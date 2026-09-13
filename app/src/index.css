@@ -6445,14 +6445,12 @@ code, .counter {
 }
 
 .rituais-search .combat-search-input {
-  font-size: 16px;
-  font-family: var(--poppins);
-  color: #fff;
+  font-size: 0.78em;
 }
 
 .rituais-search .combat-search-icon {
-  width: 1em;
-  height: 1em;
+  width: 0.95em;
+  height: 0.95em;
 }
 
 .rituais-add-ghost-btn {
@@ -6463,12 +6461,12 @@ code, .counter {
   color: #fff;
   font-family: 'Westsac', var(--heading);
   font-weight: 400;
-  font-size: 14px;
+  font-size: 11px;
   letter-spacing: 0.03em;
   text-transform: uppercase;
   line-height: 1.25;
   text-align: center;
-  padding: 6px;
+  padding: 0.25em 0.5em;
   cursor: pointer;
 }
 
@@ -6517,8 +6515,8 @@ code, .counter {
 
 .rituais-element-btn {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 1.7em;
+  height: 1.7em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6529,8 +6527,8 @@ code, .counter {
 }
 
 .rituais-element-btn img {
-  width: 36px;
-  height: 36px;
+  width: 1.15em;
+  height: 1.15em;
   object-fit: contain;
 }
 
@@ -6550,8 +6548,8 @@ code, .counter {
 
 .rituais-circle-btn {
   flex-shrink: 0;
-  min-width: 28px;
-  height: 28px;
+  min-width: 1.4em;
+  height: 1.7em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6561,8 +6559,7 @@ code, .counter {
   color: #fff;
   font-family: 'Westsac', var(--heading);
   font-weight: 400;
-  font-size: 20px;
-  padding: 0 4px;
+  font-size: 13px;
   cursor: pointer;
 }
 
