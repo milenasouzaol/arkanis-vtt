@@ -6413,7 +6413,7 @@ code, .counter {
   display: flex;
   align-items: stretch;
   gap: 0.5em;
-  margin-bottom: 0.15em;
+  margin-bottom: 0;
 }
 
 .rituais-left-box {
@@ -6575,7 +6575,7 @@ code, .counter {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: -0.2em;
+  margin-top: -0.5em;
   margin-bottom: 0.4em;
 }
 
