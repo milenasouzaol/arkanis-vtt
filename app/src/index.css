@@ -6474,7 +6474,7 @@ code, .counter {
 
 .rituais-divider {
   flex-shrink: 0;
-  width: 2px;
+  width: 1px;
   align-self: stretch;
   background: rgba(255, 255, 255, 0.7);
 }
@@ -6575,7 +6575,7 @@ code, .counter {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: -0.5em;
+  margin-top: 0;
   margin-bottom: 0.4em;
 }
 
