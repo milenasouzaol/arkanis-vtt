@@ -6481,6 +6481,7 @@ code, .counter {
 
 .rituais-skill-btn {
   flex-shrink: 0;
+  align-self: center;
   display: flex;
   align-items: center;
   gap: 0.3em;
