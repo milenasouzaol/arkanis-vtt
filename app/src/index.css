@@ -6492,26 +6492,26 @@ code, .counter {
 .rituais-filter-row {
   display: flex;
   align-items: center;
-  gap: 0.5em;
+  gap: 0.1em;
   margin-bottom: 0.6em;
 }
 
 .rituais-element-btn {
   flex-shrink: 0;
-  width: 2.8em;
-  height: 2.8em;
+  width: 2em;
+  height: 2em;
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
 }
 
 .rituais-element-btn img {
-  width: 1.8em;
-  height: 1.8em;
+  width: 1.3em;
+  height: 1.3em;
   object-fit: contain;
 }
 
@@ -6523,26 +6523,26 @@ code, .counter {
 .rituais-circle-group {
   display: flex;
   align-items: center;
-  gap: 0.3em;
-  margin-left: 0.6em;
-  padding-left: 0.6em;
+  gap: 0.05em;
+  margin-left: 0.4em;
+  padding-left: 0.4em;
   border-left: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .rituais-circle-btn {
   flex-shrink: 0;
-  min-width: 2.4em;
-  height: 2.8em;
+  min-width: 1.8em;
+  height: 2em;
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   color: #fff;
   font-family: 'Westsac', var(--heading);
   font-weight: 400;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
 }
 
