@@ -6475,8 +6475,7 @@ code, .counter {
 .rituais-divider {
   flex-shrink: 0;
   width: 1px;
-  height: 1.6em;
-  align-self: center;
+  align-self: stretch;
   background: rgba(255, 255, 255, 0.25);
 }
 
