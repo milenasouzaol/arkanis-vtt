@@ -6399,3 +6399,143 @@ code, .counter {
   border-color: #fff;
 }
 
+/* Rituais */
+
+.rituais-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 0.6em;
+}
+
+.rituais-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rituais-add-ghost-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  text-align: center;
+  padding: 0.4em 0.8em;
+  cursor: pointer;
+}
+
+.rituais-add-ghost-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rituais-divider {
+  flex-shrink: 0;
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.rituais-skill-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  background: #0e0d12;
+  border: 1px solid #4a4a4a;
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--poppins);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 0.5em 0.9em;
+  cursor: pointer;
+}
+
+.rituais-skill-btn img {
+  width: 1.3em;
+  height: 1.3em;
+  object-fit: contain;
+}
+
+.rituais-skill-btn:hover {
+  border-color: #7a7a7a;
+}
+
+.rituais-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 0.6em;
+}
+
+.rituais-element-btn {
+  flex-shrink: 0;
+  width: 2.2em;
+  height: 2.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.rituais-element-btn img {
+  width: 1.3em;
+  height: 1.3em;
+  object-fit: contain;
+}
+
+.rituais-element-btn:hover,
+.rituais-element-btn.active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.rituais-circle-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  margin-left: 0.6em;
+  padding-left: 0.6em;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.rituais-circle-btn {
+  flex-shrink: 0;
+  min-width: 2em;
+  height: 2.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.rituais-circle-btn:hover,
+.rituais-circle-btn.active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.rituais-rune-row {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: var(--heading);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 0.8em;
+}
+

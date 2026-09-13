@@ -1,6 +1,26 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../lib/AuthContext'
+import { recordRoll } from '../../lib/rollHistory'
+import { attrValue, rollAttributeTest, trainingBonus, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
+import RollResult, { type RollResultData } from './RollResult'
+import d20Icon from '../../assets/icons/d20-paranormal.svg'
+import sangueIcon from '../../assets/rituais/sangue-simbolo.png'
+import morteIcon from '../../assets/rituais/morte-simbolo.png'
+import conhecimentoIcon from '../../assets/rituais/conhecimento-simbolo.png'
+import energiaIcon from '../../assets/rituais/energia-simbolo.png'
+import medoIcon from '../../assets/rituais/medo-simbolo.png'
+
+const ELEMENT_ICON: Record<string, string> = {
+  sangue: sangueIcon,
+  morte: morteIcon,
+  conhecimento: conhecimentoIcon,
+  energia: energiaIcon,
+  medo: medoIcon,
+}
+
+const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV' }
 
 
 type Ritual = {
@@ -34,6 +54,7 @@ type CustomRitualDraft = { name: string; elemento: string; circle: number; effec
 const emptyCustomRitual: CustomRitualDraft = { name: '', elemento: '', circle: 1, effect: '' }
 
 export default function RituaisTab({ character }: { character: CharacterRecord }) {
+  const { session } = useAuth()
   const [known, setKnown] = useState<CharacterRitual[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
@@ -43,6 +64,42 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
   const [catalog, setCatalog] = useState<Ritual[]>([])
   const [creatingCustom, setCreatingCustom] = useState(false)
   const [customDraft, setCustomDraft] = useState<CustomRitualDraft>(emptyCustomRitual)
+  const [ocultismoSkill, setOcultismoSkill] = useState<{ id: string; default_attribute: string } | null>(null)
+  const [ocultismoBonus, setOcultismoBonus] = useState({ training: 'nenhum' as Training, extra_bonus: 0, attribute_override: null as string | null })
+  const [roll, setRoll] = useState<RollResultData | null>(null)
+
+  useEffect(() => {
+    supabase.from('skills').select('id, default_attribute').eq('name', 'Ocultismo').single().then(({ data }) => {
+      if (!data) return
+      setOcultismoSkill(data)
+      supabase
+        .from('character_skills')
+        .select('training, extra_bonus, attribute_override')
+        .eq('character_id', character.id)
+        .eq('skill_id', data.id)
+        .maybeSingle()
+        .then(({ data: cs }) => {
+          if (cs) setOcultismoBonus(cs as any)
+        })
+    })
+  }, [character.id])
+
+  function rollOcultismo() {
+    if (!ocultismoSkill) return
+    const attr = ocultismoBonus.attribute_override ?? ocultismoSkill.default_attribute
+    const score = attrValue(character.attributes, attr)
+    const { rolls, kept } = rollAttributeTest(score)
+    const bonus = trainingBonus(ocultismoBonus.training) + ocultismoBonus.extra_bonus
+    const label = 'Teste de Ocultismo'
+    setRoll({ label, rolls, kept, bonus, characterName: character.name, diceTray: character.dice_tray })
+    if (session) {
+      recordRoll({
+        characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
+        label, total: kept + bonus, detail: `d20 mantido: ${kept} (rolados: ${rolls.join(', ')}) + bônus ${bonus}`,
+        dice: rolls.map((v) => ({ sides: 20, value: v, discarded: v !== kept })), bonus,
+      })
+    }
+  }
 
   async function loadKnown() {
     const { data } = await supabase
@@ -95,27 +152,73 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
 
   const filteredCatalog = catalog.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))
 
+  const filteredKnown = known.filter((cr) => {
+    const ritual = cr.rituals ?? cr.custom_ritual
+    if (!ritual) return false
+    if (elementFilter.length && (!ritual.elemento || !elementFilter.includes(ritual.elemento))) return false
+    if (circleFilter.length && !circleFilter.includes(ritual.circle ?? 0)) return false
+    if (search && !ritual.name.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+
   return (
     <div>
-      <input placeholder="Buscar Rituais" value={search} onChange={(e) => setSearch(e.target.value)} />
-      <nav>
-        {ELEMENTOS.map((e) => (
-          <button key={e} type="button" onClick={() => setElementFilter((f) => toggle(f, e))} aria-pressed={elementFilter.includes(e)}>{e}</button>
-        ))}
-      </nav>
-      <nav>
-        {CIRCULOS.map((c) => (
-          <button key={c} type="button" onClick={() => setCircleFilter((f) => toggle(f, c))} aria-pressed={circleFilter.includes(c)}>{c}</button>
-        ))}
-        {(elementFilter.length > 0 || circleFilter.length > 0) && (
-          <button type="button" onClick={() => { setElementFilter([]); setCircleFilter([]) }}>Limpar filtros</button>
-        )}
-      </nav>
+      {roll && <RollResult result={roll} onClose={() => setRoll(null)} />}
 
-      <button type="button" onClick={() => setAdding((a) => !a)}>Adicionar Ritual</button>
+      <div className="rituais-toolbar">
+        <div className="rituais-search combat-search-field">
+          <input className="combat-search-input" placeholder="Busque Rituais" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <svg className="combat-search-icon" viewBox="0 0 24 24" aria-hidden>
+            <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" />
+            <line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </div>
+
+        <button type="button" className="rituais-add-ghost-btn" onClick={() => setAdding((a) => !a)}>
+          Adicionar<br />Ritual
+        </button>
+
+        <div className="rituais-divider" />
+
+        <button type="button" className="rituais-skill-btn" onClick={rollOcultismo}>
+          <img src={d20Icon} alt="" />
+          <span>Ocultismo</span>
+        </button>
+      </div>
+
+      <div className="rituais-filter-row">
+        {ELEMENTOS.map((e) => (
+          <button
+            key={e}
+            type="button"
+            className={`rituais-element-btn${elementFilter.includes(e) ? ' active' : ''}`}
+            onClick={() => setElementFilter((f) => toggle(f, e))}
+            aria-pressed={elementFilter.includes(e)}
+            title={e}
+          >
+            <img src={ELEMENT_ICON[e]} alt={e} />
+          </button>
+        ))}
+
+        <div className="rituais-circle-group">
+          {CIRCULOS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`rituais-circle-btn${circleFilter.includes(c) ? ' active' : ''}`}
+              onClick={() => setCircleFilter((f) => toggle(f, c))}
+              aria-pressed={circleFilter.includes(c)}
+            >
+              {ROMAN[c]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rituais-rune-row">Ordem Paranormal</div>
 
       <ul>
-        {known.map((cr) => {
+        {filteredKnown.map((cr) => {
           const ritual = cr.rituals ?? cr.custom_ritual
           if (!ritual) return null
           const isExpanded = expanded === cr.id
