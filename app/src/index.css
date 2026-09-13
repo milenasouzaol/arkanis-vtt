@@ -6413,7 +6413,7 @@ code, .counter {
   display: flex;
   align-items: stretch;
   gap: 0.5em;
-  margin-bottom: 0.6em;
+  margin-bottom: 0.15em;
 }
 
 .rituais-left-box {
@@ -6422,8 +6422,8 @@ code, .counter {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.45em;
-  padding: 0.4em 0.5em;
+  gap: 0.3em;
+  padding: 0.3em 0.5em;
 }
 
 .rituais-top-row {
@@ -6570,11 +6570,12 @@ code, .counter {
   text-align: center;
   color: rgba(255, 255, 255, 0.15);
   font-family: 'Sigilos De Conhecimento', var(--heading);
-  font-size: 12px;
+  font-size: 10px;
   letter-spacing: 0.05em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 0.8em;
+  margin-top: -0.2em;
+  margin-bottom: 0.4em;
 }
 
