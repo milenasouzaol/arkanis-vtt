@@ -6553,9 +6553,9 @@ code, .counter {
 
 .rituais-rune-row {
   text-align: center;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.15);
   font-family: 'Sigilos De Conhecimento', var(--heading);
-  font-size: 22px;
+  font-size: 13px;
   letter-spacing: 0.1em;
   margin-bottom: 0.8em;
 }

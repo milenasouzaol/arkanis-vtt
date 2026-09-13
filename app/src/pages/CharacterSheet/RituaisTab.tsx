@@ -215,7 +215,7 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
         </div>
       </div>
 
-      <div className="rituais-rune-row">Ordem Paranormal</div>
+      <div className="rituais-rune-row">Saber tudo é perder tudo</div>
 
       <ul>
         {filteredKnown.map((cr) => {
