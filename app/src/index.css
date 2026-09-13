@@ -6514,8 +6514,8 @@ code, .counter {
 
 .rituais-element-btn {
   flex-shrink: 0;
-  width: 1.9em;
-  height: 1.9em;
+  width: 2.05em;
+  height: 2.2em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6526,8 +6526,8 @@ code, .counter {
 }
 
 .rituais-element-btn img {
-  width: 1.85em;
-  height: 1.85em;
+  width: 2.15em;
+  height: 2.15em;
   object-fit: contain;
 }
 
@@ -6539,16 +6539,14 @@ code, .counter {
 .rituais-circle-group {
   display: flex;
   align-items: center;
-  gap: 0;
-  margin-left: 0.2em;
-  padding-left: 0.2em;
-  border-left: 2px solid rgba(255, 255, 255, 0.4);
+  gap: 4px;
+  margin-left: 0.15em;
 }
 
 .rituais-circle-btn {
   flex-shrink: 0;
-  min-width: 1.2em;
-  height: 1.9em;
+  min-width: 1.15em;
+  height: 2.2em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6558,8 +6556,8 @@ code, .counter {
   color: #fff;
   font-family: 'Westsac', var(--heading);
   font-weight: 400;
-  font-size: 24px;
-  padding: 0 3px;
+  font-size: 28px;
+  padding: 0 1px;
   cursor: pointer;
 }
 
