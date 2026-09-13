@@ -166,17 +166,50 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
       {roll && <RollResult result={roll} onClose={() => setRoll(null)} />}
 
       <div className="rituais-toolbar">
-        <div className="rituais-search combat-search-field">
-          <input className="combat-search-input" placeholder="Busque Rituais" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <svg className="combat-search-icon" viewBox="0 0 24 24" aria-hidden>
-            <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" />
-            <line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </div>
+        <div className="rituais-left-box">
+          <div className="rituais-top-row">
+            <div className="rituais-search combat-search-field">
+              <input className="combat-search-input" placeholder="Busque Rituais" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <svg className="combat-search-icon" viewBox="0 0 24 24" aria-hidden>
+                <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" />
+                <line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </div>
 
-        <button type="button" className="rituais-add-ghost-btn" onClick={() => setAdding((a) => !a)}>
-          Adicionar<br />Ritual
-        </button>
+            <button type="button" className="rituais-add-ghost-btn" onClick={() => setAdding((a) => !a)}>
+              Adicionar<br />Ritual
+            </button>
+          </div>
+
+          <div className="rituais-filter-row">
+            {ELEMENTOS.map((e) => (
+              <button
+                key={e}
+                type="button"
+                className={`rituais-element-btn${elementFilter.includes(e) ? ' active' : ''}`}
+                onClick={() => setElementFilter((f) => toggle(f, e))}
+                aria-pressed={elementFilter.includes(e)}
+                title={e}
+              >
+                <img src={ELEMENT_ICON[e]} alt={e} />
+              </button>
+            ))}
+
+            <div className="rituais-circle-group">
+              {CIRCULOS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`rituais-circle-btn${circleFilter.includes(c) ? ' active' : ''}`}
+                  onClick={() => setCircleFilter((f) => toggle(f, c))}
+                  aria-pressed={circleFilter.includes(c)}
+                >
+                  {ROMAN[c]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         <div className="rituais-divider" />
 
@@ -184,35 +217,6 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
           <img src={d20Icon} alt="" />
           <span>Ocultismo</span>
         </button>
-      </div>
-
-      <div className="rituais-filter-row">
-        {ELEMENTOS.map((e) => (
-          <button
-            key={e}
-            type="button"
-            className={`rituais-element-btn${elementFilter.includes(e) ? ' active' : ''}`}
-            onClick={() => setElementFilter((f) => toggle(f, e))}
-            aria-pressed={elementFilter.includes(e)}
-            title={e}
-          >
-            <img src={ELEMENT_ICON[e]} alt={e} />
-          </button>
-        ))}
-
-        <div className="rituais-circle-group">
-          {CIRCULOS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              className={`rituais-circle-btn${circleFilter.includes(c) ? ' active' : ''}`}
-              onClick={() => setCircleFilter((f) => toggle(f, c))}
-              aria-pressed={circleFilter.includes(c)}
-            >
-              {ROMAN[c]}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="rituais-rune-row">Tudo comeca com o sangue. Saber tudo e perder tudo</div>
