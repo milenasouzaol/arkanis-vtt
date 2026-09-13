@@ -103,6 +103,14 @@
 }
 
 @font-face {
+  font-family: 'Sigilos De Conhecimento';
+  src: url('./assets/fonts/SigilosDeConhecimento.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Keyes';
   src: url('./assets/fonts/Keyes.ttf') format('truetype');
   font-weight: 400;
@@ -6411,6 +6419,20 @@ code, .counter {
 .rituais-search {
   flex: 1 1 auto;
   min-width: 0;
+  padding-bottom: 0;
+}
+
+.rituais-search.combat-search-field {
+  padding-bottom: 0.15em;
+}
+
+.rituais-search .combat-search-input {
+  font-size: 0.78em;
+}
+
+.rituais-search .combat-search-icon {
+  width: 0.95em;
+  height: 0.95em;
 }
 
 .rituais-add-ghost-btn {
@@ -6419,9 +6441,9 @@ code, .counter {
   border: none;
   border-radius: 4px;
   color: #fff;
-  font-family: var(--heading);
-  font-weight: 700;
-  font-size: 11px;
+  font-family: 'Westsac', var(--heading);
+  font-weight: 400;
+  font-size: 15px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   line-height: 1.3;
@@ -6450,9 +6472,9 @@ code, .counter {
   border: 1px solid #4a4a4a;
   border-radius: 6px;
   color: #fff;
-  font-family: var(--poppins);
-  font-weight: 600;
-  font-size: 13px;
+  font-family: 'Westsac', var(--heading);
+  font-weight: 400;
+  font-size: 16px;
   padding: 0.5em 0.9em;
   cursor: pointer;
 }
@@ -6476,8 +6498,8 @@ code, .counter {
 
 .rituais-element-btn {
   flex-shrink: 0;
-  width: 2.2em;
-  height: 2.2em;
+  width: 2.8em;
+  height: 2.8em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6488,8 +6510,8 @@ code, .counter {
 }
 
 .rituais-element-btn img {
-  width: 1.3em;
-  height: 1.3em;
+  width: 1.8em;
+  height: 1.8em;
   object-fit: contain;
 }
 
@@ -6509,8 +6531,8 @@ code, .counter {
 
 .rituais-circle-btn {
   flex-shrink: 0;
-  min-width: 2em;
-  height: 2.2em;
+  min-width: 2.4em;
+  height: 2.8em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6518,9 +6540,9 @@ code, .counter {
   border: none;
   border-radius: 5px;
   color: #fff;
-  font-family: var(--heading);
-  font-weight: 700;
-  font-size: 13px;
+  font-family: 'Westsac', var(--heading);
+  font-weight: 400;
+  font-size: 18px;
   cursor: pointer;
 }
 
@@ -6531,11 +6553,10 @@ code, .counter {
 
 .rituais-rune-row {
   text-align: center;
-  color: rgba(255, 255, 255, 0.35);
-  font-family: var(--heading);
-  font-size: 12px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: 'Sigilos De Conhecimento', var(--heading);
+  font-size: 22px;
+  letter-spacing: 0.1em;
   margin-bottom: 0.8em;
 }
 
