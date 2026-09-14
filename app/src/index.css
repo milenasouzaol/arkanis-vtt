@@ -6787,3 +6787,21 @@ code, .counter {
   font-size: 0.8em;
   color: rgba(255, 255, 255, 0.75);
 }
+
+.ritual-picker-shell,
+.ritual-picker-shell .conditions-modal-list-item,
+.ritual-picker-shell .conditions-modal-placeholder,
+.ritual-picker-shell .conditions-modal-detail-text,
+.ritual-picker-shell .conditions-modal-content,
+.ritual-picker-shell .conditions-modal-custom-label,
+.ritual-picker-shell .ability-picker-source,
+.ritual-picker-shell .ritual-detail-sub,
+.ritual-picker-shell .ritual-detail-meta,
+.ritual-picker-shell .combat-search-input,
+.ritual-picker-shell .ability-picker-custom-btn {
+  color: #fff;
+}
+
+.ritual-picker-shell .combat-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
