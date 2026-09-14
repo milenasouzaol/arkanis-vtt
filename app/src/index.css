@@ -6580,3 +6580,214 @@ code, .counter {
   margin-bottom: 0.4em;
 }
 
+
+/* Ritual Picker Modal */
+
+.ritual-picker-shell .conditions-modal {
+  height: min(600px, 88vh);
+}
+
+.ritual-picker-list-panel {
+  width: 340px;
+  flex-direction: column;
+}
+
+.ritual-picker-detail-panel {
+  width: 440px;
+}
+
+.ritual-picker-veins {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('./assets/rituais/veins-texture.webp');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.ritual-picker-sidebar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.6em 0.7em 0.6em 0;
+}
+
+.ritual-el-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  border: 1.5px solid;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+
+.ritual-el-btn img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+.ritual-circle-sq {
+  width: 44px;
+  height: 30px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 18, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Westsac', var(--heading);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.ritual-circle-sq:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.ritual-circle-sq.active {
+  background: #fff;
+  color: #060517;
+  border-color: #fff;
+}
+
+.ritual-trash-btn {
+  width: 44px;
+  height: 40px;
+  flex-shrink: 0;
+  margin-top: 0.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.ritual-trash-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ritual-trash-btn img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.ritual-picker-search {
+  position: relative;
+  z-index: 1;
+  margin: 0 0.9em;
+  padding-bottom: 0.4em !important;
+}
+
+.ritual-picker-list-panel .conditions-modal-search {
+  padding: 0.9em 0 0;
+}
+
+.ritual-picker-shell .ability-picker-sources {
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 0.9em;
+  row-gap: 0.3em;
+}
+
+.ritual-form-row {
+  display: flex;
+  gap: 0.8em;
+}
+
+.ritual-form-row > div {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ritual-form-row-3 {
+  display: flex;
+  gap: 0.6em;
+  margin-bottom: 0.3em;
+}
+
+.ritual-form-row-3 > div {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ritual-form-image {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 18, 24, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 1em;
+  min-height: 130px;
+}
+
+.ritual-form-image img {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+}
+
+.ritual-form-image-btn {
+  position: absolute;
+  right: 0.8em;
+  bottom: 0.8em;
+  background: #fff;
+  border-radius: 999px;
+  color: #060517;
+  font-family: 'Keyes', var(--heading);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0.4em 1em;
+  cursor: pointer;
+}
+
+.ritual-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  margin-bottom: 0.7em;
+}
+
+.ritual-detail-img {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.ritual-detail-sub {
+  margin: 0.2em 0 0;
+  font-family: var(--poppins);
+  font-size: 0.8em;
+  color: var(--text-dim);
+  text-transform: capitalize;
+}
+
+.ritual-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em 1em;
+  margin-bottom: 0.7em;
+  font-family: var(--poppins);
+  font-size: 0.8em;
+  color: rgba(255, 255, 255, 0.75);
+}

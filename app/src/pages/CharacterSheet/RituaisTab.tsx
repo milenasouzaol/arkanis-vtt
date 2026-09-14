@@ -5,6 +5,7 @@ import { recordRoll } from '../../lib/rollHistory'
 import { attrValue, rollAttributeTest, trainingBonus, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
 import RollResult, { type RollResultData } from './RollResult'
+import RitualPickerModal, { type RitualPickResult } from './RitualPickerModal'
 import d20Icon from '../../assets/icons/d20-paranormal.svg'
 import sangueIcon from '../../assets/rituais/sangue-simbolo.png'
 import morteIcon from '../../assets/rituais/morte-simbolo.png'
@@ -50,9 +51,6 @@ type CharacterRitual = {
 const ELEMENTOS = ['sangue', 'morte', 'conhecimento', 'energia', 'medo'] as const
 const CIRCULOS = [1, 2, 3, 4]
 
-type CustomRitualDraft = { name: string; elemento: string; circle: number; effect: string }
-const emptyCustomRitual: CustomRitualDraft = { name: '', elemento: '', circle: 1, effect: '' }
-
 export default function RituaisTab({ character }: { character: CharacterRecord }) {
   const { session } = useAuth()
   const [known, setKnown] = useState<CharacterRitual[]>([])
@@ -61,9 +59,6 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
   const [search, setSearch] = useState('')
   const [elementFilter, setElementFilter] = useState<string[]>([])
   const [circleFilter, setCircleFilter] = useState<number[]>([])
-  const [catalog, setCatalog] = useState<Ritual[]>([])
-  const [creatingCustom, setCreatingCustom] = useState(false)
-  const [customDraft, setCustomDraft] = useState<CustomRitualDraft>(emptyCustomRitual)
   const [ocultismoSkill, setOcultismoSkill] = useState<{ id: string; default_attribute: string } | null>(null)
   const [ocultismoBonus, setOcultismoBonus] = useState({ training: 'nenhum' as Training, extra_bonus: 0, attribute_override: null as string | null })
   const [roll, setRoll] = useState<RollResultData | null>(null)
@@ -111,21 +106,8 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
 
   useEffect(() => { loadKnown() }, [character.id])
 
-  useEffect(() => {
-    if (!adding) return
-    let query = supabase.from('rituals').select('id, name, elemento, circle, execution, range, target, duration, resistance, effect, discente_cost, discente_effect, verdadeiro_cost, verdadeiro_effect')
-    if (elementFilter.length) query = query.in('elemento', elementFilter)
-    if (circleFilter.length) query = query.in('circle', circleFilter)
-    query.order('circle').then(({ data }) => setCatalog(data ?? []))
-  }, [adding, elementFilter, circleFilter])
-
   function toggle<T>(list: T[], value: T): T[] {
     return list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
-  }
-
-  async function addRitual(ritual: Ritual) {
-    await supabase.from('character_rituals').insert({ character_id: character.id, ritual_id: ritual.id })
-    await loadKnown()
   }
 
   async function removeRitual(id: string) {
@@ -133,24 +115,34 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
     await loadKnown()
   }
 
-  async function saveCustomRitual() {
-    if (!customDraft.name || !customDraft.effect) return
-    await supabase.from('character_rituals').insert({
-      character_id: character.id,
-      custom_ritual: {
-        name: customDraft.name,
-        elemento: customDraft.elemento || null,
-        circle: customDraft.circle,
-        effect: customDraft.effect,
-      },
-    })
-    setCustomDraft(emptyCustomRitual)
-    setCreatingCustom(false)
+  async function addFromPicker(result: RitualPickResult) {
+    if (result.kind === 'catalog') {
+      await supabase.from('character_rituals').insert({ character_id: character.id, ritual_id: result.id })
+    } else {
+      await supabase.from('character_rituals').insert({
+        character_id: character.id,
+        custom_ritual: {
+          name: result.name,
+          elemento: result.elemento,
+          circle: result.circle,
+          execution: result.execution || null,
+          duration: result.duration || null,
+          target: result.target || null,
+          range: result.range || null,
+          area: result.area || null,
+          resistance: result.resistance || null,
+          effect: result.effect || result.description || '',
+          dice: result.dice || null,
+          dice_discente: result.diceDiscente || null,
+          dice_verdadeiro: result.diceVerdadeiro || null,
+          image_url: result.image_url,
+          description: result.description || null,
+        },
+      })
+    }
     setAdding(false)
     await loadKnown()
   }
-
-  const filteredCatalog = catalog.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))
 
   const filteredKnown = known.filter((cr) => {
     const ritual = cr.rituals ?? cr.custom_ritual
@@ -251,37 +243,12 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
       </ul>
 
       {adding && (
-        <div>
-          <button type="button" onClick={() => setCreatingCustom((c) => !c)}>Criar Ritual Personalizado</button>
-
-          {creatingCustom ? (
-            <div>
-              <label>Nome <input value={customDraft.name} onChange={(e) => setCustomDraft((d) => ({ ...d, name: e.target.value }))} /></label>
-              <label>Elemento
-                <select value={customDraft.elemento} onChange={(e) => setCustomDraft((d) => ({ ...d, elemento: e.target.value }))}>
-                  <option value="">Multi-elemento / nenhum</option>
-                  {ELEMENTOS.map((el) => <option key={el} value={el}>{el}</option>)}
-                </select>
-              </label>
-              <label>Círculo
-                <select value={customDraft.circle} onChange={(e) => setCustomDraft((d) => ({ ...d, circle: Number(e.target.value) }))}>
-                  {CIRCULOS.map((c) => <option key={c} value={c}>{c}º</option>)}
-                </select>
-              </label>
-              <label>Efeito <textarea value={customDraft.effect} onChange={(e) => setCustomDraft((d) => ({ ...d, effect: e.target.value }))} /></label>
-              <button type="button" onClick={saveCustomRitual}>Adicionar Ritual</button>
-            </div>
-          ) : filteredCatalog.length === 0 ? <p>Nenhum ritual encontrado com esses filtros.</p> : (
-            <ul>
-              {filteredCatalog.map((r) => (
-                <li key={r.id}>
-                  <strong>{r.circle}º — {r.name}</strong> ({r.elemento ?? 'multi-elemento'}): {r.effect}
-                  <button type="button" onClick={() => addRitual(r)}>Adicionar Ritual</button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <RitualPickerModal
+          characterId={character.id}
+          onClose={() => setAdding(false)}
+          onAdd={addFromPicker}
+          onDeleteHomebrew={removeRitual}
+        />
       )}
     </div>
   )
