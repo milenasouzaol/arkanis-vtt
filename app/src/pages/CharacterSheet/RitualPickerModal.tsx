@@ -268,8 +268,7 @@ export default function RitualPickerModal({
 
           <button
             type="button"
-            className="ritual-trash-btn"
-            disabled={!selected?.homebrewId}
+            className={`ritual-trash-btn${selected?.homebrewId ? '' : ' dim'}`}
             onMouseEnter={() => setTrashHover(true)}
             onMouseLeave={() => setTrashHover(false)}
             onClick={trashSelected}

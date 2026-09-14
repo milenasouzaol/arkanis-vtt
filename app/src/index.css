@@ -6618,8 +6618,8 @@ code, .counter {
 }
 
 .ritual-el-btn {
-  width: 44px;
-  height: 44px;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -6633,15 +6633,15 @@ code, .counter {
 }
 
 .ritual-el-btn img {
-  width: 26px;
-  height: 26px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
 }
 
 .ritual-circle-sq {
-  width: 44px;
-  height: 30px;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -6651,7 +6651,7 @@ code, .counter {
   border-radius: 8px;
   color: #fff;
   font-family: 'Westsac', var(--heading);
-  font-size: 18px;
+  font-size: 24px;
   cursor: pointer;
 }
 
@@ -6666,8 +6666,8 @@ code, .counter {
 }
 
 .ritual-trash-btn {
-  width: 44px;
-  height: 40px;
+  width: 56px;
+  height: 52px;
   flex-shrink: 0;
   margin-top: 0.2em;
   display: flex;
@@ -6678,26 +6678,22 @@ code, .counter {
   cursor: pointer;
 }
 
-.ritual-trash-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
+.ritual-trash-btn.dim {
+  opacity: 0.4;
 }
 
 .ritual-trash-btn img {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
 }
 
 .ritual-picker-search {
   position: relative;
   z-index: 1;
+  flex: none;
   margin: 0 0.9em;
-  padding-bottom: 0.4em !important;
-}
-
-.ritual-picker-list-panel .conditions-modal-search {
-  padding: 0.9em 0 0;
+  padding: 0.9em 0 0.4em !important;
 }
 
 .ritual-picker-shell .ability-picker-sources {
