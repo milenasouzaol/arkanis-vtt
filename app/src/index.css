@@ -6593,7 +6593,7 @@ code, .counter {
 }
 
 .ritual-picker-detail-panel {
-  width: 440px;
+  width: 500px;
 }
 
 .ritual-picker-veins {
@@ -6735,6 +6735,14 @@ code, .counter {
 .ritual-form-row-3 > div {
   flex: 1 1 0;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.ritual-form-row-3 .conditions-modal-custom-label {
+  white-space: nowrap;
+  font-size: 0.8em;
 }
 
 .ritual-form-image {

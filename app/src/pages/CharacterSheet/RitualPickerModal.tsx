@@ -80,6 +80,33 @@ export type RitualPickResult =
       description: string
     }
 
+function Picker({ value, options, onChange }: { value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const selected = options.find((o) => o.value === value)
+  return (
+    <div className="attack-select ritual-select">
+      <button type="button" className="attack-select-trigger" onClick={() => setOpen((v) => !v)}>
+        <span>{selected?.label ?? '—'}</span>
+        <span className="attack-select-arrow">{open ? '▲' : '▾'}</span>
+      </button>
+      {open && (
+        <div className="attack-select-list">
+          {options.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              className={o.value === value ? 'selected' : ''}
+              onClick={() => { onChange(o.value); setOpen(false) }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function toDraft(): CustomDraft {
   return {
     name: '', elemento: '', circle: 1, execution: '', duration: '', target: '', range: '', area: '',
@@ -330,16 +357,15 @@ export default function RitualPickerModal({
                 <div className="ritual-form-row">
                   <div>
                     <label className="conditions-modal-custom-label">Elemento</label>
-                    <select className="ability-picker-select" value={draft.elemento} onChange={(e) => setDraft((d) => ({ ...d, elemento: e.target.value }))}>
-                      <option value="">Nenhum</option>
-                      {ELEMENTS.map((el) => <option key={el.key} value={el.key}>{el.key}</option>)}
-                    </select>
+                    <input className="conditions-modal-custom-name" value={draft.elemento} onChange={(e) => setDraft((d) => ({ ...d, elemento: e.target.value }))} placeholder="Nenhum" />
                   </div>
                   <div>
                     <label className="conditions-modal-custom-label">Círculo</label>
-                    <select className="ability-picker-select" value={draft.circle} onChange={(e) => setDraft((d) => ({ ...d, circle: Number(e.target.value) }))}>
-                      {CIRCLES.map((c) => <option key={c} value={c}>{ROMAN[c]}</option>)}
-                    </select>
+                    <Picker
+                      value={String(draft.circle)}
+                      onChange={(v) => setDraft((d) => ({ ...d, circle: Number(v) }))}
+                      options={CIRCLES.map((c) => ({ value: String(c), label: ROMAN[c] }))}
+                    />
                   </div>
                 </div>
 
