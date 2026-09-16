@@ -4,7 +4,7 @@ import { useAuth } from '../../lib/AuthContext'
 import { recordRoll } from '../../lib/rollHistory'
 import { attrValue, rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
-import RollResult, { type RollResultData } from './RollResult'
+import RollResult, { RollCard, type RollCardDie, type RollResultData } from './RollResult'
 import RitualPickerModal, { type RitualPickResult } from './RitualPickerModal'
 import RitualCard, { diceFromText, type RitualView } from './RitualCard'
 import RitualEditModal from './RitualEditModal'
@@ -87,6 +87,7 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
   const [ocultismoSkill, setOcultismoSkill] = useState<{ id: string; default_attribute: string } | null>(null)
   const [ocultismoBonus, setOcultismoBonus] = useState({ training: 'nenhum' as Training, extra_bonus: 0, attribute_override: null as string | null })
   const [roll, setRoll] = useState<RollResultData | null>(null)
+  const [ritualRoll, setRitualRoll] = useState<{ title: string; subtitle: string; total: number; dice: RollCardDie[]; bonus: number } | null>(null)
 
   useEffect(() => {
     supabase.from('skills').select('id, default_attribute').eq('name', 'Ocultismo').single().then(({ data }) => {
@@ -224,21 +225,18 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
   function rollRitual(name: string, mode: 'normal' | 'discente' | 'verdadeiro', formula: string) {
     const rolled = rollDiceFormula(formula)
     if (!rolled) return
+    // O RollResult e feito pra teste de pericia e assume d20; rolagem de ritual usa a
+    // formula do proprio ritual (3d6, 8d6...), entao vai pelo RollCard com os lados certos.
+    const sides = Number(formula.match(/d(\d+)/i)?.[1] ?? 20)
+    const dice: RollCardDie[] = rolled.rolls.map((v) => ({ sides, value: v }))
     const modeLabel = mode === 'normal' ? '' : mode === 'discente' ? ' (Discente)' : ' (Verdadeiro)'
     const label = `Ritual: ${name}${modeLabel}`
-    setRoll({
-      label,
-      rolls: rolled.rolls,
-      kept: rolled.total - rolled.modifier,
-      bonus: rolled.modifier,
-      characterName: character.name,
-      diceTray: character.dice_tray,
-    })
+    setRitualRoll({ title: character.name, subtitle: label, total: rolled.total, dice, bonus: rolled.modifier })
     if (session) {
       recordRoll({
         characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
         label, total: rolled.total, detail: `${formula}: ${rolled.rolls.join(', ')}${rolled.modifier ? ` ${rolled.modifier > 0 ? '+' : ''}${rolled.modifier}` : ''}`,
-        dice: rolled.rolls.map((v) => ({ sides: Number(formula.split('d')[1]?.match(/\d+/)?.[0] ?? 20), value: v })),
+        dice,
         bonus: rolled.modifier,
       })
     }
@@ -256,6 +254,17 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
   return (
     <div>
       {roll && <RollResult result={roll} onClose={() => setRoll(null)} />}
+      {ritualRoll && (
+        <RollCard
+          title={ritualRoll.title}
+          subtitle={ritualRoll.subtitle}
+          total={ritualRoll.total}
+          dice={ritualRoll.dice}
+          bonus={ritualRoll.bonus}
+          background={character.dice_tray && character.dice_tray !== 'padrao' ? character.dice_tray : undefined}
+          onClose={() => setRitualRoll(null)}
+        />
+      )}
 
       <div className="rituais-toolbar">
         <div className="rituais-left-box">
