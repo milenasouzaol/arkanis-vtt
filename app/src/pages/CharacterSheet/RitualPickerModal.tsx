@@ -232,6 +232,11 @@ export default function RitualPickerModal({
   return createPortal(
     <div className="conditions-modal-backdrop ritual-picker-backdrop" onClick={onClose}>
       <div className="conditions-modal-shell ritual-picker-shell" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="ritual-close-outside" onClick={onClose} aria-label="Fechar">
+          <span className="ritual-close-word">FECHAR</span>
+          <span className="ritual-close-x">X</span>
+        </button>
+
         <nav className="ritual-picker-sidebar">
           {ELEMENTS.map((el) => {
             const on = elementFilter.includes(el.key)
@@ -306,7 +311,7 @@ export default function RitualPickerModal({
                 className={`conditions-modal-list-item${selectedId === r.id ? ' active' : ''}`}
                 onClick={() => { setSelectedId(r.id); setCreating(false) }}
               >
-                {ROMAN[r.circle]} — {r.name}{r.elemento ? ` (${r.elemento})` : ''}
+                {r.name}
               </button>
             ))}
           </div>
@@ -373,7 +378,7 @@ export default function RitualPickerModal({
                 <textarea className="conditions-modal-custom-description" value={draft.description} onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))} placeholder="Escreva aqui a descrição" />
 
                 <div className="conditions-modal-custom-submit-row">
-                  <button type="button" className="conditions-modal-add-btn" onClick={submitCustom}>Adicionar Ritual</button>
+                  <button type="button" className="ritual-add-btn ritual-add-btn-inline" onClick={submitCustom}>Adicionar Ritual</button>
                 </div>
               </>
             ) : selected ? (
@@ -396,15 +401,13 @@ export default function RitualPickerModal({
                 {selected.discente_effect && <p className="conditions-modal-detail-text"><strong>Discente ({selected.discente_cost} PE):</strong> {selected.discente_effect}</p>}
                 {selected.verdadeiro_effect && <p className="conditions-modal-detail-text"><strong>Verdadeiro ({selected.verdadeiro_cost} PE):</strong> {selected.verdadeiro_effect}</p>}
                 {!selected.homebrewId && (
-                  <button type="button" className="conditions-modal-add-btn" onClick={submitCatalog}>Adicionar Ritual</button>
+                  <button type="button" className="ritual-add-btn" onClick={submitCatalog}>Adicionar Ritual</button>
                 )}
               </>
             ) : (
               <p className="conditions-modal-placeholder">Selecione um Ritual ao lado para ver detalhes.</p>
             )}
           </div>
-
-          <button type="button" className="conditions-modal-close" onClick={onClose} aria-label="Fechar">×</button>
         </div>
       </div>
     </div>,

@@ -6588,7 +6588,7 @@ code, .counter {
 }
 
 .ritual-picker-list-panel {
-  width: 420px;
+  width: 625px;
   flex-direction: column;
 }
 
@@ -6698,9 +6698,22 @@ code, .counter {
 
 .ritual-picker-shell .ability-picker-sources {
   flex-direction: row;
-  flex-wrap: wrap;
-  column-gap: 0.9em;
-  row-gap: 0.3em;
+  flex-wrap: nowrap;
+  column-gap: 0.7em;
+  row-gap: 0;
+  padding: 0.7em 0.9em 0.2em;
+}
+
+.ritual-picker-shell .ability-picker-source {
+  flex-shrink: 0;
+  gap: 0.35em;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.ritual-picker-shell .ability-picker-source img {
+  width: 1.05em;
+  height: 1.05em;
 }
 
 .ritual-form-row {
@@ -6804,4 +6817,80 @@ code, .counter {
 
 .ritual-picker-shell .combat-search-input::placeholder {
   color: rgba(255, 255, 255, 0.55);
+}
+
+/* Ritual: botao fechar solto fora do quadrado */
+
+.ritual-picker-shell {
+  position: relative;
+}
+
+.ritual-close-outside {
+  position: absolute;
+  top: -2.1em;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #fff;
+  cursor: pointer;
+}
+
+.ritual-close-word {
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.ritual-close-x {
+  font-family: 'Westsac', var(--heading);
+  font-size: 20px;
+  line-height: 1;
+  color: #fff;
+}
+
+/* Ritual: botao Adicionar Ritual igual ao Criar novo Ritual */
+
+.ritual-add-btn {
+  position: absolute;
+  right: 1.4em;
+  bottom: 1.2em;
+  z-index: 2;
+  background: #1c1c1c;
+  border: 1px solid #3a3a3a;
+  border-radius: 10px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85em;
+  padding: 0.55em 1.1em;
+  cursor: pointer;
+}
+
+.ritual-add-btn:hover {
+  border-color: #fff;
+}
+
+.ritual-add-btn-inline {
+  position: static;
+}
+
+/* Ritual: cores da descricao */
+
+.ritual-picker-shell .ritual-detail-meta {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.ritual-picker-shell .ritual-detail-meta strong,
+.ritual-picker-shell .conditions-modal-detail-text strong {
+  color: #fff;
+}
+
+.ritual-picker-shell .conditions-modal-detail-text {
+  color: rgba(255, 255, 255, 0.78);
 }
