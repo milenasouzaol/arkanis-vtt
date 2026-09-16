@@ -57,6 +57,10 @@ type CustomRitual = {
   dice?: string | null
   dice_discente?: string | null
   dice_verdadeiro?: string | null
+  discente_cost?: number | null
+  discente_effect?: string | null
+  verdadeiro_cost?: number | null
+  verdadeiro_effect?: string | null
   image_url?: string | null
   description?: string | null
 }
@@ -185,6 +189,10 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
         dice: diceFromText(r.effect),
         diceDiscente: diceFromText(r.discente_effect),
         diceVerdadeiro: diceFromText(r.verdadeiro_effect),
+        discenteCost: r.discente_cost,
+        discenteEffect: r.discente_effect,
+        verdadeiroCost: r.verdadeiro_cost,
+        verdadeiroEffect: r.verdadeiro_effect,
       }
     }
     const c = cr.custom_ritual
@@ -206,6 +214,10 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
       dice: c.dice ?? diceFromText(c.effect),
       diceDiscente: c.dice_discente ?? null,
       diceVerdadeiro: c.dice_verdadeiro ?? null,
+      discenteCost: c.discente_cost ?? null,
+      discenteEffect: c.discente_effect ?? null,
+      verdadeiroCost: c.verdadeiro_cost ?? null,
+      verdadeiroEffect: c.verdadeiro_effect ?? null,
     }
   }
 

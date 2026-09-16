@@ -7078,3 +7078,27 @@ code, .counter {
 .ritual-card-action:hover {
   background: #fff;
 }
+
+.ritual-card-variants {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 0.6em;
+  padding-top: 0.6em;
+}
+
+.ritual-card-variants p {
+  margin: 0 0 0.5em;
+  font-family: var(--poppins);
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.ritual-card-variants p:last-child {
+  margin-bottom: 0;
+}
+
+.ritual-card-variants strong {
+  color: #fff;
+  letter-spacing: 0.03em;
+  margin-right: 0.35em;
+}

@@ -32,6 +32,10 @@ export type RitualView = {
   dice: string | null
   diceDiscente: string | null
   diceVerdadeiro: string | null
+  discenteCost: number | null
+  discenteEffect: string | null
+  verdadeiroCost: number | null
+  verdadeiroEffect: string | null
 }
 
 // Os rituais do catalogo nao guardam a formula de dados numa coluna propria: o dano/cura
@@ -111,6 +115,21 @@ export default function RitualCard({
               </p>
             ))}
           </div>
+
+          {(ritual.discenteEffect || ritual.verdadeiroEffect) && (
+            <div className="ritual-card-variants">
+              {ritual.discenteEffect && (
+                <p>
+                  <strong>DISCENTE{ritual.discenteCost != null ? ` (${ritual.discenteCost} PE)` : ''}</strong> {ritual.discenteEffect}
+                </p>
+              )}
+              {ritual.verdadeiroEffect && (
+                <p>
+                  <strong>VERDADEIRO{ritual.verdadeiroCost != null ? ` (${ritual.verdadeiroCost} PE)` : ''}</strong> {ritual.verdadeiroEffect}
+                </p>
+              )}
+            </div>
+          )}
 
           {ritual.description && <p className="ritual-card-desc">{ritual.description}</p>}
 

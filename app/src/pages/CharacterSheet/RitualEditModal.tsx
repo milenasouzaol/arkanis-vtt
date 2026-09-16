@@ -57,6 +57,10 @@ export default function RitualEditModal({
   const [diceVerdadeiro, setDiceVerdadeiro] = useState(initial.diceVerdadeiro ?? '')
   const [imageUrl, setImageUrl] = useState(initial.image_url)
   const [description, setDescription] = useState(initial.description ?? '')
+  const [discenteCost, setDiscenteCost] = useState(initial.discenteCost != null ? String(initial.discenteCost) : '')
+  const [discenteEffect, setDiscenteEffect] = useState(initial.discenteEffect ?? '')
+  const [verdadeiroCost, setVerdadeiroCost] = useState(initial.verdadeiroCost != null ? String(initial.verdadeiroCost) : '')
+  const [verdadeiroEffect, setVerdadeiroEffect] = useState(initial.verdadeiroEffect ?? '')
   const [uploading, setUploading] = useState(false)
 
   async function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
@@ -92,6 +96,10 @@ export default function RitualEditModal({
           dice: dice || null,
           dice_discente: diceDiscente || null,
           dice_verdadeiro: diceVerdadeiro || null,
+          discente_cost: discenteCost ? Number(discenteCost) : null,
+          discente_effect: discenteEffect || null,
+          verdadeiro_cost: verdadeiroCost ? Number(verdadeiroCost) : null,
+          verdadeiro_effect: verdadeiroEffect || null,
           image_url: imageUrl,
           description: description || null,
         },
@@ -147,6 +155,24 @@ export default function RitualEditModal({
               <div><label className="conditions-modal-custom-label">Dados Discente</label><input className="conditions-modal-custom-name" value={diceDiscente} onChange={(e) => setDiceDiscente(e.target.value)} placeholder="1d20" /></div>
               <div><label className="conditions-modal-custom-label">Dados Verdadeiro</label><input className="conditions-modal-custom-name" value={diceVerdadeiro} onChange={(e) => setDiceVerdadeiro(e.target.value)} placeholder="1d20" /></div>
             </div>
+
+            <h4 className="conditions-modal-custom-section-title">Discente</h4>
+            <div className="ritual-form-row">
+              <div style={{ flex: '0 0 90px' }}>
+                <label className="conditions-modal-custom-label">Custo (PE)</label>
+                <input className="conditions-modal-custom-name" type="number" value={discenteCost} onChange={(e) => setDiscenteCost(e.target.value)} placeholder="—" />
+              </div>
+            </div>
+            <textarea className="conditions-modal-custom-description" value={discenteEffect} onChange={(e) => setDiscenteEffect(e.target.value)} placeholder="O que muda usando Discente" />
+
+            <h4 className="conditions-modal-custom-section-title">Verdadeiro</h4>
+            <div className="ritual-form-row">
+              <div style={{ flex: '0 0 90px' }}>
+                <label className="conditions-modal-custom-label">Custo (PE)</label>
+                <input className="conditions-modal-custom-name" type="number" value={verdadeiroCost} onChange={(e) => setVerdadeiroCost(e.target.value)} placeholder="—" />
+              </div>
+            </div>
+            <textarea className="conditions-modal-custom-description" value={verdadeiroEffect} onChange={(e) => setVerdadeiroEffect(e.target.value)} placeholder="O que muda usando Verdadeiro" />
 
             <h4 className="conditions-modal-custom-section-title">Imagem</h4>
             <div className="ritual-form-image">
