@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { recordRoll } from '../../lib/rollHistory'
-import { attrValue, rollAttributeTest, trainingBonus, type Training } from '../../lib/rules'
+import { attrValue, rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
 import RollResult, { type RollResultData } from './RollResult'
 import RitualPickerModal, { type RitualPickResult } from './RitualPickerModal'
+import RitualCard, { diceFromText, type RitualView } from './RitualCard'
+import RitualEditModal from './RitualEditModal'
 import d20Icon from '../../assets/icons/d20-paranormal.svg'
 import sangueIcon from '../../assets/rituais/sangue-simbolo.png'
 import morteIcon from '../../assets/rituais/morte-simbolo.png'
@@ -41,11 +43,29 @@ type Ritual = {
   verdadeiro_effect: string | null
 }
 
+type CustomRitual = {
+  name: string
+  elemento: string | null
+  circle: number | null
+  execution?: string | null
+  duration?: string | null
+  target?: string | null
+  range?: string | null
+  area?: string | null
+  resistance?: string | null
+  effect: string
+  dice?: string | null
+  dice_discente?: string | null
+  dice_verdadeiro?: string | null
+  image_url?: string | null
+  description?: string | null
+}
+
 type CharacterRitual = {
   id: string
   ritual_id: string | null
-  custom_ritual: { name: string; elemento: string | null; circle: number | null; effect: string } | null
-  rituals: Ritual | null
+  custom_ritual: CustomRitual | null
+  rituals: (Ritual & { image_url: string | null }) | null
 }
 
 const ELEMENTOS = ['sangue', 'morte', 'conhecimento', 'energia', 'medo'] as const
@@ -56,6 +76,7 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
   const [known, setKnown] = useState<CharacterRitual[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState<CharacterRitual | null>(null)
   const [search, setSearch] = useState('')
   const [elementFilter, setElementFilter] = useState<string[]>([])
   const [circleFilter, setCircleFilter] = useState<number[]>([])
@@ -99,7 +120,7 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
   async function loadKnown() {
     const { data } = await supabase
       .from('character_rituals')
-      .select('id, ritual_id, custom_ritual, rituals(id, name, elemento, circle, execution, range, target, duration, resistance, effect, discente_cost, discente_effect, verdadeiro_cost, verdadeiro_effect)')
+      .select('id, ritual_id, custom_ritual, rituals(id, name, elemento, circle, execution, range, target, duration, resistance, effect, discente_cost, discente_effect, verdadeiro_cost, verdadeiro_effect, image_url)')
       .eq('character_id', character.id)
     setKnown((data ?? []) as unknown as CharacterRitual[])
   }
@@ -142,6 +163,73 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
     }
     setAdding(false)
     await loadKnown()
+  }
+
+  function toView(cr: CharacterRitual): RitualView | null {
+    if (cr.rituals) {
+      const r = cr.rituals
+      return {
+        entryId: cr.id,
+        name: r.name,
+        elemento: r.elemento,
+        circle: r.circle,
+        execution: r.execution,
+        range: r.range,
+        target: r.target,
+        area: null,
+        duration: r.duration,
+        resistance: r.resistance,
+        effect: r.effect,
+        description: null,
+        image_url: r.image_url,
+        dice: diceFromText(r.effect),
+        diceDiscente: diceFromText(r.discente_effect),
+        diceVerdadeiro: diceFromText(r.verdadeiro_effect),
+      }
+    }
+    const c = cr.custom_ritual
+    if (!c) return null
+    return {
+      entryId: cr.id,
+      name: c.name,
+      elemento: c.elemento,
+      circle: c.circle ?? 1,
+      execution: c.execution ?? null,
+      range: c.range ?? null,
+      target: c.target ?? null,
+      area: c.area ?? null,
+      duration: c.duration ?? null,
+      resistance: c.resistance ?? null,
+      effect: c.effect,
+      description: c.description ?? null,
+      image_url: c.image_url ?? null,
+      dice: c.dice ?? diceFromText(c.effect),
+      diceDiscente: c.dice_discente ?? null,
+      diceVerdadeiro: c.dice_verdadeiro ?? null,
+    }
+  }
+
+  function rollRitual(name: string, mode: 'normal' | 'discente' | 'verdadeiro', formula: string) {
+    const rolled = rollDiceFormula(formula)
+    if (!rolled) return
+    const modeLabel = mode === 'normal' ? '' : mode === 'discente' ? ' (Discente)' : ' (Verdadeiro)'
+    const label = `Ritual: ${name}${modeLabel}`
+    setRoll({
+      label,
+      rolls: rolled.rolls,
+      kept: rolled.total - rolled.modifier,
+      bonus: rolled.modifier,
+      characterName: character.name,
+      diceTray: character.dice_tray,
+    })
+    if (session) {
+      recordRoll({
+        characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
+        label, total: rolled.total, detail: `${formula}: ${rolled.rolls.join(', ')}${rolled.modifier ? ` ${rolled.modifier > 0 ? '+' : ''}${rolled.modifier}` : ''}`,
+        dice: rolled.rolls.map((v) => ({ sides: Number(formula.split('d')[1]?.match(/\d+/)?.[0] ?? 20), value: v })),
+        bonus: rolled.modifier,
+      })
+    }
   }
 
   const filteredKnown = known.filter((cr) => {
@@ -213,34 +301,23 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
 
       <div className="rituais-rune-row">Tudo comeca com o sangue. Saber tudo e perder tudo</div>
 
-      <ul>
+      <div className="ritual-card-list">
         {filteredKnown.map((cr) => {
-          const ritual = cr.rituals ?? cr.custom_ritual
-          if (!ritual) return null
-          const isExpanded = expanded === cr.id
+          const view = toView(cr)
+          if (!view) return null
           return (
-            <li key={cr.id}>
-              <button type="button" onClick={() => setExpanded(isExpanded ? null : cr.id)}>
-                {ritual.circle ?? '?'}º — {ritual.name} ({ritual.elemento ?? 'multi-elemento'})
-              </button>
-              {isExpanded && (
-                <div>
-                  {cr.rituals && (
-                    <>
-                      <p>Execução: {cr.rituals.execution} · Alcance: {cr.rituals.range} · Alvo: {cr.rituals.target} · Duração: {cr.rituals.duration} · Resistência: {cr.rituals.resistance ?? '—'}</p>
-                      <p>{cr.rituals.effect}</p>
-                      {cr.rituals.discente_effect && <p><strong>Discente ({cr.rituals.discente_cost} PE):</strong> {cr.rituals.discente_effect}</p>}
-                      {cr.rituals.verdadeiro_effect && <p><strong>Verdadeiro ({cr.rituals.verdadeiro_cost} PE):</strong> {cr.rituals.verdadeiro_effect}</p>}
-                    </>
-                  )}
-                  {cr.custom_ritual && <p>{cr.custom_ritual.effect}</p>}
-                  <button type="button" onClick={() => removeRitual(cr.id)}>Remover</button>
-                </div>
-              )}
-            </li>
+            <RitualCard
+              key={cr.id}
+              ritual={view}
+              expanded={expanded === cr.id}
+              onToggle={() => setExpanded(expanded === cr.id ? null : cr.id)}
+              onRoll={(mode, formula) => rollRitual(view.name, mode, formula)}
+              onRemove={() => removeRitual(cr.id)}
+              onEdit={() => setEditing(cr)}
+            />
           )
         })}
-      </ul>
+      </div>
 
       {adding && (
         <RitualPickerModal
@@ -250,6 +327,20 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
           onDeleteHomebrew={removeRitual}
         />
       )}
+
+      {editing && (() => {
+        const view = toView(editing)
+        if (!view) return null
+        return (
+          <RitualEditModal
+            characterId={character.id}
+            entryId={editing.id}
+            initial={view}
+            onClose={() => setEditing(null)}
+            onSaved={loadKnown}
+          />
+        )
+      })()}
     </div>
   )
 }

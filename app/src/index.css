@@ -6902,3 +6902,179 @@ code, .counter {
 .ritual-picker-shell .conditions-modal-detail-text {
   color: rgba(255, 255, 255, 0.78);
 }
+
+/* Cards de ritual na ficha */
+
+.ritual-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+}
+
+.ritual-card {
+  position: relative;
+  background-color: #141218;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ritual-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 7, 11, 0.2);
+  pointer-events: none;
+}
+
+.ritual-card.expanded::before {
+  background: rgba(8, 7, 11, 0.8);
+}
+
+.ritual-card-head {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  background: none;
+  border: none;
+  padding: 0.7em 0.9em;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ritual-card-icon {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.ritual-card-circle {
+  font-family: 'Westsac', var(--heading);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+}
+
+.ritual-card-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: 'Westsac', var(--heading);
+  font-size: 20px;
+  color: #fff;
+}
+
+.ritual-card-chevron {
+  flex-shrink: 0;
+  font-size: 1.1em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.ritual-card-body {
+  position: relative;
+  z-index: 1;
+  padding: 0 0.9em 0.9em;
+}
+
+.ritual-card-rolls {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 0.7em;
+}
+
+.ritual-roll-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1em;
+  background: none;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.3em 0.8em;
+  cursor: pointer;
+}
+
+.ritual-roll-btn:last-child {
+  border-right: none;
+}
+
+.ritual-roll-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ritual-roll-btn:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.ritual-roll-formula {
+  font-family: var(--poppins);
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ritual-roll-label {
+  font-family: var(--poppins);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ritual-card-meta {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 0.6em;
+}
+
+.ritual-card-meta p {
+  margin: 0 0 0.25em;
+  font-family: var(--poppins);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.ritual-card-meta strong {
+  color: #fff;
+  letter-spacing: 0.03em;
+  margin-right: 0.35em;
+}
+
+.ritual-card-desc {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin: 0.6em 0 0;
+  padding-top: 0.6em;
+  font-family: var(--poppins);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  white-space: pre-line;
+}
+
+.ritual-card-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.8em;
+}
+
+.ritual-card-action {
+  background: #f2f2f2;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  color: #060517;
+  font-family: var(--poppins);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 0.4em 1em;
+  cursor: pointer;
+}
+
+.ritual-card-action:hover {
+  background: #fff;
+}
