@@ -6588,7 +6588,7 @@ code, .counter {
 }
 
 .ritual-picker-list-panel {
-  width: 625px;
+  width: 605px;
   flex-direction: column;
 }
 
@@ -6699,7 +6699,7 @@ code, .counter {
 .ritual-picker-shell .ability-picker-sources {
   flex-direction: row;
   flex-wrap: nowrap;
-  column-gap: 0.7em;
+  column-gap: 0.3em;
   row-gap: 0;
   padding: 0.7em 0.9em 0.2em;
 }
