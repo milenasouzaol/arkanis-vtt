@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { CharacterRecord } from './index'
 import ItemModifiers from './ItemModifiers'
+import InventarioTopBox from './InventarioTopBox'
 
 type EquipmentItem = {
   id: string
@@ -243,8 +244,21 @@ export default function InventarioTab({ character }: { character: CharacterRecor
 
   const filteredCatalog = catalog.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()))
 
+  // Atual por categoria e carga saem dos proprios itens: cada item conta 1 na sua
+  // categoria (I a IV) e soma os espacos dele, vezes a quantidade, na carga.
+  const atualPorCategoria: [number, number, number, number] = [0, 0, 0, 0]
+  let cargaAtual = 0
+  for (const inv of items) {
+    const item = inv.equipment_items ?? inv.custom_item
+    if (!item) continue
+    const indice = ['I', 'II', 'III', 'IV'].indexOf(String(inv.category_override ?? item.category ?? ''))
+    if (indice >= 0) atualPorCategoria[indice] += 1
+    cargaAtual += (item.spaces ?? 0) * Math.max(1, inv.quantity)
+  }
+
   return (
     <div>
+      <InventarioTopBox character={character} atualPorCategoria={atualPorCategoria} cargaAtual={cargaAtual} />
       <input placeholder="Buscar no Inventário" value={search} onChange={(e) => setSearch(e.target.value)} />
       <button type="button" onClick={() => setAdding((a) => !a)}>Adicionar Equipamento</button>
 
