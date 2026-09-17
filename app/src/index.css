@@ -4767,7 +4767,7 @@ code, .counter {
 .pericias-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 7px;
   max-height: 60vh;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -4817,11 +4817,11 @@ code, .counter {
    Cores tiradas da referencia da Millie - se nao baterem, e so trocar aqui. */
 
 .pericias-row[data-training='treinado'] {
-  border-color: #2f6fd0;
+  border-color: #2a86e0;
 }
 
 .pericias-row[data-training='veterano'] {
-  border-color: #6b4fd8;
+  border-color: #8b3fd9;
 }
 
 .pericias-row[data-training='expert'] {
