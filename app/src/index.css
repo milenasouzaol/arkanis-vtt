@@ -4813,6 +4813,21 @@ code, .counter {
   border-color: var(--accent);
 }
 
+/* Borda da linha muda de cor conforme o nivel de treino da pericia.
+   Cores tiradas da referencia da Millie - se nao baterem, e so trocar aqui. */
+
+.pericias-row[data-training='treinado'] {
+  border-color: #2f6fd0;
+}
+
+.pericias-row[data-training='veterano'] {
+  border-color: #6b4fd8;
+}
+
+.pericias-row[data-training='expert'] {
+  border-color: #c9601f;
+}
+
 .pericias-row-name-btn {
   display: flex;
   align-items: center;

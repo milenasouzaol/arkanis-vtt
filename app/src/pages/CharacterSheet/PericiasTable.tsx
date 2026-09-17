@@ -147,7 +147,7 @@ export default function PericiasTable({
           const bonusPipIcon = testDiceBonus < 0 ? ellipsisRedIcon : ellipsisGreenIcon
 
           return (
-            <div key={skill.id} className="pericias-row">
+            <div key={skill.id} className="pericias-row" data-training={cs.training}>
               <button type="button" className="pericias-row-roll-btn" onClick={() => onRoll(skill)} disabled={!attr} aria-label={`Rolar ${skill.name}`}>
                 <img className="pericias-row-icon" src={d20Icon} alt="" />
               </button>
