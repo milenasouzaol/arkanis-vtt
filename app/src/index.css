@@ -7325,8 +7325,17 @@ code, .counter {
   text-align: center;
 }
 
-.inv-proficiencias-placeholder {
+.inv-proficiencias-box {
   min-height: 62px;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 10px 14px;
+  font-family: var(--poppins);
+  font-size: 13px;
+  line-height: 1.35;
+  color: #fff;
 }
 
 /* --- coluna da direita: carga --- */

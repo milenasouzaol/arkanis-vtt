@@ -28,6 +28,40 @@ export function patenteOf(value: string | null | undefined) {
   return PATENTES.find((p) => p.key === value) ?? PATENTES[0]
 }
 
+// Poderes que dao proficiencia sempre escrevem "proficiencia com <coisa>" na descricao
+// (Armamento Pesado, Protecao Pesada, Balistica Avancada, Ninja Urbano, Mira de Elite...).
+// Em vez de manter uma lista fixa de poderes, a gente le isso do texto - assim poder novo
+// de livro ou homebrew ja entra sozinho. O trecho termina no ponto, no ponto-e-virgula ou
+// num "e +2 em dano" da vida, que ja e outro beneficio do mesmo poder.
+const PROFICIENCIA_RE = /profici[êe]ncia com ((?:[^.;])+?)(?=\s+e\s+[+-]|\s*[.;]|$)/gi
+
+export function proficienciasDeTexto(descricoes: string[]) {
+  const achadas: string[] = []
+  for (const descricao of descricoes) {
+    for (const m of descricao.matchAll(PROFICIENCIA_RE)) {
+      const trecho = m[1].trim()
+      if (trecho) achadas.push(trecho)
+    }
+  }
+  return achadas
+}
+
+// "a, b e c." - do jeito que o texto da classe ja vem escrito. O texto da classe entra
+// aqui inteiro ("Armas simples, armas taticas e protecoes leves"), entao ele e quebrado
+// de volta em itens pra tudo sair numa lista so, em vez de "... e X, Y e Z".
+export function juntarProficiencias(partes: string[]) {
+  const limpas: string[] = []
+  for (const parte of partes.flatMap((p) => p.split(/,\s*|\s+e\s+/i))) {
+    const normal = parte.trim().replace(/\.$/, '').toLowerCase()
+    if (!normal) continue
+    if (limpas.some((j) => j === normal)) continue
+    limpas.push(normal)
+  }
+  if (!limpas.length) return ''
+  const texto = limpas.length === 1 ? limpas[0] : `${limpas.slice(0, -1).join(', ')} e ${limpas[limpas.length - 1]}`
+  return `${texto.charAt(0).toUpperCase()}${texto.slice(1)}.`
+}
+
 export default function InventarioTopBox({
   character,
   atualPorCategoria,
@@ -41,6 +75,7 @@ export default function InventarioTopBox({
   const [prestigio, setPrestigio] = useState(String(character.prestigio ?? 0))
   const [pickerOpen, setPickerOpen] = useState(false)
   const [painel, setPainel] = useState<'limite' | 'proficiencias'>('limite')
+  const [proficiencias, setProficiencias] = useState('')
   const pickerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -56,6 +91,43 @@ export default function InventarioTopBox({
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [pickerOpen])
+
+  // A proficiencia e a da classe mais o que os poderes da ficha derem por cima.
+  useEffect(() => {
+    let cancelado = false
+
+    async function carregar() {
+      let daClasse = character.custom_class?.proficienciesText ?? ''
+      if (!daClasse && character.class_id) {
+        const { data } = await supabase.from('classes').select('proficiencies_text').eq('id', character.class_id).single()
+        daClasse = data?.proficiencies_text ?? ''
+      }
+
+      const { data: habilidades } = await supabase
+        .from('character_abilities')
+        .select('custom_ability, class_powers(description), paranormal_powers(description), general_powers(description), origins(power_description), class_track_tiers(description)')
+        .eq('character_id', character.id)
+
+      const descricoes = (habilidades ?? []).map((row: any) =>
+        row.custom_ability?.description
+        ?? row.class_powers?.description
+        ?? row.paranormal_powers?.description
+        ?? row.general_powers?.description
+        ?? row.origins?.power_description
+        ?? row.class_track_tiers?.description
+        ?? '',
+      )
+
+      const dosPoderes = proficienciasDeTexto(descricoes).filter(
+        (extra) => !daClasse.toLowerCase().includes(extra.toLowerCase()),
+      )
+
+      if (!cancelado) setProficiencias(juntarProficiencias([daClasse, ...dosPoderes]))
+    }
+
+    carregar()
+    return () => { cancelado = true }
+  }, [character.id, character.class_id, character.custom_class])
 
   async function escolherPatente(key: PatenteKey) {
     setPatente(key)
@@ -147,7 +219,7 @@ export default function InventarioTopBox({
               ))}
             </div>
           ) : (
-            <div className="inv-proficiencias-placeholder" />
+            <div className="inv-proficiencias-box">{proficiencias || '—'}</div>
           )}
         </div>
 
