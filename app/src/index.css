@@ -6472,14 +6472,6 @@ code, .counter {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.rituais-divider {
-  flex-shrink: 0;
-  width: 1px;
-  height: 2.2em;
-  align-self: flex-end;
-  background: rgba(255, 255, 255, 0.25);
-}
-
 .rituais-skill-btn {
   flex-shrink: 0;
   align-self: center;

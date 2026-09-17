@@ -312,8 +312,6 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
           </div>
         </div>
 
-        <div className="rituais-divider" />
-
         <button type="button" className="rituais-skill-btn" onClick={rollOcultismo}>
           <img src={d20Icon} alt="" />
           <span>Ocultismo</span>
