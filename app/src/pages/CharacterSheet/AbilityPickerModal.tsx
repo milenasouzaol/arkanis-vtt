@@ -128,6 +128,11 @@ export default function AbilityPickerModal({
   return createPortal(
     <div className="conditions-modal-backdrop ability-picker-backdrop" onClick={onClose}>
       <div className="conditions-modal-shell ability-picker-shell" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="ritual-close-outside" onClick={onClose} aria-label="Fechar">
+          <span className="ritual-close-word">FECHAR</span>
+          <span className="ritual-close-x">X</span>
+        </button>
+
         <nav className="conditions-modal-sidebar">
           {CATEGORIES.map((c) => (
             <button
@@ -224,7 +229,6 @@ export default function AbilityPickerModal({
             )}
           </div>
 
-          <button type="button" className="conditions-modal-close" onClick={onClose} aria-label="Fechar">×</button>
         </div>
       </div>
     </div>,
