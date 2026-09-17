@@ -2057,6 +2057,8 @@ code, .counter {
 }
 
 .conditions-modal-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
   position: relative;
   z-index: 1;
   flex: 1;
@@ -2066,6 +2068,19 @@ code, .counter {
   display: flex;
   flex-direction: column;
   gap: 0.4em;
+}
+
+.conditions-modal-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conditions-modal-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conditions-modal-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
 }
 
 .conditions-modal-list-item {
@@ -6373,7 +6388,22 @@ code, .counter {
 }
 
 .ability-picker-shell .conditions-modal-list-panel {
-  width: 320px;
+  width: 600px;
+}
+
+/* Habilidades: os 5 filtros de fonte numa linha so */
+
+.ability-picker-shell .ability-picker-sources {
+  flex-wrap: nowrap;
+  column-gap: 0.5em;
+  row-gap: 0;
+}
+
+.ability-picker-shell .ability-picker-source {
+  flex-shrink: 0;
+  gap: 0.3em;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .ability-picker-shell .conditions-modal-detail-panel {
