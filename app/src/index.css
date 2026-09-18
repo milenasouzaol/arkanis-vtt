@@ -7331,7 +7331,7 @@ code, .counter {
 .inv-limite-cat,
 .inv-limite-num {
   font-family: 'Westsac', var(--heading);
-  font-size: 13px;
+  font-size: 16px;
   color: #fff;
   text-align: center;
 }
