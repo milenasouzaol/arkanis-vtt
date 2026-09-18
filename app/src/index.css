@@ -7165,13 +7165,25 @@ code, .counter {
 }
 
 .inv-top-box {
+  /* a Raleway usa numeros old-style por padrao (o 0 fica baixinho); aqui eles ficam na altura da letra */
+  font-variant-numeric: lining-nums;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 0.9em;
   background: #17151d url('./assets/pericias/dark-plaster-texture.webp');
   background-size: cover;
   background-position: center;
-  padding: 0.8em 1em;
+  padding: 0.55em 0.9em;
+}
+
+/* As linhas de separacao nao correm a box inteira: cada uma so acompanha a altura
+   do que esta do lado, ja que as tres colunas tem alturas diferentes. */
+.inv-top-divider {
+  flex: 0 0 1px;
+  align-self: center;
+  width: 1px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.14);
 }
 
 /* --- coluna da esquerda: insignia, seletor e prestigio --- */
@@ -7182,27 +7194,27 @@ code, .counter {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5em;
-  padding-right: 0.9em;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 0.35em;
 }
 
 .inv-patente-icon {
-  width: 84px;
-  height: 40px;
+  width: 60px;
+  height: 28px;
   object-fit: contain;
   display: block;
 }
 
 .inv-patente-btn {
-  width: 118px;
+  min-width: 84px;
   background: #16151a;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 0;
   color: #fff;
-  font-family: var(--poppins);
-  font-size: 11px;
-  padding: 4px 6px;
+  font-family: var(--raleway);
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+  padding: 2px 8px;
   cursor: pointer;
 }
 
@@ -7212,17 +7224,18 @@ code, .counter {
 
 .inv-patente-picker {
   position: absolute;
-  top: 72px;
-  left: 0;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 20;
-  width: 118px;
+  width: 96px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   background: #16151a url('./assets/pericias/dark-plaster-texture.webp');
   background-size: cover;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 4px;
+  padding: 3px;
 }
 
 .inv-patente-picker button {
@@ -7230,9 +7243,10 @@ code, .counter {
   border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 0;
   color: #fff;
-  font-family: var(--poppins);
-  font-size: 11px;
-  padding: 5px 4px;
+  font-family: var(--raleway);
+  font-size: 10px;
+  line-height: 1.2;
+  padding: 4px 3px;
   cursor: pointer;
 }
 
@@ -7245,25 +7259,26 @@ code, .counter {
 .inv-prestigio-row {
   display: flex;
   align-items: center;
-  gap: 0.5em;
+  gap: 0.4em;
 }
 
 .inv-prestigio-label {
-  font-family: var(--poppins);
-  font-size: 11px;
+  font-family: var(--raleway);
+  font-size: 10px;
   color: #fff;
 }
 
 .inv-prestigio-input {
-  width: 46px;
+  font-variant-numeric: lining-nums;
+  width: 34px;
   background: #0f0e12;
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 0;
   color: #fff;
-  font-family: var(--poppins);
-  font-size: 12px;
+  font-family: var(--raleway);
+  font-size: 11px;
   text-align: center;
-  padding: 3px 2px;
+  padding: 1px 2px;
 }
 
 /* --- coluna do meio: limite de itens / proficiencias --- */
@@ -7273,13 +7288,13 @@ code, .counter {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.6em;
+  gap: 0.45em;
 }
 
 .inv-limite-tabs {
   display: flex;
   justify-content: center;
-  gap: 1.6em;
+  gap: 1.4em;
 }
 
 .inv-limite-tabs button {
@@ -7287,9 +7302,9 @@ code, .counter {
   border: none;
   border-bottom: 1px solid transparent;
   border-radius: 0;
-  padding: 0 0 2px;
+  padding: 0 0 1px;
   font-family: var(--heading);
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -7307,12 +7322,12 @@ code, .counter {
   grid-template-columns: auto repeat(4, 1fr);
   align-items: center;
   column-gap: 0.7em;
-  row-gap: 0.25em;
+  row-gap: 0.15em;
 }
 
 .inv-limite-rowlabel {
   font-family: 'Westsac', var(--heading);
-  font-size: 13px;
+  font-size: 12px;
   color: #fff;
   white-space: nowrap;
 }
@@ -7320,20 +7335,20 @@ code, .counter {
 .inv-limite-cat,
 .inv-limite-num {
   font-family: 'Westsac', var(--heading);
-  font-size: 14px;
+  font-size: 13px;
   color: #fff;
   text-align: center;
 }
 
 .inv-proficiencias-box {
-  min-height: 62px;
   display: flex;
   align-items: center;
+  min-height: 44px;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 10px 14px;
-  font-family: var(--poppins);
-  font-size: 13px;
+  padding: 6px 12px;
+  font-family: var(--raleway);
+  font-size: 12px;
   line-height: 1.35;
   color: #fff;
 }
@@ -7346,20 +7361,18 @@ code, .counter {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2em;
-  padding-left: 0.9em;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 0.1em;
 }
 
 .inv-carga-label {
-  font-family: var(--poppins);
-  font-size: 15px;
+  font-family: var(--raleway);
+  font-size: 14px;
   color: #fff;
 }
 
 .inv-carga-value {
-  font-family: var(--poppins);
+  font-family: var(--raleway);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   color: #fff;
 }

@@ -183,6 +183,8 @@ export default function InventarioTopBox({
           </div>
         </div>
 
+        <div className="inv-top-divider" />
+
         <div className="inv-limite-col">
           <div className="inv-limite-tabs">
             <button
@@ -223,10 +225,16 @@ export default function InventarioTopBox({
           )}
         </div>
 
-        <div className="inv-carga-col">
-          <span className="inv-carga-label">Carga</span>
-          <span className="inv-carga-value">{cargaAtual}|{cargaMaxima}</span>
-        </div>
+        {/* Na referencia, em Proficiencias a caixa de texto vai ate a borda e a Carga some. */}
+        {painel === 'limite' && (
+          <>
+            <div className="inv-top-divider" />
+            <div className="inv-carga-col">
+              <span className="inv-carga-label">Carga</span>
+              <span className="inv-carga-value">{cargaAtual}|{cargaMaxima}</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
