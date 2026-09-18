@@ -7176,21 +7176,16 @@ code, .counter {
   padding: 0.55em 0.9em;
 }
 
-/* As linhas de separacao nao correm a box inteira: cada uma so acompanha a altura
-   do que esta do lado, ja que as tres colunas tem alturas diferentes. */
-.inv-top-divider {
-  flex: 0 0 1px;
-  align-self: center;
-  width: 1px;
-  height: 64px;
-  background: rgba(255, 255, 255, 0.14);
-}
+/* A linha de separacao e a borda da propria coluna: como a box centraliza as colunas
+   em vez de esticar, cada linha fica exatamente da altura do que esta do lado dela. */
 
 /* --- coluna da esquerda: insignia, seletor e prestigio --- */
 
 .inv-patente-col {
   position: relative;
   flex: 0 0 auto;
+  padding-right: 0.9em;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -7358,6 +7353,8 @@ code, .counter {
 
 .inv-carga-col {
   flex: 0 0 auto;
+  padding-left: 0.9em;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
   display: flex;
   flex-direction: column;
   align-items: center;
