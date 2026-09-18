@@ -7270,15 +7270,16 @@ code, .counter {
 
 .inv-prestigio-input {
   font-variant-numeric: lining-nums;
-  width: 34px;
+  width: 24px;
   background: #0f0e12;
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 0;
   color: #fff;
   font-family: var(--raleway);
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1;
   text-align: center;
-  padding: 1px 2px;
+  padding: 1px 1px;
 }
 
 /* --- coluna do meio: limite de itens / proficiencias --- */
@@ -7303,7 +7304,7 @@ code, .counter {
   border-bottom: 1px solid transparent;
   border-radius: 0;
   padding: 0 0 1px;
-  font-family: var(--heading);
+  font-family: 'Keyes', var(--heading);
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -7326,7 +7327,7 @@ code, .counter {
 }
 
 .inv-limite-rowlabel {
-  font-family: 'Westsac', var(--heading);
+  font-family: var(--raleway);
   font-size: 12px;
   color: #fff;
   white-space: nowrap;
@@ -7365,7 +7366,7 @@ code, .counter {
 }
 
 .inv-carga-label {
-  font-family: var(--raleway);
+  font-family: 'Keyes', var(--heading);
   font-size: 14px;
   color: #fff;
 }
