@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import type { CharacterRecord } from './index'
 import ItemModifiers from './ItemModifiers'
 import InventarioTopBox from './InventarioTopBox'
+import InventoryItemCard from './InventoryItemCard'
 
 type EquipmentItem = {
   id: string
@@ -77,6 +78,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
   const [adding, setAdding] = useState(false)
   const [type, setType] = useState<EquipmentItem['type']>('arma')
   const [search, setSearch] = useState('')
+  const [filtro, setFiltro] = useState<string | null>(null)
   const [catalog, setCatalog] = useState<EquipmentItem[]>([])
   const [creatingCustom, setCreatingCustom] = useState(false)
   const [customDraft, setCustomDraft] = useState({ name: '', category: 'I', spaces: 1, description: '' })
@@ -256,106 +258,158 @@ export default function InventarioTab({ character, editMode }: { character: Char
     cargaAtual += (item.spaces ?? 0) * Math.max(1, inv.quantity)
   }
 
+  // Os filtros da barra: "Equipamentos" e o mesmo que a categoria Geral, e "Amaldicoados"
+  // nao e um tipo de item - e qualquer item que tenha alguma maldicao aplicada.
+  const FILTROS = [
+    { key: 'arma', label: 'Armas' },
+    { key: 'geral', label: 'Equipamentos' },
+    { key: 'protecao', label: 'Proteções' },
+    { key: 'municao', label: 'Munições' },
+    { key: 'amaldicoados', label: 'Amaldiçoados' },
+  ] as const
+
+  const itensVisiveis = items.filter((inv) => {
+    const item = inv.equipment_items ?? inv.custom_item
+    if (!item) return false
+    if (!item.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (!filtro) return true
+    if (filtro === 'amaldicoados') return (inv.applied_modifiers ?? []).some((m) => m.kind === 'maldicao')
+    return item.type === filtro
+  })
+
   return (
     <div>
       <InventarioTopBox character={character} atualPorCategoria={atualPorCategoria} cargaAtual={cargaAtual} editMode={editMode} />
-      <input placeholder="Buscar no Inventário" value={search} onChange={(e) => setSearch(e.target.value)} />
-      <button type="button" onClick={() => setAdding((a) => !a)}>Adicionar Equipamento</button>
 
-      <ul>
-        {items.map((inv) => {
+      <div className="combat-search-row">
+        <div className="combat-search-field">
+          <input className="combat-search-input" placeholder="Buscar no Inventário" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <svg className="combat-search-icon" viewBox="0 0 24 24" aria-hidden>
+            <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" />
+            <line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </div>
+        <button type="button" className="combat-add-btn" onClick={() => setAdding((a) => !a)}>Adicionar Equipamento</button>
+      </div>
+
+      <div className="inv-filtros">
+        {FILTROS.map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            className={filtro === f.key ? 'inv-filtro-btn active' : 'inv-filtro-btn'}
+            onClick={() => setFiltro((atualFiltro) => (atualFiltro === f.key ? null : f.key))}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="inv-item-list">
+        {itensVisiveis.map((inv) => {
           const item = inv.equipment_items ?? inv.custom_item
           if (!item) return null
           const isExpanded = expanded === inv.id
           const canEquip = item.type === 'protecao' || item.type === 'geral' || item.type === 'paranormal'
+
+          if (isExpanded && editingId === inv.id) {
+            return (
+              <div key={inv.id} className="inv-item-card expanded">
+                <label>Nome <input value={editDraft.name} onChange={(e) => setEditDraft((d) => ({ ...d, name: e.target.value }))} /></label>
+                <label>Categoria
+                  <select value={editDraft.category} onChange={(e) => setEditDraft((d) => ({ ...d, category: e.target.value }))}>
+                    {['0', 'I', 'II', 'III', 'IV'].map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </label>
+                <label>Espaços <input type="number" value={editDraft.spaces} onChange={(e) => setEditDraft((d) => ({ ...d, spaces: Number(e.target.value) }))} /></label>
+                {item.type === 'arma' && (
+                  <>
+                    <label>Dano <input value={editDraft.dano} onChange={(e) => setEditDraft((d) => ({ ...d, dano: e.target.value }))} /></label>
+                    <label>Crítico <input value={editDraft.critico} onChange={(e) => setEditDraft((d) => ({ ...d, critico: e.target.value }))} /></label>
+                  </>
+                )}
+                {item.type === 'protecao' && (
+                  <label>Defesa <input type="number" value={editDraft.defesa} onChange={(e) => setEditDraft((d) => ({ ...d, defesa: Number(e.target.value) }))} /></label>
+                )}
+                <label>Descrição <textarea value={editDraft.description} onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))} /></label>
+                <button type="button" onClick={() => saveEdit(inv)}>Salvar</button>
+                <button type="button" onClick={() => setEditingId(null)}>Cancelar</button>
+              </div>
+            )
+          }
+
           return (
-            <li key={inv.id}>
-              <button type="button" onClick={() => setExpanded(isExpanded ? null : inv.id)}>
-                {item.name}{inv.quantity > 1 ? ` (x${inv.quantity})` : ''} — {summarize(item)} {inv.is_equipped ? '(equipado)' : ''}
-              </button>
-              {isExpanded && editingId !== inv.id && (
-                <div>
-                  {item.description && <p>{item.description}</p>}
-                  <label>
-                    Quantidade
-                    <button type="button" onClick={() => setQuantity(inv, inv.quantity - 1)} disabled={inv.quantity <= 0}>-</button>
-                    {inv.quantity}
-                    <button type="button" onClick={() => setQuantity(inv, inv.quantity + 1)}>+</button>
-                  </label>
-                  {inv.ammo_total === null ? (
-                    <button type="button" onClick={() => initAmmoTracking(inv, item)}>Rastrear Munição/Usos</button>
-                  ) : (
-                    <div>
-                      <label>
-                        Rótulo <input value={inv.ammo_label ?? ''} onChange={(e) => setAmmo(inv, { ammo_label: e.target.value })} />
-                      </label>
-                      <label>
-                        Total <input type="number" value={inv.ammo_total} onChange={(e) => setAmmo(inv, { ammo_total: Number(e.target.value) })} />
-                      </label>
-                      <button type="button" onClick={() => setAmmo(inv, { ammo_current: Math.max(0, (inv.ammo_current ?? 0) - 1) })} disabled={(inv.ammo_current ?? 0) <= 0}>-</button>
-                      {inv.ammo_current} / {inv.ammo_total} {inv.ammo_label}
-                      <button type="button" onClick={() => setAmmo(inv, { ammo_current: Math.min(inv.ammo_total ?? 0, (inv.ammo_current ?? 0) + 1) })}>+</button>
-                      <button type="button" onClick={() => setAmmo(inv, { ammo_current: inv.ammo_total })}>Recarregar</button>
-                    </div>
-                  )}
-                  <button type="button" onClick={() => remove(inv.id)}>Remover</button>
-                  <button type="button" onClick={() => startEdit(inv)}>Editar</button>
-                  {item.type === 'arma' && (
-                    <>
-                      {(() => {
-                        const requiredAmmo = (item.stats ?? {}).tipo_municao as string | undefined
-                        const compatibleAmmo = items.filter((i) => {
-                          const ammoItem = i.equipment_items ?? i.custom_item
-                          if (ammoItem?.type !== 'municao') return false
-                          return requiredAmmo ? ammoItem.name === requiredAmmo : true
-                        })
-                        return (
-                          <label>
-                            Munição {requiredAmmo ? `(${requiredAmmo})` : ''}
-                            <select value={inv.linked_ammo_id ?? ''} onChange={(e) => linkAmmo(inv, e.target.value || null)}>
-                              <option value="">Nenhuma</option>
-                              {compatibleAmmo.map((i) => (
-                                <option key={i.id} value={i.id}>{(i.equipment_items ?? i.custom_item)?.name}</option>
-                              ))}
-                            </select>
-                            {requiredAmmo && compatibleAmmo.length === 0 && <p>Nenhuma {requiredAmmo} no inventário ainda.</p>}
-                          </label>
-                        )
-                      })()}
-                      <button type="button" onClick={() => sendToCombat(inv)}>Enviar para o combate</button>
-                    </>
-                  )}
-                  {canEquip && <button type="button" onClick={() => toggleEquip(inv)}>{inv.is_equipped ? 'Desequipar' : 'Equipar'}</button>}
-                  <ItemModifiers inventoryId={inv.id} itemType={item.type ?? 'geral'} applied={inv.applied_modifiers ?? []} onChanged={loadInventory} />
-                </div>
-              )}
-              {isExpanded && editingId === inv.id && (
-                <div>
-                  <label>Nome <input value={editDraft.name} onChange={(e) => setEditDraft((d) => ({ ...d, name: e.target.value }))} /></label>
-                  <label>Categoria
-                    <select value={editDraft.category} onChange={(e) => setEditDraft((d) => ({ ...d, category: e.target.value }))}>
-                      {['0', 'I', 'II', 'III', 'IV'].map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </label>
-                  <label>Espaços <input type="number" value={editDraft.spaces} onChange={(e) => setEditDraft((d) => ({ ...d, spaces: Number(e.target.value) }))} /></label>
-                  {item.type === 'arma' && (
-                    <>
-                      <label>Dano <input value={editDraft.dano} onChange={(e) => setEditDraft((d) => ({ ...d, dano: e.target.value }))} /></label>
-                      <label>Crítico <input value={editDraft.critico} onChange={(e) => setEditDraft((d) => ({ ...d, critico: e.target.value }))} /></label>
-                    </>
-                  )}
-                  {item.type === 'protecao' && (
-                    <label>Defesa <input type="number" value={editDraft.defesa} onChange={(e) => setEditDraft((d) => ({ ...d, defesa: Number(e.target.value) }))} /></label>
-                  )}
-                  <label>Descrição <textarea value={editDraft.description} onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))} /></label>
-                  <button type="button" onClick={() => saveEdit(inv)}>Salvar</button>
-                  <button type="button" onClick={() => setEditingId(null)}>Cancelar</button>
-                </div>
-              )}
-            </li>
+            <InventoryItemCard
+              key={inv.id}
+              item={{ ...item, category: inv.category_override ?? item.category }}
+              expanded={isExpanded}
+              onToggle={() => setExpanded(isExpanded ? null : inv.id)}
+              quantidade={inv.ammo_total !== null ? (
+                <>
+                  <span className="inv-item-qty-label">Quantidade:</span>
+                  <span className="inv-item-qty-box">
+                    <button type="button" onClick={() => setAmmo(inv, { ammo_current: Math.max(0, (inv.ammo_current ?? 0) - 1) })} disabled={(inv.ammo_current ?? 0) <= 0}>-</button>
+                    <span className="inv-item-qty-value">{inv.ammo_current}/{inv.ammo_total}</span>
+                    <button type="button" onClick={() => setAmmo(inv, { ammo_current: Math.min(inv.ammo_total ?? 0, (inv.ammo_current ?? 0) + 1) })}>+</button>
+                  </span>
+                </>
+              ) : undefined}
+              actions={
+                <>
+                  <button type="button" className="inv-item-btn" onClick={() => remove(inv.id)}>Remover</button>
+                  <span className="inv-item-actions-right">
+                    <button type="button" className="inv-item-btn" onClick={() => startEdit(inv)}>Editar</button>
+                    {item.type === 'arma' && (
+                      <button type="button" className="inv-item-btn" onClick={() => sendToCombat(inv)}>Enviar para o combate</button>
+                    )}
+                  </span>
+                </>
+              }
+            >
+              <div className="inv-item-extras">
+                <label>
+                  Quantas unidades
+                  <button type="button" className="inv-item-btn" onClick={() => setQuantity(inv, inv.quantity - 1)} disabled={inv.quantity <= 0}>-</button>
+                  {inv.quantity}
+                  <button type="button" className="inv-item-btn" onClick={() => setQuantity(inv, inv.quantity + 1)}>+</button>
+                </label>
+                {inv.ammo_total === null ? (
+                  <button type="button" className="inv-item-btn" onClick={() => initAmmoTracking(inv, item)}>Rastrear Munição/Usos</button>
+                ) : (
+                  <>
+                    <label>Rótulo <input value={inv.ammo_label ?? ''} onChange={(e) => setAmmo(inv, { ammo_label: e.target.value })} /></label>
+                    <label>Total <input type="number" value={inv.ammo_total} onChange={(e) => setAmmo(inv, { ammo_total: Number(e.target.value) })} /></label>
+                    <button type="button" className="inv-item-btn" onClick={() => setAmmo(inv, { ammo_current: inv.ammo_total })}>Recarregar</button>
+                  </>
+                )}
+                {item.type === 'arma' && (() => {
+                  const requiredAmmo = (item.stats ?? {}).tipo_municao as string | undefined
+                  const compatibleAmmo = items.filter((i) => {
+                    const ammoItem = i.equipment_items ?? i.custom_item
+                    if (ammoItem?.type !== 'municao') return false
+                    return requiredAmmo ? ammoItem.name === requiredAmmo : true
+                  })
+                  return (
+                    <label>
+                      Munição {requiredAmmo ? '(' + requiredAmmo + ')' : ''}
+                      <select value={inv.linked_ammo_id ?? ''} onChange={(e) => linkAmmo(inv, e.target.value || null)}>
+                        <option value="">Nenhuma</option>
+                        {compatibleAmmo.map((i) => (
+                          <option key={i.id} value={i.id}>{(i.equipment_items ?? i.custom_item)?.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )
+                })()}
+                {canEquip && (
+                  <button type="button" className="inv-item-btn" onClick={() => toggleEquip(inv)}>{inv.is_equipped ? 'Desequipar' : 'Equipar'}</button>
+                )}
+                <ItemModifiers inventoryId={inv.id} itemType={item.type ?? 'geral'} applied={inv.applied_modifiers ?? []} onChanged={loadInventory} />
+              </div>
+            </InventoryItemCard>
           )
         })}
-      </ul>
+      </div>
 
       {adding && (
         <div>

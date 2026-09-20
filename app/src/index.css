@@ -7388,3 +7388,259 @@ code, .counter {
   font-size: 17px;
   color: #fff;
 }
+
+/* ===== Inventario: filtros e cards dos itens ===== */
+
+.inv-filtros {
+  display: flex;
+  gap: 0.45em;
+  margin-bottom: 0.7em;
+}
+
+.inv-filtro-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  background: #0e0d12 url('./assets/combate/metal-texture.png');
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--raleway);
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 0.5em 0.2em;
+  cursor: pointer;
+}
+
+.inv-filtro-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.inv-filtro-btn.active {
+  color: #fff;
+  border-color: #fff;
+}
+
+.inv-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.inv-item-card {
+  background: #17151d url('./assets/pericias/dark-plaster-texture.webp');
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  padding: 0.7em 0.9em;
+}
+
+.inv-item-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inv-item-icon {
+  flex-shrink: 0;
+  width: 46px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.inv-item-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: 'Keyes', var(--heading);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.inv-item-chevron {
+  flex-shrink: 0;
+  font-size: 15px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-3px);
+}
+
+.inv-item-chevron.up {
+  transform: translateY(3px) rotate(180deg);
+}
+
+.inv-item-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2em 0.9em;
+  margin-top: 0.6em;
+}
+
+.inv-item-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  font-family: var(--raleway);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.inv-item-stat-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.inv-item-stat-value {
+  font-weight: 700;
+  color: #fff;
+}
+
+/* QUANTIDADE fica visivel com o card fechado tambem, pra gastar uso sem abrir o item */
+.inv-item-qty-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin-top: 0.6em;
+}
+
+.inv-item-qty-label {
+  font-family: 'Keyes', var(--heading);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.inv-item-qty-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.15em 0.5em;
+}
+
+.inv-item-qty-box button {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0 0.2em;
+  color: #fff;
+  font-family: var(--raleway);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.inv-item-qty-box button:disabled {
+  color: rgba(255, 255, 255, 0.3);
+  cursor: default;
+}
+
+.inv-item-qty-value {
+  font-family: var(--raleway);
+  font-variant-numeric: lining-nums;
+  font-size: 12px;
+  color: #fff;
+}
+
+.inv-item-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.14);
+  margin: 0.8em 0;
+}
+
+.inv-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  margin: 0;
+}
+
+.inv-item-details > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+}
+
+.inv-item-details dt {
+  font-family: var(--raleway);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.inv-item-details dd {
+  margin: 0;
+  font-family: var(--raleway);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inv-item-description {
+  margin: 0;
+  font-family: var(--raleway);
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inv-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+  margin-top: 0.9em;
+}
+
+.inv-item-actions-right {
+  display: inline-flex;
+  gap: 0.5em;
+}
+
+.inv-item-btn {
+  background: #0e0d12 url('./assets/combate/metal-texture.png');
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0;
+  color: #fff;
+  font-family: var(--raleway);
+  font-size: 11px;
+  padding: 0.4em 0.9em;
+  cursor: pointer;
+}
+
+.inv-item-btn:hover {
+  border-color: #fff;
+}
+
+/* Controles que a ficha precisa mas que nao estao na referencia do card */
+.inv-item-extras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+  margin-top: 0.9em;
+  padding-top: 0.7em;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--raleway);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
