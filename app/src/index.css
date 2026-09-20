@@ -7168,7 +7168,7 @@ code, .counter {
   /* a Raleway usa numeros old-style por padrao (o 0 fica baixinho); aqui eles ficam na altura da letra */
   font-variant-numeric: lining-nums;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0.9em;
   background: #17151d url('./assets/pericias/dark-plaster-texture.webp');
   background-size: cover;
@@ -7176,8 +7176,27 @@ code, .counter {
   padding: 0.55em 0.9em;
 }
 
-/* A linha de separacao e a borda da propria coluna: como a box centraliza as colunas
-   em vez de esticar, cada linha fica exatamente da altura do que esta do lado dela. */
+/* As duas linhas de separacao sao desenhadas por cima das colunas, com a mesma folga em
+   cima e embaixo. Assim elas tem sempre o mesmo tamanho uma da outra e nao encostam na
+   moldura - antes cada uma seguia a altura do seu conteudo (88px de um lado, 45px do
+   outro) e ficavam desencontradas. */
+.inv-patente-col::after,
+.inv-carga-col::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.inv-patente-col::after {
+  right: 0;
+}
+
+.inv-carga-col::before {
+  left: 0;
+}
 
 /* --- coluna da esquerda: insignia, seletor e prestigio --- */
 
@@ -7186,7 +7205,6 @@ code, .counter {
   flex: 0 0 130px;
   width: 130px;
   padding-right: 0.9em;
-  border-right: 1px solid rgba(255, 255, 255, 0.14);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -7353,9 +7371,9 @@ code, .counter {
 /* --- coluna da direita: carga --- */
 
 .inv-carga-col {
+  position: relative;
   flex: 0 0 auto;
   padding-left: 0.9em;
-  border-left: 1px solid rgba(255, 255, 255, 0.14);
   display: flex;
   flex-direction: column;
   align-items: center;
