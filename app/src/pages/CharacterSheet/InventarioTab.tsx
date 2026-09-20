@@ -71,7 +71,7 @@ function summarize(item: EquipmentItem | Partial<EquipmentItem>): string {
   return `Cat. ${item.category} · Esp. ${item.spaces ?? '—'}`
 }
 
-export default function InventarioTab({ character }: { character: CharacterRecord }) {
+export default function InventarioTab({ character, editMode }: { character: CharacterRecord; editMode: boolean }) {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
@@ -258,7 +258,7 @@ export default function InventarioTab({ character }: { character: CharacterRecor
 
   return (
     <div>
-      <InventarioTopBox character={character} atualPorCategoria={atualPorCategoria} cargaAtual={cargaAtual} />
+      <InventarioTopBox character={character} atualPorCategoria={atualPorCategoria} cargaAtual={cargaAtual} editMode={editMode} />
       <input placeholder="Buscar no Inventário" value={search} onChange={(e) => setSearch(e.target.value)} />
       <button type="button" onClick={() => setAdding((a) => !a)}>Adicionar Equipamento</button>
 

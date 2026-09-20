@@ -66,17 +66,24 @@ export default function InventarioTopBox({
   character,
   atualPorCategoria,
   cargaAtual,
+  editMode,
 }: {
   character: CharacterRecord
   atualPorCategoria: [number, number, number, number]
   cargaAtual: number
+  editMode: boolean
 }) {
   const [patente, setPatente] = useState<PatenteKey>((character.patente as PatenteKey) ?? 'sem_patente')
   const [prestigio, setPrestigio] = useState(String(character.prestigio ?? 0))
   const [pickerOpen, setPickerOpen] = useState(false)
   const [painel, setPainel] = useState<'limite' | 'proficiencias'>('limite')
   const [proficiencias, setProficiencias] = useState('')
+  const [limiteOverride, setLimiteOverride] = useState(character.item_limit_override ?? {})
   const pickerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setLimiteOverride(character.item_limit_override ?? {})
+  }, [character.id, character.item_limit_override])
 
   useEffect(() => {
     setPatente((character.patente as PatenteKey) ?? 'sem_patente')
@@ -141,7 +148,20 @@ export default function InventarioTopBox({
     await supabase.from('characters').update({ prestigio: valor }).eq('id', character.id)
   }
 
+  // O Maximo de cada categoria vem da patente, a menos que tenha sido mexido a mao no
+  // Modo de Edicao. So a categoria alterada fica presa: as outras continuam acompanhando
+  // a patente normalmente.
+  async function salvarLimite(categoria: (typeof CATEGORIAS)[number], raw: string) {
+    const proximo = { ...limiteOverride }
+    const valor = Number(raw)
+    if (raw.trim() === '' || !Number.isFinite(valor)) delete proximo[categoria]
+    else proximo[categoria] = Math.max(0, Math.trunc(valor))
+    setLimiteOverride(proximo)
+    await supabase.from('characters').update({ item_limit_override: proximo }).eq('id', character.id)
+  }
+
   const atual = patenteOf(patente)
+  const limites = CATEGORIAS.map((c, i) => limiteOverride[c] ?? atual.limites[i])
   // Carga maxima nao vem da patente, vem de Forca: 5 espacos por ponto, minimo 2.
   const forca = character.attributes?.forca ?? 0
   const cargaMaxima = Math.max(2, forca * 5)
@@ -215,7 +235,18 @@ export default function InventarioTopBox({
 
               <span className="inv-limite-rowlabel">Máximo</span>
               {CATEGORIAS.map((c, i) => (
-                <span key={c} className="inv-limite-num">{atual.limites[i]}</span>
+                editMode ? (
+                  <input
+                    key={c}
+                    className="inv-limite-num inv-limite-input"
+                    type="number"
+                    value={limites[i]}
+                    onChange={(e) => salvarLimite(c, e.target.value)}
+                    aria-label={`Máximo de itens categoria ${c}`}
+                  />
+                ) : (
+                  <span key={c} className="inv-limite-num">{limites[i]}</span>
+                )
               ))}
             </div>
           ) : (

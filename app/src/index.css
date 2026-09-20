@@ -7176,28 +7176,6 @@ code, .counter {
   padding: 0.55em 0.9em;
 }
 
-/* As duas linhas de separacao sao desenhadas por cima das colunas, com a mesma folga em
-   cima e embaixo. Assim elas tem sempre o mesmo tamanho uma da outra e nao encostam na
-   moldura - antes cada uma seguia a altura do seu conteudo (88px de um lado, 45px do
-   outro) e ficavam desencontradas. */
-.inv-patente-col::after,
-.inv-carga-col::before {
-  content: '';
-  position: absolute;
-  top: 9px;
-  bottom: 9px;
-  width: 1px;
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.inv-patente-col::after {
-  right: 0;
-}
-
-.inv-carga-col::before {
-  left: 0;
-}
-
 /* --- coluna da esquerda: insignia, seletor e prestigio --- */
 
 .inv-patente-col {
@@ -7353,6 +7331,22 @@ code, .counter {
   font-size: 16px;
   color: #fff;
   text-align: center;
+}
+
+/* No Modo de Edicao o Maximo vira campo digitavel, mantendo o mesmo tamanho da celula */
+.inv-limite-input {
+  width: 100%;
+  min-width: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0;
+  padding: 0;
+  line-height: 1.1;
+}
+
+.inv-limite-input:focus {
+  outline: none;
+  border-color: #fff;
 }
 
 .inv-proficiencias-box {

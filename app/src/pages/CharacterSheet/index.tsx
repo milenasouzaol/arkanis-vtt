@@ -32,6 +32,7 @@ const ELEMENT_BACKGROUNDS: Record<string, string> = {
 }
 
 export type CharacterRecord = {
+  item_limit_override: Partial<Record<'I' | 'II' | 'III' | 'IV', number>>
   id: string
   campaign_id: string | null
   name: string
