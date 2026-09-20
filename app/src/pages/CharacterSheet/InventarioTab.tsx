@@ -281,7 +281,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
     <div>
       <InventarioTopBox character={character} atualPorCategoria={atualPorCategoria} cargaAtual={cargaAtual} editMode={editMode} />
 
-      <div className="combat-search-row">
+      <div className="combat-search-row inv-search-row">
         <div className="combat-search-field">
           <input className="combat-search-input" placeholder="Buscar no Inventário" value={search} onChange={(e) => setSearch(e.target.value)} />
           <svg className="combat-search-icon" viewBox="0 0 24 24" aria-hidden>

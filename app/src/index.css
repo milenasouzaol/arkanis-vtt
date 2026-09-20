@@ -7644,3 +7644,8 @@ code, .counter {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.7);
 }
+
+/* No Inventario o texto da busca fica mais perto do tracejado do que no Combate */
+.inv-search-row .combat-search-field {
+  padding-bottom: 0.1em;
+}
