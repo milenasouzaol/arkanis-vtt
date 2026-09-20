@@ -7368,6 +7368,7 @@ code, .counter {
   position: relative;
   flex: 0 0 auto;
   padding-left: 0.9em;
+  padding-top: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -7377,13 +7378,13 @@ code, .counter {
 
 .inv-carga-label {
   font-family: 'Keyes', var(--heading);
-  font-size: 14px;
+  font-size: 17px;
   color: #fff;
 }
 
 .inv-carga-value {
   font-family: var(--raleway);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 17px;
   color: #fff;
 }
