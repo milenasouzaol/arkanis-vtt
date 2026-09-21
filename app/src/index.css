@@ -7834,3 +7834,43 @@ code, .counter {
   background: #2a2833;
   border-color: rgba(255, 255, 255, 0.55);
 }
+
+/* ===== Combate: card do ataque (mesmo desenho do card de item) ===== */
+
+.attack-card-boxes {
+  display: flex;
+  gap: 0.5em;
+  margin-top: 0.6em;
+}
+
+.attack-card-box {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.35em 0.6em;
+}
+
+.attack-card-box-value {
+  font-family: 'Keyes', var(--heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+}
+
+.attack-card-box-label {
+  font-family: var(--raleway);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.attack-card-rolls {
+  display: flex;
+  gap: 0.5em;
+  margin-top: 0.6em;
+}

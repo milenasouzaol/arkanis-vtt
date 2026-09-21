@@ -271,23 +271,68 @@ function ModifiersModal({ onClose, onAdd }: { onClose: () => void; onAdd: (m: Mo
   )
 }
 
+// Passando `editing`, o mesmo modal serve pra editar: ele abre preenchido e salva por cima
+// do ataque existente em vez de criar outro.
+export type AttackToEdit = {
+  id: string
+  name: string
+  skill_id: string | null
+  attribute: AttributeKey | null
+  d20_bonus: number
+  attack_bonus?: string | null
+  threat_margin: number
+  multiplier: number
+  damage_attribute?: AttributeKey | null
+  damage: DamageRow[]
+  general_info: Record<string, unknown> | null
+  image_url?: string | null
+  modifiers?: ModEntry[] | null
+  alternative_attacks?: Record<string, unknown>[] | null
+}
+
+function draftFromAttack(a: AttackToEdit): AttackDraft {
+  const info = (a.general_info ?? {}) as Record<string, unknown>
+  return {
+    name: a.name,
+    skillId: a.skill_id ?? '',
+    attribute: a.attribute ?? 'forca',
+    d20Bonus: a.d20_bonus ?? 0,
+    attackBonus: a.attack_bonus ?? '',
+    threatMargin: a.threat_margin ?? 20,
+    multiplier: a.multiplier ?? 2,
+    damageAttribute: a.damage_attribute ?? 'forca',
+    damage: a.damage?.length ? a.damage : emptyDraft().damage,
+    tipo: String(info.tipo ?? ''),
+    empunhadura: String(info.empunhadura ?? ''),
+    alcance: String(info.alcance ?? ''),
+    tipoMunicao: String(info.tipo_municao ?? ''),
+  }
+}
+
 export default function AttackFormModal({
   characterId,
   skills,
+  editing,
   onClose,
   onSaved,
 }: {
   characterId: string
   skills: { id: string; name: string }[]
+  editing?: AttackToEdit
   onClose: () => void
   onSaved: () => void
 }) {
   const { session } = useAuth()
   const [tab, setTab] = useState<'ataque' | 'alternativos'>('ataque')
-  const [draft, setDraft] = useState<AttackDraft>(emptyDraft())
-  const [alternatives, setAlternatives] = useState<AltAttackDraft[]>([])
-  const [modifiers, setModifiers] = useState<ModEntry[]>([])
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [draft, setDraft] = useState<AttackDraft>(editing ? draftFromAttack(editing) : emptyDraft())
+  const [alternatives, setAlternatives] = useState<AltAttackDraft[]>(
+    (editing?.alternative_attacks ?? []).map((alt: any) => ({
+      ...draftFromAttack({ ...alt, general_info: null } as AttackToEdit),
+      id: crypto.randomUUID(),
+    })),
+  )
+  const [modifiers, setModifiers] = useState<ModEntry[]>(editing?.modifiers ?? [])
+  const [imageUrl, setImageUrl] = useState<string | null>(editing?.image_url ?? null)
   const [showModModal, setShowModModal] = useState(false)
   const [uploading, setUploading] = useState(false)
 
@@ -321,8 +366,7 @@ export default function AttackFormModal({
 
   async function submit() {
     if (!draft.name) return
-    await supabase.from('character_attacks').insert({
-      character_id: characterId,
+    const payload = {
       name: draft.name,
       skill_id: draft.skillId || null,
       attribute: draft.attribute,
@@ -346,7 +390,16 @@ export default function AttackFormModal({
         damage_attribute: alt.damageAttribute,
         damage: alt.damage.filter((d) => d.formula),
       })),
-    })
+    }
+
+    if (editing) {
+      // A edicao nao mexe em general_info.municao nem nos modificadores herdados da
+      // municao: isso e vinculo do inventario, nao campo do formulario.
+      const info = { ...editing.general_info, ...payload.general_info }
+      await supabase.from('character_attacks').update({ ...payload, general_info: info }).eq('id', editing.id)
+    } else {
+      await supabase.from('character_attacks').insert({ character_id: characterId, ...payload })
+    }
     onSaved()
     onClose()
   }
@@ -396,7 +449,7 @@ export default function AttackFormModal({
                 </div>
               )}
 
-              <button type="button" className="attack-submit-btn" onClick={submit}>Adicionar Ataque</button>
+              <button type="button" className="attack-submit-btn" onClick={submit}>{editing ? 'Editar Ataque' : 'Adicionar Ataque'}</button>
             </>
           ) : (
             <>
@@ -411,7 +464,7 @@ export default function AttackFormModal({
                   <button type="button" className="attack-alt-remove" onClick={() => removeAlternative(alt.id)}>Remover</button>
                 </div>
               ))}
-              <button type="button" className="attack-submit-btn" onClick={submit}>Adicionar Ataque</button>
+              <button type="button" className="attack-submit-btn" onClick={submit}>{editing ? 'Editar Ataque' : 'Adicionar Ataque'}</button>
             </>
           )}
         </div>

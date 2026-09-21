@@ -10,5 +10,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 | [KAN-5](KAN-5-modal-modificacoes-maldicoes.md) | Modal centralizado de Modificações e Maldições | front | aprovado | [KAN-5](https://arkaniss.atlassian.net/browse/KAN-5) |
 | [KAN-6](KAN-6-filtros-sem-textura.md) | Tirar a textura dos botões de filtro | front | aprovado | [KAN-6](https://arkaniss.atlassian.net/browse/KAN-6) |
 | [KAN-7](KAN-7-botao-adicionar-sem-textura.md) | Tirar a textura do botão Adicionar Equipamento | front | aprovado | [KAN-7](https://arkaniss.atlassian.net/browse/KAN-7) |
+| [KAN-8](KAN-8-card-ataque-combate.md) | Refazer o card de ataque do Combate e permitir editar | front | aprovado | [KAN-8](https://arkaniss.atlassian.net/browse/KAN-8) |
 
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

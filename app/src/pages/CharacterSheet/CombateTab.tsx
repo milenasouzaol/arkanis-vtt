@@ -7,7 +7,8 @@ import type { CharacterRecord } from './index'
 import RollResult, { RollCard, type RollResultData, type RollCardDie } from './RollResult'
 import { type Modifier } from './ModifiersPanel'
 import CombateModifiersPanel from './CombateModifiersPanel'
-import AttackFormModal from './AttackFormModal'
+import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
+import AttackCard from './AttackCard'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
@@ -61,6 +62,8 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const [defenseDetailsOpen, setDefenseDetailsOpen] = useState(false)
   const [ammoOpen, setAmmoOpen] = useState(false)
   const [confirmDeleteAmmo, setConfirmDeleteAmmo] = useState<InventoryAmmoInfo | null>(null)
+  const [expandedAttack, setExpandedAttack] = useState<string | null>(null)
+  const [editingAttack, setEditingAttack] = useState<AttackToEdit | null>(null)
   const [attackSearch, setAttackSearch] = useState('')
   const [pendingAttack, setPendingAttack] = useState<{ attackId: string; isCrit: boolean } | null>(null)
   const [damageRoll, setDamageRoll] = useState<{ title: string; subtitle: string; total: number; dice: RollCardDie[]; extraLines?: string[]; bonus?: number } | null>(null)
@@ -430,11 +433,12 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         <button type="button" className="combat-add-btn" onClick={() => setAdding(true)}>Adicionar Ataque</button>
       </div>
 
-      {adding && (
+      {(adding || editingAttack) && (
         <AttackFormModal
           characterId={character.id}
           skills={skills}
-          onClose={() => setAdding(false)}
+          editing={editingAttack ?? undefined}
+          onClose={() => { setAdding(false); setEditingAttack(null) }}
           onSaved={loadAttacks}
         />
       )}
@@ -442,25 +446,29 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
       {attacks.filter((a) => a.name.toLowerCase().includes(attackSearch.toLowerCase())).map((a) => {
         const ammoInv = ammoForAttack(a)
         return (
-          <div key={a.id} className="vtt-attack-card">
-            <div className="vtt-attack-thumb">⚔</div>
-            <div style={{ flex: 1 }}>
-              <strong>{a.name}</strong>{a.general_info?.municao ? ` (${a.general_info.municao})` : ''}
-              {ammoInv && <div style={{ fontSize: '0.85em', color: 'var(--text-dim)' }}>{ammoInv.ammo_current ?? 0}/{ammoInv.ammo_total} {ammoInv.ammo_label}</div>}
-            </div>
-            <div className="vtt-attack-stats">
-              <div><span className="label">Ataque</span>{attrValue(character.attributes, a.attribute)}d20{a.d20_bonus ? `+${a.d20_bonus}` : ''}</div>
-              <div><span className="label">Dano</span>{a.damage.map((d) => `${d.formula}${d.tipo ? ` ${d.tipo}` : ''}`).join(', ') || '—'}</div>
-              <div><span className="label">Crítico</span>{a.threat_margin}/x{a.multiplier}</div>
-            </div>
-            <button type="button" onClick={() => rollAttackTest(a)}>Ataque</button>
-            {pendingAttack?.attackId === a.id && (
-              pendingAttack.isCrit
-                ? <button type="button" onClick={() => rollDamage(a, true)}>Crítico</button>
-                : <button type="button" onClick={() => rollDamage(a, false)}>Dano</button>
-            )}
-            <button type="button" onClick={() => removeAttack(a.id)}>Remover</button>
-          </div>
+          <AttackCard
+            key={a.id}
+            name={a.name}
+            ataque={`${attrValue(character.attributes, a.attribute)}d20${a.d20_bonus ? `+${a.d20_bonus}` : ''}`}
+            dano={a.damage.map((d) => `${d.formula}${d.tipo ? ` ${d.tipo}` : ''}`).join(', ') || '—'}
+            critico={`${a.threat_margin}/x${a.multiplier}`}
+            info={a.general_info}
+            municaoRestante={ammoInv ? `${ammoInv.ammo_current ?? 0}/${ammoInv.ammo_total} ${ammoInv.ammo_label ?? ''}`.trim() : null}
+            expanded={expandedAttack === a.id}
+            onToggle={() => setExpandedAttack((atual) => (atual === a.id ? null : a.id))}
+            onRemove={() => removeAttack(a.id)}
+            onEdit={() => setEditingAttack(a as unknown as AttackToEdit)}
+            rollButtons={
+              <>
+                <button type="button" className="inv-item-btn" onClick={() => rollAttackTest(a)}>Ataque</button>
+                {pendingAttack?.attackId === a.id && (
+                  pendingAttack.isCrit
+                    ? <button type="button" className="inv-item-btn" onClick={() => rollDamage(a, true)}>Crítico</button>
+                    : <button type="button" className="inv-item-btn" onClick={() => rollDamage(a, false)}>Dano</button>
+                )}
+              </>
+            }
+          />
         )
       })}
     </div>
