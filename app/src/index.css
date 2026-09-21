@@ -7851,6 +7851,9 @@ code, .counter {
 /* Linha enxuta: icone e nome a esquerda, as caixas de rolagem a direita, seta no fim. */
 .attack-card {
   padding: 0.45em 0.7em;
+  /* os cards de ataque nao ficam numa lista com gap como os de item, entao a folga
+     entre um e outro vem daqui */
+  margin-bottom: 0.6em;
 }
 
 .attack-card-head {
