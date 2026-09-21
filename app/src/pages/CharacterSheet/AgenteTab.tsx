@@ -8,7 +8,7 @@ import RollResult, { type RollResultData } from './RollResult'
 import HabilidadesTab from './HabilidadesTab'
 import RituaisTab from './RituaisTab'
 import InventarioTab from './InventarioTab'
-import { bonusCondicionais, bonusIncondicionais, penalidadeDeCarga } from './itemMods'
+import { efeitosValendo, penalidadeDeCarga, type AlvoDeBonus } from './itemMods'
 import CombateTab from './CombateTab'
 import ModifiersPanel, { type Modifier } from './ModifiersPanel'
 import PericiasTable from './PericiasTable'
@@ -114,6 +114,8 @@ export default function AgenteTab({
   const [cargaPenalty, setCargaPenalty] = useState(0)
   // Bonus de pericia que o item equipado da sempre (ex.: Pe de Morto, +5 Furtividade).
   const [bonusDeItens, setBonusDeItens] = useState<Record<string, number>>({})
+  // Atributo, PV e PE que os itens equipados somam (ex.: Pujanca +1 Forca).
+  const [bonusDeFicha, setBonusDeFicha] = useState<Partial<Record<AlvoDeBonus, number>>>({})
   const [charSkills, setCharSkills] = useState<Record<string, CharacterSkillRow>>({})
   const [roll, setRoll] = useState<RollResultData | null>(null)
   const [rightTab, setRightTab] = useState<'Combate' | 'Habilidades' | 'Rituais' | 'Inventário'>('Combate')
@@ -227,28 +229,28 @@ export default function AgenteTab({
   useEffect(() => {
     supabase
       .from('character_inventory')
-      .select('active_bonuses, equipment_items(description), custom_item')
+      .select('active_bonuses, applied_modifiers, equipment_items(description), custom_item')
       .eq('character_id', character.id)
       .eq('is_equipped', true)
       .then(({ data }) => {
         const linhas = (data ?? []).map((i: any) => ({
           descricao: i.equipment_items?.description ?? i.custom_item?.description,
-          ligados: (i.active_bonuses ?? []) as number[],
+          mods: i.applied_modifiers ?? [],
+          ligados: (i.active_bonuses ?? []) as string[],
         }))
         setCargaPenalty(linhas.reduce((soma, l) => soma + penalidadeDeCarga(l.descricao), 0))
 
         const porPericia: Record<string, number> = {}
+        const porAlvo: Partial<Record<AlvoDeBonus, number>> = {}
         for (const l of linhas) {
           // os que valem sempre entram direto; os condicionais so se a pessoa ligou
-          const valendo = [
-            ...bonusIncondicionais(l.descricao),
-            ...bonusCondicionais(l.descricao).filter((_, i) => l.ligados.includes(i)),
-          ]
-          for (const b of valendo) {
-            for (const pericia of b.pericias) porPericia[pericia] = (porPericia[pericia] ?? 0) + b.valor
+          for (const e of efeitosValendo(l.descricao, l.mods, l.ligados)) {
+            if (e.pericias) for (const p of e.pericias) porPericia[p] = (porPericia[p] ?? 0) + e.valor
+            if (e.alvo) porAlvo[e.alvo] = (porAlvo[e.alvo] ?? 0) + e.valor
           }
         }
         setBonusDeItens(porPericia)
+        setBonusDeFicha(porAlvo)
       })
   }, [character.id, rightTab])
 
@@ -438,6 +440,7 @@ export default function AgenteTab({
             onNexChange={(value) => updateCharacterField('nex_percent', value)}
             editable={editMode}
             onAttributeChange={updateAttribute}
+            bonus={bonusDeFicha}
           />
 
           {character.optional_rules.evolucao_patente && (

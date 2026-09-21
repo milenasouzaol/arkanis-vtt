@@ -420,3 +420,136 @@ export function bonusIncondicionais(descricao: string | null | undefined): Bonus
 export function bonusCondicionais(descricao: string | null | undefined): BonusDePericia[] {
   return bonusDePericiaDaDescricao(descricao).filter((b) => !!b.condicao)
 }
+
+// ---- Bonus de atributo, PV e PE de item equipado ----
+
+export type AlvoDeBonus = 'forca' | 'agilidade' | 'intelecto' | 'vigor' | 'presenca' | 'pv' | 'pe'
+
+export type BonusDeFicha = {
+  alvo: AlvoDeBonus
+  valor: number
+  /** Texto da condicao quando o bonus nao vale de imediato. Vazio quando vale ao equipar. */
+  condicao: string
+}
+
+const ATRIBUTO_POR_NOME: Record<string, AlvoDeBonus> = {
+  'força': 'forca',
+  'forca': 'forca',
+  'agilidade': 'agilidade',
+  'intelecto': 'intelecto',
+  'vigor': 'vigor',
+  'presença': 'presenca',
+  'presenca': 'presenca',
+}
+
+// "ativa apos 1 dia de uso" nao e algo que o app saiba medir, entao vira liga/desliga.
+const PRECISA_LIGAR = /\b(ativa|ativo)\b|\bap[oó]s\b|\bdepois de\b/i
+
+export function bonusDeFichaDaDescricao(descricao: string | null | undefined): BonusDeFicha[] {
+  const texto = String(descricao ?? '')
+  if (!texto) return []
+
+  const achados: BonusDeFicha[] = []
+  for (const frase of texto.split(/[.;]/)) {
+    const condicao = PRECISA_LIGAR.test(frase) ? frase.trim() : ''
+
+    for (const m of frase.matchAll(/([+-]\s*\d+)\s+(PV|PE)\b/gi)) {
+      achados.push({ alvo: m[2].toLowerCase() as AlvoDeBonus, valor: Number(m[1].replace(/\s+/g, '')), condicao })
+    }
+
+    for (const m of frase.matchAll(/([+-]\s*\d+)\s+([A-Za-zÀ-ÿ]+)/g)) {
+      const alvo = ATRIBUTO_POR_NOME[m[2].toLowerCase()]
+      if (alvo) achados.push({ alvo, valor: Number(m[1].replace(/\s+/g, '')), condicao })
+    }
+  }
+  return achados
+}
+
+// ---- Tudo que um item concede, junto num lugar so ----
+//
+// Um item pode dar bonus por tres caminhos: a descricao dele, uma modificacao aplicada e
+// uma maldicao aplicada. Cada bonus pode valer sempre (ao equipar) ou depender de algo
+// que o app nao sabe medir - "pra observar coisas distantes", "ativa apos 1 dia de uso".
+// Esses ultimos viram liga/desliga.
+//
+// A chave e estavel e descreve a origem, entao ligar um bonus nao vira outro se a ordem
+// mudar; e ela que fica guardada em active_bonuses.
+
+export type EfeitoDeItem = {
+  chave: string
+  rotulo: string
+  condicao: string
+  pericias?: string[]
+  alvo?: AlvoDeBonus
+  valor: number
+}
+
+function rotuloDeFicha(alvo: AlvoDeBonus, valor: number) {
+  const nomes: Record<AlvoDeBonus, string> = {
+    forca: 'Força', agilidade: 'Agilidade', intelecto: 'Intelecto',
+    vigor: 'Vigor', presenca: 'Presença', pv: 'PV', pe: 'PE',
+  }
+  return `${valor > 0 ? '+' : ''}${valor} ${nomes[alvo]}`
+}
+
+export function efeitosDoItem(
+  descricao: string | null | undefined,
+  mods: AppliedModifier[] | undefined,
+): EfeitoDeItem[] {
+  const lista: EfeitoDeItem[] = []
+
+  bonusDePericiaDaDescricao(descricao).forEach((b, i) => {
+    lista.push({
+      chave: `desc-pericia-${i}`,
+      rotulo: `${b.valor > 0 ? '+' : ''}${b.valor} ${b.pericias.join(' / ')}`,
+      condicao: b.condicao,
+      pericias: b.pericias,
+      valor: b.valor,
+    })
+  })
+
+  bonusDeFichaDaDescricao(descricao).forEach((b, i) => {
+    lista.push({ chave: `desc-ficha-${i}`, rotulo: rotuloDeFicha(b.alvo, b.valor), condicao: b.condicao, alvo: b.alvo, valor: b.valor })
+  })
+
+  for (const m of mods ?? []) {
+    bonusDeFichaDaDescricao(m.effect).forEach((b, i) => {
+      lista.push({
+        chave: `mod-${m.name}-ficha-${i}`,
+        rotulo: `${rotuloDeFicha(b.alvo, b.valor)} (${m.name})`,
+        condicao: b.condicao,
+        alvo: b.alvo,
+        valor: b.valor,
+      })
+    })
+    bonusDePericiaDaDescricao(m.effect).forEach((b, i) => {
+      lista.push({
+        chave: `mod-${m.name}-pericia-${i}`,
+        rotulo: `${b.valor > 0 ? '+' : ''}${b.valor} ${b.pericias.join(' / ')} (${m.name})`,
+        condicao: b.condicao,
+        pericias: b.pericias,
+        valor: b.valor,
+      })
+    })
+  }
+
+  return lista
+}
+
+export function efeitosSempre(descricao: string | null | undefined, mods: AppliedModifier[] | undefined) {
+  return efeitosDoItem(descricao, mods).filter((e) => !e.condicao)
+}
+
+export function efeitosLigaveis(descricao: string | null | undefined, mods: AppliedModifier[] | undefined) {
+  return efeitosDoItem(descricao, mods).filter((e) => !!e.condicao)
+}
+
+// O que de fato vale agora: os de sempre mais os ligados.
+export function efeitosValendo(
+  descricao: string | null | undefined,
+  mods: AppliedModifier[] | undefined,
+  ligados: string[] | undefined,
+) {
+  const ativos = new Set(ligados ?? [])
+  return efeitosDoItem(descricao, mods).filter((e) => !e.condicao || ativos.has(e.chave))
+}

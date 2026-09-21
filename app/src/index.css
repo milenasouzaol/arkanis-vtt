@@ -8127,3 +8127,14 @@ code, .counter {
   line-height: 1.35;
   color: rgba(255, 255, 255, 0.6);
 }
+
+/* Bonus de item no hexagono do atributo: pequeno e verde, ao lado do numero */
+.attr-item-bonus {
+  margin-left: 1px;
+  font-family: var(--raleway);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: super;
+  color: #3ecf6e;
+}

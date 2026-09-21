@@ -19,6 +19,7 @@ export default function AttributeDiagram({
   onNexChange,
   editable,
   onAttributeChange,
+  bonus,
 }: {
   attributes: Attributes
   nexPercent: number
@@ -26,6 +27,8 @@ export default function AttributeDiagram({
   onNexChange: (value: number) => void
   editable?: boolean
   onAttributeChange?: (key: AttributeKey, value: number) => void
+  /** Bônus de item equipado, mostrado do lado do número em vez de somado nele. */
+  bonus?: Partial<Record<AttributeKey, number>>
 }) {
   const [nexOpen, setNexOpen] = useState(false)
 
@@ -79,6 +82,7 @@ export default function AttributeDiagram({
             aria-label={`Rolar ${abbr}`}
           >
             {attributes[key]}
+            {!!bonus?.[key] && <span className="attr-item-bonus">+{bonus[key]}</span>}
           </button>
         )
       )}

@@ -7,7 +7,7 @@ import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPicke
 import { espacoComModificadores, numerosDoAtaque, statsComModificadores } from './itemMods'
 import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
 import ItemModifiersModal from './ItemModifiersModal'
-import { bonusCondicionais, type AppliedModifier } from './itemMods'
+import { efeitosLigaveis, type AppliedModifier } from './itemMods'
 
 // O <select> nativo abre a lista branca do sistema e sai roxo; este segue a estetica do
 // resto do app, igual aos seletores dos modais.
@@ -59,7 +59,7 @@ type InventoryItem = {
   ammo_current: number | null
   ammo_total: number | null
   ammo_label: string | null
-  active_bonuses: number[]
+  active_bonuses: string[]
 }
 
 export default function InventarioTab({ character, editMode }: { character: CharacterRecord; editMode: boolean }) {
@@ -112,9 +112,9 @@ export default function InventarioTab({ character, editMode }: { character: Char
   }
 
   // Liga ou desliga um bonus condicional do item (Binoculos, Corda, Mascara de Gas...).
-  async function alternarBonus(inv: InventoryItem, indice: number) {
+  async function alternarBonus(inv: InventoryItem, chave: string) {
     const ligados = inv.active_bonuses ?? []
-    const proximo = ligados.includes(indice) ? ligados.filter((i) => i !== indice) : [...ligados, indice]
+    const proximo = ligados.includes(chave) ? ligados.filter((c) => c !== chave) : [...ligados, chave]
     await supabase.from('character_inventory').update({ active_bonuses: proximo }).eq('id', inv.id)
     await loadInventory()
   }
@@ -333,21 +333,21 @@ export default function InventarioTab({ character, editMode }: { character: Char
               {/* Bonus que so valem em certa situacao: a pessoa liga na hora em que vale,
                   em vez de o numero ficar inflado o tempo todo na ficha. */}
               {(() => {
-                const condicionais = bonusCondicionais(item.description)
-                if (condicionais.length === 0) return null
+                const ligaveis = efeitosLigaveis(item.description, inv.applied_modifiers)
+                if (ligaveis.length === 0) return null
                 const ligados = inv.active_bonuses ?? []
                 return (
                   <div className="inv-bonus-block">
                     <div className="inv-bonus-head">Bônus por situação</div>
-                    {condicionais.map((b, i) => (
-                      <label key={`${b.pericias.join()}-${i}`} className="inv-bonus-row">
+                    {ligaveis.map((e) => (
+                      <label key={e.chave} className="inv-bonus-row">
                         <input
                           type="checkbox"
-                          checked={ligados.includes(i)}
-                          onChange={() => alternarBonus(inv, i)}
+                          checked={ligados.includes(e.chave)}
+                          onChange={() => alternarBonus(inv, e.chave)}
                         />
-                        <span className="inv-bonus-valor">{b.valor > 0 ? `+${b.valor}` : b.valor} {b.pericias.join(' / ')}</span>
-                        <span className="inv-bonus-condicao">{b.condicao}</span>
+                        <span className="inv-bonus-valor">{e.rotulo}</span>
+                        <span className="inv-bonus-condicao">{e.condicao}</span>
                       </label>
                     ))}
                   </div>
