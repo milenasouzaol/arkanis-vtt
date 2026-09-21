@@ -9,6 +9,7 @@ import { type Modifier } from './ModifiersPanel'
 import CombateModifiersPanel from './CombateModifiersPanel'
 import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
 import AttackCard from './AttackCard'
+import { numerosDoAtaque, type AppliedModifier } from './itemMods'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
@@ -42,6 +43,8 @@ type InventoryAmmoInfo = {
   ammo_label: string | null
   quantity: number
   name: string
+  stats: Record<string, unknown>
+  applied_modifiers: AppliedModifier[]
 }
 
 type Skill = { id: string; name: string }
@@ -79,7 +82,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   async function loadInventoryAmmo() {
     const { data } = await supabase
       .from('character_inventory')
-      .select('id, linked_ammo_id, ammo_current, ammo_total, ammo_label, quantity, custom_item, equipment_items(name)')
+      .select('id, linked_ammo_id, ammo_current, ammo_total, ammo_label, quantity, applied_modifiers, custom_item, equipment_items(name, stats)')
       .eq('character_id', character.id)
     setInventoryAmmo(
       (data ?? []).map((row: any) => ({
@@ -88,6 +91,8 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         ammo_current: row.ammo_current,
         ammo_total: row.ammo_total,
         ammo_label: row.ammo_label,
+        stats: row.equipment_items?.stats ?? row.custom_item?.stats ?? {},
+        applied_modifiers: row.applied_modifiers ?? [],
         quantity: row.quantity,
         name: row.equipment_items?.name ?? row.custom_item?.name ?? 'Item',
       })),
@@ -140,6 +145,25 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
     await supabase.from('character_attacks').delete().eq('id', id)
     await loadAttacks()
   }
+
+  // O ataque guarda uma copia dos numeros de quando foi enviado. Quem manda e o item:
+  // tirar uma maldicao da arma tem que mudar o ataque tambem. Entao aqui ele e recalculado
+  // a partir do item e das modificacoes de agora, e e essa versao que aparece e que rola.
+  const attacksAtualizados = attacks.map((a) => {
+    if (!a.from_inventory_item_id) return a
+    const origem = inventoryAmmo.find((i) => i.id === a.from_inventory_item_id)
+    if (!origem) return a // item apagado do inventario: o ataque fica como estava
+    const municao = origem.linked_ammo_id ? inventoryAmmo.find((i) => i.id === origem.linked_ammo_id) : null
+    const numeros = numerosDoAtaque(origem.stats, [...origem.applied_modifiers, ...(municao?.applied_modifiers ?? [])])
+    return {
+      ...a,
+      d20_bonus: numeros.d20Bonus,
+      threat_margin: numeros.threatMargin,
+      multiplier: numeros.multiplier,
+      damage: numeros.damage,
+      general_info: { ...a.general_info, damage_bonus_from_mods: numeros.damageBonusFromMods },
+    }
+  })
 
   function ammoForAttack(attack: Attack): InventoryAmmoInfo | null {
     if (!character.optional_rules.contagem_municao || !attack.from_inventory_item_id) return null
@@ -443,7 +467,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         />
       )}
 
-      {attacks.filter((a) => a.name.toLowerCase().includes(attackSearch.toLowerCase())).map((a) => {
+      {attacksAtualizados.filter((a) => a.name.toLowerCase().includes(attackSearch.toLowerCase())).map((a) => {
         const ammoInv = ammoForAttack(a)
         return (
           <AttackCard
@@ -458,16 +482,10 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
             onToggle={() => setExpandedAttack((atual) => (atual === a.id ? null : a.id))}
             onRemove={() => removeAttack(a.id)}
             onEdit={() => setEditingAttack(a as unknown as AttackToEdit)}
-            rollButtons={
-              <>
-                <button type="button" className="inv-item-btn" onClick={() => rollAttackTest(a)}>Ataque</button>
-                {pendingAttack?.attackId === a.id && (
-                  pendingAttack.isCrit
-                    ? <button type="button" className="inv-item-btn" onClick={() => rollDamage(a, true)}>Crítico</button>
-                    : <button type="button" className="inv-item-btn" onClick={() => rollDamage(a, false)}>Dano</button>
-                )}
-              </>
-            }
+            onRollAtaque={() => rollAttackTest(a)}
+            onRollDano={(critico) => rollDamage(a, critico)}
+            danoArmado={pendingAttack?.attackId === a.id}
+            ehCritico={pendingAttack?.attackId === a.id && pendingAttack.isCrit}
           />
         )
       })}

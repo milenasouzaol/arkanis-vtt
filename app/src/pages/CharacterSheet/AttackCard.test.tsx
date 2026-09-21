@@ -41,7 +41,10 @@ const base = {
   onToggle: () => {},
   onRemove: () => {},
   onEdit: () => {},
-  rollButtons: <button type="button">Ataque</button>,
+  onRollAtaque: () => {},
+  onRollDano: () => {},
+  danoArmado: false,
+  ehCritico: false,
 }
 
 describe('AttackCard', () => {
@@ -56,9 +59,24 @@ describe('AttackCard', () => {
     expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
   })
 
-  it('o botao de rolar continua acessivel com o card fechado', () => {
-    render(<AttackCard {...base} expanded={false} />)
-    expect(screen.getByRole('button', { name: 'Ataque' })).toBeInTheDocument()
+  // A caixa É o botão: não existe mais um botão "Ataque" solto embaixo.
+  it('a caixa de ataque rola o teste de ataque', async () => {
+    const onRollAtaque = vi.fn()
+    render(<AttackCard {...base} expanded={false} onRollAtaque={onRollAtaque} />)
+
+    await userEvent.click(screen.getByText('3d20'))
+    expect(onRollAtaque).toHaveBeenCalledOnce()
+  })
+
+  it('a caixa de dano rola dano normal e a de critico rola critico', async () => {
+    const onRollDano = vi.fn()
+    render(<AttackCard {...base} expanded={false} onRollDano={onRollDano} />)
+
+    await userEvent.click(screen.getByText('1d4 C'))
+    expect(onRollDano).toHaveBeenLastCalledWith(false)
+
+    await userEvent.click(screen.getByText('19/x2'))
+    expect(onRollDano).toHaveBeenLastCalledWith(true)
   })
 
   it('aberto, mostra as caracteristicas, a descricao e Remover/Editar', () => {

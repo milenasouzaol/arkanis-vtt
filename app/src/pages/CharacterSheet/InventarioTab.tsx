@@ -4,7 +4,7 @@ import type { CharacterRecord } from './index'
 import InventarioTopBox from './InventarioTopBox'
 import InventoryItemCard from './InventoryItemCard'
 import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPickerModal'
-import { parseCritico, parseNumericMod, statsComModificadores } from './itemMods'
+import { numerosDoAtaque, statsComModificadores } from './itemMods'
 import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
 
 type EquipmentItem = {
@@ -121,29 +121,9 @@ export default function InventarioTab({ character, editMode }: { character: Char
     if (!item) return
     const stats = item.stats ?? {}
     const isMelee = stats.natureza === 'corpo_a_corpo' || !stats.natureza
-    const { threatMargin, multiplier } = parseCritico(stats.critico)
-
-    const damage: { formula: string; tipo: string }[] = [{ formula: String(stats.dano ?? ''), tipo: String(stats.tipo_dano ?? '') }]
-    let finalMultiplier = multiplier
-    let finalThreatMargin = threatMargin
-    let attackTestBonus = 0
-    let damageBonusFromMods = 0
-
-    const linkedAmmo = inv.linked_ammo_id ? items.find((i) => i.id === inv.linked_ammo_id) : null
-
-    for (const mod of [...(inv.applied_modifiers ?? []), ...(linkedAmmo?.applied_modifiers ?? [])]) {
-      // Os casos com nome proprio sao so de modificacao; o bonus numerico escrito no
-      // texto vale pros dois, senao o card e o combate mostrariam numeros diferentes.
-      if (mod.kind === 'modificacao') {
-        if (mod.name === 'Dum Dum') finalMultiplier += 1
-        if (mod.name === 'Explosiva') damage.push({ formula: '2d6', tipo: 'explosão adicional' })
-      }
-      const parsed = parseNumericMod(mod.effect)
-      finalThreatMargin += parsed.threatMarginDelta
-      finalMultiplier += parsed.multiplierDelta
-      attackTestBonus += parsed.attackTestBonus
-      damageBonusFromMods += parsed.damageBonus
-    }
+    const linkedAmmo = inv.linked_ammo_id ? items.find((it) => it.id === inv.linked_ammo_id) : null
+    const todosMods = [...(inv.applied_modifiers ?? []), ...(linkedAmmo?.applied_modifiers ?? [])]
+    const numeros = numerosDoAtaque(stats, todosMods)
 
     const modificadores = [
       ...(inv.applied_modifiers ?? []).map((m) => ({ ...m, origem: 'Arma' as const })),
@@ -154,10 +134,10 @@ export default function InventarioTab({ character, editMode }: { character: Char
       character_id: character.id,
       name: item.name,
       attribute: isMelee ? 'forca' : 'agilidade',
-      d20_bonus: attackTestBonus,
-      threat_margin: finalThreatMargin,
-      multiplier: finalMultiplier,
-      damage,
+      d20_bonus: numeros.d20Bonus,
+      threat_margin: numeros.threatMargin,
+      multiplier: numeros.multiplier,
+      damage: numeros.damage,
       general_info: {
         tipo: stats.natureza,
         empunhadura: stats.empunhadura,
@@ -165,7 +145,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
         tipo_municao: stats.tipo_municao,
         municao: linkedAmmo?.equipment_items?.name ?? linkedAmmo?.custom_item?.name ?? null,
         modificadores,
-        damage_bonus_from_mods: damageBonusFromMods,
+        damage_bonus_from_mods: numeros.damageBonusFromMods,
       },
       from_inventory_item_id: inv.id,
     })

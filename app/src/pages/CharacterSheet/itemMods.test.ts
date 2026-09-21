@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseCritico, parseNumericMod, somaBonusNoDano, somaBonuses, statsComModificadores } from './itemMods'
+import { numerosDoAtaque, parseCritico, parseNumericMod, somaBonusNoDano, somaBonuses, statsComModificadores } from './itemMods'
 
 const mod = (effect: string) => ({ kind: 'modificacao' as const, name: 'x', effect, elemento: null })
 
@@ -96,5 +96,51 @@ describe('statsComModificadores', () => {
     const base = { critico: '19/x3' }
     statsComModificadores(base, [mod('+2 em margem de ameaça')])
     expect(base.critico).toBe('19/x3')
+  })
+})
+
+describe('numerosDoAtaque', () => {
+  it('sem modificacao, usa os numeros do proprio item', () => {
+    const r = numerosDoAtaque({ critico: '18/x3', dano: '1d10', tipo_dano: 'P' }, [])
+    expect(r.threatMargin).toBe(18)
+    expect(r.multiplier).toBe(3)
+    expect(r.damage).toEqual([{ formula: '1d10', tipo: 'P' }])
+    expect(r.d20Bonus).toBe(0)
+  })
+
+  // O caso da Millie: tirar a maldição tem que devolver o número original.
+  it('tirar a modificacao devolve o numero de antes', () => {
+    const mods = [mod('+2 em margem de ameaça')]
+    expect(numerosDoAtaque({ critico: '18/x3' }, mods).threatMargin).toBe(16)
+    expect(numerosDoAtaque({ critico: '18/x3' }, []).threatMargin).toBe(18)
+  })
+
+  it('maldicao com bonus numerico conta igual a modificacao', () => {
+    const maldicao = { kind: 'maldicao' as const, name: 'x', effect: '+2 em margem de ameaça', elemento: null }
+    expect(numerosDoAtaque({ critico: '19/x2' }, [maldicao]).threatMargin).toBe(17)
+  })
+
+  it('Dum Dum sobe o multiplicador, e so vale como modificacao', () => {
+    const comoMod = { kind: 'modificacao' as const, name: 'Dum Dum', effect: '', elemento: null }
+    const comoMaldicao = { kind: 'maldicao' as const, name: 'Dum Dum', effect: '', elemento: null }
+    expect(numerosDoAtaque({ critico: '20/x2' }, [comoMod]).multiplier).toBe(3)
+    expect(numerosDoAtaque({ critico: '20/x2' }, [comoMaldicao]).multiplier).toBe(2)
+  })
+
+  it('Explosiva acrescenta uma linha de dano', () => {
+    const explosiva = { kind: 'modificacao' as const, name: 'Explosiva', effect: '', elemento: null }
+    const r = numerosDoAtaque({ dano: '2d6', tipo_dano: 'B' }, [explosiva])
+    expect(r.damage).toHaveLength(2)
+    expect(r.damage[1]).toEqual({ formula: '2d6', tipo: 'explosão adicional' })
+  })
+
+  it('acumula modificacoes da arma e da municao', () => {
+    const r = numerosDoAtaque({ critico: '20/x2' }, [mod('+1 em margem de ameaça'), mod('+1 em margem de ameaça')])
+    expect(r.threatMargin).toBe(18)
+  })
+
+  it('margem nao passa de 20 e multiplicador nao desce de 1', () => {
+    expect(numerosDoAtaque({ critico: '20/x2' }, [mod('-5 em margem de ameaça')]).threatMargin).toBe(20)
+    expect(numerosDoAtaque({ critico: '20/x2' }, [mod('-5 no multiplicador de crítico')]).multiplier).toBe(1)
   })
 })

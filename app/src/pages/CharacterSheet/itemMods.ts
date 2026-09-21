@@ -95,3 +95,57 @@ export function statsComModificadores(
 
   return resultado
 }
+
+export type NumerosDoAtaque = {
+  d20Bonus: number
+  threatMargin: number
+  multiplier: number
+  damage: { formula: string; tipo: string }[]
+  damageBonusFromMods: number
+}
+
+// Numeros de ataque de uma arma do inventario: os do item mais o que as modificacoes da
+// arma e da municao acrescentam.
+//
+// O ataque criado no Combate guarda uma copia desses numeros, mas quem manda e o item:
+// tirar uma maldicao da arma tem que mudar o ataque tambem. Entao o Combate recalcula por
+// aqui na hora de mostrar e de rolar, em vez de confiar na copia que ficou gravada.
+export function numerosDoAtaque(
+  stats: Record<string, unknown> | undefined,
+  mods: AppliedModifier[],
+): NumerosDoAtaque {
+  const s = stats ?? {}
+  const { threatMargin, multiplier } = parseCritico(s.critico)
+
+  const damage: { formula: string; tipo: string }[] = [
+    { formula: String(s.dano ?? ''), tipo: String(s.tipo_dano ?? '') },
+  ]
+
+  let finalMultiplier = multiplier
+  let finalThreatMargin = threatMargin
+  let d20Bonus = 0
+  let damageBonusFromMods = 0
+
+  for (const mod of mods) {
+    // Casos com nome proprio so existem em modificacao; o bonus escrito no texto vale
+    // pros dois, senao a ficha e o combate mostrariam numeros diferentes.
+    if (mod.kind === 'modificacao') {
+      if (mod.name === 'Dum Dum') finalMultiplier += 1
+      if (mod.name === 'Explosiva') damage.push({ formula: '2d6', tipo: 'explosão adicional' })
+    }
+    const parsed = parseNumericMod(mod.effect ?? '')
+    finalThreatMargin += parsed.threatMarginDelta
+    finalMultiplier += parsed.multiplierDelta
+    d20Bonus += parsed.attackTestBonus
+    damageBonusFromMods += parsed.damageBonus
+  }
+
+  return {
+    d20Bonus,
+    // A margem nao passa de 20 e o multiplicador nao desce de 1.
+    threatMargin: Math.min(20, finalThreatMargin),
+    multiplier: Math.max(1, finalMultiplier),
+    damage,
+    damageBonusFromMods,
+  }
+}

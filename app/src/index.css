@@ -7846,42 +7846,91 @@ code, .counter {
   border-color: rgba(255, 255, 255, 0.55);
 }
 
-/* ===== Combate: card do ataque (mesmo desenho do card de item) ===== */
+/* ===== Combate: card do ataque ===== */
 
-.attack-card-boxes {
-  display: flex;
-  gap: 0.5em;
-  margin-top: 0.6em;
+/* Linha enxuta: icone e nome a esquerda, as caixas de rolagem a direita, seta no fim. */
+.attack-card {
+  padding: 0.45em 0.7em;
 }
 
-.attack-card-box {
-  flex: 1 1 0;
+.attack-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.attack-card-title {
+  flex: 1 1 auto;
   min-width: 0;
   display: flex;
+  align-items: center;
+  gap: 0.5em;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.attack-card-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.attack-card-boxes {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.35em;
+}
+
+/* Cada caixa e o proprio botao de rolagem - nao ha botao solto embaixo. */
+.attack-card-box {
+  display: flex;
   flex-direction: column;
-  gap: 0.1em;
-  background: rgba(0, 0, 0, 0.4);
+  align-items: flex-start;
+  gap: 0;
+  min-width: 52px;
+  background: #1b1a20;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.35em 0.6em;
+  border-radius: 0;
+  padding: 0.2em 0.45em;
+  cursor: pointer;
+}
+
+.attack-card-box:hover {
+  border-color: #fff;
+}
+
+/* Depois do teste de ataque, a caixa que rola o dano fica marcada. */
+.attack-card-box.armado {
+  border-color: #fff;
+  background: #2a2833;
 }
 
 .attack-card-box-value {
   font-family: 'Keyes', var(--heading);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 1.2;
   color: #fff;
 }
 
 .attack-card-box-label {
   font-family: var(--raleway);
-  font-size: 9px;
+  font-size: 8px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
 }
 
-.attack-card-rolls {
-  display: flex;
-  gap: 0.5em;
-  margin-top: 0.6em;
+.attack-card-chevron {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0 0.1em;
+  cursor: pointer;
 }

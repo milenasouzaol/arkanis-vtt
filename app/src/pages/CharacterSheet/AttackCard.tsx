@@ -7,11 +7,11 @@ const ALCANCE_LABEL: Record<string, string> = {
 }
 
 const NATUREZA_LABEL: Record<string, string> = {
-  corpo_a_corpo: 'Corpo a Corpo', disparo: 'Disparo', fogo: 'Fogo',
+  corpo_a_corpo: 'Corpo a Corpo', arremesso: 'Arremesso', disparo: 'Disparo', fogo: 'Fogo',
 }
 
 const EMPUNHADURA_LABEL: Record<string, string> = {
-  nenhuma: 'Nenhuma', uma_mao: 'Uma Mão', duas_maos: 'Duas Mãos',
+  nenhuma: 'Nenhuma', leve: 'Leve', uma_mao: 'Uma Mão', duas_maos: 'Duas Mãos',
 }
 
 function rotulo(mapa: Record<string, string>, valor: unknown) {
@@ -50,7 +50,10 @@ export default function AttackCard({
   municaoRestante,
   expanded,
   onToggle,
-  rollButtons,
+  onRollAtaque,
+  onRollDano,
+  danoArmado,
+  ehCritico,
   onRemove,
   onEdit,
 }: {
@@ -64,7 +67,11 @@ export default function AttackCard({
   municaoRestante?: string | null
   expanded: boolean
   onToggle: () => void
-  rollButtons: React.ReactNode
+  onRollAtaque: () => void
+  onRollDano: (critico: boolean) => void
+  /** Depois do teste de ataque, a caixa de dano fica armada para a rolagem. */
+  danoArmado: boolean
+  ehCritico: boolean
   onRemove: () => void
   onEdit: () => void
 }) {
@@ -72,25 +79,39 @@ export default function AttackCard({
 
   return (
     <div className={`inv-item-card attack-card${expanded ? ' expanded' : ''}`}>
-      <button type="button" className="inv-item-head" onClick={onToggle}>
-        <img className="inv-item-icon" src={mysteryIcon} alt="" />
-        <span className="inv-item-name">{name}</span>
-        <span className={`inv-item-chevron${expanded ? ' up' : ''}`} aria-hidden>⌄</span>
-      </button>
+      <div className="attack-card-head">
+        <button type="button" className="attack-card-title" onClick={onToggle}>
+          <img className="attack-card-icon" src={mysteryIcon} alt="" />
+          <span className="inv-item-name">{name}</span>
+        </button>
 
-      <div className="attack-card-boxes">
-        <span className="attack-card-box">
-          <span className="attack-card-box-value">{ataque}</span>
-          <span className="attack-card-box-label">Ataque</span>
-        </span>
-        <span className="attack-card-box">
-          <span className="attack-card-box-value">{dano}</span>
-          <span className="attack-card-box-label">Dano</span>
-        </span>
-        <span className="attack-card-box">
-          <span className="attack-card-box-value">{critico}</span>
-          <span className="attack-card-box-label">Crítico</span>
-        </span>
+        {/* As proprias caixas sao os botoes de rolagem: nao existe botao solto embaixo. */}
+        <div className="attack-card-boxes">
+          <button type="button" className="attack-card-box" onClick={onRollAtaque}>
+            <span className="attack-card-box-value">{ataque}</span>
+            <span className="attack-card-box-label">Ataque</span>
+          </button>
+          <button
+            type="button"
+            className={`attack-card-box${danoArmado && !ehCritico ? ' armado' : ''}`}
+            onClick={() => onRollDano(false)}
+          >
+            <span className="attack-card-box-value">{dano}</span>
+            <span className="attack-card-box-label">Dano</span>
+          </button>
+          <button
+            type="button"
+            className={`attack-card-box${danoArmado && ehCritico ? ' armado' : ''}`}
+            onClick={() => onRollDano(true)}
+          >
+            <span className="attack-card-box-value">{critico}</span>
+            <span className="attack-card-box-label">Crítico</span>
+          </button>
+        </div>
+
+        <button type="button" className="attack-card-chevron" onClick={onToggle} aria-label={expanded ? 'Recolher' : 'Expandir'}>
+          <span className={`inv-item-chevron${expanded ? ' up' : ''}`} aria-hidden>⌄</span>
+        </button>
       </div>
 
       {municaoRestante && (
@@ -99,8 +120,6 @@ export default function AttackCard({
           <span className="inv-item-qty-box"><span className="inv-item-qty-value">{municaoRestante}</span></span>
         </div>
       )}
-
-      <div className="attack-card-rolls">{rollButtons}</div>
 
       {expanded && (
         <>
