@@ -4,6 +4,7 @@ import type { CharacterRecord } from './index'
 import ItemModifiers from './ItemModifiers'
 import InventarioTopBox from './InventarioTopBox'
 import InventoryItemCard from './InventoryItemCard'
+import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPickerModal'
 
 type EquipmentItem = {
   id: string
@@ -57,31 +58,12 @@ function parseCritico(critico: unknown): { threatMargin: number; multiplier: num
   return { threatMargin, multiplier }
 }
 
-const TYPES: { key: EquipmentItem['type']; label: string }[] = [
-  { key: 'arma', label: 'Armas' },
-  { key: 'municao', label: 'Munições' },
-  { key: 'protecao', label: 'Proteções' },
-  { key: 'geral', label: 'Geral' },
-  { key: 'paranormal', label: 'Paranormal' },
-]
-
-function summarize(item: EquipmentItem | Partial<EquipmentItem>): string {
-  const stats = item.stats ?? {}
-  if (item.type === 'arma') return `Dano ${stats.dano ?? '?'} · Crítico ${stats.critico ?? '?'} · Alcance ${stats.alcance ?? '—'} · Cat. ${item.category} · Esp. ${item.spaces ?? '—'}`
-  if (item.type === 'protecao') return `Defesa +${stats.defesa ?? 0} · Cat. ${item.category} · Esp. ${item.spaces ?? '—'}`
-  return `Cat. ${item.category} · Esp. ${item.spaces ?? '—'}`
-}
-
 export default function InventarioTab({ character, editMode }: { character: CharacterRecord; editMode: boolean }) {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
-  const [type, setType] = useState<EquipmentItem['type']>('arma')
   const [search, setSearch] = useState('')
   const [filtro, setFiltro] = useState<string | null>(null)
-  const [catalog, setCatalog] = useState<EquipmentItem[]>([])
-  const [creatingCustom, setCreatingCustom] = useState(false)
-  const [customDraft, setCustomDraft] = useState({ name: '', category: 'I', spaces: 1, description: '' })
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState({ name: '', category: 'I', spaces: 1, description: '', dano: '', critico: '', defesa: 0 })
 
@@ -95,24 +77,16 @@ export default function InventarioTab({ character, editMode }: { character: Char
 
   useEffect(() => { loadInventory() }, [character.id])
 
-  useEffect(() => {
-    if (!adding) return
-    supabase.from('equipment_items').select('id, type, name, category, spaces, description, stats').eq('type', type).order('name').then(({ data }) => setCatalog(data ?? []))
-  }, [adding, type])
-
-  async function addFromCatalog(item: EquipmentItem) {
-    await supabase.from('character_inventory').insert({ character_id: character.id, equipment_item_id: item.id })
-    await loadInventory()
-  }
-
-  async function addCustom() {
-    if (!customDraft.name) return
-    await supabase.from('character_inventory').insert({
-      character_id: character.id,
-      custom_item: { name: customDraft.name, type, category: customDraft.category, spaces: customDraft.spaces, description: customDraft.description, stats: {} },
-    })
-    setCustomDraft({ name: '', category: 'I', spaces: 1, description: '' })
-    setCreatingCustom(false)
+  async function addFromPicker(result: EquipmentPickResult) {
+    if (result.kind === 'catalog') {
+      await supabase.from('character_inventory').insert({ character_id: character.id, equipment_item_id: result.id })
+    } else {
+      await supabase.from('character_inventory').insert({
+        character_id: character.id,
+        custom_item: { name: result.name, type: result.type, category: result.category, spaces: result.spaces, description: result.description, stats: {} },
+      })
+    }
+    setAdding(false)
     await loadInventory()
   }
 
@@ -243,8 +217,6 @@ export default function InventarioTab({ character, editMode }: { character: Char
       from_inventory_item_id: inv.id,
     })
   }
-
-  const filteredCatalog = catalog.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()))
 
   // Atual por categoria e carga saem dos proprios itens: cada item conta 1 na sua
   // categoria (I a IV) e soma os espacos dele, vezes a quantidade, na carga.
@@ -412,41 +384,13 @@ export default function InventarioTab({ character, editMode }: { character: Char
       </div>
 
       {adding && (
-        <div>
-          <nav>
-            {TYPES.map((t) => (
-              <button key={t.key} type="button" onClick={() => { setType(t.key); setCreatingCustom(false) }} disabled={type === t.key && !creatingCustom}>{t.label}</button>
-            ))}
-          </nav>
-
-          <button type="button" onClick={() => setCreatingCustom(true)}>Criar novo Equipamento</button>
-
-          {creatingCustom ? (
-            <div>
-              <label>Nome <input value={customDraft.name} onChange={(e) => setCustomDraft((d) => ({ ...d, name: e.target.value }))} /></label>
-              <label>Categoria
-                <select value={customDraft.category} onChange={(e) => setCustomDraft((d) => ({ ...d, category: e.target.value }))}>
-                  {['0', 'I', 'II', 'III', 'IV'].map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </label>
-              <label>Espaços <input type="number" value={customDraft.spaces} onChange={(e) => setCustomDraft((d) => ({ ...d, spaces: Number(e.target.value) }))} /></label>
-              <label>Descrição <textarea value={customDraft.description} onChange={(e) => setCustomDraft((d) => ({ ...d, description: e.target.value }))} /></label>
-              <button type="button" onClick={addCustom}>Adicionar Item</button>
-            </div>
-          ) : filteredCatalog.length === 0 ? (
-            <p>Sem itens cadastrados ainda nessa categoria.</p>
-          ) : (
-            <ul>
-              {filteredCatalog.map((i) => (
-                <li key={i.id}>
-                  {i.name} — {summarize(i)}
-                  <button type="button" onClick={() => addFromCatalog(i)}>Adicionar</button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <EquipmentPickerModal
+          characterId={character.id}
+          onClose={() => setAdding(false)}
+          onAdd={addFromPicker}
+        />
       )}
+
     </div>
   )
 }
