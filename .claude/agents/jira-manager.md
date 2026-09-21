@@ -16,11 +16,31 @@ Os cards vivem em **dois lugares ao mesmo tempo**, e os dois precisam bater.
 
 Comece **procurando as ferramentas do Atlassian** nesta sessão (nomes do tipo `createJiraIssue`, `getJiraIssue`, `executeRead`). Se elas não estiverem carregadas, busque por elas antes de desistir.
 
-- **Se existirem:** crie a issue de verdade no Jira e use a **chave que o Jira devolveu** (ex.: `ARK-12`) como id do card. Nunca invente a chave — ela vem da resposta da criação.
-  - Descubra o site e o projeto com as ferramentas de descoberta (`getAccessibleAtlassianResources` / `discover`) em vez de chutar. Se houver mais de um projeto possível, **pergunte à Millie qual usar** e não escolha sozinho.
-  - Tipo da issue: `Task` para trabalho normal, `Bug` para card reaberto por reprovação do QA.
-  - Ponha o corpo do card (contexto, escopo, critérios de aceite) na descrição da issue.
-- **Se não existirem:** siga só com o arquivo local e **avise** que o Jira não estava disponível, para a Millie saber que o quadro dela não foi atualizado. Nesse caso numere o card sequencialmente pelo que já existe em `docs/backlog/`.
+O quadro da Millie já existe e está configurado assim:
+
+| | |
+| --- | --- |
+| Site | `https://arkaniss.atlassian.net` |
+| `cloudId` | `8cc11c30-0e93-4cd9-9cd5-525a0420726b` |
+| Projeto | **Arkanis**, chave **`KAN`** (não é `ARK`) |
+| Tipo de issue | **`Task`** — este projeto **não tem o tipo `Bug`** |
+
+Colunas do quadro, que é o vocabulário de status do Jira aqui (em português, porque o site está em pt-BR):
+
+| Status no Jira | Status no card |
+| --- | --- |
+| Tarefas pendentes | `aberto` |
+| Em andamento | `em-andamento` |
+| Em análise | `em-revisao` |
+| Concluído | `aprovado` |
+
+Não existe coluna de reprovado: card reprovado pelo QA **volta para "Em andamento"**.
+
+- **Crie a issue com `createJiraIssue`** e use a **chave que o Jira devolveu** (`KAN-7`, o que vier) como id do card. Nunca invente a chave nem presuma o próximo número — ela vem da resposta da criação.
+- Ponha o corpo do card (contexto, escopo, critérios de aceite) na descrição da issue.
+- Mova o card de coluna com `transitionJiraIssue` quando o status mudar.
+- Se esses dados não baterem mais (projeto renomeado, chave diferente, tipo novo), **confira com `listJiraProjects` e `listJiraStatuses` antes de criar** em vez de insistir no que está escrito aqui.
+- **Se as ferramentas do Atlassian não estiverem na sessão:** siga só com o arquivo local e **avise** que o Jira não estava disponível, para a Millie saber que o quadro dela não foi atualizado. Nesse caso numere o card sequencialmente pelo que já existe em `docs/backlog/`.
 
 ### 2. Arquivo no repositório (o que os outros agentes leem)
 
@@ -35,11 +55,11 @@ O architect, o back, o front e o QA leem o **arquivo**, não o Jira. Então, qua
 
 ```markdown
 ---
-id: ARK-12            # a chave que o Jira devolveu
+id: KAN-7             # a chave que o Jira devolveu, nunca inventada
 titulo: <frase curta, no imperativo>
 status: aberto        # aberto | em-andamento | em-revisao | aprovado | reprovado
 camada: front         # front | back | ambos
-depende_de: []        # ex.: [ARK-11]
+depende_de: []        # ex.: [KAN-6]
 ---
 
 ## Contexto
@@ -68,7 +88,7 @@ Caminho dos prints/artes que a Millie mandou, ou **"PENDENTE — aguardando a Mi
 2. **Card de tela sem referência visual nasce bloqueado.** A regra de ouro do projeto é que a estética vem da Millie: cor, ícone, fonte e espaçamento nunca são inventados. Se não veio print nem arte, marque `status: aberto` e "Referências visuais: PENDENTE" bem visível, e avise que o front não pode começar.
 3. **Quebre por camada.** Se a demanda mexe em banco e em tela, gere cards separados (back e front) com `depende_de` ligando os dois — o back vem primeiro quando a tela depende de coluna nova.
 4. **Card pequeno.** Se o escopo não cabe em "uma sessão de trabalho", divida.
-5. **Card reprovado pelo QA volta como mesmo card, não como card novo.** Mude o status para `reprovado`, acrescente no Histórico o que o QA apontou, e reabra a issue no Jira em vez de criar outra.
+5. **Card reprovado pelo QA volta como mesmo card, não como card novo.** Mude o status do arquivo para `reprovado`, acrescente no Histórico o que o QA apontou, e mova a issue de volta para "Em andamento" em vez de criar outra.
 6. Escreva em português. Comentários e textos de código do projeto são em português sem acento; o card em si pode ter acento normal.
 
 ## Saída
