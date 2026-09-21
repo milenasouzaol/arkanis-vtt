@@ -152,6 +152,56 @@ export function defesaDeModificadores(applied: AppliedModifier[] | undefined): n
   return somaBonuses(applied).defenseBonus
 }
 
+// Resistencias que um item equipado concede. O catalogo escreve de varios jeitos:
+//   "RD sobe pra 5"             -> resistencia a dano 5
+//   "resistencia a dano 2"      -> resistencia a dano 2
+//   "Resistencia a Energia 10"  -> resistencia ao elemento Energia
+//   "Resistencia mental 10"     -> resistencia mental
+// Efeito que depende de condicao ("2 (leve/escudo) ou 5 (pesada)") nao e chutado aqui: pego
+// o maior valor citado, que e o teto, e a condicao continua escrita no texto do efeito.
+export type Resistencia = { tipo: string; valor: number }
+
+const ELEMENTOS = ['Sangue', 'Morte', 'Conhecimento', 'Energia', 'Medo']
+
+export function resistenciasDoEfeito(effect: string): Resistencia[] {
+  const achadas: Resistencia[] = []
+  if (!effect) return achadas
+
+  for (const el of ELEMENTOS) {
+    const re = new RegExp(`resist[êe]ncia\\s+(?:a|ao|contra)?\\s*${el}\\s+(\\d+)`, 'i')
+    const m = effect.match(re)
+    if (m) achadas.push({ tipo: el, valor: Number(m[1]) })
+  }
+
+  const mental = effect.match(/resist[êe]ncia\s+mental\s+(\d+)/i)
+  if (mental) achadas.push({ tipo: 'Mental', valor: Number(mental[1]) })
+
+  const rd = effect.match(/\bRD\b[^.;]*/i) ?? effect.match(/resist[êe]ncia\s+a\s+dano[^.;]*/i)
+  if (rd) {
+    const numeros = (rd[0].match(/\d+/g) ?? []).map(Number)
+    if (numeros.length) achadas.push({ tipo: 'Dano', valor: Math.max(...numeros) })
+  }
+
+  return achadas
+}
+
+// Junta as resistencias de todos os itens equipados. Repetiu o mesmo tipo, vale a maior.
+export function resistenciasDeModificadores(applied: AppliedModifier[] | undefined): Resistencia[] {
+  if (!applied?.length) return []
+  const porTipo = new Map<string, number>()
+  for (const m of applied) {
+    for (const r of resistenciasDoEfeito(m.effect ?? '')) {
+      porTipo.set(r.tipo, Math.max(porTipo.get(r.tipo) ?? 0, r.valor))
+    }
+  }
+  return [...porTipo].map(([tipo, valor]) => ({ tipo, valor }))
+}
+
+// "Dano 5 · Energia 10", ou vazio quando nao ha nenhuma.
+export function textoDasResistencias(resistencias: Resistencia[]): string {
+  return resistencias.map((r) => `${r.tipo} ${r.valor}`).join(' · ')
+}
+
 // Stats do item com as modificacoes ja aplicadas, do jeito que tem que aparecer na ficha.
 export function statsComModificadores(
   stats: Record<string, unknown> | undefined,

@@ -29,7 +29,7 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 | [KAN-20](KAN-20-coluna-pulando.md) | Coluna mudava de largura ao expandir um item | front | aprovado | [KAN-20](https://arkaniss.atlassian.net/browse/KAN-20) |
 
 | [KAN-21](KAN-21-automatizar-espaco-defesa-alcance.md) | Automatizar espaço, defesa, alcance e dados extras | regra | aprovado | [KAN-21](https://arkaniss.atlassian.net/browse/KAN-21) |
-| [KAN-22](KAN-22-resistencia-a-dano.md) | Resistência a dano na ficha | regra | aberto — **bloqueado, sem referência** | [KAN-22](https://arkaniss.atlassian.net/browse/KAN-22) |
+| [KAN-22](KAN-22-resistencia-a-dano.md) | Resistência a dano na ficha | regra | aprovado | [KAN-22](https://arkaniss.atlassian.net/browse/KAN-22) |
 | [KAN-23](KAN-23-bonus-de-atributo-do-item.md) | Item amaldiçoado somando atributo, PV e PE | regra | aberto — **bloqueado, decisões pendentes** | [KAN-23](https://arkaniss.atlassian.net/browse/KAN-23) |
 
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

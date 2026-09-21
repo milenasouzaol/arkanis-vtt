@@ -9,7 +9,7 @@ import { type Modifier } from './ModifiersPanel'
 import CombateModifiersPanel from './CombateModifiersPanel'
 import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
 import AttackCard from './AttackCard'
-import { defesaDeModificadores, numerosDoAtaque, somaBonusNoDano, type AppliedModifier } from './itemMods'
+import { defesaDeModificadores, numerosDoAtaque, resistenciasDeModificadores, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
@@ -61,6 +61,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const [charSkillBonus, setCharSkillBonus] = useState<Record<string, number>>({})
   const [equippedDefense, setEquippedDefense] = useState(0)
   const [equippedProtectionName, setEquippedProtectionName] = useState<string | null>(null)
+  const [resistencias, setResistencias] = useState<Resistencia[]>([])
   const [adding, setAdding] = useState(false)
   const [roll, setRoll] = useState<RollResultData | null>(null)
   const [attackMods, setAttackMods] = useState<Modifier[]>([])
@@ -118,6 +119,10 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         const daModificacao = defesaDeModificadores((protection as any)?.applied_modifiers)
         setEquippedDefense(Number(stats.defesa ?? 0) + daModificacao)
         setEquippedProtectionName(name)
+
+        // Resistencia nao vem so da protecao: acessorio amaldicoado equipado tambem da.
+        const todosMods = (data ?? []).flatMap((i: any) => i.applied_modifiers ?? [])
+        setResistencias(resistenciasDeModificadores(todosMods))
       })
   }
 
@@ -381,7 +386,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         {defenseDetailsOpen && (
           <div className="combat-defense-details">
             <p><strong>Proteção:</strong> {equippedProtectionName ?? 'Nenhuma equipada'}</p>
-            <p><strong>Resistência:</strong> Nenhuma</p>
+            <p><strong>Resistência:</strong> {textoDasResistencias(resistencias) || 'Nenhuma'}</p>
           </div>
         )}
        </div>
