@@ -7400,9 +7400,8 @@ code, .counter {
 .inv-filtro-btn {
   flex: 1 1 0;
   min-width: 0;
-  background: #0e0d12 url('./assets/combate/metal-texture.png');
-  background-size: cover;
-  background-position: center;
+  /* sem textura aqui: a referencia tem so uma cor escura chapada atras dos botoes */
+  background: #1b1a20;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 0;
   color: rgba(255, 255, 255, 0.75);
@@ -7648,4 +7647,184 @@ code, .counter {
 /* No Inventario o texto da busca fica mais perto do tracejado do que no Combate */
 .inv-search-row .combat-search-field {
   padding-bottom: 0.1em;
+}
+
+/* ===== Inventario: modal de Modificacoes e Maldicoes ===== */
+
+/* Diferente dos outros pickers, este e um painel so, centralizado na tela. */
+.mods-modal-shell {
+  position: relative;
+  display: flex;
+  width: min(520px, 92vw);
+}
+
+.mods-modal-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: min(600px, 86vh);
+}
+
+.mods-modal-search {
+  position: relative;
+  z-index: 1;
+  margin: 0.9em 1.1em 0;
+  flex: none;
+  padding-bottom: 0.2em;
+}
+
+.mods-modal-tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 0.6em;
+  margin: 0.9em 1.1em 0;
+}
+
+.mods-modal-tabs button {
+  flex: 1 1 0;
+  background: #1b1a20;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--raleway);
+  font-size: 13px;
+  padding: 0.65em 0.4em;
+  cursor: pointer;
+}
+
+.mods-modal-tabs button:hover {
+  color: #fff;
+}
+
+.mods-modal-tabs button.active {
+  color: #fff;
+  border-color: #fff;
+  background: #2a2833;
+}
+
+.mods-modal-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  padding: 0.9em 1.1em;
+}
+
+.mods-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mods-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mods-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+}
+
+.mods-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+}
+
+.mods-modal-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #2a2a2a;
+  border-radius: 0;
+  padding: 0.6em 0.8em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mods-modal-entry:hover {
+  border-color: #fff;
+}
+
+.mods-modal-entry-name {
+  font-family: var(--raleway);
+  font-weight: 600;
+  font-size: 12px;
+  color: #fff;
+}
+
+.mods-modal-entry-element {
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.mods-modal-entry-effect {
+  font-family: var(--raleway);
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.mods-modal-applied {
+  margin-bottom: 1em;
+}
+
+.mods-modal-applied-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #2a2a2a;
+  padding: 0.4em 0.7em;
+  margin-bottom: 0.3em;
+}
+
+.mods-modal-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0 0.2em;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mods-modal-remove:hover {
+  color: #fff;
+}
+
+.mods-modal-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6em;
+  padding: 0 1.1em 1.1em;
+}
+
+.mods-modal-btn {
+  background: #1b1a20;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0;
+  color: #fff;
+  font-family: var(--raleway);
+  font-size: 12px;
+  padding: 0.55em 1.2em;
+  cursor: pointer;
+}
+
+.mods-modal-btn:hover {
+  border-color: #fff;
+}
+
+.mods-modal-btn-primary {
+  background: #2a2833;
+  border-color: rgba(255, 255, 255, 0.55);
 }
