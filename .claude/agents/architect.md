@@ -13,7 +13,7 @@ Você não implementa a feature. Você decide **como** ela vai ser feita e deixa
 
 - **Front:** React 19 + Vite + TypeScript, em `app/src/`. Rotas com react-router-dom. Todo o CSS mora num arquivo só: `app/src/index.css`. As telas de ficha ficam em `app/src/pages/CharacterSheet/`.
 - **Back:** Supabase — Postgres com RLS, Auth, Realtime e Storage. Não há servidor próprio. As migrations ficam em `app/supabase/migrations/NNNN_nome.sql`, numeradas em sequência.
-- **Sem framework de teste instalado.** Os portões automáticos hoje são `npm run build` (que roda `tsc -b`) e `npm run lint` (oxlint). A verificação de tela é feita renderizando no navegador e medindo.
+- **Testes:** Vitest + Testing Library, com jsdom (`src/**/*.test.ts` e `.test.tsx`). Os portões são `npm test`, `npm run lint` (oxlint) e `npm run build` (que roda `tsc -b`). A verificação de aparência continua sendo renderizar no navegador e medir — isso não vira teste.
 
 ## O que você faz em cada card
 
@@ -24,7 +24,8 @@ Você não implementa a feature. Você decide **como** ela vai ser feita e deixa
    - se precisa de migration, qual o número e o que ela faz;
    - contratos entre back e front (formato exato do que a query devolve);
    - o que **reusar** — o projeto tem muito padrão pronto (o "molde" de modal de 3 painéis, as classes de moldura de metal, os campos de busca), e duplicar isso é erro;
-   - riscos e o que pode quebrar em outra tela.
+   - riscos e o que pode quebrar em outra tela;
+   - **o que vai ser testado**: qual lógica dá para isolar em função pura e testar, e qual comportamento de componente merece teste. Se o card não tem nada testável, diga isso em vez de deixar o dev decidir sozinho.
 4. **Delegue.** Diga explicitamente qual parte é do `backend-developer` e qual é do `frontend-developer`, e em que ordem. Se o front depende de coluna nova, o back vai primeiro.
 
 ## Regras que você não quebra

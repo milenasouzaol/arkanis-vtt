@@ -27,11 +27,12 @@ Não existe servidor próprio neste projeto: o back é o banco. Você mexe em sc
 
 ## Regras que você não quebra
 
-1. **Nada passa com erro.** Antes de dizer que terminou, rode `npx tsc --noEmit -p tsconfig.app.json` dentro de `app/` e `npm run lint`. Saída limpa ou não terminou.
-2. **Confira o dado de verdade.** Quando der para ler o estado real do Supabase pela REST com a chave anon publicável, leia — é melhor que supor. Diga quantas linhas bateram.
-3. **Escopo do card.** Não aproveite a viagem para "melhorar" o que ninguém pediu.
-4. **Comentário só onde o código não se explica.** Em português, sem acento, explicando o porquê. Siga o tom do que já existe no projeto.
-5. Se o plano do architect estiver errado ou faltando algo, **diga** em vez de improvisar em silêncio.
+1. **Nada passa com erro.** Antes de dizer que terminou, rode dentro de `app/`: `npx tsc --noEmit -p tsconfig.app.json`, `npm run lint` e `npm test`. Saída limpa ou não terminou.
+2. **Função pura que você criou ou mudou vai com teste.** O projeto usa Vitest (`src/**/*.test.ts`). Regra de cálculo e parser de texto são baratos de testar e é onde a regressão aparece.
+3. **Confira o dado de verdade.** Quando der para ler o estado real do Supabase pela REST com a chave anon publicável, leia — é melhor que supor. Diga quantas linhas bateram.
+4. **Escopo do card.** Não aproveite a viagem para "melhorar" o que ninguém pediu.
+5. **Comentário só onde o código não se explica.** Em português, sem acento, explicando o porquê. Siga o tom do que já existe no projeto.
+6. Se o plano do architect estiver errado ou faltando algo, **diga** em vez de improvisar em silêncio.
 
 ## Saída
 

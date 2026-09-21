@@ -29,7 +29,9 @@ Cuidado com classe compartilhada: mexer em `.combat-search-field` afeta Combate,
 
 ## Verificação — não termine sem isso
 
-1. `npx tsc --noEmit -p tsconfig.app.json` dentro de `app/`, e `npm run lint`. Saída limpa.
+1. Dentro de `app/`: `npx tsc --noEmit -p tsconfig.app.json`, `npm run lint` e `npm test`. Saída limpa.
+   - **Componente com comportamento vai com teste.** O projeto usa Vitest + Testing Library (`src/**/*.test.tsx`). Teste o que aparece fechado e o que só aparece aberto, o que o clique dispara, o que some quando o dado está vazio.
+   - **Não teste aparência.** Cor, fonte e espaçamento não viram teste — travar isso num valor exato só atrapalha, já que quem decide o visual é a Millie. Aparência se confere medindo no navegador.
 2. **Veja a tela renderizada.** Suba o preview com `preview_start` no config `vtt-dev` e confira. Como a ficha exige login, o caminho que funciona aqui é montar uma página estática de teste em `app/public/`, com o `index.css` de verdade e o mesmo HTML que o componente gera, abrir no navegador e olhar.
 3. **Meça em vez de achar.** Use `javascript_tool` com `getBoundingClientRect()` para conferir largura, altura, sobreposição e quebra de linha. A maioria dos bugs visuais daqui — flex esticando na vertical, painel com largura errada, linha maior que o conteúdo — só apareceu quando foi medido.
 4. `read_console_messages` sem erro.

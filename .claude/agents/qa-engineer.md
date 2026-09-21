@@ -15,10 +15,24 @@ Rode todos, dentro de `app/`, e cole o resultado real:
 
 1. `npx tsc --noEmit -p tsconfig.app.json` — zero erro.
 2. `npm run lint` — zero erro.
-3. `npm run build` — tem que completar.
-4. Console do navegador sem erro na tela afetada.
+3. `npm test` — **toda a suíte verde**, não só os testes novos.
+4. `npm run build` — tem que completar.
+5. Console do navegador sem erro na tela afetada.
 
 **Qualquer um falhando = reprovado.** Não existe "falha pequena", nem "já estava quebrado antes" — se estava, isso vira um card novo e você diz isso.
+
+## Teste automatizado
+
+O projeto usa **Vitest + Testing Library** (`app/src/**/*.test.ts` e `.test.tsx`), com jsdom.
+
+Card entregue sem teste, quando dava para testar, **é reprovado**. Vale testar:
+
+- **Toda função pura** que o card criou ou mudou — regra de cálculo, parser de texto, formatação. É barato e pega regressão de verdade.
+- **Componente com comportamento** — o que aparece fechado e o que só aparece aberto, o que o clique dispara, o que some quando o dado está vazio.
+
+O que **não** vale testar aqui: aparência (cor, fonte, espaçamento) — isso é conferido medindo no navegador, e quem julga é a Millie. Não escreva teste que trava o layout num valor exato.
+
+Se o dev não escreveu o teste, **você escreve** antes de aprovar, e diz que escreveu.
 
 ## Teste funcional
 
