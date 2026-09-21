@@ -7663,6 +7663,11 @@ code, .counter {
 
 /* ===== Inventario: modal de Modificacoes e Maldicoes ===== */
 
+/* Ele abre de dentro do modal de editar item (z-index 90), entao precisa vir acima dele. */
+.mods-modal-backdrop {
+  z-index: 120;
+}
+
 /* Diferente dos outros pickers, este e um painel so, centralizado na tela. */
 .mods-modal-shell {
   position: relative;

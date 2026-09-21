@@ -14,5 +14,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 | [KAN-9](KAN-9-ajustes-botoes-busca.md) | Ajustar botões e busca da aba de Inventário | front | aprovado | [KAN-9](https://arkaniss.atlassian.net/browse/KAN-9) |
 | [KAN-10](KAN-10-modal-editar-item.md) | Refazer o modal de editar item do Inventário | front | aprovado | [KAN-10](https://arkaniss.atlassian.net/browse/KAN-10) |
 | [KAN-11](KAN-11-modificacao-altera-numeros.md) | Modificação e maldição alteram os números do item | regra | aprovado | [KAN-11](https://arkaniss.atlassian.net/browse/KAN-11) |
+| [KAN-12](KAN-12-modal-modificacoes-atras.md) | Modal de Modificações abria atrás do de editar item | front | aprovado | [KAN-12](https://arkaniss.atlassian.net/browse/KAN-12) |
 
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

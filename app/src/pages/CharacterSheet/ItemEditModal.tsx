@@ -187,6 +187,7 @@ export default function ItemEditModal({
   }
 
   return createPortal(
+    <>
     <div className="attack-modal-backdrop" onClick={onClose}>
       <div className="attack-modal-wrap" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="ritual-close-outside" onClick={onClose} aria-label="Fechar">
@@ -278,16 +279,17 @@ export default function ItemEditModal({
           </div>
         </div>
       </div>
+    </div>
 
-      {showModModal && (
-        <ItemModifiersModal
-          itemType={item.type}
-          applied={modifiers}
-          onClose={() => setShowModModal(false)}
-          onApply={setModifiers}
-        />
-      )}
-    </div>,
+    {showModModal && (
+      <ItemModifiersModal
+        itemType={item.type}
+        applied={modifiers}
+        onClose={() => setShowModModal(false)}
+        onApply={setModifiers}
+      />
+    )}
+    </>,
     document.body,
   )
 }
