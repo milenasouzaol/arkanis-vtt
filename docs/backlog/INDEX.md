@@ -1,8 +1,8 @@
 # Backlog do Arkanis
 
 Um card por arquivo, em `docs/backlog/ARK-<numero>-<slug>.md`.
-Não há Jira conectado no projeto; este índice é o quadro.
+A fonte oficial é o Jira; este índice espelha o quadro, porque é ele que os agentes leem.
 
-| Card | Título | Camada | Status |
-| --- | --- | --- | --- |
-| — | _ainda sem cards_ | — | — |
+| Card | Título | Camada | Status | Jira |
+| --- | --- | --- | --- | --- |
+| — | _ainda sem cards_ | — | — | — |

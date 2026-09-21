@@ -10,7 +10,7 @@ Conduza essa demanda pelo fluxo de desenvolvimento do projeto. Você é o condut
 
 ## Ordem
 
-1. **`jira-manager`** — quebra a demanda em cards em `docs/backlog/`, com critérios de aceite verificáveis.
+1. **`jira-manager`** — cria as issues no Jira e espelha cada card em `docs/backlog/`, com critérios de aceite verificáveis.
    - Se algum card de tela ficar sem referência visual, **pare e peça a referência à Millie** antes de seguir. A estética nunca é inventada neste projeto.
 
 2. **`architect`** — lê os cards e o código, decide o desenho, escreve o `## Plano técnico` em cada card e diz o que é do back, o que é do front e em que ordem.
