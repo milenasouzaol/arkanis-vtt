@@ -26,4 +26,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-19](KAN-19-caixa-dano-estourando.md) | Caixa de dano estourava o card e engolia o nome | front | aprovado | [KAN-19](https://arkaniss.atlassian.net/browse/KAN-19) |
 
+| [KAN-20](KAN-20-coluna-pulando.md) | Coluna mudava de largura ao expandir um item | front | aprovado | [KAN-20](https://arkaniss.atlassian.net/browse/KAN-20) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._
