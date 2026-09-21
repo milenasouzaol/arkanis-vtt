@@ -24,4 +24,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 | [KAN-17](KAN-17-editar-ataque-mods-vazio.md) | Editar ataque mostrava modificações vazio | front | aprovado | [KAN-17](https://arkaniss.atlassian.net/browse/KAN-17) |
 | [KAN-18](KAN-18-mods-no-card.md) | Modificações do item listadas no card | front | aprovado | [KAN-18](https://arkaniss.atlassian.net/browse/KAN-18) |
 
+| [KAN-19](KAN-19-caixa-dano-estourando.md) | Caixa de dano estourava o card e engolia o nome | front | aprovado | [KAN-19](https://arkaniss.atlassian.net/browse/KAN-19) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

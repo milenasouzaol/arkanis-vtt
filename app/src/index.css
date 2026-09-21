@@ -7861,7 +7861,9 @@ code, .counter {
 
 .attack-card-title {
   flex: 1 1 auto;
-  min-width: 0;
+  /* nunca deixa o nome desaparecer, mesmo com dano comprido nas caixas */
+  min-width: 58px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 0.5em;
@@ -7873,6 +7875,12 @@ code, .counter {
   cursor: pointer;
 }
 
+.attack-card-title .inv-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .attack-card-icon {
   flex-shrink: 0;
   width: 34px;
@@ -7881,6 +7889,8 @@ code, .counter {
 }
 
 .attack-card-boxes {
+  /* os numeros nao encolhem: sao eles que a pessoa precisa ler pra rolar.
+     Quem cede espaco e o nome, que corta com reticencias. */
   flex-shrink: 0;
   display: flex;
   gap: 0.35em;
@@ -7893,6 +7903,9 @@ code, .counter {
   align-items: flex-start;
   gap: 0;
   min-width: 52px;
+  /* sem teto, um dano comprido esticava a caixa e engolia o nome do ataque */
+  max-width: 108px;
+  overflow: hidden;
   background: #1b1a20;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0;
@@ -7911,6 +7924,10 @@ code, .counter {
 }
 
 .attack-card-box-value {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: 'Keyes', var(--heading);
   font-weight: 700;
   font-size: 12px;

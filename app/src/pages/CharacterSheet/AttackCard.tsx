@@ -44,6 +44,7 @@ export default function AttackCard({
   name,
   ataque,
   dano,
+  danoDetalhado,
   critico,
   info,
   descricao,
@@ -60,6 +61,8 @@ export default function AttackCard({
   name: string
   ataque: string
   dano: string
+  /** Cada linha de dano por extenso, para o card expandido. */
+  danoDetalhado?: string[]
   critico: string
   info: AttackGeneralInfo
   descricao?: string | null
@@ -87,7 +90,7 @@ export default function AttackCard({
 
         {/* As proprias caixas sao os botoes de rolagem: nao existe botao solto embaixo. */}
         <div className="attack-card-boxes">
-          <button type="button" className="attack-card-box" onClick={onRollAtaque}>
+          <button type="button" className="attack-card-box" onClick={onRollAtaque} title={ataque}>
             <span className="attack-card-box-value">{ataque}</span>
             <span className="attack-card-box-label">Ataque</span>
           </button>
@@ -95,6 +98,7 @@ export default function AttackCard({
             type="button"
             className={`attack-card-box${danoArmado && !ehCritico ? ' armado' : ''}`}
             onClick={() => onRollDano(false)}
+            title={dano}
           >
             <span className="attack-card-box-value">{dano}</span>
             <span className="attack-card-box-label">Dano</span>
@@ -123,6 +127,20 @@ export default function AttackCard({
 
       {expanded && (
         <>
+          {danoDetalhado && danoDetalhado.length > 1 && (
+            <>
+              <div className="inv-item-divider" />
+              <dl className="inv-item-details">
+                {danoDetalhado.map((linha, i) => (
+                  <div key={linha + i}>
+                    <dt>{i === 0 ? 'Dano' : 'Dano extra'}</dt>
+                    <dd>{linha}</dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          )}
+
           {lista.length > 0 && (
             <>
               <div className="inv-item-divider" />

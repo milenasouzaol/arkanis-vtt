@@ -480,10 +480,17 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
             key={a.id}
             name={a.name}
             ataque={`${attrValue(character.attributes, a.attribute)}d20${a.d20_bonus ? `+${a.d20_bonus}` : ''}`}
-            dano={a.damage.map((d, i) => {
+            dano={(() => {
+              const [principal, ...extras] = a.damage
+              if (!principal) return '—'
+              const base = somaBonusNoDano(principal.formula, a.general_info?.damage_bonus_from_mods ?? 0)
+              const comTipo = `${base}${principal.tipo ? ` ${principal.tipo}` : ''}`
+              return extras.length ? `${comTipo} +${extras.map((d) => d.formula).join(' +')}` : comTipo
+            })()}
+            danoDetalhado={a.damage.map((d, i) => {
               const bonus = i === 0 ? (a.general_info?.damage_bonus_from_mods ?? 0) : 0
               return `${somaBonusNoDano(d.formula, bonus)}${d.tipo ? ` ${d.tipo}` : ''}`
-            }).join(', ') || '—'}
+            })}
             critico={`${a.threat_margin}/x${a.multiplier}`}
             info={a.general_info}
             municaoRestante={ammoInv ? `${ammoInv.ammo_current ?? 0}/${ammoInv.ammo_total} ${ammoInv.ammo_label ?? ''}`.trim() : null}
