@@ -36,6 +36,17 @@ Colunas do quadro, que é o vocabulário de status do Jira aqui (em português, 
 
 Não existe coluna de reprovado: card reprovado pelo QA **volta para "Em andamento"**.
 
+**Cuidado:** o nome da transição não é o nome da coluna de destino. Passe `transitionId` para o `transitionJiraIssue`, não o nome:
+
+| Para a coluna | `transitionId` | (nome da transição, que confunde) |
+| --- | --- | --- |
+| Tarefas pendentes | `11` | "Itens Pendentes" |
+| Em andamento | `21` | "Em andamento" |
+| Em análise | `31` | "In Review" |
+| Concluído | `41` | "Itens concluídos" |
+
+Se um id falhar, chame `listJiraIssueTransitions` na própria issue e use o que ela devolver.
+
 - **Crie a issue com `createJiraIssue`** e use a **chave que o Jira devolveu** (`KAN-7`, o que vier) como id do card. Nunca invente a chave nem presuma o próximo número — ela vem da resposta da criação.
 - Ponha o corpo do card (contexto, escopo, critérios de aceite) na descrição da issue.
 - Mova o card de coluna com `transitionJiraIssue` quando o status mudar.
