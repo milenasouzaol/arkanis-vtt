@@ -7,6 +7,33 @@ import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPicke
 import { numerosDoAtaque, statsComModificadores } from './itemMods'
 import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
 
+// O <select> nativo abre a lista branca do sistema e sai roxo; este segue a estetica do
+// resto do app, igual aos seletores dos modais.
+function AmmoPicker({ valorLabel, opcoes, onEscolher }: {
+  valorLabel: string
+  opcoes: { id: string | null; label: string }[]
+  onEscolher: (id: string | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="attack-select inv-extra-select">
+      <button type="button" className="attack-select-trigger" onClick={() => setOpen((v) => !v)}>
+        <span>{valorLabel}</span>
+        <span className="attack-select-arrow">{open ? '▲' : '▾'}</span>
+      </button>
+      {open && (
+        <div className="attack-select-list">
+          {opcoes.map((o) => (
+            <button key={o.id ?? 'nenhuma'} type="button" onClick={() => { onEscolher(o.id); setOpen(false) }}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 type EquipmentItem = {
   id: string
   type: 'arma' | 'municao' | 'protecao' | 'geral' | 'paranormal'
@@ -75,6 +102,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
       description: item.description ?? null,
       stats: item.stats ?? {},
       applied_modifiers: inv.applied_modifiers ?? [],
+      quantity: inv.quantity,
       image_url: (item as { image_url?: string | null }).image_url ?? null,
     })
   }
@@ -92,12 +120,6 @@ export default function InventarioTab({ character, editMode }: { character: Char
       if (currentlyEquippedProtection) await supabase.from('character_inventory').update({ is_equipped: false }).eq('id', currentlyEquippedProtection.id)
     }
     await supabase.from('character_inventory').update({ is_equipped: !inv.is_equipped }).eq('id', inv.id)
-    await loadInventory()
-  }
-
-  async function setQuantity(inv: InventoryItem, quantity: number) {
-    if (quantity < 0) return
-    await supabase.from('character_inventory').update({ quantity }).eq('id', inv.id)
     await loadInventory()
   }
 
@@ -246,21 +268,26 @@ export default function InventarioTab({ character, editMode }: { character: Char
               }
             >
               <div className="inv-item-extras">
-                <label>
-                  Quantas unidades
-                  <button type="button" className="inv-item-btn" onClick={() => setQuantity(inv, inv.quantity - 1)} disabled={inv.quantity <= 0}>-</button>
-                  {inv.quantity}
-                  <button type="button" className="inv-item-btn" onClick={() => setQuantity(inv, inv.quantity + 1)}>+</button>
-                </label>
-                {inv.ammo_total === null ? (
-                  <button type="button" className="inv-item-btn" onClick={() => initAmmoTracking(inv, item)}>Rastrear Munição/Usos</button>
-                ) : (
-                  <>
-                    <label>Rótulo <input value={inv.ammo_label ?? ''} onChange={(e) => setAmmo(inv, { ammo_label: e.target.value })} /></label>
-                    <label>Total <input type="number" value={inv.ammo_total} onChange={(e) => setAmmo(inv, { ammo_total: Number(e.target.value) })} /></label>
-                    <button type="button" className="inv-item-btn" onClick={() => setAmmo(inv, { ammo_current: inv.ammo_total })}>Recarregar</button>
-                  </>
+                {/* Quem conta bala e o proprio item de municao, nao a arma - e so quando a
+                    regra de contagem de municao esta ligada. Na arma fica so o vinculo. */}
+                {item.type === 'municao' && character.optional_rules.contagem_municao && (
+                  inv.ammo_total === null ? (
+                    <button type="button" className="inv-item-btn" onClick={() => initAmmoTracking(inv, item)}>Contar munição</button>
+                  ) : (
+                    <>
+                      <label className="inv-extra-field">
+                        <span>Rótulo</span>
+                        <input className="inv-extra-input" value={inv.ammo_label ?? ''} onChange={(e) => setAmmo(inv, { ammo_label: e.target.value })} />
+                      </label>
+                      <label className="inv-extra-field">
+                        <span>Total</span>
+                        <input className="inv-extra-input" type="number" value={inv.ammo_total} onChange={(e) => setAmmo(inv, { ammo_total: Number(e.target.value) })} />
+                      </label>
+                      <button type="button" className="inv-item-btn" onClick={() => setAmmo(inv, { ammo_current: inv.ammo_total })}>Recarregar</button>
+                    </>
+                  )
                 )}
+
                 {item.type === 'arma' && (() => {
                   const requiredAmmo = (item.stats ?? {}).tipo_municao as string | undefined
                   const compatibleAmmo = items.filter((i) => {
@@ -268,18 +295,26 @@ export default function InventarioTab({ character, editMode }: { character: Char
                     if (ammoItem?.type !== 'municao') return false
                     return requiredAmmo ? ammoItem.name === requiredAmmo : true
                   })
+                  const nomeDe = (id: string | null) => {
+                    if (!id) return 'Nenhuma'
+                    const achado = compatibleAmmo.find((i) => i.id === id)
+                    return (achado?.equipment_items ?? achado?.custom_item)?.name ?? 'Nenhuma'
+                  }
                   return (
-                    <label>
-                      Munição {requiredAmmo ? '(' + requiredAmmo + ')' : ''}
-                      <select value={inv.linked_ammo_id ?? ''} onChange={(e) => linkAmmo(inv, e.target.value || null)}>
-                        <option value="">Nenhuma</option>
-                        {compatibleAmmo.map((i) => (
-                          <option key={i.id} value={i.id}>{(i.equipment_items ?? i.custom_item)?.name}</option>
-                        ))}
-                      </select>
-                    </label>
+                    <div className="inv-extra-field">
+                      <span>Munição{requiredAmmo ? ` (${requiredAmmo})` : ''}</span>
+                      <AmmoPicker
+                        valorLabel={nomeDe(inv.linked_ammo_id)}
+                        opcoes={[
+                          { id: null, label: 'Nenhuma' },
+                          ...compatibleAmmo.map((i) => ({ id: i.id, label: (i.equipment_items ?? i.custom_item)?.name ?? '—' })),
+                        ]}
+                        onEscolher={(id) => linkAmmo(inv, id)}
+                      />
+                    </div>
                   )
                 })()}
+
                 {canEquip && (
                   <button type="button" className="inv-item-btn" onClick={() => toggleEquip(inv)}>{inv.is_equipped ? 'Desequipar' : 'Equipar'}</button>
                 )}

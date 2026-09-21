@@ -15,5 +15,8 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 | [KAN-10](KAN-10-modal-editar-item.md) | Refazer o modal de editar item do Inventário | front | aprovado | [KAN-10](https://arkaniss.atlassian.net/browse/KAN-10) |
 | [KAN-11](KAN-11-modificacao-altera-numeros.md) | Modificação e maldição alteram os números do item | regra | aprovado | [KAN-11](https://arkaniss.atlassian.net/browse/KAN-11) |
 | [KAN-12](KAN-12-modal-modificacoes-atras.md) | Modal de Modificações abria atrás do de editar item | front | aprovado | [KAN-12](https://arkaniss.atlassian.net/browse/KAN-12) |
+| KAN-13 | Ataque do Combate segue o item do Inventário | regra | aprovado | [KAN-13](https://arkaniss.atlassian.net/browse/KAN-13) |
+| KAN-14 | Caixas do card de ataque viram botões, card compacto | front | aprovado | [KAN-14](https://arkaniss.atlassian.net/browse/KAN-14) |
+| [KAN-15](KAN-15-limpar-controles-card.md) | Limpar controles soltos do card e contagem de bala no lugar certo | front | aprovado | [KAN-15](https://arkaniss.atlassian.net/browse/KAN-15) |
 
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

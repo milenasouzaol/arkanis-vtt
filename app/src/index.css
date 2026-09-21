@@ -7934,3 +7934,33 @@ code, .counter {
   padding: 0 0.1em;
   cursor: pointer;
 }
+
+/* Controles soltos do card de item: campo com rotulo em cima, no tom dos botoes */
+
+.inv-extra-field {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.inv-extra-input {
+  width: 70px;
+  background: #0f0e12;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0;
+  color: #fff;
+  font-family: var(--raleway);
+  font-size: 11px;
+  padding: 0.25em 0.4em;
+}
+
+.inv-extra-select {
+  min-width: 120px;
+}
+
+.inv-extra-select .attack-select-trigger {
+  background: #0f0e12;
+  border-color: rgba(255, 255, 255, 0.35);
+  font-size: 11px;
+  padding: 0.25em 0.5em;
+}

@@ -88,6 +88,8 @@ export type ItemToEdit = {
   stats: Record<string, unknown>
   applied_modifiers: AppliedModifier[]
   image_url?: string | null
+  /** Quantas unidades a pessoa tem na bolsa. Fica na linha do inventario, nao no item. */
+  quantity: number
 }
 
 export default function ItemEditModal({
@@ -104,6 +106,7 @@ export default function ItemEditModal({
   const [name, setName] = useState(item.name)
   const [categoria, setCategoria] = useState(item.category || 'I')
   const [espacos, setEspacos] = useState(String(item.spaces ?? 1))
+  const [unidades, setUnidades] = useState(String(item.quantity ?? 1))
   const [tipo, setTipo] = useState(String(s.natureza ?? 'corpo_a_corpo'))
   const [empunhadura, setEmpunhadura] = useState(String(s.empunhadura ?? 'uma_mao'))
   const [proficiencia, setProficiencia] = useState(String(s.proficiencia ?? ''))
@@ -180,6 +183,7 @@ export default function ItemEditModal({
         stats,
       },
       applied_modifiers: modifiers,
+      quantity: Math.max(0, Number(unidades) || 0),
     }).eq('id', item.id)
 
     onSaved()
@@ -202,6 +206,7 @@ export default function ItemEditModal({
               <TextField label="Nome" value={name} onChange={setName} placeholder="Item" />
               <SelectField label="Categoria" value={categoria} options={CATEGORIA_OPTIONS} onChange={setCategoria} />
               <TextField label="Espaços" value={espacos} onChange={setEspacos} placeholder="1" />
+              <TextField label="Quantas unidades" value={unidades} onChange={setUnidades} placeholder="1" />
             </div>
             <div className="attack-field-row">
               <SelectField label="Tipo" value={tipo} options={TIPO_OPTIONS} onChange={setTipo} />
