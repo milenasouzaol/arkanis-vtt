@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
 import radioChecked from '../../assets/combate/radio-checked.svg'
 import radioEmpty from '../../assets/combate/radio-empty.svg'
+import { detalhes, resumo } from './InventoryItemCard'
 
 // As categorias da lateral sao os tipos de item do banco. "Itens Amaldicoados" e o tipo
 // paranormal, e "Geral" e o mesmo que os "Equipamentos" do filtro da aba.
@@ -30,7 +31,7 @@ const ITEM_CATEGORIES = ['0', 'I', 'II', 'III', 'IV']
 
 export type EquipmentPickResult =
   | { kind: 'catalog'; id: string }
-  | { kind: 'custom'; name: string; type: EquipmentType; category: string; spaces: number; description: string }
+  | { kind: 'custom'; name: string; type: EquipmentType; category: string; spaces: number; description: string; stats?: Record<string, unknown> }
 
 type Item = {
   id: string
@@ -38,6 +39,8 @@ type Item = {
   description: string | null
   category: string | null
   spaces: number | null
+  type: EquipmentType
+  stats: Record<string, unknown>
   sourceSlug?: string | null
 }
 
@@ -104,6 +107,8 @@ export default function EquipmentPickerModal({
               description: r.custom_item.description ?? null,
               category: r.custom_item.category ?? null,
               spaces: r.custom_item.spaces ?? null,
+              type: (r.custom_item.type ?? 'geral') as EquipmentType,
+              stats: r.custom_item.stats ?? {},
             })),
         ))
       return
@@ -111,7 +116,7 @@ export default function EquipmentPickerModal({
 
     supabase
       .from('equipment_items')
-      .select('id, name, description, category, spaces, sources(slug)')
+      .select('id, name, description, category, spaces, type, stats, sources(slug)')
       .eq('type', category)
       .order('name')
       .then(({ data }) => setItems((data ?? []).map((r: any) => ({
@@ -120,6 +125,8 @@ export default function EquipmentPickerModal({
         description: r.description,
         category: r.category,
         spaces: r.spaces,
+        type: r.type,
+        stats: r.stats ?? {},
         sourceSlug: r.sources?.slug ?? null,
       }))))
   }, [category, sourceFilter, characterId])
@@ -159,6 +166,7 @@ export default function EquipmentPickerModal({
         category: selectedItem.category ?? 'I',
         spaces: selectedItem.spaces ?? 0,
         description: selectedItem.description ?? '',
+        stats: selectedItem.stats,
       })
       return
     }
@@ -257,7 +265,37 @@ export default function EquipmentPickerModal({
             ) : selectedItem ? (
               <>
                 <h3>{selectedItem.name}</h3>
-                <p className="conditions-modal-detail-text">{selectedItem.description}</p>
+
+                <div className="inv-item-stats">
+                  {resumo(selectedItem).map((e) => (
+                    <span key={e.label} className="inv-item-stat">
+                      <span className="inv-item-stat-label">{e.label}</span>
+                      <span className="inv-item-stat-value">{e.value}</span>
+                    </span>
+                  ))}
+                </div>
+
+                {detalhes(selectedItem).length > 0 && (
+                  <>
+                    <div className="inv-item-divider" />
+                    <dl className="inv-item-details">
+                      {detalhes(selectedItem).map((d) => (
+                        <div key={d.label}>
+                          <dt>{d.label}</dt>
+                          <dd>{d.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </>
+                )}
+
+                {selectedItem.description && (
+                  <>
+                    <div className="inv-item-divider" />
+                    <p className="conditions-modal-detail-text">{selectedItem.description}</p>
+                  </>
+                )}
+
                 <button type="button" className="conditions-modal-add-btn" onClick={submitCatalogItem}>Adicionar Equipamento</button>
               </>
             ) : (

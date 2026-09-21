@@ -83,7 +83,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
     } else {
       await supabase.from('character_inventory').insert({
         character_id: character.id,
-        custom_item: { name: result.name, type: result.type, category: result.category, spaces: result.spaces, description: result.description, stats: {} },
+        custom_item: { name: result.name, type: result.type, category: result.category, spaces: result.spaces, description: result.description, stats: result.stats ?? {} },
       })
     }
     setAdding(false)

@@ -36,7 +36,7 @@ function rotulo(mapa: Record<string, string>, valor: unknown) {
 
 // A linha de resumo muda conforme o tipo: arma mostra dano e critico, protecao mostra
 // defesa, e todo item mostra categoria e espaco.
-function resumo(item: InventoryCardItem): { label: string; value: string }[] {
+export function resumo(item: InventoryCardItem): { label: string; value: string }[] {
   const stats = item.stats ?? {}
   const linha: { label: string; value: string }[] = []
 
@@ -55,7 +55,7 @@ function resumo(item: InventoryCardItem): { label: string; value: string }[] {
 }
 
 // No card aberto, so aparecem os campos que o item realmente tem.
-function detalhes(item: InventoryCardItem): { label: string; value: string }[] {
+export function detalhes(item: InventoryCardItem): { label: string; value: string }[] {
   const stats = item.stats ?? {}
   const pares: { label: string; value: string | null }[] = [
     { label: 'Tipo', value: rotulo(NATUREZA_LABEL, stats.natureza) },
