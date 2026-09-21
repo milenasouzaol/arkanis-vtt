@@ -8,7 +8,7 @@ import RollResult, { type RollResultData } from './RollResult'
 import HabilidadesTab from './HabilidadesTab'
 import RituaisTab from './RituaisTab'
 import InventarioTab from './InventarioTab'
-import { bonusIncondicionais, penalidadeDeCarga } from './itemMods'
+import { bonusCondicionais, bonusIncondicionais, penalidadeDeCarga } from './itemMods'
 import CombateTab from './CombateTab'
 import ModifiersPanel, { type Modifier } from './ModifiersPanel'
 import PericiasTable from './PericiasTable'
@@ -227,16 +227,24 @@ export default function AgenteTab({
   useEffect(() => {
     supabase
       .from('character_inventory')
-      .select('equipment_items(description), custom_item')
+      .select('active_bonuses, equipment_items(description), custom_item')
       .eq('character_id', character.id)
       .eq('is_equipped', true)
       .then(({ data }) => {
-        const descricoes = (data ?? []).map((i: any) => i.equipment_items?.description ?? i.custom_item?.description)
-        setCargaPenalty(descricoes.reduce((soma, d) => soma + penalidadeDeCarga(d), 0))
+        const linhas = (data ?? []).map((i: any) => ({
+          descricao: i.equipment_items?.description ?? i.custom_item?.description,
+          ligados: (i.active_bonuses ?? []) as number[],
+        }))
+        setCargaPenalty(linhas.reduce((soma, l) => soma + penalidadeDeCarga(l.descricao), 0))
 
         const porPericia: Record<string, number> = {}
-        for (const d of descricoes) {
-          for (const b of bonusIncondicionais(d)) {
+        for (const l of linhas) {
+          // os que valem sempre entram direto; os condicionais so se a pessoa ligou
+          const valendo = [
+            ...bonusIncondicionais(l.descricao),
+            ...bonusCondicionais(l.descricao).filter((_, i) => l.ligados.includes(i)),
+          ]
+          for (const b of valendo) {
             for (const pericia of b.pericias) porPericia[pericia] = (porPericia[pericia] ?? 0) + b.valor
           }
         }

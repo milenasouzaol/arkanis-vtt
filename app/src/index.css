@@ -8086,3 +8086,44 @@ code, .counter {
   font-size: 9px;
   color: #3ecf6e;
 }
+
+/* Bonus condicionais do item, com liga/desliga */
+
+.inv-bonus-block {
+  margin-top: 0.9em;
+  padding-top: 0.7em;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.inv-bonus-head {
+  margin-bottom: 0.45em;
+  font-family: var(--raleway);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.inv-bonus-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: baseline;
+  gap: 0.5em;
+  padding: 0.3em 0;
+  cursor: pointer;
+}
+
+.inv-bonus-valor {
+  font-family: var(--raleway);
+  font-weight: 600;
+  font-size: 11px;
+  color: #3ecf6e;
+  white-space: nowrap;
+}
+
+.inv-bonus-condicao {
+  font-family: var(--raleway);
+  font-size: 10px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.6);
+}

@@ -7,7 +7,7 @@ import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPicke
 import { espacoComModificadores, numerosDoAtaque, statsComModificadores } from './itemMods'
 import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
 import ItemModifiersModal from './ItemModifiersModal'
-import type { AppliedModifier } from './itemMods'
+import { bonusCondicionais, type AppliedModifier } from './itemMods'
 
 // O <select> nativo abre a lista branca do sistema e sai roxo; este segue a estetica do
 // resto do app, igual aos seletores dos modais.
@@ -59,6 +59,7 @@ type InventoryItem = {
   ammo_current: number | null
   ammo_total: number | null
   ammo_label: string | null
+  active_bonuses: number[]
 }
 
 export default function InventarioTab({ character, editMode }: { character: CharacterRecord; editMode: boolean }) {
@@ -73,7 +74,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
   async function loadInventory() {
     const { data } = await supabase
       .from('character_inventory')
-      .select('id, equipment_item_id, custom_item, category_override, is_equipped, quantity, applied_modifiers, linked_ammo_id, ammo_current, ammo_total, ammo_label, equipment_items(id, type, name, category, spaces, description, stats)')
+      .select('id, equipment_item_id, custom_item, category_override, is_equipped, quantity, applied_modifiers, linked_ammo_id, ammo_current, ammo_total, ammo_label, active_bonuses, equipment_items(id, type, name, category, spaces, description, stats)')
       .eq('character_id', character.id)
     setItems((data ?? []) as unknown as InventoryItem[])
   }
@@ -108,6 +109,14 @@ export default function InventarioTab({ character, editMode }: { character: Char
       quantity: inv.quantity,
       image_url: (item as { image_url?: string | null }).image_url ?? null,
     })
+  }
+
+  // Liga ou desliga um bonus condicional do item (Binoculos, Corda, Mascara de Gas...).
+  async function alternarBonus(inv: InventoryItem, indice: number) {
+    const ligados = inv.active_bonuses ?? []
+    const proximo = ligados.includes(indice) ? ligados.filter((i) => i !== indice) : [...ligados, indice]
+    await supabase.from('character_inventory').update({ active_bonuses: proximo }).eq('id', inv.id)
+    await loadInventory()
   }
 
   async function salvarMods(inv: InventoryItem, next: AppliedModifier[]) {
@@ -320,6 +329,30 @@ export default function InventarioTab({ character, editMode }: { character: Char
                   </div>
                 )}
               </div>
+
+              {/* Bonus que so valem em certa situacao: a pessoa liga na hora em que vale,
+                  em vez de o numero ficar inflado o tempo todo na ficha. */}
+              {(() => {
+                const condicionais = bonusCondicionais(item.description)
+                if (condicionais.length === 0) return null
+                const ligados = inv.active_bonuses ?? []
+                return (
+                  <div className="inv-bonus-block">
+                    <div className="inv-bonus-head">Bônus por situação</div>
+                    {condicionais.map((b, i) => (
+                      <label key={`${b.pericias.join()}-${i}`} className="inv-bonus-row">
+                        <input
+                          type="checkbox"
+                          checked={ligados.includes(i)}
+                          onChange={() => alternarBonus(inv, i)}
+                        />
+                        <span className="inv-bonus-valor">{b.valor > 0 ? `+${b.valor}` : b.valor} {b.pericias.join(' / ')}</span>
+                        <span className="inv-bonus-condicao">{b.condicao}</span>
+                      </label>
+                    ))}
+                  </div>
+                )
+              })()}
 
               <div className="inv-item-extras">
                 {/* Quem conta bala e o proprio item de municao, nao a arma - e so quando a

@@ -83,3 +83,35 @@ describe('resistência de tipo que não é elemento', () => {
     expect(r.some((x) => /efeito/i.test(x.tipo))).toBe(false)
   })
 })
+
+describe('quais bônus valem, com e sem o liga/desliga', () => {
+  // Mesma conta que a ficha faz: incondicionais sempre, condicionais só se ligados.
+  function valendo(descricao: string, ligados: number[]) {
+    const lista = [
+      ...bonusIncondicionais(descricao),
+      ...bonusCondicionais(descricao).filter((_, i) => ligados.includes(i)),
+    ]
+    const porPericia: Record<string, number> = {}
+    for (const b of lista) for (const p of b.pericias) porPericia[p] = (porPericia[p] ?? 0) + b.valor
+    return porPericia
+  }
+
+  it('binóculos desligados não somam nada', () => {
+    expect(valendo(DESC.binoculos, [])).toEqual({})
+  })
+
+  it('binóculos ligados somam +5 em Percepção', () => {
+    expect(valendo(DESC.binoculos, [0])).toEqual({ Percepção: 5 })
+  })
+
+  it('Pé de Morto soma mesmo sem ligar nada, porque vale sempre', () => {
+    expect(valendo(DESC.peDeMorto, [])).toEqual({ Furtividade: 5 })
+  })
+
+  it('dois itens somam na mesma perícia', () => {
+    const a = valendo(DESC.peDeMorto, [])
+    const b = valendo(DESC.camera, [])
+    expect(a.Furtividade).toBe(5)
+    expect(b.Percepção).toBe(2)
+  })
+})
