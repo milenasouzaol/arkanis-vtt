@@ -197,6 +197,60 @@ export function resistenciasDeModificadores(applied: AppliedModifier[] | undefin
   return [...porTipo].map(([tipo, valor]) => ({ tipo, valor }))
 }
 
+const NOME_DO_TIPO: Record<string, string> = {
+  corte: 'Corte',
+  impacto: 'Impacto',
+  balistico: 'Balístico',
+  perfuracao: 'Perfuração',
+}
+
+// A resistencia de verdade nasce no proprio item: a Protecao Pesada ja traz
+// { corte: 2, impacto: 2, balistico: 2, perfuracao: 2 } no stats. Quem equipa ela ja tem
+// isso, sem modificacao nenhuma.
+export function resistenciasDoItem(stats: Record<string, unknown> | undefined): Resistencia[] {
+  const tabela = (stats ?? {}).resistencia
+  if (!tabela || typeof tabela !== 'object') return []
+  return Object.entries(tabela as Record<string, unknown>)
+    .map(([tipo, valor]) => ({ tipo: NOME_DO_TIPO[tipo] ?? tipo, valor: Number(valor) || 0 }))
+    .filter((r) => r.valor > 0)
+}
+
+// Resistencia de um item equipado, ja com as modificacoes dele.
+//
+// "RD sobe pra 5" (Blindada) nao cria um tipo novo: ela eleva os tipos que o item ja
+// resiste. Protecao Pesada com Blindada fica com 5 em corte, impacto, balistico e
+// perfuracao - nao com um "Dano 5" solto, que era o que eu estava mostrando.
+export function resistenciasDoItemEquipado(
+  stats: Record<string, unknown> | undefined,
+  applied: AppliedModifier[] | undefined,
+): Resistencia[] {
+  const doItem = resistenciasDoItem(stats)
+  const dasMods = resistenciasDeModificadores(applied)
+
+  const porTipo = new Map<string, number>()
+  for (const r of doItem) porTipo.set(r.tipo, r.valor)
+
+  for (const r of dasMods) {
+    if (r.tipo === 'Dano') {
+      // Piso generico: eleva o que o item ja resiste. Se o item nao resiste a nada,
+      // nao ha o que elevar e o valor fica como resistencia geral mesmo.
+      if (doItem.length === 0) porTipo.set('Dano', Math.max(porTipo.get('Dano') ?? 0, r.valor))
+      else for (const d of doItem) porTipo.set(d.tipo, Math.max(porTipo.get(d.tipo) ?? 0, r.valor))
+      continue
+    }
+    porTipo.set(r.tipo, Math.max(porTipo.get(r.tipo) ?? 0, r.valor))
+  }
+
+  return [...porTipo].map(([tipo, valor]) => ({ tipo, valor }))
+}
+
+// A Protecao Pesada tira 5 das pericias com penalidade de carga (Acrobacia, Crime e
+// Furtividade, que o banco marca com carga_penalty).
+export function penalidadeDeCarga(descricao: string | null | undefined): number {
+  const m = String(descricao ?? '').match(/-\s*(\d+)\s+em perícias com penalidade de carga/i)
+  return m ? -Number(m[1]) : 0
+}
+
 // "Dano 5 · Energia 10", ou vazio quando nao ha nenhuma.
 export function textoDasResistencias(resistencias: Resistencia[]): string {
   return resistencias.map((r) => `${r.tipo} ${r.valor}`).join(' · ')

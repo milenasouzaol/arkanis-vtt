@@ -10,7 +10,7 @@ import ellipsisIcon from '../../assets/pericias/ellipsis.svg'
 import ellipsisGreenIcon from '../../assets/pericias/ellipsis-green.svg'
 import ellipsisRedIcon from '../../assets/pericias/ellipsis-red.svg'
 
-type SkillRow = { id: string; name: string; default_attribute: string | null; description: string | null }
+type SkillRow = { id: string; name: string; default_attribute: string | null; description: string | null; carga_penalty?: boolean }
 type CharacterSkillRow = { skill_id: string; training: Training; attribute_override: string | null; extra_bonus: number }
 
 const ATTR_LABELS: { key: AttributeKey; abbr: string }[] = [
@@ -76,6 +76,7 @@ export default function PericiasTable({
   attributes,
   testDiceBonus,
   testValueBonus,
+  cargaPenalty,
   onSetSkillField,
   onRoll,
 }: {
@@ -84,6 +85,8 @@ export default function PericiasTable({
   attributes: Attributes
   testDiceBonus: number
   testValueBonus: number
+  /** Penalidade da proteção equipada nas perícias afetadas por carga (negativo, ex.: -5). */
+  cargaPenalty: number
   onSetSkillField: (skillId: string, patch: Partial<CharacterSkillRow>) => void
   onRoll: (skill: SkillRow) => void
 }) {
@@ -107,8 +110,11 @@ export default function PericiasTable({
     .map((s) => {
       const cs = csOf(s.id)
       const attr = cs.attribute_override ?? s.default_attribute
-      const total = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus
-      return { skill: s, cs, attr, total }
+      // A Protecao Pesada tira 5 das pericias marcadas com carga_penalty no banco:
+      // Acrobacia, Crime e Furtividade.
+      const penalidade = s.carga_penalty ? cargaPenalty : 0
+      const total = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus + penalidade
+      return { skill: s, cs, attr, total, penalidade }
     })
 
   rows.sort((a, b) => {
@@ -140,7 +146,7 @@ export default function PericiasTable({
       </div>
 
       <div className="pericias-list">
-        {rows.map(({ skill, cs, attr, total }) => {
+        {rows.map(({ skill, cs, attr, total, penalidade }) => {
           const effectiveScore = attr ? attrValue(attributes, attr) + testDiceBonus : 0
           const diceCount = effectiveScore > 0 ? effectiveScore : 2
           const bonusPips = Math.min(Math.abs(testDiceBonus), diceCount)
@@ -204,7 +210,11 @@ export default function PericiasTable({
                 />
               </div>
 
-              <div className="pericias-cell pericias-cell-total">{total}</div>
+              {/* a penalidade de carga aparece do lado do total, pra nao sumir dentro dele */}
+              <div className="pericias-cell pericias-cell-total" title={penalidade ? `inclui ${penalidade} de penalidade de carga` : undefined}>
+                {total}
+                {penalidade !== 0 && <span className="pericias-carga-penalty">{penalidade}</span>}
+              </div>
             </div>
           )
         })}

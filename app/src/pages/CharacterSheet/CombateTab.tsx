@@ -9,7 +9,7 @@ import { type Modifier } from './ModifiersPanel'
 import CombateModifiersPanel from './CombateModifiersPanel'
 import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
 import AttackCard from './AttackCard'
-import { defesaDeModificadores, numerosDoAtaque, resistenciasDeModificadores, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
+import { defesaDeModificadores, numerosDoAtaque, resistenciasDoItemEquipado, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
@@ -108,7 +108,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   function loadEquippedProtection() {
     supabase
       .from('character_inventory')
-      .select('is_equipped, applied_modifiers, equipment_items(type, stats, name), custom_item')
+      .select('is_equipped, applied_modifiers, equipment_items(type, stats, name, description), custom_item')
       .eq('character_id', character.id)
       .eq('is_equipped', true)
       .then(({ data }) => {
@@ -120,9 +120,16 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         setEquippedDefense(Number(stats.defesa ?? 0) + daModificacao)
         setEquippedProtectionName(name)
 
-        // Resistencia nao vem so da protecao: acessorio amaldicoado equipado tambem da.
-        const todosMods = (data ?? []).flatMap((i: any) => i.applied_modifiers ?? [])
-        setResistencias(resistenciasDeModificadores(todosMods))
+        // Resistencia nasce no proprio item (a Protecao Pesada ja traz corte/impacto/
+        // balistico/perfuracao 2) e as modificacoes elevam isso. Vale pra qualquer item
+        // equipado, nao so a protecao.
+        const todas = (data ?? []).flatMap((i: any) => resistenciasDoItemEquipado(
+          i.equipment_items?.stats ?? i.custom_item?.stats,
+          i.applied_modifiers,
+        ))
+        const porTipo = new Map<string, number>()
+        for (const r of todas) porTipo.set(r.tipo, Math.max(porTipo.get(r.tipo) ?? 0, r.valor))
+        setResistencias([...porTipo].map(([tipo, valor]) => ({ tipo, valor })))
       })
   }
 

@@ -8,6 +8,7 @@ import RollResult, { type RollResultData } from './RollResult'
 import HabilidadesTab from './HabilidadesTab'
 import RituaisTab from './RituaisTab'
 import InventarioTab from './InventarioTab'
+import { penalidadeDeCarga } from './itemMods'
 import CombateTab from './CombateTab'
 import ModifiersPanel, { type Modifier } from './ModifiersPanel'
 import PericiasTable from './PericiasTable'
@@ -77,6 +78,7 @@ type SkillRow = {
   name: string
   default_attribute: string | null
   description: string | null
+  carga_penalty?: boolean
 }
 
 type CharacterSkillRow = {
@@ -108,6 +110,8 @@ export default function AgenteTab({
   const { session } = useAuth()
   const [classRow, setClassRow] = useState<ClassRow | null>(null)
   const [skills, setSkills] = useState<SkillRow[]>([])
+  // Penalidade que a protecao equipada impoe as pericias de carga (ex.: -5 da pesada).
+  const [cargaPenalty, setCargaPenalty] = useState(0)
   const [charSkills, setCharSkills] = useState<Record<string, CharacterSkillRow>>({})
   const [roll, setRoll] = useState<RollResultData | null>(null)
   const [rightTab, setRightTab] = useState<'Combate' | 'Habilidades' | 'Rituais' | 'Inventário'>('Combate')
@@ -216,8 +220,25 @@ export default function AgenteTab({
     grantEligibleTrackTiers(character.chosen_track_id)
   }, [character.chosen_track_id, character.nex_percent, trackTiers])
 
+  // A penalidade de carga vem da descricao da protecao equipada ("-5 em perícias com
+  // penalidade de carga"), entao ela muda quando a pessoa equipa ou desequipa.
   useEffect(() => {
-    supabase.from('skills').select('id, name, default_attribute, description').order('sort_order').then(({ data }) => setSkills(data ?? []))
+    supabase
+      .from('character_inventory')
+      .select('equipment_items(description), custom_item')
+      .eq('character_id', character.id)
+      .eq('is_equipped', true)
+      .then(({ data }) => {
+        const total = (data ?? []).reduce((soma, i: any) => {
+          const descricao = i.equipment_items?.description ?? i.custom_item?.description
+          return soma + penalidadeDeCarga(descricao)
+        }, 0)
+        setCargaPenalty(total)
+      })
+  }, [character.id, rightTab])
+
+  useEffect(() => {
+    supabase.from('skills').select('id, name, default_attribute, description, carga_penalty').order('sort_order').then(({ data }) => setSkills(data ?? []))
     supabase
       .from('character_skills')
       .select('skill_id, training, attribute_override, extra_bonus')
@@ -556,6 +577,7 @@ export default function AgenteTab({
             attributes={character.attributes}
             testDiceBonus={testDiceBonus}
             testValueBonus={testValueBonus}
+            cargaPenalty={cargaPenalty}
             onSetSkillField={setSkillField}
             onRoll={rollSkill}
           />

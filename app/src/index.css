@@ -8070,3 +8070,11 @@ code, .counter {
 .inv-mods-remove:hover {
   color: #fff;
 }
+
+/* Penalidade de carga mostrada ao lado do total da pericia */
+.pericias-carga-penalty {
+  margin-left: 0.3em;
+  font-family: var(--raleway);
+  font-size: 9px;
+  color: #e0654a;
+}
