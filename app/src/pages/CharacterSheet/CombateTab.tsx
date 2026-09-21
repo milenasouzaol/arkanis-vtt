@@ -33,6 +33,11 @@ type Attack = {
     damage_bonus_from_mods?: number
   } | null
   from_inventory_item_id: string | null
+  attack_bonus: string | null
+  damage_attribute: AttributeKey | null
+  modifiers: AppliedModifier[] | null
+  alternative_attacks: Record<string, unknown>[] | null
+  image_url: string | null
 }
 
 type InventoryAmmoInfo = {
@@ -74,7 +79,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   async function loadAttacks() {
     const { data } = await supabase
       .from('character_attacks')
-      .select('id, name, skill_id, attribute, d20_bonus, threat_margin, multiplier, damage, general_info, from_inventory_item_id')
+      .select('id, name, skill_id, attribute, d20_bonus, attack_bonus, threat_margin, multiplier, damage_attribute, damage, general_info, modifiers, alternative_attacks, image_url, from_inventory_item_id')
       .eq('character_id', character.id)
     setAttacks((data ?? []) as unknown as Attack[])
   }
@@ -162,6 +167,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
       multiplier: numeros.multiplier,
       damage: numeros.damage,
       general_info: { ...a.general_info, damage_bonus_from_mods: numeros.damageBonusFromMods },
+      modifiers: [...origem.applied_modifiers, ...(municao?.applied_modifiers ?? [])],
     }
   })
 

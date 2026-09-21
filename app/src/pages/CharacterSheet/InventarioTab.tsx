@@ -6,6 +6,8 @@ import InventoryItemCard from './InventoryItemCard'
 import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPickerModal'
 import { numerosDoAtaque, statsComModificadores } from './itemMods'
 import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
+import ItemModifiersModal from './ItemModifiersModal'
+import type { AppliedModifier } from './itemMods'
 
 // O <select> nativo abre a lista branca do sistema e sai roxo; este segue a estetica do
 // resto do app, igual aos seletores dos modais.
@@ -66,6 +68,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
   const [search, setSearch] = useState('')
   const [filtro, setFiltro] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<ItemToEdit | null>(null)
+  const [modsPara, setModsPara] = useState<InventoryItem | null>(null)
 
   async function loadInventory() {
     const { data } = await supabase
@@ -105,6 +108,11 @@ export default function InventarioTab({ character, editMode }: { character: Char
       quantity: inv.quantity,
       image_url: (item as { image_url?: string | null }).image_url ?? null,
     })
+  }
+
+  async function salvarMods(inv: InventoryItem, next: AppliedModifier[]) {
+    await supabase.from('character_inventory').update({ applied_modifiers: next }).eq('id', inv.id)
+    await loadInventory()
   }
 
   async function remove(id: string) {
@@ -267,6 +275,36 @@ export default function InventarioTab({ character, editMode }: { character: Char
                 </>
               }
             >
+              {/* As modificacoes ficam visiveis no proprio card, logo abaixo da
+                  descricao, com adicionar e remover ali mesmo. */}
+              <div className="inv-mods-block">
+                <div className="inv-mods-head">
+                  <span>Modificadores e Maldições</span>
+                  <button type="button" className="inv-item-btn" onClick={() => setModsPara(inv)}>Adicionar</button>
+                </div>
+                {(inv.applied_modifiers ?? []).length > 0 && (
+                  <div className="inv-mods-list">
+                    {(inv.applied_modifiers ?? []).map((m, i) => (
+                      <div className="inv-mods-row" key={`${m.name}-${i}`}>
+                        <span className="inv-mods-name">
+                          {m.name}{m.elemento ? ` (${m.elemento})` : ''}
+                          <span className="inv-mods-kind">{m.kind === 'modificacao' ? 'Modificação' : 'Maldição'}</span>
+                        </span>
+                        <span className="inv-mods-effect">{m.effect}</span>
+                        <button
+                          type="button"
+                          className="inv-mods-remove"
+                          aria-label={`Remover ${m.name}`}
+                          onClick={() => salvarMods(inv, (inv.applied_modifiers ?? []).filter((_, idx) => idx !== i))}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="inv-item-extras">
                 {/* Quem conta bala e o proprio item de municao, nao a arma - e so quando a
                     regra de contagem de municao esta ligada. Na arma fica so o vinculo. */}
@@ -323,6 +361,15 @@ export default function InventarioTab({ character, editMode }: { character: Char
           )
         })}
       </div>
+
+      {modsPara && (
+        <ItemModifiersModal
+          itemType={(modsPara.equipment_items ?? modsPara.custom_item)?.type ?? 'geral'}
+          applied={modsPara.applied_modifiers ?? []}
+          onClose={() => setModsPara(null)}
+          onApply={(next) => salvarMods(modsPara, next)}
+        />
+      )}
 
       {editingItem && (
         <ItemEditModal
