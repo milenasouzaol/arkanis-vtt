@@ -4,7 +4,7 @@ import type { CharacterRecord } from './index'
 import InventarioTopBox from './InventarioTopBox'
 import InventoryItemCard from './InventoryItemCard'
 import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPickerModal'
-import { numerosDoAtaque, statsComModificadores } from './itemMods'
+import { espacoComModificadores, numerosDoAtaque, statsComModificadores } from './itemMods'
 import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
 import ItemModifiersModal from './ItemModifiersModal'
 import type { AppliedModifier } from './itemMods'
@@ -171,7 +171,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
       general_info: {
         tipo: stats.natureza,
         empunhadura: stats.empunhadura,
-        alcance: stats.alcance,
+        alcance: numeros.alcance,
         tipo_municao: stats.tipo_municao,
         municao: linkedAmmo?.equipment_items?.name ?? linkedAmmo?.custom_item?.name ?? null,
         modificadores,
@@ -190,7 +190,8 @@ export default function InventarioTab({ character, editMode }: { character: Char
     if (!item) continue
     const indice = ['I', 'II', 'III', 'IV'].indexOf(String(inv.category_override ?? item.category ?? ''))
     if (indice >= 0) atualPorCategoria[indice] += 1
-    cargaAtual += (item.spaces ?? 0) * Math.max(1, inv.quantity)
+    // "espaço +1" da Blindada e "espaço -1" da Discreta contam na carga.
+    cargaAtual += espacoComModificadores(item.spaces, inv.applied_modifiers) * Math.max(1, inv.quantity)
   }
 
   // Os filtros da barra: "Equipamentos" e o mesmo que a categoria Geral, e "Amaldicoados"
@@ -250,7 +251,12 @@ export default function InventarioTab({ character, editMode }: { character: Char
           return (
             <InventoryItemCard
               key={inv.id}
-              item={{ ...item, category: inv.category_override ?? item.category, stats: statsComModificadores(item.stats, inv.applied_modifiers) }}
+              item={{
+                ...item,
+                category: inv.category_override ?? item.category,
+                spaces: espacoComModificadores(item.spaces, inv.applied_modifiers),
+                stats: statsComModificadores(item.stats, inv.applied_modifiers),
+              }}
               expanded={isExpanded}
               onToggle={() => setExpanded(isExpanded ? null : inv.id)}
               quantidade={inv.ammo_total !== null ? (

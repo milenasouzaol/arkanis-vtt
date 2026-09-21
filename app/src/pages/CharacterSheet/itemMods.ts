@@ -17,10 +17,21 @@ export type ModBonuses = {
   multiplierDelta: number
   /** Dados extras de dano, do mesmo tipo (ex.: Calibre Grosso). */
   extraDamageDice: number
+  /** Espaco que a modificacao acrescenta ou tira do item (ex.: Blindada, Discreta). */
+  spacesDelta: number
+  /** Defesa que a modificacao acrescenta a protecao (ex.: Reforcada, Repulsora). */
+  defenseBonus: number
+  /** Categorias de alcance a mais (ex.: Mira Telescopica, Predadora). */
+  rangeSteps: number
+  /** Linhas de dano inteiras que a modificacao acrescenta (ex.: "+2d6 de dano"). */
+  extraDamageRolls: string[]
 }
 
 export function parseNumericMod(effect: string): ModBonuses {
-  const result: ModBonuses = { attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0, extraDamageDice: 0 }
+  const result: ModBonuses = {
+    attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0,
+    extraDamageDice: 0, spacesDelta: 0, defenseBonus: 0, rangeSteps: 0, extraDamageRolls: [],
+  }
   // Margem de ameaca conta ao contrario: +2 de margem abaixa o numero de 19 pra 17,
   // porque o critico acontece a partir dele.
   const margem = effect.match(/([+-]?\d+)\s+em margem de ameaça/i)
@@ -39,11 +50,33 @@ export function parseNumericMod(effect: string): ModBonuses {
   }
   const mult = effect.match(/([+-]?\d+)\s+no multiplicador de crítico/i)
   if (mult) result.multiplierDelta += Number(mult[1])
+
+  // "espaço +1" / "espaço -1"
+  const espaco = effect.match(/espaço\s*([+-]\s*\d+)/i)
+  if (espaco) result.spacesDelta += Number(espaco[1].replace(/\s+/g, ''))
+
+  // "Defesa +2" e "+2 Defesa" sao a mesma coisa escrita de dois jeitos
+  const defesa = effect.match(/defesa\s*([+-]?\s*\d+)/i) ?? effect.match(/([+-]\s*\d+)\s+defesa/i)
+  if (defesa) result.defenseBonus += Number(defesa[1].replace(/\s+/g, ''))
+
+  // "+1 categoria de alcance"
+  const alcance = effect.match(/([+-]?\d+)\s+categoria de alcance/i)
+  if (alcance) result.rangeSteps += Number(alcance[1])
+
+  // "+2d6 de dano" e uma linha de dano inteira, nao um bonus fixo nem um dado a mais.
+  // Antes isso so funcionava pra "Explosiva", pelo nome; agora vale pra qualquer uma.
+  for (const m of effect.matchAll(/([+-])\s*(\d+d\d+)\s+(?:de\s+)?dano/gi)) {
+    if (m[1] === '+') result.extraDamageRolls.push(m[2])
+  }
+
   return result
 }
 
 export function somaBonuses(applied: AppliedModifier[]): ModBonuses {
-  const total: ModBonuses = { attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0, extraDamageDice: 0 }
+  const total: ModBonuses = {
+    attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0,
+    extraDamageDice: 0, spacesDelta: 0, defenseBonus: 0, rangeSteps: 0, extraDamageRolls: [],
+  }
   for (const m of applied) {
     const b = parseNumericMod(m.effect ?? '')
     total.attackTestBonus += b.attackTestBonus
@@ -51,6 +84,10 @@ export function somaBonuses(applied: AppliedModifier[]): ModBonuses {
     total.damageBonus += b.damageBonus
     total.multiplierDelta += b.multiplierDelta
     total.extraDamageDice += b.extraDamageDice
+    total.spacesDelta += b.spacesDelta
+    total.defenseBonus += b.defenseBonus
+    total.rangeSteps += b.rangeSteps
+    total.extraDamageRolls.push(...b.extraDamageRolls)
   }
   return total
 }
@@ -90,6 +127,31 @@ export function somaDadosNoDano(formula: string, dados: number): string {
   return `${quantidade}d${m[2]}${m[3]}`
 }
 
+export const ORDEM_ALCANCE = ['curto', 'medio', 'longo', 'extremo'] as const
+
+// "+1 categoria de alcance" sobe um degrau; nao passa de extremo.
+export function subirAlcance(alcance: unknown, degraus: number): string {
+  const atual = String(alcance ?? '')
+  if (!degraus) return atual
+  const i = ORDEM_ALCANCE.indexOf(atual as (typeof ORDEM_ALCANCE)[number])
+  if (i < 0) return atual
+  return ORDEM_ALCANCE[Math.min(ORDEM_ALCANCE.length - 1, Math.max(0, i + degraus))]
+}
+
+// Espaco do item ja com as modificacoes. Nunca fica negativo: item nao ocupa
+// espaco negativo na mochila.
+export function espacoComModificadores(spaces: number | null | undefined, applied: AppliedModifier[] | undefined): number {
+  const base = spaces ?? 0
+  if (!applied?.length) return base
+  return Math.max(0, base + somaBonuses(applied).spacesDelta)
+}
+
+// Defesa que as modificacoes da protecao acrescentam.
+export function defesaDeModificadores(applied: AppliedModifier[] | undefined): number {
+  if (!applied?.length) return 0
+  return somaBonuses(applied).defenseBonus
+}
+
 // Stats do item com as modificacoes ja aplicadas, do jeito que tem que aparecer na ficha.
 export function statsComModificadores(
   stats: Record<string, unknown> | undefined,
@@ -99,7 +161,8 @@ export function statsComModificadores(
   if (!applied?.length) return base
 
   const b = somaBonuses(applied)
-  if (!b.threatMarginDelta && !b.multiplierDelta && !b.damageBonus && !b.extraDamageDice) return base
+  if (!b.threatMarginDelta && !b.multiplierDelta && !b.damageBonus && !b.extraDamageDice
+    && !b.rangeSteps && !b.defenseBonus) return base
 
   const resultado = { ...base }
 
@@ -114,6 +177,9 @@ export function statsComModificadores(
     resultado.dano = somaBonusNoDano(somaDadosNoDano(String(base.dano), b.extraDamageDice), b.damageBonus)
   }
 
+  if (b.rangeSteps && base.alcance) resultado.alcance = subirAlcance(base.alcance, b.rangeSteps)
+  if (b.defenseBonus && base.defesa != null) resultado.defesa = Number(base.defesa) + b.defenseBonus
+
   return resultado
 }
 
@@ -123,6 +189,8 @@ export type NumerosDoAtaque = {
   multiplier: number
   damage: { formula: string; tipo: string }[]
   damageBonusFromMods: number
+  /** Alcance ja com "+1 categoria de alcance" aplicado. */
+  alcance: string
 }
 
 // Numeros de ataque de uma arma do inventario: os do item mais o que as modificacoes da
@@ -137,6 +205,7 @@ export function numerosDoAtaque(
 ): NumerosDoAtaque {
   const s = stats ?? {}
   const { threatMargin, multiplier } = parseCritico(s.critico)
+  let alcanceFinal = String(s.alcance ?? '')
 
   const damage: { formula: string; tipo: string }[] = [
     { formula: String(s.dano ?? ''), tipo: String(s.tipo_dano ?? '') },
@@ -150,10 +219,7 @@ export function numerosDoAtaque(
   for (const mod of mods) {
     // Casos com nome proprio so existem em modificacao; o bonus escrito no texto vale
     // pros dois, senao a ficha e o combate mostrariam numeros diferentes.
-    if (mod.kind === 'modificacao') {
-      if (mod.name === 'Dum Dum') finalMultiplier += 1
-      if (mod.name === 'Explosiva') damage.push({ formula: '2d6', tipo: 'explosão adicional' })
-    }
+    if (mod.kind === 'modificacao' && mod.name === 'Dum Dum') finalMultiplier += 1
     const parsed = parseNumericMod(mod.effect ?? '')
     finalThreatMargin += parsed.threatMarginDelta
     finalMultiplier += parsed.multiplierDelta
@@ -161,9 +227,13 @@ export function numerosDoAtaque(
     damageBonusFromMods += parsed.damageBonus
     // Dado extra entra na primeira linha de dano, que e a da propria arma.
     if (parsed.extraDamageDice) damage[0] = { ...damage[0], formula: somaDadosNoDano(damage[0].formula, parsed.extraDamageDice) }
+    // "+2d6 de dano" vira linha propria, lida do texto - nao mais pelo nome da modificacao.
+    for (const extra of parsed.extraDamageRolls) damage.push({ formula: extra, tipo: mod.name })
+    if (parsed.rangeSteps) alcanceFinal = subirAlcance(alcanceFinal, parsed.rangeSteps)
   }
 
   return {
+    alcance: alcanceFinal,
     d20Bonus,
     // A margem nao passa de 20 e o multiplicador nao desce de 1.
     threatMargin: Math.min(20, finalThreatMargin),

@@ -17,7 +17,8 @@ describe('parseNumericMod', () => {
 
   it('efeito sem numero nao vira bonus nenhum', () => {
     expect(parseNumericMod('O disparo não é ouvido além do alcance curto.')).toEqual({
-      attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0, extraDamageDice: 0,
+      attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0,
+      extraDamageDice: 0, spacesDelta: 0, defenseBonus: 0, rangeSteps: 0, extraDamageRolls: [],
     })
   })
 })
@@ -127,11 +128,12 @@ describe('numerosDoAtaque', () => {
     expect(numerosDoAtaque({ critico: '20/x2' }, [comoMaldicao]).multiplier).toBe(2)
   })
 
-  it('Explosiva acrescenta uma linha de dano', () => {
-    const explosiva = { kind: 'modificacao' as const, name: 'Explosiva', effect: '', elemento: null }
+  // A linha extra vem do texto, nao do nome: antes bastava chamar 'Explosiva'.
+  it('Explosiva acrescenta uma linha de dano, lida do texto', () => {
+    const explosiva = { kind: 'modificacao' as const, name: 'Explosiva', effect: '+2d6 de dano', elemento: null }
     const r = numerosDoAtaque({ dano: '2d6', tipo_dano: 'B' }, [explosiva])
     expect(r.damage).toHaveLength(2)
-    expect(r.damage[1]).toEqual({ formula: '2d6', tipo: 'explosão adicional' })
+    expect(r.damage[1]).toEqual({ formula: '2d6', tipo: 'Explosiva' })
   })
 
   it('acumula modificacoes da arma e da municao', () => {

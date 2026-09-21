@@ -9,7 +9,7 @@ import { type Modifier } from './ModifiersPanel'
 import CombateModifiersPanel from './CombateModifiersPanel'
 import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
 import AttackCard from './AttackCard'
-import { numerosDoAtaque, somaBonusNoDano, type AppliedModifier } from './itemMods'
+import { defesaDeModificadores, numerosDoAtaque, somaBonusNoDano, type AppliedModifier } from './itemMods'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
@@ -107,14 +107,16 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   function loadEquippedProtection() {
     supabase
       .from('character_inventory')
-      .select('is_equipped, equipment_items(type, stats, name), custom_item')
+      .select('is_equipped, applied_modifiers, equipment_items(type, stats, name), custom_item')
       .eq('character_id', character.id)
       .eq('is_equipped', true)
       .then(({ data }) => {
         const protection = (data ?? []).find((i: any) => (i.equipment_items?.type ?? i.custom_item?.type) === 'protecao')
         const stats = (protection as any)?.equipment_items?.stats ?? (protection as any)?.custom_item?.stats ?? {}
         const name = (protection as any)?.equipment_items?.name ?? (protection as any)?.custom_item?.name ?? null
-        setEquippedDefense(Number(stats.defesa ?? 0))
+        // "Defesa +2" da Reforcada entra aqui junto com a defesa da propria protecao.
+        const daModificacao = defesaDeModificadores((protection as any)?.applied_modifiers)
+        setEquippedDefense(Number(stats.defesa ?? 0) + daModificacao)
         setEquippedProtectionName(name)
       })
   }
@@ -166,7 +168,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
       threat_margin: numeros.threatMargin,
       multiplier: numeros.multiplier,
       damage: numeros.damage,
-      general_info: { ...a.general_info, damage_bonus_from_mods: numeros.damageBonusFromMods },
+      general_info: { ...a.general_info, alcance: numeros.alcance || a.general_info?.alcance, damage_bonus_from_mods: numeros.damageBonusFromMods },
       modifiers: [...origem.applied_modifiers, ...(municao?.applied_modifiers ?? [])],
     }
   })
