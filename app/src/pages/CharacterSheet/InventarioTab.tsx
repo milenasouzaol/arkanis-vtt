@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { CharacterRecord } from './index'
-import ItemModifiers from './ItemModifiers'
 import InventarioTopBox from './InventarioTopBox'
 import InventoryItemCard from './InventoryItemCard'
 import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPickerModal'
+import { parseCritico, parseNumericMod, statsComModificadores } from './itemMods'
+import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
 
 type EquipmentItem = {
   id: string
@@ -31,41 +32,13 @@ type InventoryItem = {
   ammo_label: string | null
 }
 
-// Extrai bônus numéricos simples do texto de efeito de uma modificação (ex.: "+2 em
-// margem de ameaça", "+1 no multiplicador de crítico"). Efeitos mais complexos (Calibre
-// Grosso, Compensador etc.) não são parseados aqui e continuam só como referência textual.
-function parseNumericMod(effect: string) {
-  const result = { attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0 }
-  const margemMatch = effect.match(/([+-]?\d+)\s+em margem de ameaça/i)
-  if (margemMatch) result.threatMarginDelta -= Number(margemMatch[1])
-  const ataqueMatch = effect.match(/([+-]?\d+)\s+em testes de ataque/i)
-  if (ataqueMatch) result.attackTestBonus += Number(ataqueMatch[1])
-  const danoMatch = effect.match(/([+-]?\d+)\s+em rolagens de dano/i)
-  if (danoMatch) result.damageBonus += Number(danoMatch[1])
-  const multMatch = effect.match(/([+-]?\d+)\s+no multiplicador de crítico/i)
-  if (multMatch) result.multiplierDelta += Number(multMatch[1])
-  return result
-}
-
-function parseCritico(critico: unknown): { threatMargin: number; multiplier: number } {
-  let threatMargin = 20
-  let multiplier = 2
-  for (const part of String(critico ?? '').split('/')) {
-    const trimmed = part.trim()
-    if (/^x\d+$/i.test(trimmed)) multiplier = Number(trimmed.slice(1))
-    else if (/^\d+$/.test(trimmed)) threatMargin = Number(trimmed)
-  }
-  return { threatMargin, multiplier }
-}
-
 export default function InventarioTab({ character, editMode }: { character: CharacterRecord; editMode: boolean }) {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [search, setSearch] = useState('')
   const [filtro, setFiltro] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editDraft, setEditDraft] = useState({ name: '', category: 'I', spaces: 1, description: '', dano: '', critico: '', defesa: 0 })
+  const [editingItem, setEditingItem] = useState<ItemToEdit | null>(null)
 
   async function loadInventory() {
     const { data } = await supabase
@@ -93,40 +66,17 @@ export default function InventarioTab({ character, editMode }: { character: Char
   function startEdit(inv: InventoryItem) {
     const item = inv.equipment_items ?? inv.custom_item
     if (!item) return
-    const stats = item.stats ?? {}
-    setEditDraft({
+    setEditingItem({
+      id: inv.id,
       name: item.name,
+      type: (item.type ?? 'geral') as ItemToEdit['type'],
       category: (inv.category_override ?? item.category ?? 'I') as string,
       spaces: item.spaces ?? 1,
-      description: item.description ?? '',
-      dano: String(stats.dano ?? ''),
-      critico: String(stats.critico ?? ''),
-      defesa: Number(stats.defesa ?? 0),
+      description: item.description ?? null,
+      stats: item.stats ?? {},
+      applied_modifiers: inv.applied_modifiers ?? [],
+      image_url: (item as { image_url?: string | null }).image_url ?? null,
     })
-    setEditingId(inv.id)
-  }
-
-  async function saveEdit(inv: InventoryItem) {
-    const item = inv.equipment_items ?? inv.custom_item
-    if (!item) return
-    const stats: Record<string, unknown> = { ...(item.stats ?? {}) }
-    if (item.type === 'arma') { stats.dano = editDraft.dano; stats.critico = editDraft.critico }
-    if (item.type === 'protecao') stats.defesa = editDraft.defesa
-
-    await supabase.from('character_inventory').update({
-      custom_item: {
-        name: editDraft.name,
-        type: item.type,
-        category: editDraft.category,
-        spaces: editDraft.spaces,
-        description: editDraft.description,
-        stats,
-      },
-      equipment_item_id: null,
-    }).eq('id', inv.id)
-
-    setEditingId(null)
-    await loadInventory()
   }
 
   async function remove(id: string) {
@@ -182,9 +132,12 @@ export default function InventarioTab({ character, editMode }: { character: Char
     const linkedAmmo = inv.linked_ammo_id ? items.find((i) => i.id === inv.linked_ammo_id) : null
 
     for (const mod of [...(inv.applied_modifiers ?? []), ...(linkedAmmo?.applied_modifiers ?? [])]) {
-      if (mod.kind !== 'modificacao') continue // maldições têm efeitos narrativos demais pra parsear automaticamente
-      if (mod.name === 'Dum Dum') finalMultiplier += 1
-      if (mod.name === 'Explosiva') damage.push({ formula: '2d6', tipo: 'explosão adicional' })
+      // Os casos com nome proprio sao so de modificacao; o bonus numerico escrito no
+      // texto vale pros dois, senao o card e o combate mostrariam numeros diferentes.
+      if (mod.kind === 'modificacao') {
+        if (mod.name === 'Dum Dum') finalMultiplier += 1
+        if (mod.name === 'Explosiva') damage.push({ formula: '2d6', tipo: 'explosão adicional' })
+      }
       const parsed = parseNumericMod(mod.effect)
       finalThreatMargin += parsed.threatMarginDelta
       finalMultiplier += parsed.multiplierDelta
@@ -284,36 +237,10 @@ export default function InventarioTab({ character, editMode }: { character: Char
           const isExpanded = expanded === inv.id
           const canEquip = item.type === 'protecao' || item.type === 'geral' || item.type === 'paranormal'
 
-          if (isExpanded && editingId === inv.id) {
-            return (
-              <div key={inv.id} className="inv-item-card expanded">
-                <label>Nome <input value={editDraft.name} onChange={(e) => setEditDraft((d) => ({ ...d, name: e.target.value }))} /></label>
-                <label>Categoria
-                  <select value={editDraft.category} onChange={(e) => setEditDraft((d) => ({ ...d, category: e.target.value }))}>
-                    {['0', 'I', 'II', 'III', 'IV'].map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </label>
-                <label>Espaços <input type="number" value={editDraft.spaces} onChange={(e) => setEditDraft((d) => ({ ...d, spaces: Number(e.target.value) }))} /></label>
-                {item.type === 'arma' && (
-                  <>
-                    <label>Dano <input value={editDraft.dano} onChange={(e) => setEditDraft((d) => ({ ...d, dano: e.target.value }))} /></label>
-                    <label>Crítico <input value={editDraft.critico} onChange={(e) => setEditDraft((d) => ({ ...d, critico: e.target.value }))} /></label>
-                  </>
-                )}
-                {item.type === 'protecao' && (
-                  <label>Defesa <input type="number" value={editDraft.defesa} onChange={(e) => setEditDraft((d) => ({ ...d, defesa: Number(e.target.value) }))} /></label>
-                )}
-                <label>Descrição <textarea value={editDraft.description} onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))} /></label>
-                <button type="button" onClick={() => saveEdit(inv)}>Salvar</button>
-                <button type="button" onClick={() => setEditingId(null)}>Cancelar</button>
-              </div>
-            )
-          }
-
           return (
             <InventoryItemCard
               key={inv.id}
-              item={{ ...item, category: inv.category_override ?? item.category }}
+              item={{ ...item, category: inv.category_override ?? item.category, stats: statsComModificadores(item.stats, inv.applied_modifiers) }}
               expanded={isExpanded}
               onToggle={() => setExpanded(isExpanded ? null : inv.id)}
               quantidade={inv.ammo_total !== null ? (
@@ -376,12 +303,19 @@ export default function InventarioTab({ character, editMode }: { character: Char
                 {canEquip && (
                   <button type="button" className="inv-item-btn" onClick={() => toggleEquip(inv)}>{inv.is_equipped ? 'Desequipar' : 'Equipar'}</button>
                 )}
-                <ItemModifiers inventoryId={inv.id} itemType={item.type ?? 'geral'} applied={inv.applied_modifiers ?? []} onChanged={loadInventory} />
               </div>
             </InventoryItemCard>
           )
         })}
       </div>
+
+      {editingItem && (
+        <ItemEditModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSaved={loadInventory}
+        />
+      )}
 
       {adding && (
         <EquipmentPickerModal
