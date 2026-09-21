@@ -9,7 +9,7 @@ import { type Modifier } from './ModifiersPanel'
 import CombateModifiersPanel from './CombateModifiersPanel'
 import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
 import AttackCard from './AttackCard'
-import { numerosDoAtaque, type AppliedModifier } from './itemMods'
+import { numerosDoAtaque, somaBonusNoDano, type AppliedModifier } from './itemMods'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
@@ -474,7 +474,10 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
             key={a.id}
             name={a.name}
             ataque={`${attrValue(character.attributes, a.attribute)}d20${a.d20_bonus ? `+${a.d20_bonus}` : ''}`}
-            dano={a.damage.map((d) => `${d.formula}${d.tipo ? ` ${d.tipo}` : ''}`).join(', ') || '—'}
+            dano={a.damage.map((d, i) => {
+              const bonus = i === 0 ? (a.general_info?.damage_bonus_from_mods ?? 0) : 0
+              return `${somaBonusNoDano(d.formula, bonus)}${d.tipo ? ` ${d.tipo}` : ''}`
+            }).join(', ') || '—'}
             critico={`${a.threat_margin}/x${a.multiplier}`}
             info={a.general_info}
             municaoRestante={ammoInv ? `${ammoInv.ammo_current ?? 0}/${ammoInv.ammo_total} ${ammoInv.ammo_label ?? ''}`.trim() : null}

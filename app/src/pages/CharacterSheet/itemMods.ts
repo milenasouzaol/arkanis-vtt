@@ -15,31 +15,42 @@ export type ModBonuses = {
   threatMarginDelta: number
   damageBonus: number
   multiplierDelta: number
+  /** Dados extras de dano, do mesmo tipo (ex.: Calibre Grosso). */
+  extraDamageDice: number
 }
 
 export function parseNumericMod(effect: string): ModBonuses {
-  const result: ModBonuses = { attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0 }
+  const result: ModBonuses = { attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0, extraDamageDice: 0 }
   // Margem de ameaca conta ao contrario: +2 de margem abaixa o numero de 19 pra 17,
   // porque o critico acontece a partir dele.
   const margem = effect.match(/([+-]?\d+)\s+em margem de ameaça/i)
   if (margem) result.threatMarginDelta -= Number(margem[1])
   const ataque = effect.match(/([+-]?\d+)\s+em testes de ataque/i)
   if (ataque) result.attackTestBonus += Number(ataque[1])
-  const dano = effect.match(/([+-]?\d+)\s+em rolagens de dano/i)
-  if (dano) result.damageBonus += Number(dano[1])
+  // "+1 dado de dano" e outro dado da arma, nao um bonus fixo - tem que vir antes do
+  // bonus fixo, senao o "+1" dele seria lido como +1 de dano.
+  const dadoExtra = effect.match(/([+-]?\d+)\s+dados?\s+de\s+dano/i)
+  if (dadoExtra) result.extraDamageDice += Number(dadoExtra[1])
+  else {
+    // O catalogo escreve "em rolagens de dano", mas modificacao escrita a mao sai como
+    // "de dano", "no dano" ou "em dano" - todas valem a mesma coisa.
+    const dano = effect.match(/([+-]?\d+)\s+(?:em rolagens de|em|no|de)\s+dano/i)
+    if (dano) result.damageBonus += Number(dano[1])
+  }
   const mult = effect.match(/([+-]?\d+)\s+no multiplicador de crítico/i)
   if (mult) result.multiplierDelta += Number(mult[1])
   return result
 }
 
 export function somaBonuses(applied: AppliedModifier[]): ModBonuses {
-  const total: ModBonuses = { attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0 }
+  const total: ModBonuses = { attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0, extraDamageDice: 0 }
   for (const m of applied) {
     const b = parseNumericMod(m.effect ?? '')
     total.attackTestBonus += b.attackTestBonus
     total.threatMarginDelta += b.threatMarginDelta
     total.damageBonus += b.damageBonus
     total.multiplierDelta += b.multiplierDelta
+    total.extraDamageDice += b.extraDamageDice
   }
   return total
 }
@@ -69,6 +80,16 @@ export function somaBonusNoDano(formula: string, bonus: number): string {
   return `${base}${total > 0 ? '+' : '-'}${Math.abs(total)}`
 }
 
+// Acrescenta dados do mesmo tipo na formula: "1d10" + 1 dado -> "2d10".
+// So mexe em formula no formato NdX; o que nao for assim volta como veio.
+export function somaDadosNoDano(formula: string, dados: number): string {
+  if (!formula || !dados) return formula
+  const m = formula.match(/^(\d*)d(\d+)(.*)$/i)
+  if (!m) return formula
+  const quantidade = Math.max(1, (Number(m[1] || '1')) + dados)
+  return `${quantidade}d${m[2]}${m[3]}`
+}
+
 // Stats do item com as modificacoes ja aplicadas, do jeito que tem que aparecer na ficha.
 export function statsComModificadores(
   stats: Record<string, unknown> | undefined,
@@ -78,7 +99,7 @@ export function statsComModificadores(
   if (!applied?.length) return base
 
   const b = somaBonuses(applied)
-  if (!b.threatMarginDelta && !b.multiplierDelta && !b.damageBonus) return base
+  if (!b.threatMarginDelta && !b.multiplierDelta && !b.damageBonus && !b.extraDamageDice) return base
 
   const resultado = { ...base }
 
@@ -89,8 +110,8 @@ export function statsComModificadores(
     resultado.critico = `${margemFinal}/x${Math.max(1, multiplier + b.multiplierDelta)}`
   }
 
-  if (b.damageBonus && base.dano) {
-    resultado.dano = somaBonusNoDano(String(base.dano), b.damageBonus)
+  if ((b.damageBonus || b.extraDamageDice) && base.dano) {
+    resultado.dano = somaBonusNoDano(somaDadosNoDano(String(base.dano), b.extraDamageDice), b.damageBonus)
   }
 
   return resultado
@@ -138,6 +159,8 @@ export function numerosDoAtaque(
     finalMultiplier += parsed.multiplierDelta
     d20Bonus += parsed.attackTestBonus
     damageBonusFromMods += parsed.damageBonus
+    // Dado extra entra na primeira linha de dano, que e a da propria arma.
+    if (parsed.extraDamageDice) damage[0] = { ...damage[0], formula: somaDadosNoDano(damage[0].formula, parsed.extraDamageDice) }
   }
 
   return {

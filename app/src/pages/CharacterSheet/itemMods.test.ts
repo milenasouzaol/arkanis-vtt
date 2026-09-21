@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { numerosDoAtaque, parseCritico, parseNumericMod, somaBonusNoDano, somaBonuses, statsComModificadores } from './itemMods'
+import { numerosDoAtaque, parseCritico, somaDadosNoDano, parseNumericMod, somaBonusNoDano, somaBonuses, statsComModificadores } from './itemMods'
 
 const mod = (effect: string) => ({ kind: 'modificacao' as const, name: 'x', effect, elemento: null })
 
@@ -17,7 +17,7 @@ describe('parseNumericMod', () => {
 
   it('efeito sem numero nao vira bonus nenhum', () => {
     expect(parseNumericMod('O disparo não é ouvido além do alcance curto.')).toEqual({
-      attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0,
+      attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0, extraDamageDice: 0,
     })
   })
 })
@@ -142,5 +142,60 @@ describe('numerosDoAtaque', () => {
   it('margem nao passa de 20 e multiplicador nao desce de 1', () => {
     expect(numerosDoAtaque({ critico: '20/x2' }, [mod('-5 em margem de ameaça')]).threatMargin).toBe(20)
     expect(numerosDoAtaque({ critico: '20/x2' }, [mod('-5 no multiplicador de crítico')]).multiplier).toBe(1)
+  })
+})
+
+describe('redacoes de bonus de dano', () => {
+  // O catálogo escreve de um jeito; modificação criada à mão sai de outro.
+  it.each([
+    '+2 em rolagens de dano',
+    '+2 de dano',
+    '+2 no dano',
+    '+2 em dano',
+  ])('entende "%s"', (texto) => {
+    expect(parseNumericMod(texto).damageBonus).toBe(2)
+  })
+
+  it('"+1 dado de dano" e dado extra, nao bonus fixo', () => {
+    const r = parseNumericMod('+1 dado de dano do mesmo tipo (exige munição específica)')
+    expect(r.extraDamageDice).toBe(1)
+    expect(r.damageBonus).toBe(0)
+  })
+})
+
+describe('somaDadosNoDano', () => {
+  it('1d10 com um dado extra vira 2d10', () => {
+    expect(somaDadosNoDano('1d10', 1)).toBe('2d10')
+  })
+
+  it('formula sem quantidade conta como 1', () => {
+    expect(somaDadosNoDano('d8', 1)).toBe('2d8')
+  })
+
+  it('mantem o que vem depois da formula', () => {
+    expect(somaDadosNoDano('2d6+3', 1)).toBe('3d6+3')
+  })
+
+  it('formula que nao e NdX volta como veio', () => {
+    expect(somaDadosNoDano('especial', 1)).toBe('especial')
+  })
+
+  it('sem dado extra, nao mexe', () => {
+    expect(somaDadosNoDano('1d10', 0)).toBe('1d10')
+  })
+})
+
+describe('dado extra no ataque', () => {
+  it('Calibre Grosso acrescenta um dado na arma', () => {
+    const calibre = { kind: 'modificacao' as const, name: 'Calibre Grosso', effect: '+1 dado de dano do mesmo tipo', elemento: null }
+    const r = numerosDoAtaque({ dano: '1d10', tipo_dano: 'P' }, [calibre])
+    expect(r.damage[0].formula).toBe('2d10')
+    expect(r.damageBonusFromMods).toBe(0)
+  })
+
+  it('Cruel entra como bonus fixo, nao como dado', () => {
+    const r = numerosDoAtaque({ dano: '1d10' }, [mod('+2 em rolagens de dano')])
+    expect(r.damage[0].formula).toBe('1d10')
+    expect(r.damageBonusFromMods).toBe(2)
   })
 })

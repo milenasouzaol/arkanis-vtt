@@ -19,4 +19,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 | KAN-14 | Caixas do card de ataque viram botões, card compacto | front | aprovado | [KAN-14](https://arkaniss.atlassian.net/browse/KAN-14) |
 | [KAN-15](KAN-15-limpar-controles-card.md) | Limpar controles soltos do card e contagem de bala no lugar certo | front | aprovado | [KAN-15](https://arkaniss.atlassian.net/browse/KAN-15) |
 
+| [KAN-16](KAN-16-bonus-dano-modificacao.md) | Bônus de dano da modificação não entrava na rolagem | regra | aprovado | [KAN-16](https://arkaniss.atlassian.net/browse/KAN-16) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._
