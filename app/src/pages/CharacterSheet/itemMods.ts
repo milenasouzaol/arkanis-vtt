@@ -176,6 +176,16 @@ export function resistenciasDoEfeito(effect: string): Resistencia[] {
   const mental = effect.match(/resist[êe]ncia\s+mental\s+(\d+)/i)
   if (mental) achadas.push({ tipo: 'Mental', valor: Number(mental[1]) })
 
+  // Tipo qualquer, nao so os elementos: os trajes dao "resistencia a quimico 10".
+  // "a dano" fica de fora porque tem tratamento proprio logo abaixo, e "a efeitos
+  // ambientais" tambem, que e condicional e nao entra como resistencia fixa.
+  for (const m of effect.matchAll(/resist[êe]ncia\s+(?:a|ao|contra)\s+([a-zçãõáéíóúâêô]+)\s+(\d+)/gi)) {
+    const tipo = m[1].toLowerCase()
+    if (tipo === 'dano' || tipo === 'efeitos') continue
+    if (ELEMENTOS.some((e) => e.toLowerCase() === tipo)) continue
+    achadas.push({ tipo: tipo.charAt(0).toUpperCase() + tipo.slice(1), valor: Number(m[2]) })
+  }
+
   const rd = effect.match(/\bRD\b[^.;]*/i) ?? effect.match(/resist[êe]ncia\s+a\s+dano[^.;]*/i)
   if (rd) {
     const numeros = (rd[0].match(/\d+/g) ?? []).map(Number)
@@ -345,4 +355,68 @@ export function numerosDoAtaque(
     damage,
     damageBonusFromMods,
   }
+}
+
+// ---- Bonus de pericia escritos na descricao do item ----
+
+export const PERICIAS = [
+  'Acrobacia', 'Adestramento', 'Artes', 'Atletismo', 'Atualidades', 'Ciências', 'Crime',
+  'Diplomacia', 'Enganação', 'Fortitude', 'Furtividade', 'Iniciativa', 'Intimidação',
+  'Intuição', 'Investigação', 'Luta', 'Medicina', 'Ocultismo', 'Percepção', 'Pilotagem',
+  'Pontaria', 'Profissão', 'Reflexos', 'Religião', 'Sobrevivência', 'Tecnologia', 'Vontade',
+]
+
+export type BonusDePericia = {
+  pericias: string[]
+  valor: number
+  /** O "se" do bonus, como esta escrito. Vazio quando vale sempre. */
+  condicao: string
+}
+
+// Uma frase so vale sempre se nao tiver um "pra/para/contra/quando/em cena..." depois do
+// bonus. "+5 Furtividade" vale sempre; "+5 em Percepção pra observar coisas distantes"
+// depende da situacao e nao pode ser somado direto na ficha.
+const MARCA_DE_CONDICAO = /\b(pra|para|contra|quando|se\s|ao\s|em cena|enquanto|apenas|somente|no mesmo)\b/i
+
+// "+2 Investigação/Percepção" e "+2 Religião e Vontade" valem pras duas pericias.
+function periciasDoTrecho(trecho: string): string[] {
+  const achadas = PERICIAS.filter((p) => new RegExp(`\\b${p}\\b`, 'i').test(trecho))
+  return achadas
+}
+
+export function bonusDePericiaDaDescricao(descricao: string | null | undefined): BonusDePericia[] {
+  const texto = String(descricao ?? '')
+  if (!texto) return []
+
+  const encontrados: BonusDePericia[] = []
+  // Quebro em frases: a condicao pertence a frase do bonus, nao ao item inteiro.
+  for (const frase of texto.split(/[.;]/)) {
+    const m = frase.match(/([+-]\s*\d+)\s+(?:em\s+)?([A-Za-zÀ-ÿ/\s]+)/)
+    if (!m) continue
+
+    const valor = Number(m[1].replace(/\s+/g, ''))
+    if (!valor) continue
+
+    // So o pedaco logo depois do numero vira lista de pericias; o resto e a condicao.
+    const depois = frase.slice(frase.indexOf(m[1]) + m[1].length)
+    const listaBruta = depois.match(/^\s*(?:em\s+)?([A-Za-zÀ-ÿ/\s]+)/)?.[1] ?? ''
+    const pericias = periciasDoTrecho(listaBruta)
+    if (pericias.length === 0) continue
+
+    const resto = depois.slice(listaBruta.length).trim()
+    const condicao = MARCA_DE_CONDICAO.test(resto) || MARCA_DE_CONDICAO.test(listaBruta)
+      ? frase.trim()
+      : ''
+
+    encontrados.push({ pericias, valor, condicao })
+  }
+  return encontrados
+}
+
+export function bonusIncondicionais(descricao: string | null | undefined): BonusDePericia[] {
+  return bonusDePericiaDaDescricao(descricao).filter((b) => !b.condicao)
+}
+
+export function bonusCondicionais(descricao: string | null | undefined): BonusDePericia[] {
+  return bonusDePericiaDaDescricao(descricao).filter((b) => !!b.condicao)
 }

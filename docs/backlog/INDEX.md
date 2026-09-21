@@ -34,4 +34,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-24](KAN-24-resistencia-tipada-e-carga.md) | Resistência tipada do item e penalidade de carga | regra | aprovado | [KAN-24](https://arkaniss.atlassian.net/browse/KAN-24) |
 
+| [KAN-25](KAN-25-bonus-incondicionais-e-escudo.md) | Bônus incondicionais dos itens e bug do Escudo | regra | aprovado | [KAN-25](https://arkaniss.atlassian.net/browse/KAN-25) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

@@ -8078,3 +8078,11 @@ code, .counter {
   font-size: 9px;
   color: #e0654a;
 }
+
+/* Bonus de item equipado, ao lado do total da pericia */
+.pericias-item-bonus {
+  margin-left: 0.3em;
+  font-family: var(--raleway);
+  font-size: 9px;
+  color: #3ecf6e;
+}

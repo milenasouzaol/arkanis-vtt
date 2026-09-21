@@ -120,11 +120,21 @@ export default function InventarioTab({ character, editMode }: { character: Char
     await loadInventory()
   }
 
+  // O escudo e do tipo protecao mas nao ocupa o lugar dela: o livro diz "Defesa +2
+  // (acumula com protecao)". Sem esta excecao, equipar o escudo desequipava a armadura e
+  // a pessoa perdia Defesa em vez de ganhar.
+  function ehEscudo(nome: string | undefined) {
+    return /escudo/i.test(nome ?? '')
+  }
+
   async function toggleEquip(inv: InventoryItem) {
     const item = inv.equipment_items ?? inv.custom_item
-    if (item?.type === 'protecao' && !inv.is_equipped) {
-      // só 1 proteção equipada por vez
-      const currentlyEquippedProtection = items.find((i) => i.is_equipped && (i.equipment_items?.type ?? i.custom_item?.type) === 'protecao')
+    if (item?.type === 'protecao' && !inv.is_equipped && !ehEscudo(item.name)) {
+      // só 1 proteção de corpo equipada por vez
+      const currentlyEquippedProtection = items.find((i) => {
+        const outro = i.equipment_items ?? i.custom_item
+        return i.is_equipped && (outro?.type === 'protecao') && !ehEscudo(outro?.name)
+      })
       if (currentlyEquippedProtection) await supabase.from('character_inventory').update({ is_equipped: false }).eq('id', currentlyEquippedProtection.id)
     }
     await supabase.from('character_inventory').update({ is_equipped: !inv.is_equipped }).eq('id', inv.id)

@@ -112,13 +112,17 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
       .eq('character_id', character.id)
       .eq('is_equipped', true)
       .then(({ data }) => {
-        const protection = (data ?? []).find((i: any) => (i.equipment_items?.type ?? i.custom_item?.type) === 'protecao')
-        const stats = (protection as any)?.equipment_items?.stats ?? (protection as any)?.custom_item?.stats ?? {}
-        const name = (protection as any)?.equipment_items?.name ?? (protection as any)?.custom_item?.name ?? null
-        // "Defesa +2" da Reforcada entra aqui junto com a defesa da propria protecao.
-        const daModificacao = defesaDeModificadores((protection as any)?.applied_modifiers)
-        setEquippedDefense(Number(stats.defesa ?? 0) + daModificacao)
-        setEquippedProtectionName(name)
+        // O escudo acumula com a protecao, entao a Defesa soma todas as protecoes
+        // equipadas, nao so a primeira encontrada.
+        const protecoes = (data ?? []).filter((i: any) => (i.equipment_items?.type ?? i.custom_item?.type) === 'protecao')
+        const defesaTotal = protecoes.reduce((soma, p: any) => {
+          const stats = p.equipment_items?.stats ?? p.custom_item?.stats ?? {}
+          // "Defesa +2" da Reforcada entra junto com a defesa da propria protecao.
+          return soma + Number(stats.defesa ?? 0) + defesaDeModificadores(p.applied_modifiers)
+        }, 0)
+        const nomes = protecoes.map((p: any) => p.equipment_items?.name ?? p.custom_item?.name).filter(Boolean)
+        setEquippedDefense(defesaTotal)
+        setEquippedProtectionName(nomes.length ? nomes.join(' + ') : null)
 
         // Resistencia nasce no proprio item (a Protecao Pesada ja traz corte/impacto/
         // balistico/perfuracao 2) e as modificacoes elevam isso. Vale pra qualquer item

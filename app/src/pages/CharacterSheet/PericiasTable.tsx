@@ -77,6 +77,7 @@ export default function PericiasTable({
   testDiceBonus,
   testValueBonus,
   cargaPenalty,
+  bonusDeItens,
   onSetSkillField,
   onRoll,
 }: {
@@ -87,6 +88,8 @@ export default function PericiasTable({
   testValueBonus: number
   /** Penalidade da proteção equipada nas perícias afetadas por carga (negativo, ex.: -5). */
   cargaPenalty: number
+  /** Bônus por perícia vindos de itens equipados, somados por nome da perícia. */
+  bonusDeItens: Record<string, number>
   onSetSkillField: (skillId: string, patch: Partial<CharacterSkillRow>) => void
   onRoll: (skill: SkillRow) => void
 }) {
@@ -113,8 +116,9 @@ export default function PericiasTable({
       // A Protecao Pesada tira 5 das pericias marcadas com carga_penalty no banco:
       // Acrobacia, Crime e Furtividade.
       const penalidade = s.carga_penalty ? cargaPenalty : 0
-      const total = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus + penalidade
-      return { skill: s, cs, attr, total, penalidade }
+      const doItem = bonusDeItens[s.name] ?? 0
+      const total = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus + penalidade + doItem
+      return { skill: s, cs, attr, total, penalidade, doItem }
     })
 
   rows.sort((a, b) => {
@@ -146,7 +150,7 @@ export default function PericiasTable({
       </div>
 
       <div className="pericias-list">
-        {rows.map(({ skill, cs, attr, total, penalidade }) => {
+        {rows.map(({ skill, cs, attr, total, penalidade, doItem }) => {
           const effectiveScore = attr ? attrValue(attributes, attr) + testDiceBonus : 0
           const diceCount = effectiveScore > 0 ? effectiveScore : 2
           const bonusPips = Math.min(Math.abs(testDiceBonus), diceCount)
@@ -211,9 +215,13 @@ export default function PericiasTable({
               </div>
 
               {/* a penalidade de carga aparece do lado do total, pra nao sumir dentro dele */}
-              <div className="pericias-cell pericias-cell-total" title={penalidade ? `inclui ${penalidade} de penalidade de carga` : undefined}>
+              <div
+                className="pericias-cell pericias-cell-total"
+                title={[penalidade ? `${penalidade} de penalidade de carga` : '', doItem ? `+${doItem} de item equipado` : ''].filter(Boolean).join(' · ') || undefined}
+              >
                 {total}
                 {penalidade !== 0 && <span className="pericias-carga-penalty">{penalidade}</span>}
+                {doItem !== 0 && <span className="pericias-item-bonus">+{doItem}</span>}
               </div>
             </div>
           )

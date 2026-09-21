@@ -8,7 +8,7 @@ import RollResult, { type RollResultData } from './RollResult'
 import HabilidadesTab from './HabilidadesTab'
 import RituaisTab from './RituaisTab'
 import InventarioTab from './InventarioTab'
-import { penalidadeDeCarga } from './itemMods'
+import { bonusIncondicionais, penalidadeDeCarga } from './itemMods'
 import CombateTab from './CombateTab'
 import ModifiersPanel, { type Modifier } from './ModifiersPanel'
 import PericiasTable from './PericiasTable'
@@ -112,6 +112,8 @@ export default function AgenteTab({
   const [skills, setSkills] = useState<SkillRow[]>([])
   // Penalidade que a protecao equipada impoe as pericias de carga (ex.: -5 da pesada).
   const [cargaPenalty, setCargaPenalty] = useState(0)
+  // Bonus de pericia que o item equipado da sempre (ex.: Pe de Morto, +5 Furtividade).
+  const [bonusDeItens, setBonusDeItens] = useState<Record<string, number>>({})
   const [charSkills, setCharSkills] = useState<Record<string, CharacterSkillRow>>({})
   const [roll, setRoll] = useState<RollResultData | null>(null)
   const [rightTab, setRightTab] = useState<'Combate' | 'Habilidades' | 'Rituais' | 'Inventário'>('Combate')
@@ -229,11 +231,16 @@ export default function AgenteTab({
       .eq('character_id', character.id)
       .eq('is_equipped', true)
       .then(({ data }) => {
-        const total = (data ?? []).reduce((soma, i: any) => {
-          const descricao = i.equipment_items?.description ?? i.custom_item?.description
-          return soma + penalidadeDeCarga(descricao)
-        }, 0)
-        setCargaPenalty(total)
+        const descricoes = (data ?? []).map((i: any) => i.equipment_items?.description ?? i.custom_item?.description)
+        setCargaPenalty(descricoes.reduce((soma, d) => soma + penalidadeDeCarga(d), 0))
+
+        const porPericia: Record<string, number> = {}
+        for (const d of descricoes) {
+          for (const b of bonusIncondicionais(d)) {
+            for (const pericia of b.pericias) porPericia[pericia] = (porPericia[pericia] ?? 0) + b.valor
+          }
+        }
+        setBonusDeItens(porPericia)
       })
   }, [character.id, rightTab])
 
@@ -578,6 +585,7 @@ export default function AgenteTab({
             testDiceBonus={testDiceBonus}
             testValueBonus={testValueBonus}
             cargaPenalty={cargaPenalty}
+            bonusDeItens={bonusDeItens}
             onSetSkillField={setSkillField}
             onRoll={rollSkill}
           />
