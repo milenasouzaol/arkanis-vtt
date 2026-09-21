@@ -7649,6 +7649,12 @@ code, .counter {
   padding-bottom: 0.1em;
 }
 
+/* O botao de adicionar aqui segue os filtros: cor chapada, sem textura. O Adicionar
+   Ataque do Combate usa a mesma classe e continua com a textura de metal. */
+.inv-search-row .combat-add-btn {
+  background: #1b1a20;
+}
+
 /* ===== Inventario: modal de Modificacoes e Maldicoes ===== */
 
 /* Diferente dos outros pickers, este e um painel so, centralizado na tela. */
