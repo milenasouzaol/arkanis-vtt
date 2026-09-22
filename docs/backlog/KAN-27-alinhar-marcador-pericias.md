@@ -38,4 +38,4 @@ Print da Millie, 22/09/2026.
 - 22/09/2026 reaberto: o CSS não tinha entrado no arquivo (o script de edição não casou o
   trecho e falhou em silêncio). A verificação da primeira vez foi numa página isolada com o
   CSS escrito à mão, então provou a técnica e não o arquivo. Refeito e conferido carregando
-  o  de verdade.
+  o index.css de verdade.
