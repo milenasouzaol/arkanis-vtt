@@ -4938,8 +4938,22 @@ code, .counter {
 }
 
 .pericias-cell-total {
+  position: relative;
   font-weight: 700;
   color: #fff;
+}
+
+/* Os marcadores saem do fluxo pro numero do total continuar centralizado na coluna. */
+.pericias-marcadores {
+  position: absolute;
+  left: calc(50% + 0.5em);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  pointer-events: none;
+  line-height: 1;
 }
 
 .pericias-picker {
