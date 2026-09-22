@@ -220,8 +220,12 @@ export default function PericiasTable({
                 title={[penalidade ? `${penalidade} de penalidade de carga` : '', doItem ? `+${doItem} de item equipado` : ''].filter(Boolean).join(' · ') || undefined}
               >
                 {total}
-                {penalidade !== 0 && <span className="pericias-carga-penalty">{penalidade}</span>}
-                {doItem !== 0 && <span className="pericias-item-bonus">+{doItem}</span>}
+                {(penalidade !== 0 || doItem !== 0) && (
+                  <span className="pericias-marcadores">
+                    {penalidade !== 0 && <span className="pericias-carga-penalty">{penalidade}</span>}
+                    {doItem !== 0 && <span className="pericias-item-bonus">+{doItem}</span>}
+                  </span>
+                )}
               </div>
             </div>
           )
