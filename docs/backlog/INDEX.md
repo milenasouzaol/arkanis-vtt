@@ -38,4 +38,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-26](KAN-26-liga-desliga-bonus.md) | Ligar e desligar os bônus condicionais dos itens | regra | aprovado | [KAN-26](https://arkaniss.atlassian.net/browse/KAN-26) |
 
+| [KAN-27](KAN-27-alinhar-marcador-pericias.md) | Alinhar o marcador de bônus/penalidade no total das perícias | front | aprovado | [KAN-27](https://arkaniss.atlassian.net/browse/KAN-27) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._
