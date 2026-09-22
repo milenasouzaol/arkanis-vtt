@@ -40,4 +40,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-27](KAN-27-alinhar-marcador-pericias.md) | Alinhar o marcador de bônus/penalidade no total das perícias | front | aprovado | [KAN-27](https://arkaniss.atlassian.net/browse/KAN-27) |
 
+| [KAN-28](KAN-28-adicionar-sem-textura-geral.md) | Botões Adicionar Habilidade e Adicionar Ataque sem textura | front | aprovado | [KAN-28](https://arkaniss.atlassian.net/browse/KAN-28) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

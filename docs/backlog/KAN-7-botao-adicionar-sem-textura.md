@@ -29,3 +29,4 @@ Print da Millie, 21/09/2026.
 
 - 21/09/2026 criado — https://arkaniss.atlassian.net/browse/KAN-7
 - 21/09/2026 concluído
+- 22/09/2026 o "fora de escopo" foi revertido pela Millie no KAN-28: o Adicionar Ataque também perdeu a textura.

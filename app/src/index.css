@@ -5678,9 +5678,8 @@ code, .counter {
 .combat-add-btn {
   position: relative;
   flex-shrink: 0;
-  background: #0e0d12 url('./assets/combate/metal-texture.png');
-  background-size: cover;
-  background-position: center;
+  /* Cor chapada, sem textura de metal: todos os "Adicionar" seguem o do Inventario. */
+  background: #1b1a20;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0;
   color: #fff;
@@ -7656,12 +7655,6 @@ code, .counter {
 .inv-search-row .combat-search-input {
   line-height: 1.1;
   padding-bottom: 1px;
-}
-
-/* O botao de adicionar aqui segue os filtros: cor chapada, sem textura. O Adicionar
-   Ataque do Combate usa a mesma classe e continua com a textura de metal. */
-.inv-search-row .combat-add-btn {
-  background: #1b1a20;
 }
 
 /* ===== Inventario: modal de Modificacoes e Maldicoes ===== */
