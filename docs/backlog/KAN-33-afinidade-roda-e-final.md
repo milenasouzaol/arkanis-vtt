@@ -71,6 +71,13 @@ as artes). Removido neste.
   por foco + rodinha, e na página.
 - `--tamanho-orbe` e `--tamanho-triangulo` entraram no bloco MEXA AQUI.
 
+## Terceira rodada
+
+- Os orbes ganharam a textura granulada que a Millie mandou (`textura-orbe.webp`),
+  ampliada 380% e com um recorte diferente em cada orbe.
+- O símbolo dentro do triângulo foi de 27% pra 39% da largura dele — a proporção do
+  print de referência. Vale na roda e na tela final. Variável `--tamanho-simbolo-meio`.
+
 ## Critérios de aceite
 
 - [x] Orbes dentro dos círculos da arte em qualquer tamanho de tela.

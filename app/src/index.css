@@ -8776,6 +8776,8 @@ code, .counter {
      medem uns 7% e o do meio 17,6%: passando disso eles vazam pra fora do circulo. */
   --tamanho-orbe: 6.4%;
   --tamanho-triangulo: 17%;
+  /* Simbolo do elemento dentro do triangulo, em % da largura do triangulo. */
+  --tamanho-simbolo-meio: 39%;
   /* ===== FIM ===== */
 
   position: absolute;
@@ -8813,11 +8815,20 @@ code, .counter {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* A textura da propria arte, ampliada, faz o miolo escuro do botao. */
-  background: #0d0c10 url('./assets/afinidade/fundo-decoracao.webp') center / 900% 900%;
+  /* A textura granulada que a Millie mandou, ampliada: cada orbe mostra so um pedaco
+     dela, e um pedaco diferente do outro (a posicao vem logo abaixo). */
+  background: #0a0a0a url('./assets/afinidade/textura-orbe.webp') no-repeat;
+  background-size: 380%;
+  background-position: var(--orbe-recorte, 50% 50%);
   box-shadow: 0 0 0 0 transparent;
   transition: box-shadow 0.25s ease, opacity 0.2s ease;
 }
+
+/* Um recorte por orbe, pra nenhum repetir o do vizinho. */
+.afin-orbe:nth-of-type(1) { --orbe-recorte: 12% 20%; }
+.afin-orbe:nth-of-type(2) { --orbe-recorte: 85% 15%; }
+.afin-orbe:nth-of-type(3) { --orbe-recorte: 25% 85%; }
+.afin-orbe:nth-of-type(4) { --orbe-recorte: 70% 70%; }
 
 .afin-orbe img {
   width: 58%;
@@ -8896,10 +8907,10 @@ code, .counter {
 /* Ele entra dentro do triangulo, que fica um pouco abaixo do centro do desenho. */
 .afin-centro-elemento {
   position: absolute;
-  top: 56%;
+  top: 54%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 27%;
+  width: var(--tamanho-simbolo-meio, 39%);
   object-fit: contain;
 }
 
