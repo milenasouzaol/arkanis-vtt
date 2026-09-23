@@ -80,6 +80,21 @@ A Freehand entrou no `index.html` junto da Barlow, que o projeto já carrega do 
   medem igual: papel 1319×701 e pasta 1355×737 num viewport de 1500×860, sem sobra de
   rolagem.
 
+## Onde a Millie mexe sozinha
+
+Bloco `MEXA AQUI` no começo de `.inv-pasta`, em `app/src/index.css`:
+
+| variável | o que faz |
+| --- | --- |
+| `--pasta-largura` | largura da pasta marrom (1184px na referência) |
+| `--pasta-altura` | altura máxima dela (851px) |
+| `--foto-tamanho` | diâmetro da foto, em % da largura do cartão |
+| `--foto-altura` | altura do centro da foto dentro do cartão |
+
+O brasão é derivado da foto por `calc()`, então mudar `--foto-tamanho` não desalinha
+nada. Conferido em 36%, 44%, 52% e 60%: diâmetro do círculo igual ao da foto e 0px de
+desalinho em x e y nos quatro.
+
 ## Critérios de aceite
 
 - [x] As duas sub-abas com o visual da referência.

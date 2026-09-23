@@ -8144,8 +8144,23 @@ code, .counter {
   --papel: #d9d9d9;
   --tinta: #1c1c1c;
   --typewriter: 'Secret Service Typewriter', 'Courier New', ui-monospace, monospace;
-  /* A pasta marrom mede 1184x851 na referencia; aqui ela e o .inv-pasta-corpo. */
-  width: min(92%, 1184px);
+  /* ===== MEXA AQUI ===== */
+  /* Tamanho da pasta marrom. A referencia mede 1184x851. */
+  --pasta-largura: 1184px;
+  --pasta-altura: 851px;
+  /* Diametro da foto do agente, em % da largura do cartao. */
+  --foto-tamanho: 44%;
+  /* Altura do centro da foto dentro do cartao. */
+  --foto-altura: 34%;
+  /* ===== FIM ===== */
+
+  /* Nao precisa mexer: o brasao se redimensiona sozinho pra o circulo do capacete
+     cair exatamente em cima da foto. 2.0325 = 1 / 0.492 (o circulo ocupa 49,2% da
+     largura da imagem) e 0.42193 e onde fica o centro dele, contado do topo. */
+  --brasao-largura: calc(var(--foto-tamanho) * 2.0325);
+  --brasao-topo: calc(var(--foto-altura) - var(--brasao-largura) * 0.42193);
+
+  width: min(92%, var(--pasta-largura));
   height: 100%;
   margin: 0 auto;
   padding: 0 0 1.2em;
@@ -8225,7 +8240,7 @@ code, .counter {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  max-height: 851px;
+  max-height: var(--pasta-altura);
   display: flex;
   background: var(--pasta);
   border-radius: 0 8px 8px 8px;
@@ -8362,9 +8377,9 @@ code, .counter {
 .inv-ficha-brasao {
   position: absolute;
   left: 50%;
-  top: -0.3%;
+  top: var(--brasao-topo);
   transform: translateX(-50%);
-  width: 81.3%;
+  width: var(--brasao-largura);
   opacity: 0.1;
   pointer-events: none;
 }
@@ -8432,10 +8447,10 @@ code, .counter {
 .inv-ficha-foto {
   position: absolute;
   left: 50%;
-  top: 34%;
+  top: var(--foto-altura);
   transform: translate(-50%, -50%);
   z-index: 1;
-  width: 40%;
+  width: var(--foto-tamanho);
   aspect-ratio: 1;
   border-radius: 50%;
   overflow: hidden;
