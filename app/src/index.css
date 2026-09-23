@@ -8138,6 +8138,7 @@ code, .counter {
 /* A pasta e feita no CSS, sem imagem: o marrom e a borda da pasta e o cinza claro
    e o papel. A unica arte e a textura, que entra bem apagada por cima do papel. */
 .inv-pasta {
+  font-synthesis: weight;
   --pasta: #b1865c;
   --pasta-escura: #835e39;
   --papel: #d9d9d9;
@@ -8229,18 +8230,13 @@ code, .counter {
   padding: 18px;
 }
 
-/* Com o lembrete aberto a pasta abre uma calha na direita pro post-it ficar nela,
-   em vez de cobrir a coluna do Historico. */
-.inv-pasta.com-lembrete .inv-pasta-corpo {
-  padding-right: 205px;
-}
-
 .inv-pasta-grid {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
   gap: 12px;
   background: var(--papel);
   border-radius: 2px;
@@ -8310,7 +8306,7 @@ code, .counter {
 
 .inv-campo-texto {
   flex: 1 1 auto;
-  min-height: 4.5em;
+  min-height: 2.5em;
   resize: none;
   border: none;
   outline: none;
@@ -8364,10 +8360,10 @@ code, .counter {
 .inv-ficha-brasao {
   position: absolute;
   left: 50%;
-  top: 44%;
+  top: -0.3%;
   transform: translateX(-50%);
-  width: 56%;
-  opacity: 0.07;
+  width: 81.3%;
+  opacity: 0.1;
   pointer-events: none;
 }
 
@@ -8375,7 +8371,7 @@ code, .counter {
 .inv-ficha-clipe {
   position: absolute;
   left: 76.2%;
-  top: -11.9%;
+  top: -7.5%;
   width: 12.2%;
   pointer-events: none;
 }
@@ -8422,18 +8418,23 @@ code, .counter {
 
 .inv-ficha-miolo {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
 }
 
+/* Ela fica exatamente por cima do circulo do brasao, nao empilhada no meio da coluna. */
 .inv-ficha-foto {
-  position: relative;
-  width: 46%;
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  width: 40%;
   aspect-ratio: 1;
-  margin: 0.2em auto 0;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -8466,7 +8467,8 @@ code, .counter {
 
 .inv-ficha-nome {
   font-family: var(--typewriter);
-  font-size: 1.35em;
+  font-weight: 700;
+  font-size: 1.05em;
   letter-spacing: 0.04em;
   line-height: 1.1;
   text-transform: uppercase;
@@ -8573,8 +8575,8 @@ code, .counter {
 .inv-lembrete {
   position: absolute;
   z-index: 3;
-  top: 18px;
-  right: 18px;
+  top: 24px;
+  right: 24px;
   width: 173px;
   background: #ffe59e;
   padding: 12px 12px 44px;

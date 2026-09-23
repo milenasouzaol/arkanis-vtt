@@ -63,6 +63,23 @@ A Freehand entrou no `index.html` junto da Barlow, que o projeto já carrega do 
 - Pra o clipe poder passar da borda, quem recorta agora é o `.inv-ficha-fundo`, não o
   cartão.
 
+## Segunda rodada de ajustes
+
+- **O negrito não aparecia**: a raiz do app tem `font-synthesis: none` e a Secret Service
+  Typewriter só tem o arquivo Regular, então `font-weight: 700` não fazia nada. Religado
+  com `font-synthesis: weight` dentro de `.inv-pasta`. Vale pros títulos dos quadros, pro
+  nome do agente e pros valores de origem e classe.
+- Nome do agente menor (1,35em → 1,05em) e em negrito.
+- A foto virou absoluta e caiu **em cima do círculo do brasão**. O círculo do capacete
+  mede 49,2% da largura da imagem e o centro dele fica a 33,96% da altura, então com a
+  foto em 40% do cartão o brasão precisa de 81,3% de largura e `top: -0.3%`. Medido:
+  131px de diâmetro nos dois e 0px de desalinho em x e y.
+- Clipe desceu (`top: -11.9%` → `-7.5%`) pra parecer preso no papel.
+- **A calha do post-it foi removida.** Ela estreitava só a sub-aba Pessoal, e era essa a
+  diferença de tamanho entre as duas. Agora o post-it flutua por cima do papel e as duas
+  medem igual: papel 1319×701 e pasta 1355×737 num viewport de 1500×860, sem sobra de
+  rolagem.
+
 ## Critérios de aceite
 
 - [x] As duas sub-abas com o visual da referência.
