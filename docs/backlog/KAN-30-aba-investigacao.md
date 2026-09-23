@@ -90,6 +90,7 @@ Bloco `MEXA AQUI` no começo de `.inv-pasta`, em `app/src/index.css`:
 | `--pasta-altura` | altura máxima dela (851px) |
 | `--foto-tamanho` | diâmetro da foto, em % da largura do cartão |
 | `--foto-altura` | altura do centro da foto dentro do cartão |
+| `--foto-lado` | posição horizontal do centro da foto (50% é o meio) |
 
 O brasão **não** acompanha a foto: ele fica parado em `81.3%` / `-0.3%`, que é o
 encaixe que a Millie aprovou. Chegou a ser derivado da foto por `calc()`, mas ela pediu
@@ -113,3 +114,5 @@ Prints e DevTools da Millie, 23/09/2026. Arte em `fts vtt/investigacao`.
 
 - 23/09/2026 criado — https://arkaniss.atlassian.net/browse/KAN-30
 - 23/09/2026 concluído
+- 23/09/2026 a Millie ajustou os valores finais no bloco `MEXA AQUI`: foto 44%,
+  altura 43%, lado 45%. Aprovado por ela.

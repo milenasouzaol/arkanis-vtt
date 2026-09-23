@@ -8153,7 +8153,7 @@ code, .counter {
   /* Altura do centro da foto dentro do cartao. */
   --foto-altura: 43%;
   /* Lado: 50% e o meio. Menor vai pra esquerda, maior vai pra direita. */
-  --foto-lado: 50%;
+  --foto-lado: 45%;
   /* ===== FIM ===== */
 
   /* O brasao fica parado no encaixe dele e nao acompanha a foto: mexer no
