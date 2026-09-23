@@ -8144,10 +8144,11 @@ code, .counter {
   --papel: #d9d9d9;
   --tinta: #1c1c1c;
   --typewriter: 'Secret Service Typewriter', 'Courier New', ui-monospace, monospace;
-  max-width: 1400px;
+  /* A pasta marrom mede 1184x851 na referencia; aqui ela e o .inv-pasta-corpo. */
+  width: min(92%, 1184px);
   height: 100%;
   margin: 0 auto;
-  padding: 0 1.5em 1.5em;
+  padding: 0 0 1.2em;
   display: flex;
   flex-direction: column;
 }
@@ -8224,6 +8225,7 @@ code, .counter {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  max-height: 851px;
   display: flex;
   background: var(--pasta);
   border-radius: 0 8px 8px 8px;
