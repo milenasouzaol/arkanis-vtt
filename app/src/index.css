@@ -328,6 +328,13 @@ code, .counter {
   overflow-y: auto;
 }
 
+/* Telas que sao uma cena so (a roda e a tela final da Afinidade): travadas, sem rolar.
+   Se nao couber, a arte e cortada em vez de a tela ganhar barra de rolagem. */
+.sheet-root > .aba-travada:not(.sheet-bg):not(.vtt-topbar) {
+  /* clip e nao hidden: hidden ainda deixa rolar por foco de teclado ou por script. */
+  overflow: clip;
+}
+
 .sheet-bg {
   position: fixed;
   inset: 0;
@@ -8765,6 +8772,10 @@ code, .counter {
   --zoom: 1.45;
   /* Forca do traco da arte: 1 seria o branco cheio do arquivo. */
   --forca-arte: 0.42;
+  /* Tamanho das bolinhas e do triangulo, em % da largura da arte. Os circulos da arte
+     medem uns 7% e o do meio 17,6%: passando disso eles vazam pra fora do circulo. */
+  --tamanho-orbe: 6.4%;
+  --tamanho-triangulo: 17%;
   /* ===== FIM ===== */
 
   position: absolute;
@@ -8793,7 +8804,7 @@ code, .counter {
 .afin-orbe {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 5.8%;
+  width: var(--tamanho-orbe);
   aspect-ratio: 1;
   padding: 0;
   border: none;
@@ -8834,7 +8845,7 @@ code, .counter {
   left: 49.8%;
   top: 50.3%;
   transform: translate(-50%, -50%);
-  width: 15.1%;
+  width: var(--tamanho-triangulo);
 }
 
 /* Camada de texto, por cima da arte e sem a ampliacao dela. */

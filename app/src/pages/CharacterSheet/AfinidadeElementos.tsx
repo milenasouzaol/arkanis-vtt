@@ -14,7 +14,7 @@ export default function AfinidadeElementos({
 
   return (
     <div
-      className={`afin-palco${atual ? ' com-elemento' : ''}`}
+      className={`afin-palco aba-travada${atual ? ' com-elemento' : ''}`}
       style={atual ? ({ '--elemento-tinta': atual.tinta } as React.CSSProperties) : undefined}
     >
       {/* Camada ampliada: a arte, os orbes e o selo andam juntos, grudados nos circulos. */}

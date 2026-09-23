@@ -60,6 +60,17 @@ Bloco `MEXA AQUI (roda de afinidade)` em `.afin-arte`: `--zoom` e `--forca-arte`
 O commit do KAN-32 levou o `sharp` pro `package.json` por acidente (usado só pra converter
 as artes). Removido neste.
 
+## Ajustes depois do primeiro print
+
+- Triângulo maior (15,1% → 17% da arte, 420 → 473px numa tela de 1918) e orbes maiores
+  (5,8% → 6,4%, 161 → 178px), ainda dentro dos círculos da arte.
+- **Tela travada.** A regra genérica das abas (`.sheet-root > *`) põe `overflow-y: auto`
+  e é mais específica que o `overflow: hidden` da roda, então a tela rolava. A roda e a
+  tela final ganharam a classe `aba-travada`, com `overflow: clip` — não `hidden`,
+  que ainda deixava rolar por foco de teclado ou script. Medido: 0px rolados por script,
+  por foco + rodinha, e na página.
+- `--tamanho-orbe` e `--tamanho-triangulo` entraram no bloco MEXA AQUI.
+
 ## Critérios de aceite
 
 - [x] Orbes dentro dos círculos da arte em qualquer tamanho de tela.

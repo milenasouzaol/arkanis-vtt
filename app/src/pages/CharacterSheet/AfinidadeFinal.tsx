@@ -15,7 +15,7 @@ export default function AfinidadeFinal({
 
   return (
     <div
-      className="afin-final"
+      className="afin-final aba-travada"
       style={{ '--elemento-cor': e.cor, '--elemento-fundo': `url(${e.fundo})` } as React.CSSProperties}
     >
       {/* O fundo do elemento entra borrado, e por cima passa a correnteza mais escura. */}
