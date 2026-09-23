@@ -5660,10 +5660,13 @@ code, .counter {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
-  align-items: center;
+  /* A linha do campo estica pra altura do botao ao lado; sem isso o texto flutua
+     no meio dessa altura em vez de ficar escrito em cima do tracejado. */
+  align-items: flex-end;
   gap: 0.5em;
   border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
-  padding-bottom: 0.4em;
+  /* O texto fica escrito em cima da linha: folga zero ate o tracejado. */
+  padding-bottom: 0;
 }
 
 .combat-search-input {
@@ -5672,10 +5675,11 @@ code, .counter {
   background: none;
   border: none;
   outline: none;
-  padding: 0;
+  padding: 0 0 1px;
   color: #fff;
   font-family: var(--poppins);
   font-size: 0.85em;
+  line-height: 1.1;
 }
 
 .combat-search-input::placeholder {
@@ -6446,7 +6450,6 @@ code, .counter {
 
 .ability-picker-shell .combat-search-field {
   flex: none;
-  padding-bottom: 0.6em;
 }
 
 .ability-picker-shell .combat-search-input {
@@ -6500,10 +6503,6 @@ code, .counter {
   flex: 1 1 auto;
   min-width: 0;
   padding-bottom: 0;
-}
-
-.rituais-search.combat-search-field {
-  padding-bottom: 0.15em;
 }
 
 .rituais-search .combat-search-input {
@@ -7661,16 +7660,6 @@ code, .counter {
 }
 
 /* No Inventario o texto da busca fica mais perto do tracejado do que no Combate */
-.inv-search-row .combat-search-field {
-  /* o texto fica escrito em cima da linha, entao a folga ate o tracejado e zero */
-  padding-bottom: 0;
-}
-
-.inv-search-row .combat-search-input {
-  line-height: 1.1;
-  padding-bottom: 1px;
-}
-
 /* ===== Inventario: modal de Modificacoes e Maldicoes ===== */
 
 /* Ele abre de dentro do modal de editar item (z-index 90), entao precisa vir acima dele. */

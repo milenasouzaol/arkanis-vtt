@@ -42,4 +42,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-28](KAN-28-adicionar-sem-textura-geral.md) | Botões Adicionar Habilidade e Adicionar Ataque sem textura | front | aprovado | [KAN-28](https://arkaniss.atlassian.net/browse/KAN-28) |
 
+| [KAN-29](KAN-29-busca-colada-na-linha.md) | Campos de busca colados no tracejado em todas as abas | front | aprovado | [KAN-29](https://arkaniss.atlassian.net/browse/KAN-29) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._
