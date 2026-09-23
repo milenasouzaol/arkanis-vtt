@@ -8139,12 +8139,16 @@ code, .counter {
    e o papel. A unica arte e a textura, que entra bem apagada por cima do papel. */
 .inv-pasta {
   --pasta: #b1865c;
+  --pasta-escura: #835e39;
   --papel: #d9d9d9;
   --tinta: #1c1c1c;
   --typewriter: 'Secret Service Typewriter', 'Courier New', ui-monospace, monospace;
   max-width: 1400px;
+  height: 100%;
   margin: 0 auto;
-  padding: 0 1.5em 2em;
+  padding: 0 1.5em 1.5em;
+  display: flex;
+  flex-direction: column;
 }
 
 .inv-pasta-abas {
@@ -8157,10 +8161,11 @@ code, .counter {
   border: none;
   border-radius: 6px 6px 0 0;
   padding: 0.7em 1.4em 0.55em;
-  background: var(--pasta);
-  color: rgba(28, 28, 28, 0.75);
+  background: var(--pasta-escura);
+  color: rgba(255, 255, 255, 0.8);
   font-family: var(--typewriter);
-  font-size: 0.8em;
+  font-size: 0.85em;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -8171,7 +8176,7 @@ code, .counter {
      papel e avanca 1px pra baixo pra cobrir a emenda com a pasta. */
   margin-bottom: -1px;
   padding-bottom: 0.75em;
-  background: #ece9e4;
+  background: var(--pasta);
   color: var(--tinta);
 }
 
@@ -8216,6 +8221,9 @@ code, .counter {
 
 .inv-pasta-corpo {
   position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
   background: var(--pasta);
   border-radius: 0 8px 8px 8px;
   padding: 18px;
@@ -8231,8 +8239,9 @@ code, .counter {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
+  flex: 1 1 auto;
+  min-width: 0;
   gap: 12px;
-  min-height: 70vh;
   background: var(--papel);
   border-radius: 2px;
   padding: 12px;
@@ -8275,7 +8284,8 @@ code, .counter {
   border-bottom: 1px solid var(--tinta);
   padding: 0.5em 0.8em 0.4em;
   font-family: var(--typewriter);
-  font-size: 0.8em;
+  font-weight: 700;
+  font-size: 0.85em;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -8329,47 +8339,84 @@ code, .counter {
 
 /* --- A fichinha do agente --- */
 
+/* Ela e um quadrado de cantos arredondados (294x294 na referencia), nao um retangulo:
+   a altura acompanha a largura da coluna. */
 .inv-ficha {
   position: relative;
-  overflow: hidden;
+  flex-shrink: 0;
+  aspect-ratio: 1;
   display: flex;
-  gap: 0.8em;
-  border: 1px solid var(--tinta);
-  border-radius: 8px;
+  gap: 0.6em;
+  border: 1px solid rgba(28, 28, 28, 0.35);
+  border-radius: 12px;
   padding: 0.9em;
-  background: linear-gradient(150deg, #cfcdc8, #b9b7b2);
+  background: linear-gradient(150deg, #cfcdc8, #bcbab5);
+}
+
+.inv-ficha-fundo {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .inv-ficha-brasao {
   position: absolute;
-  right: -12%;
-  bottom: -10%;
-  width: 78%;
-  opacity: 0.08;
+  left: 50%;
+  top: 44%;
+  transform: translateX(-50%);
+  width: 56%;
+  opacity: 0.07;
   pointer-events: none;
+}
+
+/* A barra preta fica em cima e o "Agente N" corre por baixo dela, lendo de baixo pra cima. */
+.inv-ficha-clipe {
+  position: absolute;
+  left: 76.2%;
+  top: -11.9%;
+  width: 12.2%;
+  pointer-events: none;
+}
+
+/* Os tracinhos da lateral direita sao texto mesmo, como no original. */
+.inv-ficha-tracos {
+  position: absolute;
+  right: 0.7em;
+  top: 2.6em;
+  writing-mode: vertical-rl;
+  text-orientation: sideways;
+  font-family: var(--typewriter);
+  font-size: 0.95em;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  color: rgba(28, 28, 28, 0.35);
+  pointer-events: none;
+  user-select: none;
 }
 
 .inv-ficha-lateral {
   flex-shrink: 0;
   display: flex;
-  align-items: center;
-  gap: 0.5em;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6em;
 }
 
 .inv-ficha-barra {
-  width: 7px;
-  height: 2.2em;
+  flex-shrink: 0;
+  width: 9px;
+  height: 2.4em;
   background: var(--tinta);
-  align-self: flex-start;
 }
 
 .inv-ficha-doc {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-family: var(--typewriter);
-  font-size: 0.62em;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.8em;
+  letter-spacing: 0.1em;
   color: rgba(28, 28, 28, 0.7);
 }
 
@@ -8378,14 +8425,15 @@ code, .counter {
   z-index: 1;
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .inv-ficha-foto {
   position: relative;
-  width: 100%;
+  width: 46%;
   aspect-ratio: 1;
-  max-width: 170px;
-  margin: 0 auto 0.9em;
+  margin: 0.2em auto 0;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -8409,31 +8457,39 @@ code, .counter {
 
 .inv-ficha-rotulo {
   font-family: var(--typewriter);
-  font-size: 0.62em;
-  letter-spacing: 0.12em;
+  font-size: 0.8em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(28, 28, 28, 0.65);
+  line-height: 1.1;
+  color: rgba(28, 28, 28, 0.6);
 }
 
 .inv-ficha-nome {
-  margin-bottom: 0.7em;
   font-family: var(--typewriter);
-  font-size: 1.05em;
-  letter-spacing: 0.06em;
+  font-size: 1.35em;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
   text-transform: uppercase;
   color: var(--tinta);
+}
+
+/* O bloco de baixo encosta no fim do quadrado; o rotulo cola no valor. */
+.inv-ficha-identidade {
+  margin-top: auto;
 }
 
 .inv-ficha-linha {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.6em;
+  margin-top: 0.7em;
 }
 
 .inv-ficha-valor {
   font-family: var(--typewriter);
-  font-size: 0.78em;
+  font-size: 1em;
   font-weight: 700;
+  line-height: 1.1;
   color: var(--tinta);
 }
 

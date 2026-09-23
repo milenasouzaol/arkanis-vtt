@@ -48,10 +48,20 @@ A Freehand entrou no `index.html` junto da Barlow, que o projeto já carrega do 
   nela, em vez de cobrir a coluna do Histórico.
 - A textura de 1,5 MB virou webp de 15 KB.
 
-## Pendente de referência
+## Ajustes depois do primeiro print (mesmo card)
 
-- O **clipe de papel** que aparece no topo da fichinha não veio nos arquivos.
-- A cor da **aba aberta** (`#ece9e4`) foi lida do print, não medida no DevTools.
+- Abas: fechada `#835e39`, aberta na cor da pasta `#b1865c` — não branca.
+- A pasta passou a ocupar a altura toda da tela, e as duas sub-abas ficam do mesmo
+  tamanho (medido: 701px nas duas, e os títulos no mesmo 12,75px/700).
+- Títulos dos quadros em negrito.
+- Fichinha refeita como **quadrado** (294×294 na referência, `aspect-ratio: 1` aqui),
+  foto menor, fontes maiores, rótulo colado no valor, brasão centralizado e mais fraco.
+- O "Agente Nº" perdeu o número: é só o rótulo, com a barra preta em cima.
+- Entraram o **clipe de papel** (SVG que a Millie mandou, preso a -35px do topo e 224px
+  da esquerda, em %) e os **tracinhos** da lateral direita, que no original são o texto
+  `/////////////////` de pé.
+- Pra o clipe poder passar da borda, quem recorta agora é o `.inv-ficha-fundo`, não o
+  cartão.
 
 ## Critérios de aceite
 

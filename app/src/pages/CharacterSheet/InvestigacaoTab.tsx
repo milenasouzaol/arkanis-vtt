@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import type { CharacterRecord } from './index'
 import { fallbackAvatarColor } from '../../lib/color'
 import brasao from '../../assets/criacao/brasao-ordo-realitas.png'
+import clipe from '../../assets/investigacao/clipe.svg'
 import arkanisLogo from '../../assets/icons/arkanis-logo.png'
 import lixeira from '../../assets/combate/lixeira.png'
 import lixeiraAberta from '../../assets/combate/lixeira-aberta.png'
@@ -328,10 +329,13 @@ export function Campo({
 export function FichaAgente({ character, originName, className }: { character: CharacterRecord; originName: string | null; className: string | null }) {
   return (
     <div className="inv-ficha">
-      <img className="inv-ficha-brasao" src={brasao} alt="" />
+      <div className="inv-ficha-fundo">
+        <img className="inv-ficha-brasao" src={brasao} alt="" />
+      </div>
+      <img className="inv-ficha-clipe" src={clipe} alt="" />
       <div className="inv-ficha-lateral">
         <span className="inv-ficha-barra" />
-        <span className="inv-ficha-doc">Agente Nº {character.doc_number}</span>
+        <span className="inv-ficha-doc">Agente Nº</span>
       </div>
 
       <div className="inv-ficha-miolo">
@@ -344,8 +348,10 @@ export function FichaAgente({ character, originName, className }: { character: C
             : <img className="sem-foto" src={arkanisLogo} alt="" />}
         </div>
 
-        <div className="inv-ficha-rotulo">Agente</div>
-        <div className="inv-ficha-nome">{character.name}</div>
+        <div className="inv-ficha-identidade">
+          <div className="inv-ficha-rotulo">Agente</div>
+          <div className="inv-ficha-nome">{character.name}</div>
+        </div>
 
         <div className="inv-ficha-linha">
           <div>
@@ -358,6 +364,8 @@ export function FichaAgente({ character, originName, className }: { character: C
           </div>
         </div>
       </div>
+
+      <div className="inv-ficha-tracos" aria-hidden>/////////////////</div>
     </div>
   )
 }

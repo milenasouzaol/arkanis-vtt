@@ -34,10 +34,10 @@ describe('Campo', () => {
 })
 
 describe('FichaAgente', () => {
-  it('traz nome, documento, origem e classe', () => {
+  it('traz nome, rotulo de agente, origem e classe', () => {
     render(<FichaAgente character={agente} originName="Militar" className="Combatente" />)
     expect(screen.getByText('Ana Ferraz')).toBeInTheDocument()
-    expect(screen.getByText('Agente Nº 004-7721')).toBeInTheDocument()
+    expect(screen.getByText('Agente Nº')).toBeInTheDocument()
     expect(screen.getByText('Militar')).toBeInTheDocument()
     expect(screen.getByText('Combatente')).toBeInTheDocument()
   })
