@@ -1,7 +1,7 @@
 ---
 id: KAN-32
 titulo: Aba Afinidade — tela de escolher como descobrir o elemento
-status: em revisão da Millie
+status: aprovado
 camada: front
 depende_de: []
 ---
@@ -56,3 +56,4 @@ Conferido na página: cartão 350×545, título `Optima 32px rgb(239,233,221)`, 
 ## Histórico
 
 - 23/09/2026 criado — https://arkaniss.atlassian.net/browse/KAN-32
+- 23/09/2026 concluído; o caminho Liberdade seguiu no KAN-33

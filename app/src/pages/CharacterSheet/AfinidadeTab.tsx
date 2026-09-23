@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { CharacterRecord } from './index'
 import AfinidadeEscolha, { type Caminho } from './AfinidadeEscolha'
+import AfinidadeElementos from './AfinidadeElementos'
+import AfinidadeFinal from './AfinidadeFinal'
+import type { ChaveElemento } from './elementosParanormais'
 
 const ELEMENTOS = [
   { key: 'sangue', name: 'Sangue', description: 'Vitalidade, fúria, o corpo levado ao extremo.' },
@@ -16,6 +19,8 @@ export default function AfinidadeTab({ character, onUpdated }: { character: Char
   // null = a tela dos tres caminhos; senao, o caminho que a pessoa escolheu.
   const [caminho, setCaminho] = useState<Caminho | null>(null)
   const [sorteado, setSorteado] = useState<string | null>(null)
+  // Elemento ja escolhido na roda, esperando o "Finalizar" da tela final.
+  const [aceito, setAceito] = useState<ChaveElemento | null>(null)
   const [rituais, setRituais] = useState<{ id: string; name: string; circle: number }[]>([])
   const [poderes, setPoderes] = useState<{ id: string; name: string; description: string }[]>([])
 
@@ -50,6 +55,20 @@ export default function AfinidadeTab({ character, onUpdated }: { character: Char
 
   if (!elemento && caminho === null) {
     return <AfinidadeEscolha onEscolher={(c) => (c === 'aleatorio' ? sortear() : setCaminho(c))} />
+  }
+
+  if (!elemento && aceito) {
+    return (
+      <AfinidadeFinal
+        elemento={aceito}
+        onFinalizar={() => confirmElemento(aceito)}
+        onVoltar={() => setAceito(null)}
+      />
+    )
+  }
+
+  if (!elemento && caminho === 'escolher') {
+    return <AfinidadeElementos onAceitar={setAceito} onVoltar={() => setCaminho(null)} />
   }
 
   if (!elemento && caminho === 'teste') {
