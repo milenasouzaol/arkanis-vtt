@@ -8154,11 +8154,10 @@ code, .counter {
   --foto-altura: 34%;
   /* ===== FIM ===== */
 
-  /* Nao precisa mexer: o brasao se redimensiona sozinho pra o circulo do capacete
-     cair exatamente em cima da foto. 2.0325 = 1 / 0.492 (o circulo ocupa 49,2% da
-     largura da imagem) e 0.42193 e onde fica o centro dele, contado do topo. */
-  --brasao-largura: calc(var(--foto-tamanho) * 2.0325);
-  --brasao-topo: calc(var(--foto-altura) - var(--brasao-largura) * 0.42193);
+  /* O brasao fica parado no encaixe dele e nao acompanha a foto: mexer no
+     --foto-tamanho ou no --foto-altura nao mexe nada aqui. */
+  --brasao-largura: 81.3%;
+  --brasao-topo: -0.3%;
 
   width: min(92%, var(--pasta-largura));
   height: 100%;

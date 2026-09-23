@@ -91,9 +91,10 @@ Bloco `MEXA AQUI` no começo de `.inv-pasta`, em `app/src/index.css`:
 | `--foto-tamanho` | diâmetro da foto, em % da largura do cartão |
 | `--foto-altura` | altura do centro da foto dentro do cartão |
 
-O brasão é derivado da foto por `calc()`, então mudar `--foto-tamanho` não desalinha
-nada. Conferido em 36%, 44%, 52% e 60%: diâmetro do círculo igual ao da foto e 0px de
-desalinho em x e y nos quatro.
+O brasão **não** acompanha a foto: ele fica parado em `81.3%` / `-0.3%`, que é o
+encaixe que a Millie aprovou. Chegou a ser derivado da foto por `calc()`, mas ela pediu
+o contrário — quer mover só a foto. Conferido com a foto em 33%, 44% e 60%: o brasão
+ficou em 267px de largura e topo 70px nos três, e só a foto mudou (108, 144 e 197px).
 
 ## Critérios de aceite
 
