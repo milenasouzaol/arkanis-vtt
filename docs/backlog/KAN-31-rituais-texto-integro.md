@@ -1,7 +1,7 @@
 ---
 id: KAN-31
 titulo: Texto íntegro dos 23 rituais que estavam resumidos
-status: aguardando a Millie rodar a migration
+status: aprovado
 camada: back
 depende_de: []
 ---
@@ -45,9 +45,11 @@ um elemento só e ele está como `sangue`. Não foi alterado.
 - [x] Cada `where` casa com exatamente uma linha real (nome + slug da fonte), conferido
       contra o banco pela API.
 - [x] Os 23 blocos SQL bem formados: aspas balanceadas, 3 campos, terminador.
-- [ ] Migration rodada pela Millie no SQL Editor.
+- [x] Migration rodada pela Millie no SQL Editor.
+- [x] Conferido pela API depois de rodar: os 23 estão com o texto do livro no banco.
 
 ## Histórico
 
 - 23/09/2026 criado — https://arkaniss.atlassian.net/browse/KAN-31
-- 23/09/2026 migration entregue, aguardando execução
+- 23/09/2026 migration entregue e rodada pela Millie; conferido pela API, 23/23 batendo
+  (o banco guardou CRLF em vez de LF nas quebras de parágrafo, o que não muda o texto)
