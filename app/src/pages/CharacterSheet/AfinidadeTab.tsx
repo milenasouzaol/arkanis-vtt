@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { CharacterRecord } from './index'
+import AfinidadeEscolha, { type Caminho } from './AfinidadeEscolha'
 
 const ELEMENTOS = [
   { key: 'sangue', name: 'Sangue', description: 'Vitalidade, fúria, o corpo levado ao extremo.' },
@@ -12,6 +13,9 @@ const ELEMENTOS = [
 export default function AfinidadeTab({ character, onUpdated }: { character: CharacterRecord & { afinidade_elemento?: string | null }; onUpdated: () => void }) {
   const [elemento, setElemento] = useState<string | null>(null)
   const [confirming, setConfirming] = useState<string | null>(null)
+  // null = a tela dos tres caminhos; senao, o caminho que a pessoa escolheu.
+  const [caminho, setCaminho] = useState<Caminho | null>(null)
+  const [sorteado, setSorteado] = useState<string | null>(null)
   const [rituais, setRituais] = useState<{ id: string; name: string; circle: number }[]>([])
   const [poderes, setPoderes] = useState<{ id: string; name: string; description: string }[]>([])
 
@@ -38,10 +42,44 @@ export default function AfinidadeTab({ character, onUpdated }: { character: Char
     onUpdated()
   }
 
+  function sortear() {
+    const escolha = ELEMENTOS[Math.floor(Math.random() * ELEMENTOS.length)].key
+    setSorteado(escolha)
+    setCaminho('aleatorio')
+  }
+
+  if (!elemento && caminho === null) {
+    return <AfinidadeEscolha onEscolher={(c) => (c === 'aleatorio' ? sortear() : setCaminho(c))} />
+  }
+
+  if (!elemento && caminho === 'teste') {
+    return (
+      <div>
+        <h2>Teste de Personalidade</h2>
+        <p>As 30 perguntas ainda não foram escritas.</p>
+        <button type="button" onClick={() => setCaminho(null)}>Voltar</button>
+      </div>
+    )
+  }
+
+  if (!elemento && caminho === 'aleatorio' && sorteado) {
+    const sorte = ELEMENTOS.find((e) => e.key === sorteado)!
+    return (
+      <div>
+        <h2>O caos escolheu: {sorte.name}</h2>
+        <p>{sorte.description}</p>
+        <button type="button" onClick={() => confirmElemento(sorte.key)}>Aceitar</button>
+        <button type="button" onClick={sortear}>Sortear de novo</button>
+        <button type="button" onClick={() => { setSorteado(null); setCaminho(null) }}>Voltar</button>
+      </div>
+    )
+  }
+
   if (!elemento) {
     return (
       <div>
         <h2>Afinidade</h2>
+        <button type="button" onClick={() => setCaminho(null)}>Voltar</button>
         <p>Escolha um elemento. Essa escolha é definitiva.</p>
         <ul>
           {ELEMENTOS.map((e) => (

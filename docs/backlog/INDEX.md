@@ -48,4 +48,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-31](KAN-31-rituais-texto-integro.md) | Texto íntegro dos 23 rituais resumidos | back | aprovado | [KAN-31](https://arkaniss.atlassian.net/browse/KAN-31) |
 
+| [KAN-32](KAN-32-afinidade-tres-caminhos.md) | Afinidade: tela dos três caminhos | front | em revisão | [KAN-32](https://arkaniss.atlassian.net/browse/KAN-32) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._
