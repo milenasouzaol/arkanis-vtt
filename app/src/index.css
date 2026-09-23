@@ -8151,7 +8151,9 @@ code, .counter {
   /* Diametro da foto do agente, em % da largura do cartao. */
   --foto-tamanho: 44%;
   /* Altura do centro da foto dentro do cartao. */
-  --foto-altura: 34%;
+  --foto-altura: 43%;
+  /* Lado: 50% e o meio. Menor vai pra esquerda, maior vai pra direita. */
+  --foto-lado: 50%;
   /* ===== FIM ===== */
 
   /* O brasao fica parado no encaixe dele e nao acompanha a foto: mexer no
@@ -8445,7 +8447,7 @@ code, .counter {
 /* Ela fica exatamente por cima do circulo do brasao, nao empilhada no meio da coluna. */
 .inv-ficha-foto {
   position: absolute;
-  left: 50%;
+  left: var(--foto-lado);
   top: var(--foto-altura);
   transform: translate(-50%, -50%);
   z-index: 1;
