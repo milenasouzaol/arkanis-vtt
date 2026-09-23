@@ -44,4 +44,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-29](KAN-29-busca-colada-na-linha.md) | Campos de busca colados no tracejado em todas as abas | front | aprovado | [KAN-29](https://arkaniss.atlassian.net/browse/KAN-29) |
 
+| [KAN-30](KAN-30-aba-investigacao.md) | Aba Investigação: pasta, sub-aba Pessoal e páginas | front | aprovado | [KAN-30](https://arkaniss.atlassian.net/browse/KAN-30) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

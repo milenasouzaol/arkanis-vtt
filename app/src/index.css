@@ -8132,3 +8132,444 @@ code, .counter {
   vertical-align: super;
   color: #3ecf6e;
 }
+
+/* ===== Aba Investigacao: a pasta de papel ===== */
+
+/* A pasta e feita no CSS, sem imagem: o marrom e a borda da pasta e o cinza claro
+   e o papel. A unica arte e a textura, que entra bem apagada por cima do papel. */
+.inv-pasta {
+  --pasta: #b1865c;
+  --papel: #d9d9d9;
+  --tinta: #1c1c1c;
+  --typewriter: 'Secret Service Typewriter', 'Courier New', ui-monospace, monospace;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5em 2em;
+}
+
+.inv-pasta-abas {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.15em;
+}
+
+.inv-pasta-aba {
+  border: none;
+  border-radius: 6px 6px 0 0;
+  padding: 0.7em 1.4em 0.55em;
+  background: var(--pasta);
+  color: rgba(28, 28, 28, 0.75);
+  font-family: var(--typewriter);
+  font-size: 0.8em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.inv-pasta-aba.ativa {
+  /* A aba aberta e a "lingueta" do papel que esta na frente, entao ela usa a cor do
+     papel e avanca 1px pra baixo pra cobrir a emenda com a pasta. */
+  margin-bottom: -1px;
+  padding-bottom: 0.75em;
+  background: #ece9e4;
+  color: var(--tinta);
+}
+
+.inv-pasta-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-left: auto;
+  padding-bottom: 0.4em;
+}
+
+.inv-pasta-add {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  background: #1b1a20;
+  color: #fff;
+  font-family: var(--raleway);
+  font-size: 0.82em;
+  padding: 0.6em 1em;
+  cursor: pointer;
+}
+
+.inv-pasta-lixo {
+  width: 2.1em;
+  height: 2.1em;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  background: #1b1a20;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25em;
+}
+
+.inv-pasta-lixo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.inv-pasta-corpo {
+  position: relative;
+  background: var(--pasta);
+  border-radius: 0 8px 8px 8px;
+  padding: 18px;
+}
+
+/* Com o lembrete aberto a pasta abre uma calha na direita pro post-it ficar nela,
+   em vez de cobrir a coluna do Historico. */
+.inv-pasta.com-lembrete .inv-pasta-corpo {
+  padding-right: 205px;
+}
+
+.inv-pasta-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  min-height: 70vh;
+  background: var(--papel);
+  border-radius: 2px;
+  padding: 12px;
+  color: var(--tinta);
+}
+
+.inv-pasta-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: url('./assets/investigacao/papel-textura.webp') center / cover;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.inv-pasta-coluna {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* --- Cada quadro escrito --- */
+
+.inv-campo {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--tinta);
+}
+
+.inv-campo.cresce {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.inv-campo-titulo {
+  border-bottom: 1px solid var(--tinta);
+  padding: 0.5em 0.8em 0.4em;
+  font-family: var(--typewriter);
+  font-size: 0.8em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* O Titulo/Identificador e o unico invertido, como na referencia. */
+.inv-campo.destaque {
+  background: #000;
+  color: #fff;
+}
+
+.inv-campo.destaque .inv-campo-titulo {
+  border-bottom-color: rgba(255, 255, 255, 0.35);
+}
+
+.inv-campo.destaque .inv-campo-texto {
+  color: #fff;
+}
+
+.inv-campo.destaque .inv-campo-texto::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.inv-campo-texto {
+  flex: 1 1 auto;
+  min-height: 4.5em;
+  resize: none;
+  border: none;
+  outline: none;
+  background: none;
+  padding: 0.7em 0.8em;
+  color: var(--tinta);
+  font-family: var(--raleway);
+  font-size: 0.85em;
+  line-height: 1.5;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+
+.inv-campo-texto::placeholder {
+  color: rgba(28, 28, 28, 0.4);
+}
+
+.inv-campo-texto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.inv-campo-texto::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 3px;
+}
+
+/* --- A fichinha do agente --- */
+
+.inv-ficha {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  gap: 0.8em;
+  border: 1px solid var(--tinta);
+  border-radius: 8px;
+  padding: 0.9em;
+  background: linear-gradient(150deg, #cfcdc8, #b9b7b2);
+}
+
+.inv-ficha-brasao {
+  position: absolute;
+  right: -12%;
+  bottom: -10%;
+  width: 78%;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.inv-ficha-lateral {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.inv-ficha-barra {
+  width: 7px;
+  height: 2.2em;
+  background: var(--tinta);
+  align-self: flex-start;
+}
+
+.inv-ficha-doc {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--typewriter);
+  font-size: 0.62em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(28, 28, 28, 0.7);
+}
+
+.inv-ficha-miolo {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.inv-ficha-foto {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 170px;
+  margin: 0 auto 0.9em;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inv-ficha-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Sem foto, a mesma regra do resto do app: a cor de sorteio do personagem com a
+   logo do Arkanis por cima. */
+.inv-ficha-foto .sem-foto {
+  width: 62%;
+  height: auto;
+  object-fit: contain;
+}
+
+.inv-ficha-rotulo {
+  font-family: var(--typewriter);
+  font-size: 0.62em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(28, 28, 28, 0.65);
+}
+
+.inv-ficha-nome {
+  margin-bottom: 0.7em;
+  font-family: var(--typewriter);
+  font-size: 1.05em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tinta);
+}
+
+.inv-ficha-linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6em;
+}
+
+.inv-ficha-valor {
+  font-family: var(--typewriter);
+  font-size: 0.78em;
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+/* --- Modais de renomear e de deletar --- */
+
+.inv-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.inv-modal {
+  width: min(420px, 92vw);
+  background: #17161b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.2em;
+  color: #fff;
+}
+
+.inv-modal h3 {
+  margin: 0 0 0.6em;
+  padding-bottom: 0.6em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--heading);
+  font-size: 1.05em;
+  font-weight: 700;
+}
+
+.inv-modal p {
+  margin: 0 0 0.3em;
+  font-family: var(--raleway);
+  font-size: 0.9em;
+}
+
+.inv-modal-aviso {
+  color: #e0394f;
+}
+
+.inv-modal input {
+  width: 100%;
+  background: #24232a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  outline: none;
+  padding: 0.6em 0.7em;
+  color: #fff;
+  font-family: var(--raleway);
+  font-size: 0.9em;
+}
+
+.inv-modal-botoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6em;
+  margin-top: 1.1em;
+}
+
+.inv-modal-btn {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  background: none;
+  padding: 0.55em 1.1em;
+  color: #fff;
+  font-family: var(--raleway);
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.inv-modal-btn.perigo {
+  border-color: #e0394f;
+  background: #e0394f;
+}
+
+/* --- O post-it do Lembrete --- */
+
+.inv-lembrete {
+  position: absolute;
+  z-index: 3;
+  top: 18px;
+  right: 18px;
+  width: 173px;
+  background: #ffe59e;
+  padding: 12px 12px 44px;
+  color: #000;
+  box-shadow: 2px 3px 7px rgba(0, 0, 0, 0.3);
+}
+
+/* A pontinha dobrada do canto de baixo, na esquerda. */
+.inv-lembrete::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 32px;
+  height: 32px;
+  background: #b29c5f;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+
+.inv-lembrete-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5em;
+  margin-bottom: 0.3em;
+}
+
+.inv-lembrete-titulo {
+  font-family: 'Freehand', cursive;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.inv-lembrete-x {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.inv-lembrete-x svg {
+  width: 100%;
+  height: 100%;
+}
+
+.inv-lembrete-texto {
+  font-family: 'Secret Service Typewriter', 'Courier New', ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.35;
+}

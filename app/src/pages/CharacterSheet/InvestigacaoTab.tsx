@@ -1,6 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { CharacterRecord } from './index'
+import { fallbackAvatarColor } from '../../lib/color'
+import brasao from '../../assets/criacao/brasao-ordo-realitas.png'
+import arkanisLogo from '../../assets/icons/arkanis-logo.png'
+import lixeira from '../../assets/combate/lixeira.png'
+import lixeiraAberta from '../../assets/combate/lixeira-aberta.png'
 
 type Page = {
   id: string
@@ -19,11 +24,18 @@ type PersonalFields = {
   lembrete_fechado: boolean
 }
 
+export const TITULO_PADRAO = 'Investigação'
+
 export default function InvestigacaoTab({ character, originName, className }: { character: CharacterRecord; originName: string | null; className: string | null }) {
-  const [subTab, setSubTab] = useState<'pessoal' | 'investigacao'>('pessoal')
   const [personal, setPersonal] = useState<PersonalFields | null>(null)
   const [pages, setPages] = useState<Page[]>([])
+  // null = a sub-aba Pessoal; qualquer outro valor e o id da pagina aberta.
   const [activePage, setActivePage] = useState<string | null>(null)
+  const [renaming, setRenaming] = useState<{ id: string; valor: string } | null>(null)
+  const [deleting, setDeleting] = useState<Page | null>(null)
+  const [trashHover, setTrashHover] = useState(false)
+  // A primeira pagina e criada sozinha; esse guarda evita criar duas no StrictMode.
+  const criouPrimeira = useRef(false)
 
   useEffect(() => {
     supabase
@@ -33,6 +45,7 @@ export default function InvestigacaoTab({ character, originName, className }: { 
       .single()
       .then(({ data }) => setPersonal(data))
     loadPages()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character.id])
 
   async function loadPages() {
@@ -41,8 +54,13 @@ export default function InvestigacaoTab({ character, originName, className }: { 
       .select('id, title, objective, summary, questions, clues')
       .eq('character_id', character.id)
       .order('sort_order')
-    setPages(data ?? [])
-    if (data?.length && !activePage) setActivePage(data[0].id)
+    const lista = data ?? []
+    if (lista.length === 0 && !criouPrimeira.current) {
+      criouPrimeira.current = true
+      await addPage()
+      return
+    }
+    setPages(lista)
   }
 
   async function savePersonalField(field: keyof PersonalFields, value: string | boolean) {
@@ -53,17 +71,22 @@ export default function InvestigacaoTab({ character, originName, className }: { 
   async function addPage() {
     const { data } = await supabase
       .from('character_investigation_pages')
-      .insert({ character_id: character.id, sort_order: pages.length })
-      .select('id')
+      .insert({ character_id: character.id, title: TITULO_PADRAO, sort_order: pages.length })
+      .select('id, title, objective, summary, questions, clues')
       .single()
-    await loadPages()
-    if (data) setActivePage(data.id)
+    if (data) {
+      setPages((ps) => [...ps, data])
+      setActivePage(data.id)
+    }
   }
 
-  async function removePage(id: string) {
-    await supabase.from('character_investigation_pages').delete().eq('id', id)
+  async function confirmDelete() {
+    if (!deleting) return
+    const id = deleting.id
+    setDeleting(null)
+    setPages((ps) => ps.filter((p) => p.id !== id))
     if (activePage === id) setActivePage(null)
-    await loadPages()
+    await supabase.from('character_investigation_pages').delete().eq('id', id)
   }
 
   async function updatePage(id: string, patch: Partial<Page>) {
@@ -71,60 +94,270 @@ export default function InvestigacaoTab({ character, originName, className }: { 
     await supabase.from('character_investigation_pages').update(patch).eq('id', id)
   }
 
-  const current = pages.find((p) => p.id === activePage)
+  async function salvarTitulo() {
+    if (!renaming) return
+    const { id, valor } = renaming
+    setRenaming(null)
+    await updatePage(id, { title: valor.trim() || TITULO_PADRAO })
+  }
+
+  /** Clicar na aba ja aberta abre o modal de renomear; na fechada, so troca de aba. */
+  function clicarNaAba(p: Page) {
+    if (activePage === p.id) setRenaming({ id: p.id, valor: p.title })
+    else setActivePage(p.id)
+  }
+
+  const current = pages.find((p) => p.id === activePage) ?? null
+
+  const lembreteAberto = activePage === null && personal !== null && !personal.lembrete_fechado
 
   return (
-    <div>
-      <nav>
-        <button type="button" onClick={() => setSubTab('pessoal')} disabled={subTab === 'pessoal'}>Pessoal</button>
-        <button type="button" onClick={() => setSubTab('investigacao')} disabled={subTab === 'investigacao'}>Investigação</button>
+    <div className={`inv-pasta${lembreteAberto ? ' com-lembrete' : ''}`}>
+      <nav className="inv-pasta-abas">
+        <button
+          type="button"
+          className={`inv-pasta-aba${activePage === null ? ' ativa' : ''}`}
+          onClick={() => setActivePage(null)}
+        >
+          Pessoal
+        </button>
+        {pages.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            className={`inv-pasta-aba${activePage === p.id ? ' ativa' : ''}`}
+            onClick={() => clicarNaAba(p)}
+            title={activePage === p.id ? 'Clique para renomear' : undefined}
+          >
+            {p.title || TITULO_PADRAO}
+          </button>
+        ))}
+
+        <div className="inv-pasta-acoes">
+          <button type="button" className="inv-pasta-add" onClick={addPage}>Adicionar nova página</button>
+          {current && (
+            <button
+              type="button"
+              className="inv-pasta-lixo"
+              onMouseEnter={() => setTrashHover(true)}
+              onMouseLeave={() => setTrashHover(false)}
+              onClick={() => setDeleting(current)}
+              aria-label="Deletar esta página"
+            >
+              <img src={trashHover ? lixeiraAberta : lixeira} alt="" />
+            </button>
+          )}
+        </div>
       </nav>
 
-      {subTab === 'pessoal' && personal && (
-        <div>
-          <section>
-            <p>Doc.No: {character.doc_number} — AGENTE</p>
-            <p>{character.name}</p>
-            <p>{originName} — {className}</p>
-          </section>
-
-          <label>Aparência <textarea value={personal.aparencia ?? ''} onChange={(e) => savePersonalField('aparencia', e.target.value)} /></label>
-          <label>Personalidade <textarea value={personal.personalidade ?? ''} onChange={(e) => savePersonalField('personalidade', e.target.value)} /></label>
-          <label>Objetivo <textarea value={personal.objetivo ?? ''} onChange={(e) => savePersonalField('objetivo', e.target.value)} /></label>
-          <label>Histórico <textarea rows={6} value={personal.historico ?? ''} onChange={(e) => savePersonalField('historico', e.target.value)} /></label>
-
-          {!personal.lembrete_fechado && (
-            <div>
-              <button type="button" onClick={() => savePersonalField('lembrete_fechado', true)}>x</button>
-              <p><strong>Lembrete:</strong> Anote as perguntas que você tem ao longo da investigação, e responda-as à medida que encontra evidências.</p>
+      <div className="inv-pasta-corpo">
+        {activePage === null && personal && (
+          <>
+          <div className="inv-pasta-grid">
+            <div className="inv-pasta-coluna">
+              <FichaAgente character={character} originName={originName} className={className} />
+              <Campo
+                titulo="Aparência"
+                valor={personal.aparencia ?? ''}
+                onChange={(v) => savePersonalField('aparencia', v)}
+                cresce
+              />
             </div>
-          )}
+
+            <div className="inv-pasta-coluna">
+              <Campo
+                titulo="Personalidade"
+                valor={personal.personalidade ?? ''}
+                onChange={(v) => savePersonalField('personalidade', v)}
+                cresce
+              />
+              <Campo
+                titulo="Objetivo"
+                valor={personal.objetivo ?? ''}
+                onChange={(v) => savePersonalField('objetivo', v)}
+                cresce
+              />
+            </div>
+
+            <div className="inv-pasta-coluna">
+              <Campo
+                titulo="Histórico"
+                valor={personal.historico ?? ''}
+                onChange={(v) => savePersonalField('historico', v)}
+                cresce
+              />
+            </div>
+
+            </div>
+
+            {!personal.lembrete_fechado && (
+              <div className="inv-lembrete">
+                <div className="inv-lembrete-topo">
+                  <span className="inv-lembrete-titulo">Lembrete</span>
+                  <button
+                    type="button"
+                    className="inv-lembrete-x"
+                    onClick={() => savePersonalField('lembrete_fechado', true)}
+                    aria-label="Fechar lembrete"
+                  >
+                    <svg viewBox="0 0 16 16" aria-hidden>
+                      <path d="M2 2 L14 14 M14 2 L2 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="inv-lembrete-texto">
+                  Anote as perguntas que você têm ao longo da investigação, e responda-as à medida que encontra evidências
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {current && (
+          <div className="inv-pasta-grid">
+            <div className="inv-pasta-coluna">
+              <Campo
+                titulo="Título/Identificador"
+                valor={current.title === TITULO_PADRAO ? '' : current.title}
+                onChange={(v) => updatePage(current.id, { title: v })}
+                destaque
+                linhas={2}
+              />
+              <Campo
+                titulo="Objetivo"
+                valor={current.objective}
+                onChange={(v) => updatePage(current.id, { objective: v })}
+                linhas={4}
+              />
+              <Campo
+                titulo="Resumo"
+                valor={current.summary}
+                onChange={(v) => updatePage(current.id, { summary: v })}
+                cresce
+              />
+            </div>
+
+            <div className="inv-pasta-coluna">
+              <Campo
+                titulo="Perguntas"
+                valor={current.questions}
+                onChange={(v) => updatePage(current.id, { questions: v })}
+                cresce
+              />
+            </div>
+
+            <div className="inv-pasta-coluna">
+              <Campo
+                titulo="Pistas"
+                valor={current.clues}
+                onChange={(v) => updatePage(current.id, { clues: v })}
+                cresce
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {renaming && (
+        <div className="inv-modal-backdrop" onClick={() => setRenaming(null)}>
+          <div className="inv-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Editar título</h3>
+            <input
+              autoFocus
+              value={renaming.valor}
+              onChange={(e) => setRenaming({ ...renaming, valor: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') salvarTitulo()
+                if (e.key === 'Escape') setRenaming(null)
+              }}
+            />
+            <div className="inv-modal-botoes">
+              <button type="button" className="inv-modal-btn" onClick={() => setRenaming(null)}>Descartar</button>
+              <button type="button" className="inv-modal-btn" onClick={salvarTitulo}>Salvar e voltar</button>
+            </div>
+          </div>
         </div>
       )}
 
-      {subTab === 'investigacao' && (
-        <div>
-          <nav>
-            {pages.map((p) => (
-              <span key={p.id}>
-                <button type="button" onClick={() => setActivePage(p.id)} disabled={activePage === p.id}>{p.title || '(sem título)'}</button>
-                <button type="button" onClick={() => removePage(p.id)}>Excluir</button>
-              </span>
-            ))}
-            <button type="button" onClick={addPage}>Adicionar nova página</button>
-          </nav>
-
-          {current && (
-            <div>
-              <label>Título/Identificador <input value={current.title} onChange={(e) => updatePage(current.id, { title: e.target.value })} /></label>
-              <label>Objetivo <input value={current.objective} onChange={(e) => updatePage(current.id, { objective: e.target.value })} /></label>
-              <label>Resumo <textarea rows={6} value={current.summary} onChange={(e) => updatePage(current.id, { summary: e.target.value })} /></label>
-              <label>Perguntas <textarea value={current.questions} onChange={(e) => updatePage(current.id, { questions: e.target.value })} /></label>
-              <label>Pistas <textarea value={current.clues} onChange={(e) => updatePage(current.id, { clues: e.target.value })} /></label>
+      {deleting && (
+        <div className="inv-modal-backdrop" onClick={() => setDeleting(null)}>
+          <div className="inv-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Confirme sua escolha</h3>
+            <p>Tem certeza que deseja deletar a página "{deleting.title || TITULO_PADRAO}"?</p>
+            <p className="inv-modal-aviso">Essa ação é irreversível!</p>
+            <div className="inv-modal-botoes">
+              <button type="button" className="inv-modal-btn" onClick={() => setDeleting(null)}>Cancelar</button>
+              <button type="button" className="inv-modal-btn perigo" onClick={confirmDelete}>Deletar página</button>
             </div>
-          )}
+          </div>
         </div>
       )}
+    </div>
+  )
+}
+
+export function Campo({
+  titulo,
+  valor,
+  onChange,
+  cresce,
+  destaque,
+  linhas,
+}: {
+  titulo: string
+  valor: string
+  onChange: (v: string) => void
+  cresce?: boolean
+  destaque?: boolean
+  linhas?: number
+}) {
+  return (
+    <div className={`inv-campo${cresce ? ' cresce' : ''}${destaque ? ' destaque' : ''}`}>
+      <div className="inv-campo-titulo">{titulo}</div>
+      <textarea
+        className="inv-campo-texto"
+        placeholder="Escreva aqui..."
+        rows={linhas}
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  )
+}
+
+export function FichaAgente({ character, originName, className }: { character: CharacterRecord; originName: string | null; className: string | null }) {
+  return (
+    <div className="inv-ficha">
+      <img className="inv-ficha-brasao" src={brasao} alt="" />
+      <div className="inv-ficha-lateral">
+        <span className="inv-ficha-barra" />
+        <span className="inv-ficha-doc">Agente Nº {character.doc_number}</span>
+      </div>
+
+      <div className="inv-ficha-miolo">
+        <div
+          className="inv-ficha-foto"
+          style={character.avatar_url ? undefined : { background: fallbackAvatarColor(character.id) }}
+        >
+          {character.avatar_url
+            ? <img src={character.avatar_url} alt="" />
+            : <img className="sem-foto" src={arkanisLogo} alt="" />}
+        </div>
+
+        <div className="inv-ficha-rotulo">Agente</div>
+        <div className="inv-ficha-nome">{character.name}</div>
+
+        <div className="inv-ficha-linha">
+          <div>
+            <div className="inv-ficha-rotulo">Origem</div>
+            <div className="inv-ficha-valor">{originName ?? '—'}</div>
+          </div>
+          <div>
+            <div className="inv-ficha-rotulo">Classe</div>
+            <div className="inv-ficha-valor">{className ?? '—'}</div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
