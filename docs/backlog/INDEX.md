@@ -46,4 +46,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-30](KAN-30-aba-investigacao.md) | Aba Investigação: pasta, sub-aba Pessoal e páginas | front | aprovado | [KAN-30](https://arkaniss.atlassian.net/browse/KAN-30) |
 
+| [KAN-31](KAN-31-rituais-texto-integro.md) | Texto íntegro dos 23 rituais resumidos | back | aguardando migration | [KAN-31](https://arkaniss.atlassian.net/browse/KAN-31) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._
