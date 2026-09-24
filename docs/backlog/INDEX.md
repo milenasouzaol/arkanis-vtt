@@ -52,4 +52,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-33](KAN-33-afinidade-roda-e-final.md) | Afinidade: roda ritual e tela final | front | em revisão | [KAN-33](https://arkaniss.atlassian.net/browse/KAN-33) |
 
+| [KAN-34](KAN-34-afinidade-pagina-morte.md) | Afinidade: página do elemento escolhido (Morte) | front | em revisão | [KAN-34](https://arkaniss.atlassian.net/browse/KAN-34) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

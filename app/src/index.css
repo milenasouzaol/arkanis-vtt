@@ -9032,3 +9032,199 @@ code, .counter {
 .afin-final-selo {
   width: min(360px, 42vh);
 }
+
+/* ===== Afinidade: a pagina do elemento ja escolhido ===== */
+
+.afin-pag {
+  position: relative;
+  font-variant-numeric: lining-nums;
+  padding: 1.2em 1.6em 2.4em;
+}
+
+/* A arte do elemento fica parada atras enquanto o conteudo rola, escurecida pra leitura. */
+.afin-pag::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(rgba(8, 8, 10, 0.35), rgba(8, 8, 10, 0.55)),
+    var(--afin-pag-fundo, none) center / cover no-repeat;
+  pointer-events: none;
+}
+
+.afin-pag-topo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+  margin-bottom: 1.4em;
+}
+
+.afin-pag-titulo-img {
+  width: min(620px, 80%);
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.8));
+}
+
+.afin-pag-titulo {
+  margin: 0;
+  font-family: 'Westsac', var(--heading);
+  font-size: 64px;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.afin-pag-lema {
+  margin: 0;
+  font-family: 'Westsac', var(--heading);
+  font-size: 22px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+}
+
+.afin-pag-corpo {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.6em;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* A figura acompanha a leitura, grudada no alto enquanto as tabelas rolam. */
+.afin-pag-figura {
+  position: sticky;
+  top: 1em;
+  flex: 0 0 300px;
+}
+
+.afin-pag-figura img {
+  width: 100%;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.85));
+}
+
+.afin-pag-conteudo {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2em;
+}
+
+.afin-pag-painel {
+  background: #17151d url('./assets/pericias/dark-plaster-texture.webp') center / cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1em 1.2em 1.2em;
+}
+
+.afin-pag-painel-titulo {
+  margin: 0 0 0.8em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  font-family: 'Keyes', var(--heading);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.afin-pag-grupo + .afin-pag-grupo {
+  margin-top: 1em;
+}
+
+.afin-pag-grupo-titulo {
+  margin-bottom: 0.35em;
+  font-family: 'Keyes', var(--heading);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.afin-pag-tabela {
+  width: 100%;
+  /* Larguras fixas: cada circulo e uma tabela, e sem isso as colunas nao alinham entre elas. */
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-family: var(--raleway);
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.afin-pag-tabela th {
+  padding: 0.45em 0.7em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  font-family: 'Keyes', var(--heading);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.afin-pag-tabela td {
+  padding: 0.5em 0.7em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+.afin-pag-tabela tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.afin-pag-nome {
+  font-weight: 700;
+  color: #fff;
+}
+
+.afin-pag-grupo .afin-pag-tabela th:nth-child(1) { width: 26%; }
+.afin-pag-grupo .afin-pag-tabela th:nth-child(2) { width: 13%; }
+.afin-pag-grupo .afin-pag-tabela th:nth-child(3) { width: 13%; }
+.afin-pag-grupo .afin-pag-tabela th:nth-child(4) { width: 24%; }
+.afin-pag-grupo .afin-pag-tabela th:nth-child(5) { width: 24%; }
+
+/* Nos poderes o nome quebra linha pra caber o pre-requisito embaixo. */
+.afin-pag-tabela-poderes th:nth-child(1) { width: 18%; }
+.afin-pag-tabela-poderes th:nth-child(2) { width: 47%; }
+.afin-pag-tabela-poderes th:nth-child(3) { width: 35%; }
+
+.afin-pag-prereq {
+  display: block;
+  margin-top: 0.2em;
+  font-weight: 400;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.afin-pag-vazio {
+  margin: 0;
+  font-family: var(--raleway);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.afin-pag-rodape {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.afin-pag-remover {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: #1b1a20;
+  padding: 0.6em 1.2em;
+  color: #fff;
+  font-family: 'Keyes', var(--heading);
+  font-size: 13px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* Em tela estreita a figura sai de lado e as tabelas ganham a largura toda. */
+@media (max-width: 1000px) {
+  .afin-pag-figura { display: none; }
+}
