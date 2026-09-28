@@ -13,6 +13,11 @@ import medoSimbolo from '../../assets/afinidade/medo/simbolo.webp'
 import bgSangue from '../../assets/backgrounds/bg-sangue.webp'
 import bgConhecimento from '../../assets/backgrounds/bg-conhecimento.webp'
 import bgMedo from '../../assets/backgrounds/bg-medo.webp'
+import bgEnergia from '../../assets/backgrounds/bg-energia.webp'
+import energiaTitulo from '../../assets/afinidade/energia/titulo.webp'
+import energiaFigura from '../../assets/afinidade/energia/figura.webp'
+import energiaFiguraDireita from '../../assets/afinidade/energia/figura-direita.webp'
+import energiaSigilo from '../../assets/afinidade/energia/sigilo.webp'
 
 export type RitualDaAfinidade = {
   id: string
@@ -32,16 +37,28 @@ export type PoderDaAfinidade = {
   prerequisites: string | null
 }
 
+type Arte = {
+  fundo: string
+  titulo: string
+  figura: string
+  figuraEhSimbolo?: boolean
+  /** Segunda figura, do outro lado das tabelas. */
+  figuraDireita?: string
+  /** Sigilo grande e apagado atras da pagina, no lugar de um fundo proprio. */
+  sigilo?: string
+}
+
 /**
  * Arte propria de cada elemento. Morte tem fundo e figura proprios; Sangue, Conhecimento e
- * Medo usam o fundo que a ficha ja tem e o simbolo no lugar da figura. Energia ainda nao
- * tem arte e cai no titulo em texto.
+ * Medo usam o fundo que a ficha ja tem e o simbolo no lugar da figura; Energia tem duas
+ * figuras, uma de cada lado, e o sigilo atras.
  */
-export const ARTES: Record<string, { fundo: string; titulo: string; figura: string; figuraEhSimbolo?: boolean }> = {
+export const ARTES: Record<string, Arte> = {
   morte: { fundo: morteFundo, titulo: morteTitulo, figura: morteFigura },
   sangue: { fundo: bgSangue, titulo: sangueTitulo, figura: sangueSimbolo, figuraEhSimbolo: true },
   conhecimento: { fundo: bgConhecimento, titulo: conhecimentoTitulo, figura: conhecimentoSimbolo, figuraEhSimbolo: true },
   medo: { fundo: bgMedo, titulo: medoTitulo, figura: medoSimbolo, figuraEhSimbolo: true },
+  energia: { fundo: bgEnergia, titulo: energiaTitulo, figura: energiaFigura, figuraDireita: energiaFiguraDireita, sigilo: energiaSigilo },
 }
 
 // Medo nao esta na roda de escolha, entao nao tem entrada em elementosParanormais.
@@ -78,6 +95,8 @@ export default function AfinidadePagina({ elemento, onRemover }: { elemento: str
 
   return (
     <div className="afin-pag" style={arte ? ({ '--afin-pag-fundo': `url(${arte.fundo})` } as React.CSSProperties) : undefined}>
+      {arte?.sigilo && <img className="afin-pag-sigilo" src={arte.sigilo} alt="" />}
+
       <header className="afin-pag-topo">
         {arte ? <img className="afin-pag-titulo-img" src={arte.titulo} alt={nome} /> : <h1 className="afin-pag-titulo">{nome}</h1>}
         {info && <p className="afin-pag-lema">{info.frase}</p>}
@@ -159,6 +178,12 @@ export default function AfinidadePagina({ elemento, onRemover }: { elemento: str
             <button type="button" className="afin-pag-remover" onClick={onRemover}>Remover afinidade</button>
           </div>
         </div>
+
+        {arte?.figuraDireita && (
+          <aside className="afin-pag-figura direita">
+            <img src={arte.figuraDireita} alt="" />
+          </aside>
+        )}
       </div>
     </div>
   )

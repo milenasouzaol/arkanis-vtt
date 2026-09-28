@@ -28,20 +28,22 @@ describe('porCirculo', () => {
 })
 
 describe('artes por elemento', () => {
-  it('Morte, Sangue, Conhecimento e Medo têm título em arte', async () => {
+  it('os cinco elementos têm título em arte', async () => {
     const { ARTES } = await import('./AfinidadePagina')
-    expect(Object.keys(ARTES).sort()).toEqual(['conhecimento', 'medo', 'morte', 'sangue'])
+    expect(Object.keys(ARTES).sort()).toEqual(['conhecimento', 'energia', 'medo', 'morte', 'sangue'])
   })
 
-  // Só Morte tem uma figura de corpo inteiro; os outros usam o símbolo no lugar.
-  it('só Morte tem figura própria, os outros usam o símbolo', async () => {
+  // Morte e Energia têm figura de corpo inteiro; os outros usam o símbolo no lugar.
+  it('Morte e Energia têm figura própria, os outros usam o símbolo', async () => {
     const { ARTES } = await import('./AfinidadePagina')
     expect(ARTES.morte.figuraEhSimbolo).toBeFalsy()
+    expect(ARTES.energia.figuraEhSimbolo).toBeFalsy()
     for (const e of ['sangue', 'conhecimento', 'medo']) expect(ARTES[e].figuraEhSimbolo).toBe(true)
   })
 
-  it('Energia ainda não tem arte e cai no título em texto', async () => {
+  it('só Energia tem a segunda figura e o sigilo atrás', async () => {
     const { ARTES } = await import('./AfinidadePagina')
-    expect(ARTES.energia).toBeUndefined()
+    expect(Object.keys(ARTES).filter((e) => ARTES[e].figuraDireita)).toEqual(['energia'])
+    expect(Object.keys(ARTES).filter((e) => ARTES[e].sigilo)).toEqual(['energia'])
   })
 })

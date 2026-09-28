@@ -64,7 +64,13 @@ retângulo branco na página escura:
 Conferido com os dados reais: Sangue 24 rituais e 13 poderes, Conhecimento 24 e 10,
 Medo 9 e 0, Energia 24 e 13.
 
-**Energia** não veio arte: continua no título em texto.
+**Energia** chegou depois com título, sigilo e duas figuras, já com fundo transparente.
+Uma figura de cada lado das tabelas (a da direita some abaixo de 1400px de tela, pra não
+apertar demais) e o sigilo grande, a 10% de opacidade, girando devagar atrás da página.
+
+O título de Energia é 1,5:1 e os outros ~3:1, então com a mesma largura ele ficava com o
+dobro da altura. Os títulos ganharam um limite de 230px de altura; medido: entre 191 e
+230px nos cinco.
 
 **Medo** tem página, mas não está na roda de escolha — só aparece se o personagem já tiver
 Medo como afinidade. Também não tem frase, porque não havia print dela.

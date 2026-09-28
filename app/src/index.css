@@ -9061,8 +9061,12 @@ code, .counter {
   margin-bottom: 1.4em;
 }
 
+/* Limite de altura alem da largura: o titulo de Energia e 1,5:1 e os outros ~3:1, e sem
+   isso ele ficava o dobro da altura e empurrava as tabelas pra baixo. */
 .afin-pag-titulo-img {
-  width: min(620px, 80%);
+  width: auto;
+  max-width: min(620px, 80%);
+  max-height: 230px;
   filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.8));
 }
 
@@ -9233,6 +9237,38 @@ code, .counter {
   font-size: 13px;
   text-transform: uppercase;
   cursor: pointer;
+}
+
+/* A figura da direita e um pouco menor e desce, pra as duas nao ficarem espelhadas. */
+.afin-pag-figura.direita {
+  flex-basis: 260px;
+  padding-top: 6em;
+}
+
+/* Sigilo grande e apagado atras de tudo, no lugar de um fundo proprio. Gira devagar. */
+.afin-pag-sigilo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: -1;
+  width: min(900px, 90vmin);
+  opacity: 0.1;
+  transform: translate(-50%, -50%);
+  animation: afin-sigilo-gira 180s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes afin-sigilo-gira {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afin-pag-sigilo { animation: none; }
+}
+
+/* Duas figuras apertam a tabela; a da direita sai primeiro. */
+@media (max-width: 1400px) {
+  .afin-pag-figura.direita { display: none; }
 }
 
 /* Em tela estreita a figura sai de lado e as tabelas ganham a largura toda. */
