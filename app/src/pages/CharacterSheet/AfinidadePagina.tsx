@@ -4,6 +4,15 @@ import { elementoPorChave } from './elementosParanormais'
 import morteFundo from '../../assets/afinidade/morte/fundo.webp'
 import morteTitulo from '../../assets/afinidade/morte/titulo.webp'
 import morteFigura from '../../assets/afinidade/morte/aeternus.webp'
+import sangueTitulo from '../../assets/afinidade/sangue/titulo.webp'
+import sangueSimbolo from '../../assets/afinidade/sangue/simbolo.webp'
+import conhecimentoTitulo from '../../assets/afinidade/conhecimento/titulo.webp'
+import conhecimentoSimbolo from '../../assets/afinidade/conhecimento/simbolo.webp'
+import medoTitulo from '../../assets/afinidade/medo/titulo.webp'
+import medoSimbolo from '../../assets/afinidade/medo/simbolo.webp'
+import bgSangue from '../../assets/backgrounds/bg-sangue.webp'
+import bgConhecimento from '../../assets/backgrounds/bg-conhecimento.webp'
+import bgMedo from '../../assets/backgrounds/bg-medo.webp'
 
 export type RitualDaAfinidade = {
   id: string
@@ -23,10 +32,20 @@ export type PoderDaAfinidade = {
   prerequisites: string | null
 }
 
-/** Arte propria de cada elemento. So Morte tem por enquanto; os outros caem no titulo em texto. */
-const ARTES: Record<string, { fundo: string; titulo: string; figura: string }> = {
+/**
+ * Arte propria de cada elemento. Morte tem fundo e figura proprios; Sangue, Conhecimento e
+ * Medo usam o fundo que a ficha ja tem e o simbolo no lugar da figura. Energia ainda nao
+ * tem arte e cai no titulo em texto.
+ */
+export const ARTES: Record<string, { fundo: string; titulo: string; figura: string; figuraEhSimbolo?: boolean }> = {
   morte: { fundo: morteFundo, titulo: morteTitulo, figura: morteFigura },
+  sangue: { fundo: bgSangue, titulo: sangueTitulo, figura: sangueSimbolo, figuraEhSimbolo: true },
+  conhecimento: { fundo: bgConhecimento, titulo: conhecimentoTitulo, figura: conhecimentoSimbolo, figuraEhSimbolo: true },
+  medo: { fundo: bgMedo, titulo: medoTitulo, figura: medoSimbolo, figuraEhSimbolo: true },
 }
+
+// Medo nao esta na roda de escolha, entao nao tem entrada em elementosParanormais.
+const NOMES_EXTRAS: Record<string, string> = { medo: 'Medo' }
 
 export function porCirculo(rituais: RitualDaAfinidade[]) {
   const grupos = new Map<number, RitualDaAfinidade[]>()
@@ -39,7 +58,7 @@ export default function AfinidadePagina({ elemento, onRemover }: { elemento: str
   const [poderes, setPoderes] = useState<PoderDaAfinidade[]>([])
   const info = elementoPorChave(elemento)
   const arte = ARTES[elemento]
-  const nome = info?.nome ?? elemento
+  const nome = info?.nome ?? NOMES_EXTRAS[elemento] ?? elemento
 
   useEffect(() => {
     supabase
@@ -66,7 +85,7 @@ export default function AfinidadePagina({ elemento, onRemover }: { elemento: str
 
       <div className="afin-pag-corpo">
         {arte && (
-          <aside className="afin-pag-figura">
+          <aside className={`afin-pag-figura${arte.figuraEhSimbolo ? ' simbolo' : ''}`}>
             <img src={arte.figura} alt="" />
           </aside>
         )}

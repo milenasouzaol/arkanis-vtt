@@ -9104,6 +9104,17 @@ code, .counter {
   filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.85));
 }
 
+/* Quando a figura e o simbolo do elemento, ele fica menor e desce um pouco, e a borda
+   some num degrade: o simbolo do Medo vem cortado reto na direita do arquivo. */
+.afin-pag-figura.simbolo {
+  padding: 2.5em 1.5em 0;
+}
+
+.afin-pag-figura.simbolo img {
+  -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
+}
+
 .afin-pag-conteudo {
   flex: 1 1 auto;
   min-width: 0;

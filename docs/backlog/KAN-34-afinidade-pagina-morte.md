@@ -1,6 +1,6 @@
 ---
 id: KAN-34
-titulo: Afinidade — página do elemento escolhido (Morte)
+titulo: Afinidade — página do elemento escolhido
 status: em revisão da Millie
 camada: front
 depende_de: [KAN-33]
@@ -43,6 +43,31 @@ afinidade.
 `ARTES` em `AfinidadePagina.tsx` guarda fundo, título e figura por elemento. Só Morte tem
 por enquanto; Sangue, Energia e Conhecimento caem no título em texto (Westsac) até
 chegarem as artes deles.
+
+## Os outros elementos
+
+A Millie mandou título e símbolo de **Sangue**, **Conhecimento** e **Medo**. Sem fundo
+novo nem figura: usam o `bg-*.webp` que a ficha já tinha, e o símbolo entra no lugar do
+Aeternus.
+
+As seis imagens vieram com **fundo branco sólido** (alfa 255 nos cantos), que viraria um
+retângulo branco na página escura:
+
+- **Sangue e Conhecimento**: "color to alpha" a partir do branco — desfaz a composição
+  da arte sobre o papel, então o brilho dourado e os respingos viram semitransparentes
+  em vez de serrilhados.
+- **Medo**: esse método apagava as próprias letras, que são tinta branca sobre papel
+  branco. Aqui só o papel quase puro some (acima de 242); a tinta e a fumaça, um pouco
+  mais escuras, ficam. O símbolo vinha cortado reto na direita do arquivo, então os
+  símbolos ganharam um degradê radial na borda.
+
+Conferido com os dados reais: Sangue 24 rituais e 13 poderes, Conhecimento 24 e 10,
+Medo 9 e 0, Energia 24 e 13.
+
+**Energia** não veio arte: continua no título em texto.
+
+**Medo** tem página, mas não está na roda de escolha — só aparece se o personagem já tiver
+Medo como afinidade. Também não tem frase, porque não havia print dela.
 
 ## Pendente
 

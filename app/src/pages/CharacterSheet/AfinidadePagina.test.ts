@@ -26,3 +26,22 @@ describe('porCirculo', () => {
     expect(porCirculo([])).toEqual([])
   })
 })
+
+describe('artes por elemento', () => {
+  it('Morte, Sangue, Conhecimento e Medo têm título em arte', async () => {
+    const { ARTES } = await import('./AfinidadePagina')
+    expect(Object.keys(ARTES).sort()).toEqual(['conhecimento', 'medo', 'morte', 'sangue'])
+  })
+
+  // Só Morte tem uma figura de corpo inteiro; os outros usam o símbolo no lugar.
+  it('só Morte tem figura própria, os outros usam o símbolo', async () => {
+    const { ARTES } = await import('./AfinidadePagina')
+    expect(ARTES.morte.figuraEhSimbolo).toBeFalsy()
+    for (const e of ['sangue', 'conhecimento', 'medo']) expect(ARTES[e].figuraEhSimbolo).toBe(true)
+  })
+
+  it('Energia ainda não tem arte e cai no título em texto', async () => {
+    const { ARTES } = await import('./AfinidadePagina')
+    expect(ARTES.energia).toBeUndefined()
+  })
+})
