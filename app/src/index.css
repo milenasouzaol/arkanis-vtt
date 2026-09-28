@@ -9127,9 +9127,15 @@ code, .counter {
   gap: 1.2em;
 }
 
+/* Vidro na cor do elemento: a cor a 16% sobre um escuro translucido, e o fundo borrado
+   atras pra o texto continuar legivel sem precisar de uma textura chapada. */
 .afin-pag-painel {
-  background: #17151d url('./assets/pericias/dark-plaster-texture.webp') center / cover;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(color-mix(in srgb, var(--afin-pag-cor) 16%, transparent), color-mix(in srgb, var(--afin-pag-cor) 10%, transparent)),
+    rgba(8, 8, 10, 0.42);
+  border: 1px solid color-mix(in srgb, var(--afin-pag-cor) 35%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   padding: 1em 1.2em 1.2em;
 }
 

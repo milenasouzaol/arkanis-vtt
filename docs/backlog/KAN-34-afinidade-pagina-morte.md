@@ -75,6 +75,13 @@ dobro da altura. Os títulos ganharam um limite de 230px de altura; medido: entr
 **Medo** tem página, mas não está na roda de escolha — só aparece se o personagem já tiver
 Medo como afinidade. Também não tem frase, porque não havia print dela.
 
+## Painéis sem textura
+
+A Millie achou feia a textura `dark-plaster` nos painéis. Eles viraram um vidro na cor do
+elemento: a cor a 16%/10% sobre um escuro translúcido, borda na cor a 35% e o fundo
+borrado atrás (`backdrop-filter`). Cores das quatro da roda (as do brilho dos orbes);
+Medo, que não está na roda, ficou num cinza neutro `#9a9a9a`.
+
 ## Pendente
 
 - O "Remover afinidade" continua, mas a tela de escolha diz que a escolha é definitiva.

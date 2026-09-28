@@ -63,6 +63,8 @@ export const ARTES: Record<string, Arte> = {
 
 // Medo nao esta na roda de escolha, entao nao tem entrada em elementosParanormais.
 const NOMES_EXTRAS: Record<string, string> = { medo: 'Medo' }
+// Cor dos paineis. Os quatro da roda usam a cor do brilho deles; Medo, cinza neutro.
+const CORES_EXTRAS: Record<string, string> = { medo: '#9a9a9a' }
 
 export function porCirculo(rituais: RitualDaAfinidade[]) {
   const grupos = new Map<number, RitualDaAfinidade[]>()
@@ -94,7 +96,13 @@ export default function AfinidadePagina({ elemento, onRemover }: { elemento: str
   }, [elemento])
 
   return (
-    <div className="afin-pag" style={arte ? ({ '--afin-pag-fundo': `url(${arte.fundo})` } as React.CSSProperties) : undefined}>
+    <div
+      className="afin-pag"
+      style={{
+        ...(arte ? { '--afin-pag-fundo': `url(${arte.fundo})` } : {}),
+        '--afin-pag-cor': info?.cor ?? CORES_EXTRAS[elemento] ?? '#9a9a9a',
+      } as React.CSSProperties}
+    >
       {arte?.sigilo && <img className="afin-pag-sigilo" src={arte.sigilo} alt="" />}
 
       <header className="afin-pag-topo">
