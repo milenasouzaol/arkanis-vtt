@@ -82,6 +82,26 @@ elemento: a cor a 16%/10% sobre um escuro translúcido, borda na cor a 35% e o f
 borrado atrás (`backdrop-filter`). Cores das quatro da roda (as do brilho dos orbes);
 Medo, que não está na roda, ficou num cinza neutro `#9a9a9a`.
 
+## Refeita no modelo da aba de rituais
+
+A Millie pediu a página no molde da aba de adicionar rituais:
+
+- **Título com o símbolo do elemento atrás**, centrado nele, nos cinco. Morte usa o
+  símbolo da roda de escolha; Energia, o sigilo roxo.
+- **Círculos | Rituais | Poderes lado a lado**, não mais um painel embaixo do outro.
+- **Filtro de círculo**: os mesmos quadrados I–IV da aba de rituais, numa coluna à
+  esquerda. Mesma regra: nenhum marcado mostra todos; dá pra marcar mais de um.
+- **A página não rola**: cada painel rola por dentro, com o título dele parado em cima.
+- Tudo menor: título até 140px de altura, tabelas em 11,5px, menos espaço entre as coisas.
+
+Conferido nos cinco elementos: símbolo carregado, atrás do título e centrado nele, painéis
+na mesma altura, e o botão de baixo dentro da tela (887px numa janela de 900). Filtro
+testado clicando: II mostra só o 2º, II+IV mostra os dois, desmarcar volta a todos.
+
+**As figuras laterais saíram** (Aeternus e as duas de Energia): com três colunas lado a
+lado não sobra largura pra elas. Os arquivos continuam no projeto, fora do build porque
+nada importa mais eles. Se a Millie quiser, voltam como decoração em algum canto.
+
 ## Pendente
 
 - O "Remover afinidade" continua, mas a tela de escolha diz que a escolha é definitiva.
