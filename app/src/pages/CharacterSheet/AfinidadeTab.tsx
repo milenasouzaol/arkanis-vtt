@@ -5,6 +5,7 @@ import AfinidadeEscolha, { type Caminho } from './AfinidadeEscolha'
 import AfinidadeElementos from './AfinidadeElementos'
 import AfinidadeFinal from './AfinidadeFinal'
 import AfinidadePagina from './AfinidadePagina'
+import AfinidadeTeste from './AfinidadeTeste'
 import { sortearElemento, type ChaveElemento } from './elementosParanormais'
 
 export default function AfinidadeTab({ character, onUpdated }: { character: CharacterRecord & { afinidade_elemento?: string | null }; onUpdated: () => void }) {
@@ -38,10 +39,10 @@ export default function AfinidadeTab({ character, onUpdated }: { character: Char
     if (c === 'aleatorio') setAceito(sortearElemento())
   }
 
-  /** Da tela final, o sorteio volta pros tres cartoes; a roda volta pra roda. */
+  /** Da tela final, a roda volta pra roda; o sorteio e o teste voltam pros tres cartoes. */
   function voltarDaTelaFinal() {
     setAceito(null)
-    if (caminho === 'aleatorio') setCaminho(null)
+    if (caminho !== 'escolher') setCaminho(null)
   }
 
   if (elemento) return <AfinidadePagina elemento={elemento} onRemover={removeAfinidade} />
@@ -55,13 +56,7 @@ export default function AfinidadeTab({ character, onUpdated }: { character: Char
   }
 
   if (caminho === 'teste') {
-    return (
-      <div>
-        <h2>Teste de Personalidade</h2>
-        <p>As 30 perguntas ainda não foram escritas.</p>
-        <button type="button" onClick={() => setCaminho(null)}>Voltar</button>
-      </div>
-    )
+    return <AfinidadeTeste onResultado={setAceito} onDesistir={() => setCaminho(null)} />
   }
 
   return <AfinidadeEscolha onEscolher={escolherCaminho} />

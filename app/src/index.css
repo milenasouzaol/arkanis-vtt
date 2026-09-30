@@ -8778,7 +8778,7 @@ code, .counter {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: 'Optima', var(--heading);
+  font-family: 'Optima Nova LT Pro', var(--heading);
   font-size: 32px;
   line-height: 1.12;
   text-transform: uppercase;
@@ -9339,4 +9339,254 @@ code, .counter {
 @media (max-width: 1000px) {
   .afin-pag-corpo { grid-template-columns: auto minmax(0, 1fr); }
   .afin-pag-corpo > .afin-pag-painel:last-child { grid-column: 1 / -1; }
+}
+
+/* ===== Afinidade: Teste de Personalidade ===== */
+
+/* Aqui e em toda a Afinidade a fonte e a Optima Nova, nao a Optima.ttf: o arquivo .ttf
+   do projeto tem a tabela de caracteres errada e troca os acentos por letras cirilicas
+   ("voce" vira "vock", "relacao" vira "relazgo"). */
+
+/* Cores medidas nos prints da referencia. O escolhido la e azul; aqui e o mesmo claro/
+   escuro sem o azul, como a Millie pediu. */
+.afin-teste {
+  --teste-fundo: #191a21;
+  --teste-botao: #1e1c1a;
+  --teste-borda: #424242;
+  --teste-escolhido: #353535;
+  --teste-escolhido-borda: #bdbdbd;
+  --teste-cheio: #d6d6d8;
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--teste-fundo);
+  color: #fff;
+}
+
+/* Granulado bem leve por cima do fundo liso. */
+.afin-teste::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('./assets/afinidade/textura-orbe.webp') center / cover;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.afin-teste-canto {
+  position: absolute;
+  z-index: 0;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.afin-teste-canto.sup-dir { top: 0; right: 0; height: min(290px, 32vh); }
+.afin-teste-canto.inf-esq { bottom: 0; left: 0; height: min(460px, 50vh); }
+.afin-teste-canto.inf-dir { bottom: 0; right: 0; height: min(320px, 36vh); }
+
+.afin-teste-miolo {
+  position: relative;
+  z-index: 1;
+  width: min(800px, 92%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.afin-teste-desistir {
+  position: absolute;
+  z-index: 2;
+  top: 1.2em;
+  left: 1.2em;
+  border: 1px solid var(--teste-borda);
+  border-radius: 0;
+  background: var(--teste-botao);
+  padding: 0.55em 1.4em;
+  color: #fff;
+  font-family: var(--poppins);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* --- Titulo "N/30" com as linhas dos lados --- */
+
+.afin-teste-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin-bottom: 0.25em;
+  font-family: 'Optima Nova LT Pro', var(--heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: #efe9dd;
+}
+
+/* Provisorio: o enfeite da referencia e uma imagem (title__arrow, 204x27) que ainda nao
+   veio. Ate chegar, fica uma linha fina que some nas pontas. */
+.afin-teste-titulo-linha {
+  width: 160px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(239, 233, 221, 0.85));
+}
+
+.afin-teste-titulo-linha.espelhada {
+  transform: scaleX(-1);
+}
+
+.afin-teste-pergunta {
+  margin: 0 0 1.4em;
+  max-width: 34em;
+  text-align: center;
+  font-family: 'Optima Nova LT Pro', var(--heading);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #efe9dd;
+}
+
+.afin-teste-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4em;
+  margin-bottom: 1.6em;
+  text-align: center;
+  font-family: 'Optima Nova LT Pro', var(--heading);
+  font-size: 16px;
+  line-height: 1.55;
+  color: #efe9dd;
+}
+
+.afin-teste-intro p {
+  margin: 0;
+}
+
+/* --- As opcoes --- */
+
+.afin-teste-opcoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+  width: 100%;
+}
+
+/* Com numero impar de opcoes, a ultima fica sozinha no meio, como na referencia. */
+.afin-teste-opcao:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - 12px);
+}
+
+.afin-teste-opcao {
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  min-height: 40px;
+  padding: 0.5em 1em;
+  border: 1px solid var(--teste-borda);
+  border-radius: 0;
+  background: var(--teste-botao);
+  color: #fff;
+  font-family: var(--poppins);
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+/* A luz cinza que segue o mouse dentro do botao. */
+.afin-teste-opcao::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(180px circle at var(--mx) var(--my), rgba(200, 200, 200, 0.22), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.afin-teste-opcao:hover::before {
+  opacity: 1;
+}
+
+.afin-teste-opcao.escolhida {
+  background: var(--teste-escolhido);
+  border-color: var(--teste-escolhido-borda);
+}
+
+/* --- Voltar / Continuar --- */
+
+.afin-teste-navegar {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 1.6em;
+}
+
+.afin-teste-nav {
+  min-width: 124px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2em;
+  padding: 0.4em 1em;
+  border-radius: 0;
+  font-family: var(--poppins);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.afin-teste-nav span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.afin-teste-nav.contorno {
+  border: 1px solid #fff;
+  background: transparent;
+  color: #fff;
+}
+
+.afin-teste-nav.cheio {
+  border: 1px solid var(--teste-cheio);
+  background: var(--teste-cheio);
+  color: #1a1a1c;
+}
+
+.afin-teste-nav.cheio:disabled {
+  border-color: var(--teste-borda);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: default;
+}
+
+/* --- As bolinhas do progresso --- */
+
+.afin-teste-marcadores {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2.6em;
+}
+
+.afin-teste-marcador {
+  width: 14px;
+  height: 14px;
+}
+
+/* A da pergunta atual fica girando. */
+.afin-teste-marcador.atual {
+  animation: afin-marcador-gira 2.4s linear infinite;
+}
+
+@keyframes afin-marcador-gira {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afin-teste-marcador.atual { animation: none; }
 }

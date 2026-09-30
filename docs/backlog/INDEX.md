@@ -56,4 +56,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-35](KAN-35-fundo-colunas-afinidade.md) | Fundo de textura nas colunas com afinidade | front | em revisão | [KAN-35](https://arkaniss.atlassian.net/browse/KAN-35) |
 
+| [KAN-36](KAN-36-afinidade-teste-personalidade.md) | Afinidade: Teste de Personalidade | front | em revisão | [KAN-36](https://arkaniss.atlassian.net/browse/KAN-36) |
+
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._
