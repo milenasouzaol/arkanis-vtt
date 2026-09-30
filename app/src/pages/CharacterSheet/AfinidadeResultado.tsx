@@ -35,7 +35,7 @@ export default function AfinidadeResultado({
 
         <div className="afin-resultado-corpo">
           <div className="afin-resultado-emblema">
-            <img className={arquetipo ? '' : 'simbolo'} src={arquetipo?.emblema ?? e.simbolo} alt="" />
+            <img className={arquetipo?.emblema ? '' : 'simbolo'} src={arquetipo?.emblema ?? e.simbolo} alt="" />
             <span className="afin-empate-nome">{e.nome}</span>
             {arquetipo && <span className="afin-resultado-arquetipo">{arquetipo.nome}</span>}
           </div>

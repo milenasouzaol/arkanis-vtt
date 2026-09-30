@@ -55,7 +55,7 @@ export default function AfinidadeEmpate({
                 onClick={() => setEscolhido(k)}
                 aria-pressed={escolhido === k}
               >
-                <img className={`afin-empate-imagem${arquetipo ? '' : ' simbolo'}`} src={arquetipo?.emblema ?? e.simbolo} alt="" />
+                <img className={`afin-empate-imagem${arquetipo?.emblema ? '' : ' simbolo'}`} src={arquetipo?.emblema ?? e.simbolo} alt="" />
                 <span className="afin-empate-nome">{arquetipo?.nome ?? e.nome}</span>
                 {arquetipo && <span className="afin-empate-elemento">{e.nome}</span>}
               </button>
