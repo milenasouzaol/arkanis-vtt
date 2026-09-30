@@ -201,6 +201,38 @@ h1, h2, h3, h4 {
   margin: 0 0 0.5em;
 }
 
+/* No Chrome, quando um elemento usa scrollbar-width/scrollbar-color, as regras
+   ::-webkit-scrollbar passam a ser ignoradas - e com elas a que esconde as setinhas.
+   Aqui essas duas propriedades sao desligadas so onde o navegador entende
+   ::-webkit-scrollbar (Chrome, Edge, Safari); o Firefox segue usando elas. Todos os
+   elementos que usam scrollbar-color tem regras webkit proprias com a mesma cor. */
+@supports selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: auto !important;
+    scrollbar-color: auto !important;
+  }
+
+  /* Barra fina padrao pra quem nao tem estilo proprio: sem isso ela volta a ser a do
+     sistema, com as setas. Regras especificas de cada lista continuam valendo por cima. */
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
 *::-webkit-scrollbar-button,
 *::-webkit-scrollbar-button:single-button,
 *::-webkit-scrollbar-button:start,
