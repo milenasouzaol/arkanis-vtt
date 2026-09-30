@@ -88,6 +88,18 @@ crua antiga saíram da aba.
 Conferido clicando: 24 sorteios seguidos mostraram os quatro elementos; em 40 mil sorteios
 no teste, cada um fica a menos de 2 pontos de 25%.
 
+## Ouro derretido de Conhecimento
+
+O fundo de Conhecimento (tela final, Decida seu Destino e resultado do teste) ficava laranja:
+era o `bg-conhecimento` borrado com saturação forte. Virou um mármore dourado gerado no
+navegador (`FundoElemento.tsx`): ruído torcido por um segundo ruído largo, pintado em
+faixas com os tons medidos no print da referência. Duas camadas escorrem devagar em
+sentidos opostos; o filtro é desenhado uma vez só e o movimento é por transform, que roda
+na placa de vídeo. Mediana medida: `#765927` contra `#6d5524` da referência.
+
+O filtro precisa de `color-interpolation-filters: sRGB`: no padrão (espaço linear) o ouro
+saía cor de areia.
+
 ## Critérios de aceite
 
 - [x] Orbes dentro dos círculos da arte em qualquer tamanho de tela.

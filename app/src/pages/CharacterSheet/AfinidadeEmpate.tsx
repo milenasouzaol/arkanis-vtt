@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import FundoElemento from './FundoElemento'
 import { elementoPorChave, type ChaveElemento } from './elementosParanormais'
 import { ARQUETIPOS } from './arquetipos'
 import molduraSupEsq from '../../assets/afinidade/moldura-sup-esq.webp'
@@ -34,9 +35,7 @@ export default function AfinidadeEmpate({
       className="afin-final afin-empate aba-travada"
       style={{ '--elemento-cor': atual.cor, '--elemento-fundo': `url(${atual.fundo})` } as React.CSSProperties}
     >
-      {/* Mesmo fundo da tela final, na cor de quem esta escolhido agora. */}
-      <div className="afin-final-fundo" />
-      <div className="afin-final-correnteza" />
+      <FundoElemento elemento={atual.key} />
       <Moldura />
 
       <div className="afin-empate-miolo">

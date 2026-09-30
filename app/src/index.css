@@ -9784,3 +9784,49 @@ code, .counter {
 .afin-resultado-botao:hover {
   border-color: rgba(255, 255, 255, 0.45);
 }
+
+/* ===== Afinidade: ouro derretido de Conhecimento ===== */
+
+.afin-fundo-ouro {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #5c4115;
+}
+
+/* O marmore e desenhado uma vez so, em meia resolucao, e ampliado: fica liso como metal
+   liquido e o navegador nao precisa redesenhar o filtro a cada quadro. O movimento e so de
+   transform, que roda na placa de video. */
+.afin-ouro-camada {
+  position: absolute;
+  top: -15%;
+  left: -15%;
+  width: 130%;
+  height: 130%;
+  will-change: transform;
+}
+
+.afin-ouro-camada.c0 {
+  animation: afin-ouro-escorre 48s ease-in-out infinite alternate;
+}
+
+/* A segunda camada corre pro outro lado e mistura por cima: e o que da a cara de derreter. */
+.afin-ouro-camada.c1 {
+  opacity: 0.45;
+  mix-blend-mode: multiply;
+  animation: afin-ouro-escorre-2 36s ease-in-out infinite alternate;
+}
+
+@keyframes afin-ouro-escorre {
+  from { transform: translate(-3%, -2%) scale(1.02) rotate(-1deg); }
+  to { transform: translate(3%, 3%) scale(1.1) rotate(1.5deg); }
+}
+
+@keyframes afin-ouro-escorre-2 {
+  from { transform: translate(4%, 2%) scale(1.12) rotate(2deg); }
+  to { transform: translate(-4%, -3%) scale(1.04) rotate(-2deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afin-ouro-camada { animation: none; }
+}

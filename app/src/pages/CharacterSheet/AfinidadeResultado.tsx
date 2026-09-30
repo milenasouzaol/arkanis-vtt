@@ -1,4 +1,5 @@
 import { elementoPorChave, type ChaveElemento } from './elementosParanormais'
+import FundoElemento from './FundoElemento'
 import { ARQUETIPOS, CITACOES, SUBTITULOS } from './arquetipos'
 import { Moldura } from './AfinidadeEmpate'
 
@@ -23,8 +24,7 @@ export default function AfinidadeResultado({
       className="afin-final afin-empate aba-travada"
       style={{ '--elemento-cor': e.cor, '--elemento-fundo': `url(${e.fundo})` } as React.CSSProperties}
     >
-      <div className="afin-final-fundo" />
-      <div className="afin-final-correnteza" />
+      <FundoElemento elemento={e.key} />
       <Moldura />
 
       <div className="afin-resultado-miolo">

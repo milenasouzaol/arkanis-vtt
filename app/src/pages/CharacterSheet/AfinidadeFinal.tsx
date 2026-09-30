@@ -1,4 +1,5 @@
 import { elementoPorChave, type ChaveElemento } from './elementosParanormais'
+import FundoElemento from './FundoElemento'
 import transcender from '../../assets/afinidade/simbolo-transcender.webp'
 
 export default function AfinidadeFinal({
@@ -18,9 +19,7 @@ export default function AfinidadeFinal({
       className="afin-final aba-travada"
       style={{ '--elemento-cor': e.cor, '--elemento-fundo': `url(${e.fundo})` } as React.CSSProperties}
     >
-      {/* O fundo do elemento entra borrado, e por cima passa a correnteza mais escura. */}
-      <div className="afin-final-fundo" />
-      <div className="afin-final-correnteza" />
+      <FundoElemento elemento={e.key} />
 
       <button type="button" className="afin-voltar" onClick={onVoltar}>Voltar</button>
 
