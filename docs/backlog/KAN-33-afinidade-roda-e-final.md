@@ -78,6 +78,16 @@ as artes). Removido neste.
 - O símbolo dentro do triângulo foi de 27% pra 39% da largura dele — a proporção do
   print de referência. Vale na roda e na tela final. Variável `--tamanho-simbolo-meio`.
 
+## Escolha por Mim
+
+O cartão Premonição sorteia um dos quatro elementos (25% cada, `sortearElemento`) e já
+abre a tela final dele, sem passar pela roda. O Voltar dali leva pros três cartões; na roda,
+o Voltar da tela final continua levando pra roda. A tela provisória do sorteio e a lista
+crua antiga saíram da aba.
+
+Conferido clicando: 24 sorteios seguidos mostraram os quatro elementos; em 40 mil sorteios
+no teste, cada um fica a menos de 2 pontos de 25%.
+
 ## Critérios de aceite
 
 - [x] Orbes dentro dos círculos da arte em qualquer tamanho de tela.

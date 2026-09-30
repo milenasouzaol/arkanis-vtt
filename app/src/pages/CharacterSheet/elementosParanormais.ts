@@ -82,3 +82,12 @@ export const ELEMENTOS: Elemento[] = [
 export function elementoPorChave(key: string | null | undefined) {
   return ELEMENTOS.find((e) => e.key === key) ?? null
 }
+
+/**
+ * "Escolha por Mim": um dos quatro elementos da roda, 25% de chance cada.
+ * `sorte` e um numero em [0, 1), como o de Math.random, pra dar pra testar.
+ */
+export function sortearElemento(sorte: number = Math.random()): ChaveElemento {
+  const i = Math.min(ELEMENTOS.length - 1, Math.floor(sorte * ELEMENTOS.length))
+  return ELEMENTOS[i].key
+}

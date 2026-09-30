@@ -97,3 +97,29 @@ describe('AfinidadeFinal', () => {
     expect(onFinalizar).not.toHaveBeenCalled()
   })
 })
+
+describe('Escolha por Mim', () => {
+  it('cada quarto do sorteio cai num elemento diferente', async () => {
+    const { sortearElemento } = await import('./elementosParanormais')
+    const caiu = [0.1, 0.3, 0.6, 0.9].map((s) => sortearElemento(s))
+    expect(new Set(caiu).size).toBe(4)
+  })
+
+  it('as pontas do intervalo não quebram', async () => {
+    const { sortearElemento } = await import('./elementosParanormais')
+    expect(sortearElemento(0)).toBeTruthy()
+    expect(sortearElemento(0.999999)).toBeTruthy()
+  })
+
+  // 25% cada: em 40 mil sorteios de verdade, cada elemento fica perto de 10 mil.
+  it('os quatro saem na mesma proporção', async () => {
+    const { sortearElemento } = await import('./elementosParanormais')
+    const conta: Record<string, number> = {}
+    for (let i = 0; i < 40000; i++) {
+      const e = sortearElemento()
+      conta[e] = (conta[e] ?? 0) + 1
+    }
+    expect(Object.keys(conta).sort()).toEqual(['conhecimento', 'energia', 'morte', 'sangue'])
+    for (const n of Object.values(conta)) expect(Math.abs(n / 40000 - 0.25)).toBeLessThan(0.02)
+  })
+})
