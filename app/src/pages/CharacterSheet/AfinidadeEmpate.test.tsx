@@ -15,10 +15,17 @@ describe('Decida seu Destino', () => {
   })
 
   // Energia tem emblema de arquetipo; quem nao tem usa o nome do elemento.
-  it('Energia aparece como Transformação; os outros pelo nome', () => {
-    render(<AfinidadeEmpate opcoes={['energia', 'morte']} onEscolher={() => {}} />)
+  it('Energia e Sangue aparecem pelo arquétipo; os outros pelo nome', () => {
+    render(<AfinidadeEmpate opcoes={['energia', 'sangue', 'morte']} onEscolher={() => {}} />)
     expect(screen.getByText('Transformação')).toBeInTheDocument()
+    expect(screen.getByText('Empatia')).toBeInTheDocument()
     expect(screen.getByText('Morte')).toBeInTheDocument()
+  })
+
+  it('cada elemento tem a própria frase de subtítulo', () => {
+    render(<AfinidadeResultado ranking={['sangue', 'energia', 'morte', 'conhecimento']} onAceitar={() => {}} onRecusar={() => {}} />)
+    expect(screen.getByText(/Seu coração pulsa em uma corrente de/)).toBeInTheDocument()
+    expect(screen.getByText(/O Sangue é a entidade do sentimento/)).toBeInTheDocument()
   })
 
   it('clicar troca o aceso e Escolher entrega ele', async () => {
@@ -35,7 +42,9 @@ describe('resultado do teste', () => {
     render(<AfinidadeResultado ranking={['energia', 'sangue', 'morte', 'conhecimento']} onAceitar={() => {}} onRecusar={() => {}} />)
     expect(screen.getByText('O caos é inevitável.')).toBeInTheDocument()
     expect(screen.getByText('O Outro Lado também reconheceu:')).toBeInTheDocument()
-    expect(screen.getByText('Sangue')).toBeInTheDocument()
+    // Sangue tem arquétipo, então aparece como Empatia; Morte não tem, aparece pelo nome.
+    expect(screen.getByText('Empatia')).toBeInTheDocument()
+    expect(screen.getByText('Morte')).toBeInTheDocument()
   })
 
   it('Aceitar entrega o elemento; Recusar desiste', async () => {

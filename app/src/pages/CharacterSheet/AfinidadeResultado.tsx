@@ -1,5 +1,5 @@
 import { elementoPorChave, type ChaveElemento } from './elementosParanormais'
-import { ARQUETIPOS, CITACOES } from './arquetipos'
+import { ARQUETIPOS, CITACOES, SUBTITULOS } from './arquetipos'
 import { Moldura } from './AfinidadeEmpate'
 
 /** Resultado do Teste de Personalidade: o elemento que venceu e quem veio depois dele. */
@@ -29,8 +29,8 @@ export default function AfinidadeResultado({
 
       <div className="afin-resultado-miolo">
         <h2 className="afin-empate-titulo">{e.frase}</h2>
-        {arquetipo && (
-          <p className="afin-empate-sub">Sua alma flui através de ondas de <em>{arquetipo.nome}</em></p>
+        {arquetipo && SUBTITULOS[e.key] && (
+          <p className="afin-empate-sub">{SUBTITULOS[e.key]} <em>{arquetipo.nome}</em></p>
         )}
 
         <div className="afin-resultado-corpo">

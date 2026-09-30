@@ -93,5 +93,6 @@ describe('AfinidadeTeste', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Aceitar' }))
     expect(onResultado).toHaveBeenCalledOnce()
     expect(['sangue', 'morte', 'conhecimento', 'energia']).toContain(onResultado.mock.calls[0][0])
-  })
+    // Clica as 29 perguntas uma a uma: com a suite inteira rodando, passa dos 5s padrao.
+  }, 30000)
 })
