@@ -56,7 +56,8 @@ export default function AfinidadeTab({ character, onUpdated }: { character: Char
   }
 
   if (caminho === 'teste') {
-    return <AfinidadeTeste onResultado={setAceito} onDesistir={() => setCaminho(null)} />
+    // O teste tem a propria tela de resultado com Aceitar, entao grava direto.
+    return <AfinidadeTeste onResultado={confirmElemento} onDesistir={() => setCaminho(null)} />
   }
 
   return <AfinidadeEscolha onEscolher={escolherCaminho} />

@@ -86,6 +86,11 @@ describe('AfinidadeTeste', () => {
     expect(screen.getByText('Extra')).toBeInTheDocument()
     await userEvent.click(document.querySelectorAll('.afin-teste-opcao')[0] as HTMLElement)
     await userEvent.click(screen.getByRole('button', { name: /Terminar/ }))
+    // Pode cair no "Decida seu Destino" antes do resultado; se cair, escolhe o aceso.
+    const escolher = screen.queryByRole('button', { name: 'Escolher' })
+    if (escolher) await userEvent.click(escolher)
+    expect(onResultado).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Aceitar' }))
     expect(onResultado).toHaveBeenCalledOnce()
     expect(['sangue', 'morte', 'conhecimento', 'energia']).toContain(onResultado.mock.calls[0][0])
   })

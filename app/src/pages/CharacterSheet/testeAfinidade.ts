@@ -427,6 +427,26 @@ export function pontuar(respostas: (number | undefined)[], perguntas: Pergunta[]
   return { brutos, proporcao }
 }
 
+/**
+ * Quem ficou no topo, junto com quem chegou perto dele (ate `margem` abaixo, em fracao).
+ * Com um so, o teste decidiu; com dois ou mais, a pessoa escolhe na tela "Decida seu
+ * Destino". Ordem: do mais forte pro mais fraco.
+ */
+export function empatados(respostas: (number | undefined)[], margem: number = MARGEM_DE_EMPATE, perguntas: Pergunta[] = PERGUNTAS): ChaveElemento[] {
+  const { proporcao } = pontuar(respostas, perguntas)
+  const topo = Math.max(...CHAVES.map((k) => proporcao[k]))
+  return CHAVES.filter((k) => proporcao[k] >= topo * (1 - margem) - 1e-9).sort((a, b) => proporcao[b] - proporcao[a])
+}
+
+/** 3%: "quase empate" o bastante pra deixar a pessoa decidir em vez do calculo. */
+export const MARGEM_DE_EMPATE = 0.03
+
+/** Os quatro elementos do mais forte pro mais fraco. */
+export function ranking(respostas: (number | undefined)[], perguntas: Pergunta[] = PERGUNTAS): ChaveElemento[] {
+  const { proporcao } = pontuar(respostas, perguntas)
+  return [...CHAVES].sort((a, b) => proporcao[b] - proporcao[a])
+}
+
 /** O elemento com a maior proporcao. Empate e decidido na sorte entre os empatados. */
 export function resultado(respostas: (number | undefined)[], sorte: number = Math.random(), perguntas: Pergunta[] = PERGUNTAS): ChaveElemento {
   const { proporcao } = pontuar(respostas, perguntas)

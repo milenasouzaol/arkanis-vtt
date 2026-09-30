@@ -42,11 +42,31 @@ A `Optima.ttf` do projeto tem a tabela de caracteres errada e troca acentos por 
 cirílicas ("você" vira "vock"). Toda a Afinidade passou pra `Optima Nova LT Pro`, a mesma
 família. Só código meu usava a `.ttf`.
 
+## Empate e resultado
+
+- **Decida seu Destino**: se outro elemento chega a 3% do primeiro, a pessoa escolhe entre
+  eles. Moldura nos quatro cantos, o escolhido aceso e os outros apagados, o fundo na cor
+  de quem está aceso. Com respostas ao acaso, acontece em ~11% dos testes.
+- **Resultado**: a frase do elemento, o emblema, um cartão com o arquétipo e a citação da
+  entidade, e "O Outro Lado também reconheceu" com os outros elementos na ordem do cálculo,
+  cada um na sua cor. **Aceitar** grava a afinidade direto; **Recusar** volta pros cartões.
+- O enfeite do título (`title-arrow.png`) chegou e substituiu a linha provisória.
+
+## Arquétipos (achado pelo print do resultado)
+
+Transformação e Liberdade **não são elementos, são arquétipos**, e os dois são de Energia
+(Liberdade aparece em roxo no "também reconheceu"). A referência calcula arquétipos, e o
+elemento vem junto. Aqui o teste ainda calcula só o elemento, e cada elemento mostra um
+arquétipo: só Energia tem (Transformação, com o texto do print). Os outros usam o símbolo
+e a descrição do elemento. A citação da entidade também só existe pra Energia.
+
 ## Pendente
 
 - **Pergunta 17**: não veio nos prints. O contador mostra "N/29" até ela chegar.
-- **Enfeite do título** (`title__arrow`, 204×27, espelhado): é uma imagem que não está
-  na pasta. Por enquanto, uma linha fina.
+- **Arquétipos**: a lista completa, de qual elemento cada um é, texto e emblema. Com
+  isso o teste passa a calcular arquétipos como a referência.
+- Citação das outras três entidades.
+- "Personagens Relacionados" e "Compartilhar" do print não entraram.
 - Revisão da Millie dos pesos de cada resposta.
 
 ## Critérios de aceite

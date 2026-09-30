@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { INTRODUCAO, PERGUNTAS, PERGUNTA_EXTRA, resultado, type Pergunta } from './testeAfinidade'
+import { INTRODUCAO, PERGUNTAS, PERGUNTA_EXTRA, empatados, ranking, type Pergunta } from './testeAfinidade'
+import AfinidadeResultado from './AfinidadeResultado'
+import AfinidadeEmpate from './AfinidadeEmpate'
+import tituloEnfeite from '../../assets/afinidade/titulo-enfeite.webp'
 import type { ChaveElemento } from './elementosParanormais'
 import marcadorRespondida from '../../assets/afinidade/marcador-respondida.webp'
 import marcadorAtual from '../../assets/afinidade/marcador-atual.webp'
@@ -18,9 +21,9 @@ function acompanharMouse(e: React.MouseEvent<HTMLElement>) {
 function Titulo({ children }: { children: React.ReactNode }) {
   return (
     <div className="afin-teste-titulo">
-      <span className="afin-teste-titulo-linha" aria-hidden />
+      <img className="afin-teste-titulo-enfeite" src={tituloEnfeite} alt="" />
       <span>{children}</span>
-      <span className="afin-teste-titulo-linha espelhada" aria-hidden />
+      <img className="afin-teste-titulo-enfeite espelhado" src={tituloEnfeite} alt="" />
     </div>
   )
 }
@@ -33,6 +36,10 @@ export default function AfinidadeTeste({
   onDesistir: () => void
 }) {
   const [etapa, setEtapa] = useState<'intro' | 'perguntas'>('intro')
+  // Preenchido quando o resultado da quase empatado: a pessoa escolhe entre eles.
+  const [empate, setEmpate] = useState<ChaveElemento[] | null>(null)
+  // A ordem final dos elementos; o primeiro e o resultado mostrado.
+  const [final, setFinal] = useState<ChaveElemento[] | null>(null)
   // 0..PERGUNTAS.length-1 sao as perguntas; PERGUNTAS.length e a pergunta extra.
   const [indice, setIndice] = useState(0)
   const [respostas, setRespostas] = useState<(number | undefined)[]>([])
@@ -50,8 +57,17 @@ export default function AfinidadeTeste({
 
   function continuar() {
     if (escolhida === undefined) return
-    if (naExtra) onResultado(resultado(respostas))
-    else setIndice((i) => i + 1)
+    if (!naExtra) { setIndice((i) => i + 1); return }
+    const topo = empatados(respostas)
+    if (topo.length === 1) setFinal(ranking(respostas))
+    else setEmpate(topo)
+  }
+
+  if (final) return <AfinidadeResultado ranking={final} onAceitar={onResultado} onRecusar={onDesistir} />
+
+  if (empate) {
+    // O escolhido no empate sobe pro topo; o resto segue a ordem do calculo.
+    return <AfinidadeEmpate opcoes={empate} onEscolher={(k) => setFinal([k, ...ranking(respostas).filter((r) => r !== k)])} />
   }
 
   if (etapa === 'intro') {
