@@ -15,11 +15,19 @@ describe('Decida seu Destino', () => {
   })
 
   // Energia tem emblema de arquetipo; quem nao tem usa o nome do elemento.
-  it('Energia e Sangue aparecem pelo arquétipo; os outros pelo nome', () => {
-    render(<AfinidadeEmpate opcoes={['energia', 'sangue', 'morte']} onEscolher={() => {}} />)
-    expect(screen.getByText('Transformação')).toBeInTheDocument()
-    expect(screen.getByText('Empatia')).toBeInTheDocument()
-    expect(screen.getByText('Morte')).toBeInTheDocument()
+  it('cada elemento aparece pelo arquétipo, com o elemento embaixo', () => {
+    render(<AfinidadeEmpate opcoes={['energia', 'sangue', 'morte', 'conhecimento']} onEscolher={() => {}} />)
+    for (const nome of ['Transformação', 'Empatia', 'Contemplação', 'Equilíbrio']) expect(screen.getByText(nome)).toBeInTheDocument()
+    expect(screen.getByText('Morte')).toHaveClass('afin-empate-elemento')
+  })
+
+  it('os quatro elementos têm arquétipo, emblema, citação e subtítulo', async () => {
+    const { ARQUETIPOS, CITACOES, SUBTITULOS } = await import('./arquetipos')
+    for (const k of ['sangue', 'morte', 'conhecimento', 'energia'] as const) {
+      expect(ARQUETIPOS[k]?.emblema).toBeTruthy()
+      expect(CITACOES[k]).toBeTruthy()
+      expect(SUBTITULOS[k]).toBeTruthy()
+    }
   })
 
   it('cada elemento tem a própria frase de subtítulo', () => {
@@ -31,7 +39,7 @@ describe('Decida seu Destino', () => {
   it('clicar troca o aceso e Escolher entrega ele', async () => {
     const onEscolher = vi.fn()
     render(<AfinidadeEmpate opcoes={['energia', 'morte']} onEscolher={onEscolher} />)
-    await userEvent.click(screen.getByText('Morte'))
+    await userEvent.click(screen.getByText('Contemplação'))
     await userEvent.click(screen.getByRole('button', { name: 'Escolher' }))
     expect(onEscolher).toHaveBeenCalledWith('morte')
   })
@@ -42,9 +50,9 @@ describe('resultado do teste', () => {
     render(<AfinidadeResultado ranking={['energia', 'sangue', 'morte', 'conhecimento']} onAceitar={() => {}} onRecusar={() => {}} />)
     expect(screen.getByText('O caos é inevitável.')).toBeInTheDocument()
     expect(screen.getByText('O Outro Lado também reconheceu:')).toBeInTheDocument()
-    // Sangue tem arquétipo, então aparece como Empatia; Morte não tem, aparece pelo nome.
+    // Os outros aparecem pelo arquétipo, cada um na cor do seu elemento.
     expect(screen.getByText('Empatia')).toBeInTheDocument()
-    expect(screen.getByText('Morte')).toBeInTheDocument()
+    expect(screen.getByText('Contemplação')).toBeInTheDocument()
   })
 
   it('Aceitar entrega o elemento; Recusar desiste', async () => {

@@ -57,15 +57,14 @@ família. Só código meu usava a `.ttf`.
 Transformação e Liberdade **não são elementos, são arquétipos**, e os dois são de Energia
 (Liberdade aparece em roxo no "também reconheceu"). A referência calcula arquétipos, e o
 elemento vem junto. Aqui o teste ainda calcula só o elemento, e cada elemento mostra um
-arquétipo: Energia (Transformação), Sangue (Empatia) e Conhecimento (Equilíbrio), com o texto dos prints. Morte usa o símbolo e a descrição do
-elemento. Citação e subtítulo: os três menos Morte.
+arquétipo, com texto, emblema, citação da entidade e subtítulo tirados dos prints: Energia
+(Transformação), Sangue (Empatia), Conhecimento (Equilíbrio) e Morte (Contemplação).
 
 ## Pendente
 
 - **Pergunta 17**: não veio nos prints. O contador mostra "N/29" até ela chegar.
 - **Arquétipos**: a lista completa, de qual elemento cada um é, texto e emblema. Com
   isso o teste passa a calcular arquétipos como a referência.
-- Resultado de Morte (arquétipo, emblema, citação, subtítulo).
 - "Personagens Relacionados" e "Compartilhar" do print não entraram.
 - Revisão da Millie dos pesos de cada resposta.
 
