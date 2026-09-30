@@ -60,9 +60,13 @@ elemento vem junto. Aqui o teste ainda calcula só o elemento, e cada elemento m
 arquétipo, com texto, emblema, citação da entidade e subtítulo tirados dos prints: Energia
 (Transformação), Sangue (Empatia), Conhecimento (Equilíbrio) e Morte (Contemplação).
 
+## Pergunta 17
+
+Chegou por último. Com as 30: ao acaso cada elemento sai entre 24% e 26,4%, e ~10% dos
+testes caem no Decida seu Destino.
+
 ## Pendente
 
-- **Pergunta 17**: não veio nos prints. O contador mostra "N/29" até ela chegar.
 - **Arquétipos**: a lista completa, de qual elemento cada um é, texto e emblema. Com
   isso o teste passa a calcular arquétipos como a referência.
 - "Personagens Relacionados" e "Compartilhar" do print não entraram.

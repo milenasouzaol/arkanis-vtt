@@ -233,7 +233,18 @@ export const PERGUNTAS: Pergunta[] = [
       { texto: 'Não, em nenhuma circunstância.', pontos: mix(C(1), M(1)) },
     ],
   },
-  // A pergunta 17 ainda nao chegou.
+  {
+    numero: 17,
+    texto: 'Uma vez que você tem um objetivo, você sente dificuldade de desistir dele?',
+    opcoes: [
+      { texto: 'Sempre', pontos: S() },
+      { texto: 'Na maioria das vezes, sim', pontos: C() },
+      { texto: 'Depende, mas pende para sim', pontos: mix(C(1), M(1)) },
+      { texto: 'Depende, mas pende para não', pontos: M() },
+      { texto: 'Na maioria das vezes, não', pontos: mix(M(1), E(1)) },
+      { texto: 'Nunca', pontos: E() },
+    ],
+  },
   {
     numero: 18,
     texto: 'Se você tivesse poder suficiente para alterar a realidade, o usaria para modificar quem você é, mesmo que isso tenha consequências?',

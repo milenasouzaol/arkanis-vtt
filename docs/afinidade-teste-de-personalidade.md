@@ -193,7 +193,16 @@ Somo os pontos de cada elemento e divido pelo que ele ganharia **em média respo
 | Somente se os meios não me prejudicarem | Energia 1 + Morte 1 |
 | Não, em nenhuma circunstância. | Conhecimento 1 + Morte 1 |
 
-### 17. *(ainda não chegou)*
+### 17. Uma vez que você tem um objetivo, você sente dificuldade de desistir dele?
+
+| resposta | vale |
+| --- | --- |
+| Sempre | Sangue 2 |
+| Na maioria das vezes, sim | Conhecimento 2 |
+| Depende, mas pende para sim | Conhecimento 1 + Morte 1 |
+| Depende, mas pende para não | Morte 2 |
+| Na maioria das vezes, não | Morte 1 + Energia 1 |
+| Nunca | Energia 2 |
 
 ### 18. Se você tivesse poder suficiente para alterar a realidade, o usaria para modificar quem você é, mesmo que isso tenha consequências?
 
