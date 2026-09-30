@@ -1,6 +1,7 @@
 import type { ChaveElemento } from './elementosParanormais'
 import emblemaTransformacao from '../../assets/afinidade/emblema-transformacao.webp'
 import emblemaEmpatia from '../../assets/afinidade/emblema-empatia.webp'
+import emblemaEquilibrio from '../../assets/afinidade/emblema-equilibrio.webp'
 
 /**
  * Arquetipos do Teste de Personalidade. Na referencia cada elemento tem mais de um
@@ -33,6 +34,7 @@ export const ARQUETIPOS: Partial<Record<ChaveElemento, Arquetipo>> = {
     nome: 'Equilíbrio',
     titulo: 'Equilíbrio: o pilar da temperança.',
     texto: 'Tudo tem um motivo para existir: O bem e o mal, a luz e a escuridão, o certo e o errado. Você tem um estrito código moral, buscando resolver a maioria dos conflitos através da mediação entre emoção e razão. Todavia, isso cria uma dúvida, seria o excesso de equilíbrio injusto?',
+    emblema: emblemaEquilibrio,
   },
 }
 
