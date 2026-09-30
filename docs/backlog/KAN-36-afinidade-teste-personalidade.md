@@ -1,7 +1,7 @@
 ---
 id: KAN-36
 titulo: Afinidade — Teste de Personalidade
-status: em revisão da Millie
+status: aprovado
 camada: front
 depende_de: [KAN-32, KAN-33]
 ---
@@ -85,3 +85,4 @@ estilo de Energia, cai em "O caos é inevitável.".
 ## Histórico
 
 - 30/09/2026 criado — https://arkaniss.atlassian.net/browse/KAN-36
+- 30/09/2026 aprovado pela Millie
