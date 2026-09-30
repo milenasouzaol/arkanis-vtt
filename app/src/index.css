@@ -1831,6 +1831,15 @@ code, .counter {
   padding: 0.9em 1em;
 }
 
+/* Com afinidade, cada coluna ganha um fundo proprio, separado das outras: a textura escura
+   com 55% de opacidade gravada no arquivo, pra dar contraste sem esconder o fundo do
+   elemento. O fundo fica parado enquanto o conteudo da coluna rola. */
+.sheet-root.com-afinidade .vtt-col-side,
+.sheet-root.com-afinidade .vtt-col-main,
+.sheet-root.com-afinidade .vtt-col-combat {
+  background: url('./assets/backgrounds/coluna-afinidade.webp') center / cover no-repeat;
+}
+
 .vtt-name {
   font-family: 'Dico Typewriter', var(--heading);
   font-size: 1.7em;

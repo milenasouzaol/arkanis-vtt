@@ -154,7 +154,7 @@ export default function CharacterSheet() {
   const bgClass = elemento && ELEMENT_BACKGROUNDS[elemento] ? `bg-${elemento}` : 'bg-padrao'
 
   return (
-    <main className="sheet-root">
+    <main className={`sheet-root${elemento ? ' com-afinidade' : ''}`}>
       <div
         className={`sheet-bg ${bgClass}${bgAnimated ? '' : ' sheet-bg-static'}`}
         style={{ backgroundImage: `linear-gradient(rgba(19,17,24,0.4), rgba(19,17,24,0.4)), url(${bgImage})` }}
