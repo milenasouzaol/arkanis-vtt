@@ -1838,6 +1838,7 @@ code, .counter {
 .sheet-root.com-afinidade .vtt-col-main,
 .sheet-root.com-afinidade .vtt-col-combat {
   background: url('./assets/backgrounds/coluna-afinidade.webp') center / cover no-repeat;
+  border-radius: 8px;
 }
 
 .vtt-name {
