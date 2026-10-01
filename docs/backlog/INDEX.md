@@ -6,7 +6,7 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | Card | Título | Camada | Status | Jira |
 | --- | --- | --- | --- | --- |
-| [KAN-4](KAN-4-controles-soltos-card-item.md) | Dar forma aos controles soltos dentro do card de item | front | aberto — **bloqueado, sem referência visual** | [KAN-4](https://arkaniss.atlassian.net/browse/KAN-4) |
+| [KAN-4](KAN-4-controles-soltos-card-item.md) | Dar forma aos controles soltos dentro do card de item | front | concluído | [KAN-4](https://arkaniss.atlassian.net/browse/KAN-4) |
 | [KAN-5](KAN-5-modal-modificacoes-maldicoes.md) | Modal centralizado de Modificações e Maldições | front | aprovado | [KAN-5](https://arkaniss.atlassian.net/browse/KAN-5) |
 | [KAN-6](KAN-6-filtros-sem-textura.md) | Tirar a textura dos botões de filtro | front | aprovado | [KAN-6](https://arkaniss.atlassian.net/browse/KAN-6) |
 | [KAN-7](KAN-7-botao-adicionar-sem-textura.md) | Tirar a textura do botão Adicionar Equipamento | front | aprovado | [KAN-7](https://arkaniss.atlassian.net/browse/KAN-7) |

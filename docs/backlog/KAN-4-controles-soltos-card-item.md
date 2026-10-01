@@ -1,7 +1,7 @@
 ---
 id: KAN-4
 titulo: Dar forma aos controles soltos dentro do card de item do Inventário
-status: aberto
+status: concluído (resolvido pela Millie)
 camada: front
 depende_de: []
 ---
