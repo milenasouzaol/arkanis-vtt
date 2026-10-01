@@ -9850,3 +9850,682 @@ code, .counter {
   inset: 0;
   background: rgba(19, 17, 24, 0.4);
 }
+
+/* ===== Aba Progressao (KAN-38) =====
+   Mesmo vidro na cor do elemento da pagina de afinidade; sem afinidade, o cinza da ficha. */
+
+.prog {
+  --prog-cor: #8b8596;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1em 1.2em 1.4em;
+  font-family: var(--raleway);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.prog-vidro {
+  background:
+    linear-gradient(color-mix(in srgb, var(--prog-cor) 16%, transparent), color-mix(in srgb, var(--prog-cor) 10%, transparent)),
+    rgba(8, 8, 10, 0.42);
+  border: 1px solid color-mix(in srgb, var(--prog-cor) 35%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.prog-rotulo {
+  display: block;
+  font-family: 'Keyes', var(--heading);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.prog-titulo {
+  margin: 0;
+  font-family: 'Keyes', var(--heading);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* --- Cabecalho: NEX | classe e trilha | estatisticas --- */
+
+.prog-topo {
+  display: flex;
+  align-items: center;
+  gap: 2em;
+  padding: 0.8em 1.2em;
+}
+
+.prog-nex-linha {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.prog-nex-valor {
+  min-width: 3.2em;
+  text-align: center;
+  font-family: 'Westsac', var(--heading);
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1;
+  color: #fff;
+}
+
+.prog-seta {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: #1b1a20;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.prog-seta:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.prog-xp {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-top: 0.4em;
+  font-size: 12px;
+}
+
+.prog-quem {
+  display: flex;
+  gap: 1.6em;
+  padding-left: 2em;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.prog-quem strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.prog-stats {
+  display: flex;
+  gap: 1.4em;
+  margin: 0 0 0 auto;
+}
+
+.prog-stat dt {
+  font-family: 'Keyes', var(--heading);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.prog-stat dd {
+  margin: 0;
+  font-family: var(--poppins);
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.prog-stat-ganho {
+  margin-left: 0.3em;
+  font-size: 12px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--prog-cor) 60%, #fff);
+}
+
+/* --- Linha do NEX --- */
+
+.prog-linha {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(20, minmax(0, 1fr));
+  padding: 0.3em 0 0.2em;
+  align-items: start;
+}
+
+/* O trilho vai do centro do primeiro marco ao centro do ultimo (cada coluna tem 5%). */
+.prog-trilho {
+  position: absolute;
+  top: calc(0.3em + 8px);
+  left: 2.5%;
+  right: 2.5%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.prog-trilho-cheio {
+  height: 100%;
+  background: color-mix(in srgb, var(--prog-cor) 75%, #fff);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--prog-cor) 70%, transparent);
+}
+
+.prog-marco {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0 0 0.3em;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.prog-marco-ponto {
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  box-sizing: border-box;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: #141218;
+  transition: transform 0.15s;
+}
+
+.prog-alcancado .prog-marco-ponto,
+.prog-atual .prog-marco-ponto {
+  border-color: color-mix(in srgb, var(--prog-cor) 75%, #fff);
+  background: color-mix(in srgb, var(--prog-cor) 75%, #fff);
+}
+
+.prog-atual .prog-marco-ponto {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--prog-cor) 35%, transparent);
+}
+
+.prog-marco:hover .prog-marco-ponto {
+  transform: scale(1.25);
+}
+
+.prog-selecionado .prog-marco-ponto {
+  outline: 1px solid #fff;
+  outline-offset: 3px;
+}
+
+.prog-marco-nex {
+  font-family: var(--poppins);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.prog-alcancado .prog-marco-nex,
+.prog-atual .prog-marco-nex,
+.prog-selecionado .prog-marco-nex {
+  color: #fff;
+}
+
+/* Nivel com algo planejado ganha um tracinho embaixo do numero. */
+.prog-planejado .prog-marco-nex {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--prog-cor) 75%, #fff);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+}
+
+.prog-marco-tipo {
+  min-height: 2.4em;
+  font-family: 'Keyes', var(--heading);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.prog-selecionado .prog-marco-tipo {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* --- Detalhe do nivel | caminho planejado --- */
+
+.prog-corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 0.8em;
+  align-items: start;
+}
+
+.prog-detalhe,
+.prog-resumo,
+.prog-lembrete {
+  padding: 0.8em 1em 0.9em;
+}
+
+.prog-detalhe-topo {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  margin-bottom: 0.7em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid color-mix(in srgb, var(--prog-cor) 30%, rgba(255, 255, 255, 0.15));
+}
+
+.prog-detalhe .prog-titulo {
+  font-family: 'Westsac', var(--heading);
+  font-size: 24px;
+  letter-spacing: 0.02em;
+}
+
+.prog-chip {
+  padding: 0.2em 0.6em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: 'Keyes', var(--heading);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.prog-chip-atual,
+.prog-chip-alcancado {
+  border-color: color-mix(in srgb, var(--prog-cor) 60%, transparent);
+  background: color-mix(in srgb, var(--prog-cor) 20%, transparent);
+  color: #fff;
+}
+
+.prog-resumo .prog-titulo {
+  margin-bottom: 0.6em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid color-mix(in srgb, var(--prog-cor) 30%, rgba(255, 255, 255, 0.15));
+}
+
+.prog-bloco + .prog-bloco,
+.prog-bloco + .prog-nota {
+  margin-top: 0.9em;
+  padding-top: 0.9em;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.prog-bloco-topo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  margin-bottom: 0.5em;
+}
+
+.prog-bloco-tipo {
+  flex-shrink: 0;
+  padding: 0.15em 0.5em;
+  background: color-mix(in srgb, var(--prog-cor) 30%, rgba(255, 255, 255, 0.06));
+  font-family: 'Keyes', var(--heading);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.prog-bloco-nome {
+  margin: 0;
+  font-family: var(--raleway);
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.prog-dica {
+  margin: 0 0 0.5em;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.prog-dica strong {
+  color: #fff;
+}
+
+/* Lista de poderes/trilhas pra escolher. */
+.prog-busca {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 0.4em;
+  padding: 0.4em 0.6em;
+  border: none;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.25);
+  font-family: var(--raleway);
+  font-size: 13px;
+  color: #fff;
+}
+
+.prog-busca:focus {
+  outline: none;
+  border-bottom-color: color-mix(in srgb, var(--prog-cor) 70%, #fff);
+}
+
+.prog-lista ul {
+  max-height: 330px;
+  margin: 0;
+  padding: 0 0.35em 0 0;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.prog-opcao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  width: 100%;
+  padding: 0.45em 0.6em;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: none;
+  text-align: left;
+  color: inherit;
+  font-family: var(--raleway);
+  cursor: pointer;
+}
+
+.prog-opcao:hover {
+  background: color-mix(in srgb, var(--prog-cor) 14%, rgba(255, 255, 255, 0.03));
+}
+
+.prog-opcao-nome {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.prog-opcao-onde {
+  margin-left: 0.6em;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--prog-cor) 60%, #fff);
+}
+
+.prog-opcao-detalhe {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.prog-opcao-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.prog-escolhido {
+  padding: 0.6em 0.75em;
+  border-left: 2px solid color-mix(in srgb, var(--prog-cor) 75%, #fff);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.prog-escolhido-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8em;
+}
+
+.prog-escolhido-topo strong {
+  font-size: 14px;
+  color: #fff;
+}
+
+.prog-escolhido-desc {
+  margin: 0.35em 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.prog-trocar {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: #1b1a20;
+  padding: 0.25em 0.8em;
+  color: #fff;
+  font-family: 'Keyes', var(--heading);
+  font-size: 10px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.prog-auto {
+  font-family: 'Keyes', var(--heading);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.prog-sub {
+  margin-top: 0.7em;
+  padding-left: 0.9em;
+  border-left: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.prog-sub .prog-rotulo {
+  margin-bottom: 0.4em;
+}
+
+/* Atributos e pericias: botoes que marcam. */
+.prog-atributos {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4em;
+}
+
+.prog-atributo,
+.prog-pericia {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: #1b1a20;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: var(--raleway);
+  cursor: pointer;
+}
+
+.prog-atributo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
+  padding: 0.5em 0.3em;
+}
+
+.prog-atributo-nome {
+  font-family: 'Keyes', var(--heading);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.prog-atributo-valor {
+  font-family: var(--poppins);
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.prog-pericias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em;
+}
+
+.prog-pericia {
+  padding: 0.3em 0.65em;
+  font-size: 12px;
+}
+
+.prog-pericia:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.prog-atributo:hover,
+.prog-pericia:not(:disabled):hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.prog-marcado {
+  border-color: color-mix(in srgb, var(--prog-cor) 75%, #fff);
+  background: color-mix(in srgb, var(--prog-cor) 32%, #1b1a20);
+  color: #fff;
+}
+
+.prog-stats-nivel {
+  margin: 0;
+}
+
+.prog-stats-nivel .prog-stat dd {
+  font-size: 18px;
+}
+
+.prog-nota {
+  display: block;
+}
+
+.prog-nota textarea,
+.prog-lembrete textarea {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 0.35em;
+  padding: 0.5em 0.6em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.28);
+  font-family: var(--raleway);
+  font-size: 13px;
+  color: #fff;
+  resize: vertical;
+}
+
+.prog-nota textarea:focus,
+.prog-lembrete textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--prog-cor) 60%, #fff);
+}
+
+/* Caminho planejado: um nivel por linha, clicavel. */
+.prog-resumo-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prog-resumo-linha {
+  display: flex;
+  gap: 0.8em;
+  width: 100%;
+  padding: 0.45em 0.4em;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: none;
+  text-align: left;
+  color: inherit;
+  font-family: var(--raleway);
+  cursor: pointer;
+}
+
+.prog-resumo-linha:hover,
+.prog-resumo-linha.prog-selecionado {
+  background: color-mix(in srgb, var(--prog-cor) 14%, rgba(255, 255, 255, 0.03));
+}
+
+.prog-resumo-nex {
+  flex-shrink: 0;
+  width: 2.6em;
+  font-family: var(--poppins);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.prog-resumo-linha.prog-alcancado .prog-resumo-nex,
+.prog-resumo-linha.prog-atual .prog-resumo-nex {
+  color: color-mix(in srgb, var(--prog-cor) 60%, #fff);
+}
+
+.prog-resumo-itens {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  min-width: 0;
+}
+
+.prog-resumo-item {
+  font-size: 12.5px;
+  color: #fff;
+}
+
+.prog-resumo-tipo {
+  margin-right: 0.45em;
+  font-family: 'Keyes', var(--heading);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.prog-resumo-nota {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.prog-lembrete .prog-titulo {
+  margin-bottom: 0.2em;
+}
+
+.prog-aviso {
+  margin: 0;
+  padding: 1.2em;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Tela estreita: o caminho planejado desce e a linha do NEX quebra em duas. */
+@media (max-width: 1000px) {
+  .prog-topo { flex-wrap: wrap; gap: 1em; }
+  .prog-quem { padding-left: 0; border-left: none; }
+  .prog-stats { margin-left: 0; }
+  .prog-corpo { grid-template-columns: minmax(0, 1fr); }
+  .prog-linha { grid-template-columns: repeat(10, minmax(0, 1fr)); row-gap: 0.6em; }
+  .prog-trilho { display: none; }
+  .prog-atributos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.prog-lista-grupo {
+  display: block;
+  margin: 0.6em 0 0.2em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid color-mix(in srgb, var(--prog-cor) 30%, rgba(255, 255, 255, 0.15));
+  font-family: 'Keyes', var(--heading);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.prog-lista li:first-child .prog-lista-grupo {
+  margin-top: 0;
+}
