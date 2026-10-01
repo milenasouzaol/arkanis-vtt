@@ -23,14 +23,10 @@ describe('FundoElemento', () => {
     expect(container.querySelector('.afin-final-fundo')).toBeNull()
   })
 
-  it('Sangue usa o fundo borrado com a correnteza', () => {
-    for (const e of ['sangue'] as const) {
-      const { container, unmount } = render(<FundoElemento elemento={e} />)
-      expect(container.querySelector('.afin-final-fundo')).toBeTruthy()
-      expect(container.querySelector('.afin-final-correnteza')).toBeTruthy()
-      expect(container.querySelector('.afin-fundo-ouro')).toBeNull()
-      unmount()
-    }
+  it('Sangue usa os coágulos passando na veia', () => {
+    const { container } = render(<FundoElemento elemento="sangue" />)
+    expect(container.querySelector('.afin-fundo-sangue')).toBeTruthy()
+    expect(container.querySelector('.afin-final-fundo')).toBeNull()
   })
 })
 

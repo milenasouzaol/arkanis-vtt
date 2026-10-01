@@ -9824,6 +9824,18 @@ code, .counter {
   background: radial-gradient(ellipse at 40% 40%, #5e2689, #451766 45%, #2b0f40);
 }
 
+.afin-fundo-sangue {
+  background: #69120b;
+}
+
+/* Sem placa de video: o vermelho liso do fundo de Sangue. */
+.afin-sangue-liso {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #69120b;
+}
+
 /* Sem placa de video: um dourado liso com os tons do marmore. */
 .afin-ouro-liso {
   background: radial-gradient(ellipse at 30% 30%, #8c6928, #6d5224 45%, #4f3410);

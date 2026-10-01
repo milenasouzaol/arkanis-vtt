@@ -11,7 +11,6 @@ import medoTitulo from '../../assets/afinidade/medo/titulo.webp'
 import medoSimbolo from '../../assets/afinidade/medo/simbolo.webp'
 import energiaTitulo from '../../assets/afinidade/energia/titulo.webp'
 import energiaSimbolo from '../../assets/afinidade/energia/sigilo.webp'
-import bgSangue from '../../assets/backgrounds/bg-sangue.webp'
 import bgMedo from '../../assets/backgrounds/bg-medo.webp'
 
 export type RitualDaAfinidade = {
@@ -33,7 +32,7 @@ export type PoderDaAfinidade = {
 }
 
 type Arte = {
-  /** Sem fundo proprio, a pagina deixa aparecer o fundo da ficha (o ouro de Conhecimento, a gota de Morte, o caos de Energia). */
+  /** Sem fundo proprio, a pagina deixa aparecer o fundo da ficha (o ouro de Conhecimento, a gota de Morte, o caos de Energia, a veia de Sangue). */
   fundo?: string
   titulo: string
   /** Simbolo do elemento, que fica atras do titulo. */
@@ -41,13 +40,13 @@ type Arte = {
 }
 
 /**
- * Arte de cada elemento. Conhecimento, Morte e Energia deixam aparecer o fundo animado da ficha;
+ * Arte de cada elemento. Conhecimento, Morte, Energia e Sangue deixam aparecer o fundo animado da ficha;
  * os outros usam a imagem de fundo do elemento. O simbolo de Morte e o da roda de escolha,
  * e o de Energia e o sigilo roxo.
  */
 export const ARTES: Record<string, Arte> = {
   morte: { titulo: morteTitulo, simbolo: morteSimbolo },
-  sangue: { fundo: bgSangue, titulo: sangueTitulo, simbolo: sangueSimbolo },
+  sangue: { titulo: sangueTitulo, simbolo: sangueSimbolo },
   conhecimento: { titulo: conhecimentoTitulo, simbolo: conhecimentoSimbolo },
   medo: { fundo: bgMedo, titulo: medoTitulo, simbolo: medoSimbolo },
   energia: { titulo: energiaTitulo, simbolo: energiaSimbolo },

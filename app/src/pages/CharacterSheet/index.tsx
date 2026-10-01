@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import OuroLiquido from './OuroLiquido'
 import GotaMorte from './GotaMorte'
 import CaosEnergia from './CaosEnergia'
+import VeiaSangue from './VeiaSangue'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { Attributes } from '../../lib/rules'
@@ -167,6 +168,11 @@ export default function CharacterSheet() {
         // Energia: o marmore roxo mexendo sem direcao, no lugar da imagem.
         <div className="sheet-bg sheet-bg-ouro afin-fundo-energia">
           <CaosEnergia parado={!bgAnimated} />
+        </div>
+      ) : elemento === 'sangue' ? (
+        // Sangue: os coagulos passando dentro da veia, no lugar da imagem.
+        <div className="sheet-bg sheet-bg-ouro afin-fundo-sangue">
+          <VeiaSangue parado={!bgAnimated} />
         </div>
       ) : elemento === 'morte' ? (
         // Morte: a gota caindo na agua, no lugar da imagem.
