@@ -59,5 +59,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 | [KAN-36](KAN-36-afinidade-teste-personalidade.md) | Afinidade: Teste de Personalidade | front | aprovado | [KAN-36](https://arkaniss.atlassian.net/browse/KAN-36) |
 | [KAN-37](KAN-37-fundo-sangue-veia.md) | Fundo animado de Sangue: coágulos na veia | front | concluído | [KAN-37](https://arkaniss.atlassian.net/browse/KAN-37) |
 | [KAN-38](KAN-38-aba-progressao.md) | Aba Progressão: linha do NEX e planejamento | front | concluído | [KAN-38](https://arkaniss.atlassian.net/browse/KAN-38) |
+| [KAN-39](KAN-39-interludio-cena.md) | Aba Interlúdio: cena clicável do esconderijo | front | em revisão | [KAN-39](https://arkaniss.atlassian.net/browse/KAN-39) |
 
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

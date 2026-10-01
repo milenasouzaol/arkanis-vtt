@@ -5,6 +5,9 @@ import { recordRoll } from '../../lib/rollHistory'
 import { attrValue, nexSteps, rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
 import RollResult, { type RollResultData } from './RollResult'
+import { elementoPorChave } from './elementosParanormais'
+import { ALTURA_CENA, LARGURA_CENA, OBJETOS } from './interludioCena'
+import esconderijo from '../../assets/interludio/esconderijo.webp'
 
 type ActionKey = 'alimentar' | 'dormir' | 'exercitar' | 'ler' | 'manutencao' | 'relaxar' | 'revisar_caso' | 'resolver_problema'
 
@@ -57,6 +60,8 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
   const [folgaSkill1, setFolgaSkill1] = useState<string | null>(null)
   const [folgaSkill2, setFolgaSkill2] = useState<string | null>(null)
   const [folgaResult, setFolgaResult] = useState<{ successes: number; nat20: boolean } | null>(null)
+  // Painel do lado: uma acao da cena, a folga ou os bonus guardados.
+  const [painel, setPainel] = useState<ActionKey | 'folga' | 'bonus' | null>(null)
 
   async function loadVinculo() {
     const { data } = await supabase.from('characters').select('vinculo_parceiro, vinculo_pv_pe_bonus, problema_folga').eq('id', character.id).single()
@@ -169,226 +174,357 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
 
   const canConfirm = selectedActions.length > 0
 
+  function rolarRevisarCaso() {
+    const skill = skills.find((s) => s.id === selectedSkillId)
+    if (!skill) return
+    const cs = charSkills[skill.id] ?? { training: 'nenhum' as const, extra_bonus: 0, attribute_override: null }
+    const attr = cs.attribute_override ?? skill.default_attribute
+    const score = attrValue(character.attributes, attr)
+    const { rolls, kept } = rollAttributeTest(score)
+    const bonus = trainingBonus(cs.training) + cs.extra_bonus + (prato === 'rapido' ? 5 : 0)
+    const label = `Revisar Caso — Teste de ${skill.name}`
+    setRoll({ label, rolls, kept, bonus, characterName: character.name, diceTray: character.dice_tray })
+    if (session) {
+      recordRoll({
+        characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
+        label, total: kept + bonus, detail: `d20 mantido: ${kept} (rolados: ${rolls.join(', ')}) + bônus ${bonus}`,
+        dice: rolls.map((v) => ({ sides: 20, value: v, discarded: v !== kept })), bonus,
+      })
+    }
+  }
+
+  function testarFolga() {
+    let successes = 0
+    let nat20 = false
+    const parts: string[] = []
+    for (const skillId of [folgaSkill1, folgaSkill2]) {
+      const skill = skills.find((s) => s.id === skillId)
+      if (!skill) continue
+      const cs = charSkills[skill.id] ?? { training: 'nenhum' as const, extra_bonus: 0, attribute_override: null }
+      const attr = cs.attribute_override ?? skill.default_attribute
+      const score = attrValue(character.attributes, attr)
+      const { rolls, kept } = rollAttributeTest(score)
+      if (rolls.includes(20)) nat20 = true
+      const bonus = trainingBonus(cs.training) + cs.extra_bonus
+      const total = kept + bonus
+      if (total >= 20) successes += 1
+      parts.push(`${skill.name}: ${total} (d20 mantido ${kept} + bônus ${bonus})`)
+    }
+    setFolgaResult({ successes, nat20 })
+    if (session) {
+      recordRoll({
+        characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
+        label: `Folga da Ordem (${interesse})`, total: successes, detail: parts.join(' · '),
+      })
+    }
+  }
+
+  async function aplicarFolga() {
+    if (!folgaResult) return
+    if (folgaResult.successes === 2) {
+      const rolled = rollDiceFormula(folgaResult.nat20 ? '3d6' : '1d6')!
+      await supabase.from('character_temp_bonuses').insert({ character_id: character.id, source: 'Folga da Ordem', attribute_group: 'geral', dice: `${rolled.total} (fixo)`, remaining: 1 })
+    } else if (folgaResult.successes === 0) {
+      await supabase.from('characters').update({ problema_folga: `Problema em ${interesse} (folga sem sucesso)` }).eq('id', character.id)
+      await loadVinculo()
+    }
+    setFolgaResult(null)
+    await loadTempBonuses()
+  }
+
+  async function perderVinculo() {
+    await supabase.from('characters').update({ vinculo_parceiro: null, vinculo_pv_pe_bonus: 0 }).eq('id', character.id)
+    await loadVinculo()
+    onUpdated()
+  }
+
+  // Por que uma acao nao pode entrar agora (ou null se pode).
+  function bloqueio(key: ActionKey): string | null {
+    if (selectedActions.includes(key)) return null
+    if (key === 'relaxar' && vinculo?.problema_folga) return 'Relaxar está travado até resolver o problema da folga.'
+    if (key !== 'revisar_caso' && selectedActions.length >= 2) return 'Já tem 2 ações neste interlúdio. Tire uma pra trocar.'
+    return null
+  }
+
+  // Clicar num objeto da cena: escolhe a acao (se der) e abre o painel dela.
+  function clicarObjeto(key: ActionKey) {
+    setConfirmed(null)
+    if (!selectedActions.includes(key) && !bloqueio(key)) toggleAction(key)
+    setPainel(key)
+  }
+
+  const acao = painel && painel !== 'folga' && painel !== 'bonus' ? ACTIONS.find((a) => a.key === painel)! : null
+  const elemento = character.afinidade_elemento ? elementoPorChave(character.afinidade_elemento as never) : null
+
   return (
-    <div>
-      <p><em>Cenas onde os personagens não estão investigando/combatendo — descansar, planejar, refletir. Até 2 ações por interlúdio (Revisar Caso pode repetir).</em></p>
-
-      {confirmed && <p role="status">{confirmed}</p>}
-
-      {vinculo?.vinculo_parceiro && (
-        <section>
-          <p><strong>Vínculo Romântico:</strong> {vinculo.vinculo_parceiro} (+{vinculo.vinculo_pv_pe_bonus} PV e PE, máx. e atual)</p>
-          <p><em>Condição Apaixonado: penalidade de -{vinculo.vinculo_pv_pe_bonus} em testes contra {vinculo.vinculo_parceiro}.</em></p>
-          <button
-            type="button"
-            onClick={async () => {
-              await supabase.from('characters').update({ vinculo_parceiro: null, vinculo_pv_pe_bonus: 0 }).eq('id', character.id)
-              await loadVinculo()
-              onUpdated()
-            }}
-          >
-            Parceiro morreu (perde o vínculo — condição Trêmulo: -1d20 Força/Vigor por 3 rodadas)
-          </button>
-        </section>
-      )}
-
-      {vinculo?.problema_folga && <p><strong>Problema pendente (Folga):</strong> {vinculo.problema_folga} — bloqueia Relaxar até resolvido.</p>}
-
-      <ul>
-        {ACTIONS.filter((a) => a.key !== 'resolver_problema' || vinculo?.problema_folga).map((a) => (
-          <li key={a.key}>
-            <label>
-              <input
-                type="checkbox"
-                checked={selectedActions.includes(a.key)}
-                disabled={a.key === 'relaxar' && Boolean(vinculo?.problema_folga)}
-                onChange={() => toggleAction(a.key)}
-              />
-              <strong>{a.label}</strong>
-            </label>
-            {selectedActions.includes(a.key) && <p>{a.description}</p>}
-          </li>
-        ))}
-      </ul>
-
-      {(selectedActions.includes('dormir') || selectedActions.includes('relaxar')) && (
-        <label>
-          Condição de descanso
-          <select value={condicao} onChange={(e) => setCondicao(e.target.value as typeof condicao)}>
-            {CONDICOES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-          </select>
-        </label>
-      )}
-
-      {selectedActions.includes('dormir') && !vinculo?.vinculo_parceiro && (
-        <fieldset>
-          <legend>Regra da Paixão (opcional)</legend>
-          <p><em>Envolvimento romântico com outro personagem — combinado com a mesa/mestre antes de usar.</em></p>
-          <label><input type="checkbox" checked={paixaoChecked} onChange={(e) => setPaixaoChecked(e.target.checked)} /> Envolver-se romanticamente</label>
-          {paixaoChecked && (
-            <label>Nome do parceiro <input value={parceiroNome} onChange={(e) => setParceiroNome(e.target.value)} /></label>
-          )}
-        </fieldset>
-      )}
-
-      {selectedActions.includes('alimentar') && (
-        <fieldset>
-          <legend>Escolha o prato</legend>
-          {PRATOS.map((p) => (
-            <label key={p.key}>
-              <input type="radio" name="prato" checked={prato === p.key} onChange={() => setPrato(p.key)} />
-              <strong>{p.label}</strong>: {p.description}
-            </label>
+    <div className="inter aba-travada" style={{ '--inter-cor': elemento?.cor ?? '#8b8596' } as React.CSSProperties}>
+      <svg
+        className="inter-cena"
+        viewBox={`0 0 ${LARGURA_CENA} ${ALTURA_CENA}`}
+        preserveAspectRatio="xMidYMid slice"
+        role="group"
+        aria-label="Esconderijo: clique no que o agente vai fazer"
+      >
+        <defs>
+          {OBJETOS.map((o) => (
+            <clipPath key={o.acao} id={`inter-recorte-${o.acao}`}>
+              <polygon points={o.contorno} />
+            </clipPath>
           ))}
-        </fieldset>
-      )}
-
-      {selectedActions.includes('manutencao') && (
-        <label>Item consertado (registro) <input value={manutencaoNote} onChange={(e) => setManutencaoNote(e.target.value)} /></label>
-      )}
-
-      {selectedActions.includes('revisar_caso') && (
-        <fieldset>
-          <legend>Revisar Caso</legend>
-          <label>
-            Página de investigação
-            <select value={selectedPageId ?? ''} onChange={(e) => setSelectedPageId(e.target.value || null)}>
-              <option value="">—</option>
-              {pages.map((p) => <option key={p.id} value={p.id}>{p.title || '(sem título)'}</option>)}
-            </select>
-          </label>
-          <label>
-            Perícia
-            <select value={selectedSkillId ?? ''} onChange={(e) => setSelectedSkillId(e.target.value || null)}>
-              <option value="">—</option>
-              {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </label>
-          {prato === 'rapido' && <p>+5 no teste (Prato Rápido).</p>}
-          <button
-            type="button"
-            disabled={!selectedSkillId}
-            onClick={() => {
-              const skill = skills.find((s) => s.id === selectedSkillId)
-              if (!skill) return
-              const cs = charSkills[skill.id] ?? { training: 'nenhum' as const, extra_bonus: 0, attribute_override: null }
-              const attr = cs.attribute_override ?? skill.default_attribute
-              const score = attrValue(character.attributes, attr)
-              const { rolls, kept } = rollAttributeTest(score)
-              const bonus = trainingBonus(cs.training) + cs.extra_bonus + (prato === 'rapido' ? 5 : 0)
-              const label = `Revisar Caso — Teste de ${skill.name}`
-              setRoll({ label, rolls, kept, bonus, characterName: character.name, diceTray: character.dice_tray })
-              if (session) {
-                recordRoll({
-                  characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
-                  label, total: kept + bonus, detail: `d20 mantido: ${kept} (rolados: ${rolls.join(', ')}) + bônus ${bonus}`,
-                  dice: rolls.map((v) => ({ sides: 20, value: v, discarded: v !== kept })), bonus,
-                })
-              }
-            }}
-          >
-            Rolar teste
-          </button>
-          <label>Pista encontrada (se passar no teste) <textarea value={foundClue} onChange={(e) => setFoundClue(e.target.value)} /></label>
-        </fieldset>
-      )}
-
-      {roll && <RollResult result={roll} onClose={() => setRoll(null)} />}
-
-      <button type="button" onClick={confirmar} disabled={!canConfirm}>Confirmar Interlúdio</button>
-
-      <section>
-        <h3>Bônus temporários acumulados</h3>
-        {tempBonuses.length === 0 ? <p>Nenhum.</p> : (
-          <ul>
-            {tempBonuses.map((b) => (
-              <li key={b.id}>
-                {b.source}: {b.remaining}x {b.dice} ({b.attribute_group === 'fisico' ? 'Agilidade/Força/Vigor' : b.attribute_group === 'mental' ? 'Intelecto/Presença' : 'qualquer teste'})
-                <button type="button" onClick={() => useTempBonus(b.id)}>Usar 1</button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <h3>Folga da Ordem / Vida Além da Ordem (entre missões)</h3>
-        <p><em>1 folga por missão. Escolha um interesse pessoal e 2 perícias temáticas — cada uma é testada contra DT 20.</em></p>
-        <label>
-          Interesse
-          <select value={interesse} onChange={(e) => setInteresse(e.target.value as typeof interesse)}>
-            {INTERESSES.map((i) => <option key={i} value={i}>{i}</option>)}
-          </select>
-        </label>
-        <label>
-          Perícia 1
-          <select value={folgaSkill1 ?? ''} onChange={(e) => setFolgaSkill1(e.target.value || null)}>
-            <option value="">—</option>
-            {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </label>
-        <label>
-          Perícia 2
-          <select value={folgaSkill2 ?? ''} onChange={(e) => setFolgaSkill2(e.target.value || null)}>
-            <option value="">—</option>
-            {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </label>
-
-        <button
-          type="button"
-          disabled={!folgaSkill1 || !folgaSkill2}
-          onClick={() => {
-            let successes = 0
-            let nat20 = false
-            const parts: string[] = []
-            for (const skillId of [folgaSkill1, folgaSkill2]) {
-              const skill = skills.find((s) => s.id === skillId)
-              if (!skill) continue
-              const cs = charSkills[skill.id] ?? { training: 'nenhum' as const, extra_bonus: 0, attribute_override: null }
-              const attr = cs.attribute_override ?? skill.default_attribute
-              const score = attrValue(character.attributes, attr)
-              const { rolls, kept } = rollAttributeTest(score)
-              if (rolls.includes(20)) nat20 = true
-              const bonus = trainingBonus(cs.training) + cs.extra_bonus
-              const total = kept + bonus
-              if (total >= 20) successes += 1
-              parts.push(`${skill.name}: ${total} (d20 mantido ${kept} + bônus ${bonus})`)
-            }
-            setFolgaResult({ successes, nat20 })
-            if (session) {
-              recordRoll({
-                characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
-                label: `Folga da Ordem (${interesse})`, total: successes, detail: parts.join(' · '),
-              })
-            }
-          }}
-        >
-          Testar Folga
-        </button>
-
-        {folgaResult && (
-          <div>
-            <p>{folgaResult.successes} sucesso(s) de 2.</p>
-            <button
-              type="button"
-              onClick={async () => {
-                if (folgaResult.successes === 2) {
-                  const rolled = rollDiceFormula(folgaResult.nat20 ? '3d6' : '1d6')!
-                  await supabase.from('character_temp_bonuses').insert({ character_id: character.id, source: 'Folga da Ordem', attribute_group: 'geral', dice: `${rolled.total} (fixo)`, remaining: 1 })
-                } else if (folgaResult.successes === 0) {
-                  await supabase.from('characters').update({ problema_folga: `Problema em ${interesse} (folga sem sucesso)` }).eq('id', character.id)
-                  await loadVinculo()
-                }
-                setFolgaResult(null)
-                await loadTempBonuses()
-              }}
+        </defs>
+        <image href={esconderijo} width={LARGURA_CENA} height={ALTURA_CENA} />
+        {OBJETOS.map((o) => {
+          const a = ACTIONS.find((x) => x.key === o.acao)!
+          const escolhida = selectedActions.includes(o.acao)
+          const travada = !!bloqueio(o.acao)
+          return (
+            <g
+              key={o.acao}
+              className={`inter-objeto${escolhida ? ' inter-escolhido' : ''}${travada ? ' inter-travado' : ''}${painel === o.acao ? ' inter-aberto' : ''}`}
+              role="button"
+              tabIndex={0}
+              aria-label={a.label}
+              aria-pressed={escolhida}
+              onClick={() => clicarObjeto(o.acao)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); clicarObjeto(o.acao) } }}
             >
-              Aplicar resultado
-            </button>
+              <image
+                className="inter-aceso"
+                href={esconderijo}
+                width={LARGURA_CENA}
+                height={ALTURA_CENA}
+                clipPath={`url(#inter-recorte-${o.acao})`}
+              />
+              <polygon className="inter-alvo" points={o.contorno} />
+              <g className="inter-etiqueta" transform={`translate(${o.etiqueta[0]} ${o.etiqueta[1]})`}>
+                <text textAnchor="middle" dominantBaseline="middle">{a.label}</text>
+              </g>
+            </g>
+          )
+        })}
+      </svg>
+
+      <header className="inter-topo">
+        <h2 className="inter-titulo">Interlúdio</h2>
+        <p className="inter-sub">Clique no que o agente vai fazer. Até 2 ações; Revisar Caso pode repetir.</p>
+      </header>
+
+      <div className="inter-avisos">
+        {confirmed && <p className="inter-vidro inter-aviso" role="status">{confirmed}</p>}
+        {vinculo?.problema_folga && (
+          <p className="inter-vidro inter-aviso">
+            <strong>Problema pendente (Folga):</strong> {vinculo.problema_folga}. Relaxar fica travado até resolver.
+          </p>
+        )}
+        {vinculo?.vinculo_parceiro && (
+          <div className="inter-vidro inter-aviso">
+            <p><strong>Vínculo romântico:</strong> {vinculo.vinculo_parceiro} (+{vinculo.vinculo_pv_pe_bonus} PV e PE, máx. e atual).</p>
+            <p className="inter-dica">Condição Apaixonado: -{vinculo.vinculo_pv_pe_bonus} em testes contra {vinculo.vinculo_parceiro}.</p>
+            <button type="button" className="inter-botao" onClick={perderVinculo}>Parceiro morreu</button>
+            <p className="inter-dica">Perde o vínculo; condição Trêmulo: -1d20 em Força/Vigor por 3 rodadas.</p>
           </div>
         )}
-      </section>
+      </div>
+
+      {painel && (
+        <aside className="inter-vidro inter-painel" aria-label="Detalhes">
+          <div className="inter-painel-topo">
+            <h3 className="inter-painel-titulo">
+              {acao ? acao.label : painel === 'folga' ? 'Folga da Ordem' : 'Bônus guardados'}
+            </h3>
+            <button type="button" className="inter-fechar" aria-label="Fechar" onClick={() => setPainel(null)}>×</button>
+          </div>
+
+          <div className="inter-painel-corpo">
+            {acao && (
+              <>
+                <p className="inter-desc">{acao.description}</p>
+
+                {(acao.key === 'dormir' || acao.key === 'relaxar') && (
+                  <div className="inter-campo">
+                    <span className="inter-rotulo">Condição de descanso</span>
+                    <div className="inter-opcoes inter-opcoes-4">
+                      {CONDICOES.map((c) => (
+                        <button
+                          key={c.key}
+                          type="button"
+                          className={`inter-opcao${condicao === c.key ? ' inter-marcado' : ''}`}
+                          aria-pressed={condicao === c.key}
+                          onClick={() => setCondicao(c.key as typeof condicao)}
+                        >
+                          {c.label.replace(/ \(.*\)/, '')}
+                          <span className="inter-opcao-extra">x{String(c.mult).replace('.', ',')}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {acao.key === 'dormir' && !vinculo?.vinculo_parceiro && (
+                  <div className="inter-campo">
+                    <span className="inter-rotulo">Regra da Paixão (opcional)</span>
+                    <p className="inter-dica">Envolvimento romântico com outro personagem, combinado com a mesa antes.</p>
+                    <label className="inter-check">
+                      <input type="checkbox" checked={paixaoChecked} onChange={(e) => setPaixaoChecked(e.target.checked)} />
+                      Envolver-se romanticamente
+                    </label>
+                    {paixaoChecked && (
+                      <input className="inter-input" placeholder="Nome do parceiro" value={parceiroNome} onChange={(e) => setParceiroNome(e.target.value)} />
+                    )}
+                  </div>
+                )}
+
+                {acao.key === 'alimentar' && (
+                  <div className="inter-campo">
+                    <span className="inter-rotulo">Prato</span>
+                    <div className="inter-pratos">
+                      {PRATOS.map((p) => (
+                        <button
+                          key={p.key}
+                          type="button"
+                          className={`inter-prato${prato === p.key ? ' inter-marcado' : ''}`}
+                          aria-pressed={prato === p.key}
+                          onClick={() => setPrato(p.key)}
+                        >
+                          <strong>{p.label}</strong>
+                          <span>{p.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {acao.key === 'manutencao' && (
+                  <div className="inter-campo">
+                    <span className="inter-rotulo">Item consertado</span>
+                    <input className="inter-input" placeholder="Qual item?" value={manutencaoNote} onChange={(e) => setManutencaoNote(e.target.value)} />
+                  </div>
+                )}
+
+                {acao.key === 'revisar_caso' && (
+                  <div className="inter-campo">
+                    <span className="inter-rotulo">Página de investigação</span>
+                    <select className="inter-input" value={selectedPageId ?? ''} onChange={(e) => setSelectedPageId(e.target.value || null)}>
+                      <option value="">—</option>
+                      {pages.map((p) => <option key={p.id} value={p.id}>{p.title || '(sem título)'}</option>)}
+                    </select>
+                    <span className="inter-rotulo">Perícia</span>
+                    <select className="inter-input" value={selectedSkillId ?? ''} onChange={(e) => setSelectedSkillId(e.target.value || null)}>
+                      <option value="">—</option>
+                      {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    {prato === 'rapido' && <p className="inter-dica">+5 no teste (Prato Rápido).</p>}
+                    <button type="button" className="inter-botao" disabled={!selectedSkillId} onClick={rolarRevisarCaso}>Rolar teste</button>
+                    <span className="inter-rotulo">Pista encontrada (se passar)</span>
+                    <textarea className="inter-input" rows={3} value={foundClue} onChange={(e) => setFoundClue(e.target.value)} />
+                  </div>
+                )}
+              </>
+            )}
+
+            {painel === 'bonus' && (
+              tempBonuses.length === 0 ? (
+                <p className="inter-dica">Nenhum bônus guardado. Exercitar-se, Ler e a Folga da Ordem guardam bônus pra testes futuros.</p>
+              ) : (
+                <ul className="inter-bonus">
+                  {tempBonuses.map((b) => (
+                    <li key={b.id}>
+                      <div>
+                        <strong>{b.source}</strong>
+                        <span className="inter-dica">
+                          {b.remaining}x {b.dice} · {b.attribute_group === 'fisico' ? 'Agilidade/Força/Vigor' : b.attribute_group === 'mental' ? 'Intelecto/Presença' : 'qualquer teste'}
+                        </span>
+                      </div>
+                      <button type="button" className="inter-botao" onClick={() => useTempBonus(b.id)}>Usar 1</button>
+                    </li>
+                  ))}
+                </ul>
+              )
+            )}
+
+            {painel === 'folga' && (
+              <div className="inter-campo">
+                <p className="inter-desc">Entre missões, uma folga por missão. Escolha um interesse pessoal e 2 perícias; cada uma é testada contra DT 20.</p>
+                <span className="inter-rotulo">Interesse</span>
+                <div className="inter-opcoes">
+                  {INTERESSES.map((i) => (
+                    <button key={i} type="button" className={`inter-opcao${interesse === i ? ' inter-marcado' : ''}`} aria-pressed={interesse === i} onClick={() => setInteresse(i)}>{i}</button>
+                  ))}
+                </div>
+                <span className="inter-rotulo">Perícias</span>
+                <select className="inter-input" value={folgaSkill1 ?? ''} onChange={(e) => setFolgaSkill1(e.target.value || null)}>
+                  <option value="">—</option>
+                  {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                <select className="inter-input" value={folgaSkill2 ?? ''} onChange={(e) => setFolgaSkill2(e.target.value || null)}>
+                  <option value="">—</option>
+                  {skills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                <button type="button" className="inter-botao" disabled={!folgaSkill1 || !folgaSkill2} onClick={testarFolga}>Testar folga</button>
+                {folgaResult && (
+                  <div className="inter-resultado">
+                    <p>{folgaResult.successes} sucesso(s) de 2.</p>
+                    <button type="button" className="inter-botao" onClick={aplicarFolga}>Aplicar resultado</button>
+                  </div>
+                )}
+                {vinculo?.problema_folga && (
+                  <>
+                    <span className="inter-rotulo">Problema pendente</span>
+                    <p className="inter-dica">{ACTIONS.find((a) => a.key === 'resolver_problema')!.description}</p>
+                    <button
+                      type="button"
+                      className={`inter-botao${selectedActions.includes('resolver_problema') ? ' inter-marcado' : ''}`}
+                      disabled={!!bloqueio('resolver_problema')}
+                      onClick={() => toggleAction('resolver_problema')}
+                    >
+                      {selectedActions.includes('resolver_problema') ? 'Tirar do interlúdio' : 'Resolver neste interlúdio'}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {acao && (
+            <div className="inter-painel-rodape">
+              {bloqueio(acao.key) && <p className="inter-dica">{bloqueio(acao.key)}</p>}
+              {selectedActions.includes(acao.key) ? (
+                <button type="button" className="inter-botao" onClick={() => toggleAction(acao.key)}>Tirar do interlúdio</button>
+              ) : (
+                <button type="button" className="inter-botao inter-botao-forte" disabled={!!bloqueio(acao.key)} onClick={() => toggleAction(acao.key)}>Fazer isso</button>
+              )}
+            </div>
+          )}
+        </aside>
+      )}
+
+      <footer className="inter-vidro inter-barra">
+        <div className="inter-escolhidas">
+          {selectedActions.length === 0 ? (
+            <span className="inter-dica">Nenhuma ação escolhida.</span>
+          ) : (
+            selectedActions.map((k) => (
+              <span key={k} className="inter-chip">
+                <button type="button" className="inter-chip-nome" onClick={() => setPainel(k === 'resolver_problema' ? 'folga' : k)}>
+                  {ACTIONS.find((a) => a.key === k)?.label}
+                </button>
+                <button type="button" className="inter-chip-tirar" aria-label={`Tirar ${ACTIONS.find((a) => a.key === k)?.label}`} onClick={() => toggleAction(k)}>×</button>
+              </span>
+            ))
+          )}
+        </div>
+        <button type="button" className={`inter-botao${painel === 'bonus' ? ' inter-marcado' : ''}`} onClick={() => setPainel(painel === 'bonus' ? null : 'bonus')}>
+          Bônus guardados ({tempBonuses.length})
+        </button>
+        <button type="button" className={`inter-botao${painel === 'folga' ? ' inter-marcado' : ''}`} onClick={() => setPainel(painel === 'folga' ? null : 'folga')}>
+          Folga da Ordem
+        </button>
+        <button type="button" className="inter-botao inter-botao-forte" onClick={async () => { await confirmar(); setPainel(null) }} disabled={!canConfirm}>
+          Resolver interlúdio
+        </button>
+      </footer>
+
+      {roll && <RollResult result={roll} onClose={() => setRoll(null)} />}
     </div>
   )
 }

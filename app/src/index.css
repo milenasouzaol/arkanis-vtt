@@ -10529,3 +10529,461 @@ code, .counter {
 .prog-lista li:first-child .prog-lista-grupo {
   margin-top: 0;
 }
+
+/* ===== Aba Interludio (KAN-39): a cena clicavel do esconderijo =====
+   A arte cobre a aba inteira (o SVG faz o "cover" com slice); cada objeto e um contorno
+   que acende ao passar o mouse. Paineis no mesmo vidro da Progressao. */
+
+.inter {
+  --inter-cor: #8b8596;
+  position: relative;
+  font-family: var(--raleway);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inter-cena {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.inter-cena > image {
+  transition: filter 0.25s;
+}
+
+/* Com um objeto em foco, o resto do comodo escurece um pouco. */
+.inter-cena:has(.inter-objeto:hover) > image,
+.inter-cena:has(.inter-objeto:focus-visible) > image {
+  filter: brightness(0.75);
+}
+
+.inter-objeto {
+  cursor: pointer;
+  outline: none;
+}
+
+.inter-alvo {
+  fill: transparent;
+}
+
+.inter-aceso {
+  pointer-events: none;
+  opacity: 0;
+  filter: brightness(1.6) saturate(1.1);
+  transition: opacity 0.25s;
+}
+
+.inter-escolhido .inter-aceso {
+  opacity: 0.75;
+  filter: brightness(1.35);
+}
+
+.inter-objeto:hover .inter-aceso,
+.inter-objeto:focus-visible .inter-aceso,
+.inter-aberto .inter-aceso {
+  opacity: 1;
+  filter: brightness(1.6) saturate(1.1);
+}
+
+.inter-travado:hover .inter-aceso {
+  filter: brightness(1.15) saturate(0.4);
+}
+
+.inter-etiqueta {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.inter-etiqueta text {
+  font-family: 'Keyes', var(--heading);
+  font-size: 24px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  fill: #fff;
+  stroke: rgba(0, 0, 0, 0.85);
+  stroke-width: 6px;
+  paint-order: stroke;
+}
+
+.inter-objeto:hover .inter-etiqueta,
+.inter-objeto:focus-visible .inter-etiqueta,
+.inter-escolhido .inter-etiqueta,
+.inter-aberto .inter-etiqueta {
+  opacity: 1;
+}
+
+.inter-vidro {
+  background:
+    linear-gradient(color-mix(in srgb, var(--inter-cor) 16%, transparent), color-mix(in srgb, var(--inter-cor) 10%, transparent)),
+    rgba(8, 8, 10, 0.62);
+  border: 1px solid color-mix(in srgb, var(--inter-cor) 35%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* --- Titulo, avisos, painel e barra por cima da cena --- */
+
+.inter-topo {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  pointer-events: none;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
+}
+
+.inter-titulo {
+  margin: 0;
+  font-family: 'Westsac', var(--heading);
+  font-size: 34px;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.inter-sub {
+  margin: 0.1em 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.inter-avisos {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  width: min(460px, calc(100% - 32px));
+}
+
+.inter-aviso {
+  margin: 0;
+  padding: 0.5em 0.8em;
+  font-size: 12.5px;
+}
+
+.inter-aviso p {
+  margin: 0 0 0.3em;
+}
+
+.inter-aviso strong {
+  color: #fff;
+}
+
+.inter-painel {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  max-height: calc(100% - 98px);
+  width: min(380px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+}
+
+.inter-painel-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8em;
+  padding: 0.7em 0.9em 0.5em;
+  border-bottom: 1px solid color-mix(in srgb, var(--inter-cor) 30%, rgba(255, 255, 255, 0.15));
+}
+
+.inter-painel-titulo {
+  margin: 0;
+  font-family: 'Westsac', var(--heading);
+  font-size: 22px;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.inter-fechar {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: #1b1a20;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.inter-painel-corpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.7em 0.9em;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.inter-painel-rodape {
+  padding: 0.6em 0.9em 0.8em;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.inter-painel-rodape .inter-botao {
+  width: 100%;
+}
+
+.inter-desc {
+  margin: 0 0 0.8em;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inter-dica {
+  display: block;
+  margin: 0 0 0.4em;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.inter-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.inter-campo + .inter-campo {
+  margin-top: 0.9em;
+  padding-top: 0.9em;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.inter-rotulo {
+  margin-top: 0.3em;
+  font-family: 'Keyes', var(--heading);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.inter-opcoes {
+  display: flex;
+  gap: 0.3em;
+}
+
+.inter-opcoes > * {
+  flex: 1 1 0;
+}
+
+.inter-opcao,
+.inter-prato,
+.inter-botao {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: #1b1a20;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--raleway);
+  cursor: pointer;
+}
+
+.inter-opcao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1em;
+  padding: 0.45em 0.2em;
+  font-size: 12px;
+}
+
+.inter-opcao-extra {
+  font-family: var(--poppins);
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.inter-pratos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+}
+
+.inter-prato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  padding: 0.5em 0.7em;
+  text-align: left;
+}
+
+.inter-prato strong {
+  font-size: 13px;
+  color: #fff;
+}
+
+.inter-prato span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.inter-botao {
+  padding: 0.45em 1em;
+  font-family: 'Keyes', var(--heading);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.inter-botao:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.inter-botao-forte {
+  border-color: color-mix(in srgb, var(--inter-cor) 70%, #fff);
+  background: color-mix(in srgb, var(--inter-cor) 35%, #1b1a20);
+}
+
+.inter-opcao:hover,
+.inter-prato:hover,
+.inter-botao:not(:disabled):hover {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.inter-marcado {
+  border-color: color-mix(in srgb, var(--inter-cor) 75%, #fff);
+  background: color-mix(in srgb, var(--inter-cor) 32%, #1b1a20);
+  color: #fff;
+}
+
+.inter-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.45em 0.6em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.35);
+  font-family: var(--raleway);
+  font-size: 13px;
+  color: #fff;
+}
+
+.inter-input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--inter-cor) 60%, #fff);
+}
+
+textarea.inter-input {
+  resize: vertical;
+}
+
+.inter-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.inter-resultado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+  padding: 0.5em 0.6em;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.inter-resultado p {
+  margin: 0;
+  font-size: 13px;
+  color: #fff;
+}
+
+.inter-bonus {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inter-bonus li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+  padding: 0.5em 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.inter-bonus strong {
+  display: block;
+  font-size: 13px;
+  color: #fff;
+}
+
+.inter-bonus .inter-dica {
+  margin: 0;
+}
+
+.inter-barra {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.55em 0.7em;
+}
+
+.inter-escolhidas {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35em;
+  min-width: 0;
+}
+
+.inter-escolhidas .inter-dica {
+  margin: 0;
+}
+
+.inter-chip {
+  display: inline-flex;
+  border: 1px solid color-mix(in srgb, var(--inter-cor) 60%, rgba(255, 255, 255, 0.3));
+  background: color-mix(in srgb, var(--inter-cor) 22%, #1b1a20);
+}
+
+.inter-chip button {
+  border: none;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.inter-chip-nome {
+  padding: 0.3em 0.4em 0.3em 0.7em;
+  font-family: 'Keyes', var(--heading);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.inter-chip-tirar {
+  padding: 0 0.55em;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.inter-chip-tirar:hover {
+  color: #fff;
+}
+
+@media (max-width: 800px) {
+  .inter-barra { flex-wrap: wrap; }
+  .inter-escolhidas { flex-basis: 100%; }
+  .inter-avisos { top: 80px; }
+}
