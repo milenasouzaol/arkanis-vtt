@@ -1,7 +1,7 @@
 ---
 id: KAN-33
 titulo: Afinidade — roda ritual de escolher o elemento e tela final
-status: concluído
+status: em revisão da Millie
 camada: front
 depende_de: [KAN-32]
 ---
