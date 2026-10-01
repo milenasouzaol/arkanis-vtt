@@ -1,7 +1,7 @@
 ---
 id: KAN-39
 titulo: Aba Interlúdio: cena clicável do esconderijo
-status: em revisão da Millie
+status: concluído
 camada: front
 depende_de: []
 ---
