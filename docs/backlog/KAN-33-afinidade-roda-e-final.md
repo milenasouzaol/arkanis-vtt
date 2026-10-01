@@ -150,3 +150,11 @@ A gota também virou o fundo da ficha inteira de quem tem afinidade com Morte (s
 escurecimento de 40%, que o mármore já é escuro) e, como em Conhecimento, a página de
 afinidade de Morte deixa de ter imagem própria e mostra a gota da ficha. Respeita o
 "fundo sem animação" da ficha.
+
+## Energia: o caos roxo
+
+Pedido da Millie: igual ao ouro de Conhecimento, mas aleatório e sem direção certa. Mesmo
+mármore em faixas (`CaosEnergia.tsx`), nos roxos e magentas do print dela, e cada dobra
+vai e volta em ritmos que não batem entre si, então os veios trocam de rumo o tempo todo.
+Vale em tudo: fundo da ficha, página de afinidade (que perdeu a imagem própria), tela
+final, empate e resultado.

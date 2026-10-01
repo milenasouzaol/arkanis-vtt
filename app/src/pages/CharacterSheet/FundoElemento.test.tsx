@@ -17,8 +17,14 @@ describe('FundoElemento', () => {
     expect(container.querySelector('.afin-final-fundo')).toBeNull()
   })
 
-  it('Sangue e Energia usam o fundo borrado com a correnteza', () => {
-    for (const e of ['sangue', 'energia'] as const) {
+  it('Energia usa o mármore roxo sem rumo', () => {
+    const { container } = render(<FundoElemento elemento="energia" />)
+    expect(container.querySelector('.afin-fundo-energia')).toBeTruthy()
+    expect(container.querySelector('.afin-final-fundo')).toBeNull()
+  })
+
+  it('Sangue usa o fundo borrado com a correnteza', () => {
+    for (const e of ['sangue'] as const) {
       const { container, unmount } = render(<FundoElemento elemento={e} />)
       expect(container.querySelector('.afin-final-fundo')).toBeTruthy()
       expect(container.querySelector('.afin-final-correnteza')).toBeTruthy()
