@@ -123,6 +123,11 @@ anéis se abrem pra fora, entortam o mármore como a água entorta o fundo, e se
 gotas se revezam. O WebGL virou um componente genérico (`FundoShader.tsx`) usado pelo ouro
 e pela gota.
 
+Depois a Millie pediu mais cara de água: a superfície virou uma altura de verdade (anéis +
+tremor leve), e da inclinação sai a luz — reflexo fino nas cristas, sombra nas encostas e o
+mármore visto por refração. Ela achou branco e rápido demais: agora é uma gota a cada 14s,
+anéis andando a menos da metade da velocidade, e o reflexo no cinza do próprio fundo.
+
 O fundo da ficha e a página de afinidade de Morte continuam como estavam.
 
 ## Critérios de aceite
