@@ -21,12 +21,12 @@ ${RUIDO_GLSL}
 
 // Altura dos aneis de uma gota: um pacote que anda do centro pra fora e se apaga.
 float anel(float d, float idade) {
-  float frente = idade * 0.065;
+  float frente = idade * 0.09;
   float pacote = exp(-pow((d - frente) * 13.0, 2.0));
-  float some = 1.0 - smoothstep(0.0, ${PERIODO}, idade);
+  float some = 1.0 - smoothstep(${PERIODO} * 0.8, ${PERIODO}, idade);
   // O primeiro instante e o respingo: forte e concentrado no centro.
   float respingo = exp(-idade * 2.5) * exp(-d * d * 400.0);
-  return (sin((d - frente) * 42.0) * pacote * some + respingo) / (1.0 + d * 2.5);
+  return (sin((d - frente) * 42.0) * pacote * some + respingo) / (1.0 + d * 0.9);
 }
 
 float altura(vec2 p) {

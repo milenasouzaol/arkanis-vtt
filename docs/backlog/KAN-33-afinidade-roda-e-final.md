@@ -128,6 +128,10 @@ tremor leve), e da inclinação sai a luz — reflexo fino nas cristas, sombra n
 mármore visto por refração. Ela achou branco e rápido demais: agora é uma gota a cada 14s,
 anéis andando a menos da metade da velocidade, e o reflexo no cinza do próprio fundo.
 
+Os anéis morriam no meio da tela. Agora a onda atravessa a tela inteira até os cantos
+(anda um pouco mais rápido, só some nos últimos 20% da vida e perde pouca força com a
+distância).
+
 O fundo da ficha e a página de afinidade de Morte continuam como estavam.
 
 ## Critérios de aceite
