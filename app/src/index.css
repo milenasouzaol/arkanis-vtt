@@ -9795,11 +9795,21 @@ code, .counter {
 }
 
 /* O canvas desenha em meia resolucao; aqui ele e esticado pro tamanho da tela. */
-.afin-ouro-tela,
+.fundo-shader,
+.afin-morte-liso,
 .afin-ouro-liso {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.afin-fundo-morte {
+  background: #141211;
+}
+
+/* Sem placa de video: o cinza quase preto de Morte, mais claro no centro. */
+.afin-morte-liso {
+  background: radial-gradient(circle at 50% 50%, #2b2b29, #1c1a19 45%, #141211);
 }
 
 /* Sem placa de video: um dourado liso com os tons do marmore. */

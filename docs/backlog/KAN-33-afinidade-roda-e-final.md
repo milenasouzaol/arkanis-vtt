@@ -115,6 +115,16 @@ teste. Sem WebGL, cai num dourado liso; com "menos movimento" ligado no sistema,
 
 A roda de escolher o elemento continua com o tom escuro amostrado do print.
 
+## Morte: a gota caindo na água
+
+Tela final, Decida seu Destino e resultado do teste de Morte: mármore escuro em espiral
+(tons do print, `#141211` a `#2b2b29`) e, no centro, uma gota caindo a cada 7,5s — os
+anéis se abrem pra fora, entortam o mármore como a água entorta o fundo, e se apagam. Três
+gotas se revezam. O WebGL virou um componente genérico (`FundoShader.tsx`) usado pelo ouro
+e pela gota.
+
+O fundo da ficha e a página de afinidade de Morte continuam como estavam.
+
 ## Critérios de aceite
 
 - [x] Orbes dentro dos círculos da arte em qualquer tamanho de tela.

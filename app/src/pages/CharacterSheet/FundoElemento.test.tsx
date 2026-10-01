@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
 import FundoElemento from './FundoElemento'
 import OuroLiquido, { FAIXAS } from './OuroLiquido'
+import GotaMorte from './GotaMorte'
 
 describe('FundoElemento', () => {
   it('Conhecimento usa o ouro derretido', () => {
@@ -10,14 +11,27 @@ describe('FundoElemento', () => {
     expect(container.querySelector('.afin-final-fundo')).toBeNull()
   })
 
-  it('os outros elementos usam o fundo borrado com a correnteza', () => {
-    for (const e of ['sangue', 'morte', 'energia'] as const) {
+  it('Morte usa a gota caindo na água', () => {
+    const { container } = render(<FundoElemento elemento="morte" />)
+    expect(container.querySelector('.afin-fundo-morte')).toBeTruthy()
+    expect(container.querySelector('.afin-final-fundo')).toBeNull()
+  })
+
+  it('Sangue e Energia usam o fundo borrado com a correnteza', () => {
+    for (const e of ['sangue', 'energia'] as const) {
       const { container, unmount } = render(<FundoElemento elemento={e} />)
       expect(container.querySelector('.afin-final-fundo')).toBeTruthy()
       expect(container.querySelector('.afin-final-correnteza')).toBeTruthy()
       expect(container.querySelector('.afin-fundo-ouro')).toBeNull()
       unmount()
     }
+  })
+})
+
+describe('GotaMorte', () => {
+  it('sem WebGL, mostra o cinza escuro de Morte', async () => {
+    const { container } = render(<GotaMorte />)
+    await waitFor(() => expect(container.querySelector('.afin-morte-liso')).toBeTruthy())
   })
 })
 
