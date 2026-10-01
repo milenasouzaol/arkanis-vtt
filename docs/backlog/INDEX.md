@@ -50,11 +50,11 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 | [KAN-32](KAN-32-afinidade-tres-caminhos.md) | Afinidade: tela dos três caminhos | front | aprovado | [KAN-32](https://arkaniss.atlassian.net/browse/KAN-32) |
 
-| [KAN-33](KAN-33-afinidade-roda-e-final.md) | Afinidade: roda ritual e tela final | front | em revisão | [KAN-33](https://arkaniss.atlassian.net/browse/KAN-33) |
+| [KAN-33](KAN-33-afinidade-roda-e-final.md) | Afinidade: roda ritual e tela final | front | concluído | [KAN-33](https://arkaniss.atlassian.net/browse/KAN-33) |
 
-| [KAN-34](KAN-34-afinidade-pagina-morte.md) | Afinidade: página do elemento escolhido (Morte) | front | em revisão | [KAN-34](https://arkaniss.atlassian.net/browse/KAN-34) |
+| [KAN-34](KAN-34-afinidade-pagina-morte.md) | Afinidade: página do elemento escolhido (Morte) | front | concluído | [KAN-34](https://arkaniss.atlassian.net/browse/KAN-34) |
 
-| [KAN-35](KAN-35-fundo-colunas-afinidade.md) | Fundo de textura nas colunas com afinidade | front | em revisão | [KAN-35](https://arkaniss.atlassian.net/browse/KAN-35) |
+| [KAN-35](KAN-35-fundo-colunas-afinidade.md) | Fundo de textura nas colunas com afinidade | front | concluído | [KAN-35](https://arkaniss.atlassian.net/browse/KAN-35) |
 
 | [KAN-36](KAN-36-afinidade-teste-personalidade.md) | Afinidade: Teste de Personalidade | front | aprovado | [KAN-36](https://arkaniss.atlassian.net/browse/KAN-36) |
 

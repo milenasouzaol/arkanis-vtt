@@ -1,7 +1,7 @@
 ---
 id: KAN-34
 titulo: Afinidade — página do elemento escolhido
-status: em revisão da Millie
+status: concluído
 camada: front
 depende_de: [KAN-33]
 ---

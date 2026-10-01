@@ -1,7 +1,7 @@
 ---
 id: KAN-35
 titulo: Fundo de textura em cada coluna da ficha quando há afinidade
-status: em revisão da Millie
+status: concluído
 camada: front
 depende_de: [KAN-33]
 ---
