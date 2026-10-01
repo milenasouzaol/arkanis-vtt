@@ -1,7 +1,7 @@
 ---
 id: KAN-37
 titulo: Fundo animado de Sangue: coágulos passando na veia
-status: em revisão da Millie
+status: concluído
 camada: front
 depende_de: [KAN-33]
 ---
