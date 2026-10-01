@@ -4,9 +4,9 @@ import { supabase } from '../../lib/supabase'
 import radioChecked from '../../assets/combate/radio-checked.svg'
 import radioEmpty from '../../assets/combate/radio-empty.svg'
 
-type Category = 'Combatente' | 'Especialista' | 'Ocultista' | 'Sobrevivente' | 'Mundano' | 'Poderes Paranormais' | 'Poderes Gerais' | 'Origens'
+type Category = 'Combatente' | 'Especialista' | 'Ocultista' | 'Sobrevivente' | 'Mundano' | 'Poderes Paranormais' | 'Poderes Gerais' | 'Origens' | 'Aliados'
 
-const CATEGORIES: Category[] = ['Combatente', 'Especialista', 'Ocultista', 'Sobrevivente', 'Mundano', 'Poderes Paranormais', 'Poderes Gerais', 'Origens']
+const CATEGORIES: Category[] = ['Combatente', 'Especialista', 'Ocultista', 'Sobrevivente', 'Mundano', 'Poderes Paranormais', 'Poderes Gerais', 'Origens', 'Aliados']
 
 const CLASS_SLUGS: Record<string, string> = {
   Combatente: 'combatente',
@@ -27,10 +27,15 @@ const SOURCE_OPTIONS: { key: SourceFilter; label: string }[] = [
 ]
 
 export type AbilityPickResult =
-  | { kind: 'class_power' | 'paranormal_power' | 'general_power' | 'origin'; id: string }
+  | { kind: 'class_power' | 'paranormal_power' | 'general_power' | 'origin' | 'ally'; id: string }
   | { kind: 'custom'; name: string; hasElement: boolean; element: string | null; description: string }
 
-type Item = { id: string; name: string; description: string; sourceSlug?: string | null }
+type Item = { id: string; name: string; description: string; sourceSlug?: string | null; imageUrl?: string | null }
+
+/** Texto do aliado como aparece na ficha: o bonus e a habilidade, como no livro. */
+export function textoDoAliado(a: { descricao?: string | null; bonus: string; habilidade_nome: string; habilidade: string }) {
+  return [a.descricao, `Bônus. ${a.bonus}`, `${a.habilidade_nome}. ${a.habilidade}`].filter(Boolean).join('\n\n')
+}
 
 export default function AbilityPickerModal({
   characterId,
@@ -76,6 +81,12 @@ export default function AbilityPickerModal({
         setItems((data ?? []).map((r: any) => ({ id: r.id, name: r.name, description: r.description, sourceSlug: r.sources?.slug ?? null }))))
       return
     }
+    if (category === 'Aliados') {
+      // Pessoas primeiro, depois os tipos de aliado drone (Drone de Combate Tatico).
+      supabase.from('allies').select('id, name, tipo, descricao, bonus, habilidade_nome, habilidade, image_url, sources(slug)').order('tipo', { ascending: false }).order('sort_order').then(({ data }) =>
+        setItems((data ?? []).map((r: any) => ({ id: r.id, name: r.name, description: textoDoAliado(r), sourceSlug: r.sources?.slug ?? null, imageUrl: r.image_url }))))
+      return
+    }
     if (category === 'Origens') {
       supabase.from('origins').select('id, power_name, power_description, sources(slug)').order('sort_order').then(({ data }) =>
         setItems((data ?? []).map((r: any) => ({ id: r.id, name: r.power_name, description: r.power_description, sourceSlug: r.sources?.slug ?? null }))))
@@ -106,9 +117,9 @@ export default function AbilityPickerModal({
   const filteredItems = items.filter((i) => matchesSource(i) && i.name.toLowerCase().includes(search.toLowerCase()))
   const selectedItem = items.find((i) => i.id === selectedId) ?? null
 
-  const abilityKindByCategory: Record<Category, 'class_power' | 'paranormal_power' | 'general_power' | 'origin'> = {
+  const abilityKindByCategory: Record<Category, 'class_power' | 'paranormal_power' | 'general_power' | 'origin' | 'ally'> = {
     Combatente: 'class_power', Especialista: 'class_power', Ocultista: 'class_power', Sobrevivente: 'class_power', Mundano: 'class_power',
-    'Poderes Paranormais': 'paranormal_power', 'Poderes Gerais': 'general_power', Origens: 'origin',
+    'Poderes Paranormais': 'paranormal_power', 'Poderes Gerais': 'general_power', Origens: 'origin', Aliados: 'ally',
   }
 
   function submitCustom() {
@@ -221,6 +232,7 @@ export default function AbilityPickerModal({
             ) : selectedItem ? (
               <>
                 <h3>{selectedItem.name}</h3>
+                {selectedItem.imageUrl && <img className="aliado-token aliado-token-grande" src={selectedItem.imageUrl} alt="" />}
                 <p className="conditions-modal-detail-text">{selectedItem.description}</p>
                 <button type="button" className="conditions-modal-add-btn" onClick={submitCatalogItem}>Adicionar Habilidade</button>
               </>

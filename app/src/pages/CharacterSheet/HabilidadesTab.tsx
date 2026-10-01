@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { CharacterRecord } from './index'
-import AbilityPickerModal, { type AbilityPickResult } from './AbilityPickerModal'
+import AbilityPickerModal, { textoDoAliado, type AbilityPickResult } from './AbilityPickerModal'
 import AbilityEditModal, { type AbilityEditDraft } from './AbilityEditModal'
 
 type AbilityEntry = {
@@ -11,6 +11,8 @@ type AbilityEntry = {
   editable: boolean
   hasElement: boolean
   element: string | null
+  /** Token do aliado. */
+  imageUrl?: string | null
 }
 
 export default function HabilidadesTab({ character }: { character: CharacterRecord }) {
@@ -28,7 +30,7 @@ export default function HabilidadesTab({ character }: { character: CharacterReco
   async function loadCurrent() {
     const { data } = await supabase
       .from('character_abilities')
-      .select('id, class_power_id, paranormal_power_id, general_power_id, origin_power_of, class_track_tier_id, custom_ability, class_powers(name, description), paranormal_powers(name, description), general_powers(name, description), origins(power_name, power_description), class_track_tiers(name, description)')
+      .select('id, class_power_id, paranormal_power_id, general_power_id, origin_power_of, class_track_tier_id, ally_id, custom_ability, allies(name, descricao, bonus, habilidade_nome, habilidade, image_url), class_powers(name, description), paranormal_powers(name, description), general_powers(name, description), origins(power_name, power_description), class_track_tiers(name, description)')
       .eq('character_id', character.id)
 
     const entries: AbilityEntry[] = (data ?? []).map((row: any) => {
@@ -39,6 +41,7 @@ export default function HabilidadesTab({ character }: { character: CharacterReco
       if (row.paranormal_powers) return { id: row.id, name: row.paranormal_powers.name, description: row.paranormal_powers.description, editable: false, hasElement: false, element: null }
       if (row.general_powers) return { id: row.id, name: row.general_powers.name, description: row.general_powers.description, editable: false, hasElement: false, element: null }
       if (row.origins) return { id: row.id, name: row.origins.power_name, description: row.origins.power_description, editable: false, hasElement: false, element: null }
+      if (row.allies) return { id: row.id, name: row.allies.name, description: textoDoAliado(row.allies), editable: false, hasElement: false, element: null, imageUrl: row.allies.image_url }
       if (row.class_track_tiers) return { id: row.id, name: row.class_track_tiers.name, description: row.class_track_tiers.description, editable: false, hasElement: false, element: null }
       return { id: row.id, name: '(desconhecida)', description: '', editable: false, hasElement: false, element: null }
     })
@@ -67,6 +70,7 @@ export default function HabilidadesTab({ character }: { character: CharacterReco
     } else if (result.kind === 'paranormal_power') patch.paranormal_power_id = result.id
     else if (result.kind === 'general_power') patch.general_power_id = result.id
     else if (result.kind === 'origin') patch.origin_power_of = result.id
+    else if (result.kind === 'ally') patch.ally_id = result.id
     else patch.class_power_id = result.id
 
     await supabase.from('character_abilities').insert({ character_id: character.id, ...patch })
@@ -103,6 +107,7 @@ export default function HabilidadesTab({ character }: { character: CharacterReco
       {filtered.map((a) => (
         <div className="ability-frame" key={a.id}>
           <button type="button" className="ability-header" onClick={() => setExpandedId((v) => (v === a.id ? null : a.id))}>
+            {a.imageUrl && <img className="aliado-token" src={a.imageUrl} alt="" />}
             <span>{a.name}</span>
             <span className="ability-chevron">{expandedId === a.id ? '▲' : '▾'}</span>
           </button>

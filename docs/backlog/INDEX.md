@@ -61,5 +61,8 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 | [KAN-38](KAN-38-aba-progressao.md) | Aba Progressão: linha do NEX e planejamento | front | concluído | [KAN-38](https://arkaniss.atlassian.net/browse/KAN-38) |
 | [KAN-39](KAN-39-interludio-cena.md) | Aba Interlúdio: cena clicável do esconderijo | front | concluído | [KAN-39](https://arkaniss.atlassian.net/browse/KAN-39) |
 | [KAN-40](KAN-40-regras-extras.md) | Aba Regras Extras: compêndio de consulta | front | em revisão | [KAN-40](https://arkaniss.atlassian.net/browse/KAN-40) |
+| [KAN-41](KAN-41-as09-conteudo.md) | Arquivos Secretos 09: conteúdo no banco | back | em revisão | [KAN-41](https://arkaniss.atlassian.net/browse/KAN-41) |
+| [KAN-42](KAN-42-imagem-itens-catalogo.md) | Imagem nos itens do catálogo e nos aliados | back + front | em revisão | [KAN-42](https://arkaniss.atlassian.net/browse/KAN-42) |
+| [KAN-43](KAN-43-aliados.md) | Aliados na ficha (inclui drone) | back + front | em revisão | [KAN-43](https://arkaniss.atlassian.net/browse/KAN-43) |
 
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._

@@ -7,6 +7,8 @@ export type InventoryCardItem = {
   spaces?: number | null
   description?: string | null
   stats?: Record<string, unknown>
+  /** Arte do item (catalogo ou item editado na ficha); sem ela, o icone de misterio. */
+  image_url?: string | null
 }
 
 const ALCANCE_LABEL: Record<string, string> = {
@@ -90,7 +92,7 @@ export default function InventoryItemCard({
   return (
     <div className={`inv-item-card${expanded ? ' expanded' : ''}`}>
       <button type="button" className="inv-item-head" onClick={onToggle}>
-        <img className="inv-item-icon" src={mysteryIcon} alt="" />
+        <img className={`inv-item-icon${item.image_url ? ' inv-item-icon-arte' : ''}`} src={item.image_url || mysteryIcon} alt="" />
         <span className="inv-item-name">{item.name}</span>
         <span className={`inv-item-chevron${expanded ? ' up' : ''}`} aria-hidden>⌄</span>
       </button>

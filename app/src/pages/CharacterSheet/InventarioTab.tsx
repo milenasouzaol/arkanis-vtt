@@ -44,6 +44,7 @@ type EquipmentItem = {
   spaces: number | null
   description: string | null
   stats: Record<string, unknown>
+  image_url?: string | null
 }
 
 type InventoryItem = {
@@ -74,7 +75,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
   async function loadInventory() {
     const { data } = await supabase
       .from('character_inventory')
-      .select('id, equipment_item_id, custom_item, category_override, is_equipped, quantity, applied_modifiers, linked_ammo_id, ammo_current, ammo_total, ammo_label, active_bonuses, equipment_items(id, type, name, category, spaces, description, stats)')
+      .select('id, equipment_item_id, custom_item, category_override, is_equipped, quantity, applied_modifiers, linked_ammo_id, ammo_current, ammo_total, ammo_label, active_bonuses, equipment_items(id, type, name, category, spaces, description, stats, image_url)')
       .eq('character_id', character.id)
     setItems((data ?? []) as unknown as InventoryItem[])
   }

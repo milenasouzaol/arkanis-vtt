@@ -42,6 +42,7 @@ type Item = {
   type: EquipmentType
   stats: Record<string, unknown>
   sourceSlug?: string | null
+  image_url?: string | null
 }
 
 // Dropdown proprio: o <select> nativo abre a lista branca do sistema, que nao estiliza.
@@ -116,7 +117,7 @@ export default function EquipmentPickerModal({
 
     supabase
       .from('equipment_items')
-      .select('id, name, description, category, spaces, type, stats, sources(slug)')
+      .select('id, name, description, category, spaces, type, stats, image_url, sources(slug)')
       .eq('type', category)
       .order('name')
       .then(({ data }) => setItems((data ?? []).map((r: any) => ({
@@ -128,6 +129,7 @@ export default function EquipmentPickerModal({
         type: r.type,
         stats: r.stats ?? {},
         sourceSlug: r.sources?.slug ?? null,
+        image_url: r.image_url ?? null,
       }))))
   }, [category, sourceFilter, characterId])
 
@@ -265,6 +267,7 @@ export default function EquipmentPickerModal({
             ) : selectedItem ? (
               <>
                 <h3>{selectedItem.name}</h3>
+                {selectedItem.image_url && <img className="equip-picker-arte" src={selectedItem.image_url} alt="" />}
 
                 <div className="inv-item-stats">
                   {resumo(selectedItem).map((e) => (

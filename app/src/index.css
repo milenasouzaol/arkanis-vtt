@@ -11245,3 +11245,41 @@ textarea.inter-input {
     padding: 0.8em 16px;
   }
 }
+
+/* ===== Arte de itens do catalogo e token de aliados (KAN-42/43) ===== */
+
+/* A arte do item ocupa o lugar do icone de misterio, no mesmo tamanho. */
+.inv-item-icon-arte {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.equip-picker-arte {
+  display: block;
+  max-width: 100%;
+  max-height: 170px;
+  margin: 0.2em auto 0.7em;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+}
+
+/* Token do aliado no cabecalho do card de habilidade: o nome continua alinhado a esquerda. */
+.ability-header .aliado-token {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  margin: -4px 0.5em -4px 0;
+  object-fit: contain;
+}
+
+.ability-header .aliado-token + span {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.aliado-token-grande {
+  display: block;
+  width: 130px;
+  height: 130px;
+  margin: 0.2em auto 0.6em;
+  object-fit: contain;
+}
