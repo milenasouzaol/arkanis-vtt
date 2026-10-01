@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
 import FundoElemento from './FundoElemento'
 import OuroLiquido, { FAIXAS } from './OuroLiquido'
@@ -37,5 +37,31 @@ describe('OuroLiquido', () => {
       expect(r).toBeGreaterThan(g)
       expect(g).toBeGreaterThan(b)
     }
+  })
+})
+
+describe('OuroLiquido no StrictMode', () => {
+  // O bug: o React (StrictMode) desmonta e monta de novo o mesmo canvas. Se a desmontagem
+  // derrubar o contexto WebGL, a segunda montagem pega ele derrubado e cai no dourado liso.
+  it('a desmontagem não derruba o contexto', async () => {
+    const { StrictMode } = await import('react')
+    const perdeu = vi.fn()
+    // Contexto falso que aceita qualquer chamada, pra o efeito ir ate o fim e registrar a
+    // desmontagem; so a extensao de derrubar e espionada.
+    const contexto: unknown = new Proxy({}, {
+      get: (_, nome) => {
+        if (nome === 'getExtension') return () => ({ loseContext: perdeu })
+        if (nome === 'getShaderParameter' || nome === 'getProgramParameter') return () => true
+        if (typeof nome === 'string' && /^[A-Z_]+$/.test(nome)) return 0
+        return () => ({})
+      },
+    })
+    const original = HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext = (() => contexto) as never
+    const { unmount } = render(<StrictMode><OuroLiquido parado /></StrictMode>)
+    HTMLCanvasElement.prototype.getContext = original
+    // O StrictMode ja desmontou e montou uma vez; o contexto tem que continuar de pe.
+    expect(perdeu).not.toHaveBeenCalled()
+    unmount()
   })
 })

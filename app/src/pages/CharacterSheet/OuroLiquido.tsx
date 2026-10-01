@@ -145,7 +145,9 @@ export default function OuroLiquido({ parado = false, className = '' }: { parado
     return () => {
       cancelAnimationFrame(quadro)
       window.removeEventListener('resize', aoRedimensionar)
-      gl.getExtension('WEBGL_lose_context')?.loseContext()
+      // Nao derrubar o contexto aqui: o React (StrictMode) desmonta e monta de novo o mesmo
+      // canvas, e getContext devolveria o contexto ja derrubado, caindo no dourado liso.
+      // Quando o canvas sai da tela de verdade, o navegador libera o contexto sozinho.
     }
   }, [parado])
 
