@@ -6,7 +6,7 @@ import { attrValue, nexSteps, rollAttributeTest, rollDiceFormula, trainingBonus,
 import type { CharacterRecord } from './index'
 import RollResult, { type RollResultData } from './RollResult'
 import { elementoPorChave } from './elementosParanormais'
-import { ALTURA_CENA, LARGURA_CENA, OBJETOS } from './interludioCena'
+import { ALTURA_CENA, LARGURA_CENA, OBJETOS, centroDe } from './interludioCena'
 import esconderijo from '../../assets/interludio/esconderijo.webp'
 
 type ActionKey = 'alimentar' | 'dormir' | 'exercitar' | 'ler' | 'manutencao' | 'relaxar' | 'revisar_caso' | 'resolver_problema'
@@ -266,10 +266,16 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
         aria-label="Esconderijo: clique no que o agente vai fazer"
       >
         <defs>
+          {/* Borda um pouco desfocada: o recorte some na cena em vez de fazer um degrau. */}
+          <filter id="inter-borda" x="-5%" y="-5%" width="110%" height="110%">
+            <feGaussianBlur stdDeviation="2.5" />
+          </filter>
           {OBJETOS.map((o) => (
-            <clipPath key={o.acao} id={`inter-recorte-${o.acao}`}>
-              <polygon points={o.contorno} />
-            </clipPath>
+            <mask key={o.acao} id={`inter-recorte-${o.acao}`} maskUnits="userSpaceOnUse" x="0" y="0" width={LARGURA_CENA} height={ALTURA_CENA}>
+              <g filter="url(#inter-borda)">
+                {o.contornos.map((c) => <polygon key={c} points={c} fill="#fff" />)}
+              </g>
+            </mask>
           ))}
         </defs>
         <image href={esconderijo} width={LARGURA_CENA} height={ALTURA_CENA} />
@@ -277,6 +283,7 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
           const a = ACTIONS.find((x) => x.key === o.acao)!
           const escolhida = selectedActions.includes(o.acao)
           const travada = !!bloqueio(o.acao)
+          const [cx, cy] = centroDe(o)
           return (
             <g
               key={o.acao}
@@ -293,9 +300,10 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
                 href={esconderijo}
                 width={LARGURA_CENA}
                 height={ALTURA_CENA}
-                clipPath={`url(#inter-recorte-${o.acao})`}
+                mask={`url(#inter-recorte-${o.acao})`}
+                style={{ transformOrigin: `${cx}px ${cy}px` }}
               />
-              <polygon className="inter-alvo" points={o.contorno} />
+              {o.contornos.map((c) => <polygon key={c} className="inter-alvo" points={c} />)}
               <g className="inter-etiqueta" transform={`translate(${o.etiqueta[0]} ${o.etiqueta[1]})`}>
                 <text textAnchor="middle" dominantBaseline="middle">{a.label}</text>
               </g>
@@ -332,7 +340,10 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
             <h3 className="inter-painel-titulo">
               {acao ? acao.label : painel === 'folga' ? 'Folga da Ordem' : 'Bônus guardados'}
             </h3>
-            <button type="button" className="inter-fechar" aria-label="Fechar" onClick={() => setPainel(null)}>×</button>
+            <button type="button" className="inter-fechar" aria-label="Fechar" onClick={() => setPainel(null)}>
+              {/* Desenhado em vez do caractere "×", que fica fora do centro na fonte. */}
+              <svg viewBox="0 0 12 12" aria-hidden><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+            </button>
           </div>
 
           <div className="inter-painel-corpo">

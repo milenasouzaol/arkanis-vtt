@@ -9,7 +9,7 @@ describe('cena do interlúdio', () => {
   // Contorno fora da arte não acende nada e não dá pra clicar.
   it('contornos e etiquetas ficam dentro da arte', () => {
     for (const o of OBJETOS) {
-      const pontos = o.contorno.split(' ').map((p) => p.split(',').map(Number))
+      const pontos = o.contornos.flatMap((c) => c.split(' ').map((p) => p.split(',').map(Number)))
       expect(pontos.length).toBeGreaterThanOrEqual(3)
       for (const [x, y] of [...pontos, o.etiqueta]) {
         expect(x).toBeGreaterThanOrEqual(0)

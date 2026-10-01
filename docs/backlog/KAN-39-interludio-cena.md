@@ -29,3 +29,12 @@ canto pra cada ação do interlúdio) e escolheu a cena clicável em vez de só 
   Ordem (com Resolver Problema quando houver) e Resolver interlúdio.
 - Avisos no topo: interlúdio resolvido, problema de folga pendente e vínculo romântico.
 - A lógica de recuperação (PV/PE/Sanidade/PD, bônus, pistas, folga) é a mesma de antes.
+
+## Ajustes da Millie
+
+- O X de fechar o painel não estava no centro: agora é desenhado (SVG) e centralizado.
+- O recorte em volta dos itens estava errado: os contornos foram retraçados rente a cada
+  silhueta, sobre a arte ampliada com grade (o exercício virou duas partes: saco e
+  halteres), e a borda do recorte é levemente desfocada.
+- Ao passar o mouse, o objeto brilha de leve e dá um mini zoom (4%) a partir do centro
+  dele; o resto do cômodo escurece pouco.

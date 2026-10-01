@@ -10556,7 +10556,7 @@ code, .counter {
 /* Com um objeto em foco, o resto do comodo escurece um pouco. */
 .inter-cena:has(.inter-objeto:hover) > image,
 .inter-cena:has(.inter-objeto:focus-visible) > image {
-  filter: brightness(0.75);
+  filter: brightness(0.82);
 }
 
 .inter-objeto {
@@ -10568,27 +10568,31 @@ code, .counter {
   fill: transparent;
 }
 
+/* Copia do objeto por cima da cena: ao passar o mouse ela brilha de leve e cresce um
+   pouquinho a partir do centro do objeto (o transform-origin vem do componente). */
 .inter-aceso {
   pointer-events: none;
   opacity: 0;
-  filter: brightness(1.6) saturate(1.1);
-  transition: opacity 0.25s;
+  transform: scale(1);
+  transition: opacity 0.25s, transform 0.3s ease-out, filter 0.25s;
 }
 
 .inter-escolhido .inter-aceso {
-  opacity: 0.75;
-  filter: brightness(1.35);
+  opacity: 1;
+  filter: brightness(1.12);
 }
 
 .inter-objeto:hover .inter-aceso,
 .inter-objeto:focus-visible .inter-aceso,
 .inter-aberto .inter-aceso {
   opacity: 1;
-  filter: brightness(1.6) saturate(1.1);
+  transform: scale(1.04);
+  filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 225, 180, 0.3));
 }
 
 .inter-travado:hover .inter-aceso {
-  filter: brightness(1.15) saturate(0.4);
+  transform: scale(1.02);
+  filter: brightness(1.05) saturate(0.4);
 }
 
 .inter-etiqueta {
@@ -10705,13 +10709,21 @@ code, .counter {
 .inter-fechar {
   width: 28px;
   height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0;
   background: #1b1a20;
   color: #fff;
-  font-size: 18px;
-  line-height: 1;
   cursor: pointer;
+}
+
+.inter-fechar svg {
+  display: block;
+  width: 12px;
+  height: 12px;
 }
 
 .inter-painel-corpo {
