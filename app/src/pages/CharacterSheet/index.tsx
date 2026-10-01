@@ -249,7 +249,7 @@ export default function CharacterSheet() {
       {tab === 'Interlúdio' && (
         <InterludioTab character={character} onUpdated={() => setRefreshKey((k) => k + 1)} />
       )}
-      {tab === 'Regras Extras' && <RegrasExtrasTab />}
+      {tab === 'Regras Extras' && <RegrasExtrasTab elemento={elemento} />}
     </main>
   )
 }

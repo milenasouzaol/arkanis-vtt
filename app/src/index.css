@@ -10999,3 +10999,249 @@ textarea.inter-input {
   .inter-escolhidas { flex-basis: 100%; }
   .inter-avisos { top: 80px; }
 }
+
+/* ===== Aba Regras Extras (KAN-40): compendio de consulta =====
+   Lista a esquerda, leitura a direita; cada lado rola sozinho. Mesmo vidro da Progressao. */
+
+.regras {
+  --regras-cor: #8b8596;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 0.8em;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1em 1.2em 1.2em;
+  font-family: var(--raleway);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.regras-vidro {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(color-mix(in srgb, var(--regras-cor) 16%, transparent), color-mix(in srgb, var(--regras-cor) 10%, transparent)),
+    rgba(8, 8, 10, 0.5);
+  border: 1px solid color-mix(in srgb, var(--regras-cor) 35%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.regras-rolagem {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+/* --- Lista --- */
+
+.regras-indice {
+  /* Uma regra geral de nav da ficha liga a quebra; aqui a lista e uma coluna so. */
+  flex-wrap: nowrap;
+  gap: 0;
+  padding: 0.8em 0.6em 0.6em 0.8em;
+}
+
+.regras-busca {
+  box-sizing: border-box;
+  width: calc(100% - 0.2em);
+  margin-bottom: 0.7em;
+  padding: 0.45em 0.6em;
+  border: none;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.25);
+  font-family: var(--raleway);
+  font-size: 13px;
+  color: #fff;
+}
+
+.regras-busca:focus {
+  outline: none;
+  border-bottom-color: color-mix(in srgb, var(--regras-cor) 70%, #fff);
+}
+
+.regras-indice .regras-rolagem {
+  padding-right: 0.3em;
+}
+
+.regras-grupo + .regras-grupo {
+  margin-top: 0.9em;
+}
+
+.regras-grupo-titulo {
+  margin: 0 0 0.3em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid color-mix(in srgb, var(--regras-cor) 30%, rgba(255, 255, 255, 0.15));
+  font-family: 'Keyes', var(--heading);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.regras-grupo ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.regras-item {
+  display: block;
+  width: 100%;
+  padding: 0.42em 0.6em;
+  border: none;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  text-align: left;
+  font-family: var(--raleway);
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+}
+
+.regras-item:hover {
+  background: color-mix(in srgb, var(--regras-cor) 12%, rgba(255, 255, 255, 0.03));
+  color: #fff;
+}
+
+.regras-ativa {
+  border-left-color: color-mix(in srgb, var(--regras-cor) 75%, #fff);
+  background: color-mix(in srgb, var(--regras-cor) 22%, rgba(255, 255, 255, 0.04));
+  font-weight: 700;
+  color: #fff;
+}
+
+.regras-vazio {
+  margin: 0.4em 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* --- Leitura --- */
+
+.regras-leitura {
+  padding: 1em 0.6em 0.6em 1.4em;
+}
+
+.regras-cabeca {
+  flex-shrink: 0;
+  margin-right: 0.8em;
+  margin-bottom: 0.8em;
+  padding-bottom: 0.6em;
+  border-bottom: 1px solid color-mix(in srgb, var(--regras-cor) 30%, rgba(255, 255, 255, 0.15));
+}
+
+.regras-categoria {
+  font-family: 'Keyes', var(--heading);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--regras-cor) 55%, #fff);
+}
+
+.regras-titulo {
+  margin: 0.15em 0 0;
+  font-family: 'Westsac', var(--heading);
+  font-size: 30px;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* Linha de leitura confortavel: o texto nao estica na tela toda. */
+.regras-texto {
+  padding-right: 0.8em;
+}
+
+.regras-texto > * {
+  max-width: 78ch;
+}
+
+.regras-paragrafo {
+  margin: 0 0 0.8em;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.regras-termo {
+  font-weight: 700;
+  color: #fff;
+}
+
+.regras-subtitulo {
+  margin: 1.2em 0 0.5em;
+  font-family: 'Keyes', var(--heading);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.regras-lista {
+  margin: 0 0 0.9em;
+  padding: 0;
+  list-style: none;
+}
+
+.regras-lista li {
+  position: relative;
+  margin-bottom: 0.45em;
+  padding-left: 1em;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.regras-lista li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  background: color-mix(in srgb, var(--regras-cor) 70%, #fff);
+}
+
+/* Tabelas de DT ("DT5→15m · DT10→18m ..."): um bloquinho por valor. */
+.regras-sequencia {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+  margin: -0.3em 0 1em;
+  padding: 0;
+  list-style: none;
+}
+
+.regras-sequencia li {
+  padding: 0.3em 0.65em;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: #fff;
+}
+
+.regras-nota {
+  flex-shrink: 0;
+  margin: 0.6em 0.8em 0 0;
+  padding-top: 0.5em;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11.5px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Tela estreita: a lista vai pra cima, com altura limitada. */
+@media (max-width: 800px) {
+  .regras {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 38%) minmax(0, 1fr);
+    padding: 0.8em 16px;
+  }
+}
