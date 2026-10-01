@@ -1,7 +1,7 @@
 ---
 id: KAN-38
 titulo: Aba Progressão: linha do NEX e planejamento por nível
-status: em revisão da Millie
+status: concluído
 camada: front
 depende_de: []
 ---
