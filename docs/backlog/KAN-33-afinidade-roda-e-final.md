@@ -100,6 +100,21 @@ na placa de vídeo. Mediana medida: `#765927` contra `#6d5524` da referência.
 O filtro precisa de `color-interpolation-filters: sRGB`: no padrão (espaço linear) o ouro
 saía cor de areia.
 
+## Os veios em movimento, e em todo lugar de Conhecimento
+
+A Millie aprovou o ouro e pediu os veios se mexendo, e o mesmo fundo em tudo de
+Conhecimento. O mármore parado (filtro SVG) virou um shader WebGL (`OuroLiquido.tsx`):
+ruído dobrado sobre ele mesmo, com o tempo dentro das dobras, então os veios escorrem e se
+retorcem em vez de a imagem só deslizar. Mesmas 12 faixas de cor aprovadas. Desenha em meia
+resolução e o CSS amplia.
+
+Onde entrou: fundo da ficha inteira com afinidade em Conhecimento (respeita a opção de
+fundo sem animação), a página de afinidade de Conhecimento (que deixa o da ficha aparecer,
+pra nunca ter dois rodando juntos), a tela final, o Decida seu Destino e o resultado do
+teste. Sem WebGL, cai num dourado liso; com "menos movimento" ligado no sistema, fica parado.
+
+A roda de escolher o elemento continua com o tom escuro amostrado do print.
+
 ## Critérios de aceite
 
 - [x] Orbes dentro dos círculos da arte em qualquer tamanho de tela.

@@ -49,12 +49,16 @@ describe('filtro de círculo', () => {
 })
 
 describe('artes por elemento', () => {
-  it('os cinco elementos têm título, símbolo e fundo', () => {
+  it('os cinco elementos têm título e símbolo', () => {
     expect(Object.keys(ARTES).sort()).toEqual(['conhecimento', 'energia', 'medo', 'morte', 'sangue'])
     for (const arte of Object.values(ARTES)) {
       expect(arte.titulo).toBeTruthy()
       expect(arte.simbolo).toBeTruthy()
-      expect(arte.fundo).toBeTruthy()
     }
+  })
+
+  // Conhecimento não tem fundo próprio: deixa aparecer o ouro derretido da ficha.
+  it('só Conhecimento usa o fundo da ficha', () => {
+    expect(Object.keys(ARTES).filter((e) => !ARTES[e].fundo)).toEqual(['conhecimento'])
   })
 })

@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import FundoElemento from './FundoElemento'
+import OuroLiquido, { FAIXAS } from './OuroLiquido'
 
 describe('FundoElemento', () => {
-  // Conhecimento é o único com o ouro derretido; os outros seguem com o fundo borrado.
-  it('Conhecimento usa o ouro derretido, em duas camadas', () => {
+  it('Conhecimento usa o ouro derretido', () => {
     const { container } = render(<FundoElemento elemento="conhecimento" />)
     expect(container.querySelector('.afin-fundo-ouro')).toBeTruthy()
-    expect(container.querySelectorAll('.afin-ouro-camada')).toHaveLength(2)
     expect(container.querySelector('.afin-final-fundo')).toBeNull()
   })
 
@@ -20,10 +19,23 @@ describe('FundoElemento', () => {
       unmount()
     }
   })
+})
 
-  // Sem isso o filtro calcula as cores em espaço linear e o ouro vira areia clara.
-  it('o filtro do ouro calcula as cores em sRGB', () => {
-    const { container } = render(<FundoElemento elemento="conhecimento" />)
-    for (const f of container.querySelectorAll('filter')) expect(f.getAttribute('color-interpolation-filters')).toBe('sRGB')
+describe('OuroLiquido', () => {
+  // Sem placa de video (o jsdom dos testes nao tem WebGL), cai no dourado liso em vez
+  // de deixar o fundo preto.
+  it('sem WebGL, mostra o dourado liso', async () => {
+    const { container } = render(<OuroLiquido />)
+    await waitFor(() => expect(container.querySelector('.afin-ouro-liso')).toBeTruthy())
+    expect(container.querySelector('canvas')).toBeNull()
+  })
+
+  // As faixas sao os tons medidos no print de Conhecimento; o shader precisa de 12.
+  it('tem as 12 faixas de cor do marmore, todas em tons de ouro', () => {
+    expect(FAIXAS).toHaveLength(12)
+    for (const [r, g, b] of FAIXAS) {
+      expect(r).toBeGreaterThan(g)
+      expect(g).toBeGreaterThan(b)
+    }
   })
 })

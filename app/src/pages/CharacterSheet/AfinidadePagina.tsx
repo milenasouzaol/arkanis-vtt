@@ -13,7 +13,6 @@ import medoSimbolo from '../../assets/afinidade/medo/simbolo.webp'
 import energiaTitulo from '../../assets/afinidade/energia/titulo.webp'
 import energiaSimbolo from '../../assets/afinidade/energia/sigilo.webp'
 import bgSangue from '../../assets/backgrounds/bg-sangue.webp'
-import bgConhecimento from '../../assets/backgrounds/bg-conhecimento.webp'
 import bgMedo from '../../assets/backgrounds/bg-medo.webp'
 import bgEnergia from '../../assets/backgrounds/bg-energia.webp'
 
@@ -36,7 +35,8 @@ export type PoderDaAfinidade = {
 }
 
 type Arte = {
-  fundo: string
+  /** Sem fundo proprio, a pagina deixa aparecer o fundo da ficha (o ouro de Conhecimento). */
+  fundo?: string
   titulo: string
   /** Simbolo do elemento, que fica atras do titulo. */
   simbolo: string
@@ -49,7 +49,7 @@ type Arte = {
 export const ARTES: Record<string, Arte> = {
   morte: { fundo: morteFundo, titulo: morteTitulo, simbolo: morteSimbolo },
   sangue: { fundo: bgSangue, titulo: sangueTitulo, simbolo: sangueSimbolo },
-  conhecimento: { fundo: bgConhecimento, titulo: conhecimentoTitulo, simbolo: conhecimentoSimbolo },
+  conhecimento: { titulo: conhecimentoTitulo, simbolo: conhecimentoSimbolo },
   medo: { fundo: bgMedo, titulo: medoTitulo, simbolo: medoSimbolo },
   energia: { fundo: bgEnergia, titulo: energiaTitulo, simbolo: energiaSimbolo },
 }
@@ -107,7 +107,7 @@ export default function AfinidadePagina({ elemento, onRemover }: { elemento: str
     <div
       className="afin-pag aba-travada"
       style={{
-        ...(arte ? { '--afin-pag-fundo': `url(${arte.fundo})` } : {}),
+        ...(arte?.fundo ? { '--afin-pag-fundo': `url(${arte.fundo})` } : {}),
         '--afin-pag-cor': info?.cor ?? CORES_EXTRAS[elemento] ?? '#9a9a9a',
       } as React.CSSProperties}
     >

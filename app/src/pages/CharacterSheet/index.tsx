@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import OuroLiquido from './OuroLiquido'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { Attributes } from '../../lib/rules'
@@ -155,10 +156,17 @@ export default function CharacterSheet() {
 
   return (
     <main className={`sheet-root${elemento ? ' com-afinidade' : ''}`}>
-      <div
-        className={`sheet-bg ${bgClass}${bgAnimated ? '' : ' sheet-bg-static'}`}
-        style={{ backgroundImage: `linear-gradient(rgba(19,17,24,0.4), rgba(19,17,24,0.4)), url(${bgImage})` }}
-      />
+      {elemento === 'conhecimento' ? (
+        // Conhecimento: o ouro derretido com os veios em movimento, no lugar da imagem.
+        <div className="sheet-bg sheet-bg-ouro">
+          <OuroLiquido parado={!bgAnimated} />
+        </div>
+      ) : (
+        <div
+          className={`sheet-bg ${bgClass}${bgAnimated ? '' : ' sheet-bg-static'}`}
+          style={{ backgroundImage: `linear-gradient(rgba(19,17,24,0.4), rgba(19,17,24,0.4)), url(${bgImage})` }}
+        />
+      )}
       <header className="vtt-topbar">
         <nav className="vtt-tabs">
           <img className="vtt-topbar-logo" src={arkanisLogo} alt="Arkanis" />

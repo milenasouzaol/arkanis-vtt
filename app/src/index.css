@@ -9794,39 +9794,25 @@ code, .counter {
   background: #5c4115;
 }
 
-/* O marmore e desenhado uma vez so, em meia resolucao, e ampliado: fica liso como metal
-   liquido e o navegador nao precisa redesenhar o filtro a cada quadro. O movimento e so de
-   transform, que roda na placa de video. */
-.afin-ouro-camada {
+/* O canvas desenha em meia resolucao; aqui ele e esticado pro tamanho da tela. */
+.afin-ouro-tela,
+.afin-ouro-liso {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Sem placa de video: um dourado liso com os tons do marmore. */
+.afin-ouro-liso {
+  background: radial-gradient(ellipse at 30% 30%, #8c6928, #6d5224 45%, #4f3410);
+}
+
+
+/* Fundo da ficha inteira com afinidade em Conhecimento. O mesmo escurecimento de 40% que
+   os outros elementos recebem por cima da imagem, pra os paineis continuarem legiveis. */
+.sheet-bg.sheet-bg-ouro::after {
+  content: '';
   position: absolute;
-  top: -15%;
-  left: -15%;
-  width: 130%;
-  height: 130%;
-  will-change: transform;
-}
-
-.afin-ouro-camada.c0 {
-  animation: afin-ouro-escorre 48s ease-in-out infinite alternate;
-}
-
-/* A segunda camada corre pro outro lado e mistura por cima: e o que da a cara de derreter. */
-.afin-ouro-camada.c1 {
-  opacity: 0.45;
-  mix-blend-mode: multiply;
-  animation: afin-ouro-escorre-2 36s ease-in-out infinite alternate;
-}
-
-@keyframes afin-ouro-escorre {
-  from { transform: translate(-3%, -2%) scale(1.02) rotate(-1deg); }
-  to { transform: translate(3%, 3%) scale(1.1) rotate(1.5deg); }
-}
-
-@keyframes afin-ouro-escorre-2 {
-  from { transform: translate(4%, 2%) scale(1.12) rotate(2deg); }
-  to { transform: translate(-4%, -3%) scale(1.04) rotate(-2deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .afin-ouro-camada { animation: none; }
+  inset: 0;
+  background: rgba(19, 17, 24, 0.4);
 }
