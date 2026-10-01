@@ -145,3 +145,8 @@ O fundo da ficha e a página de afinidade de Morte continuam como estavam.
 ## Histórico
 
 - 23/09/2026 criado — https://arkaniss.atlassian.net/browse/KAN-33
+
+A gota também virou o fundo da ficha inteira de quem tem afinidade com Morte (sem o
+escurecimento de 40%, que o mármore já é escuro) e, como em Conhecimento, a página de
+afinidade de Morte deixa de ter imagem própria e mostra a gota da ficha. Respeita o
+"fundo sem animação" da ficha.

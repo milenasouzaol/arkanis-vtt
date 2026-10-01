@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { elementoPorChave } from './elementosParanormais'
-import morteFundo from '../../assets/afinidade/morte/fundo.webp'
 import morteTitulo from '../../assets/afinidade/morte/titulo.webp'
 import morteSimbolo from '../../assets/afinidade/morte-simbolo.webp'
 import sangueTitulo from '../../assets/afinidade/sangue/titulo.webp'
@@ -35,7 +34,7 @@ export type PoderDaAfinidade = {
 }
 
 type Arte = {
-  /** Sem fundo proprio, a pagina deixa aparecer o fundo da ficha (o ouro de Conhecimento). */
+  /** Sem fundo proprio, a pagina deixa aparecer o fundo da ficha (o ouro de Conhecimento, a gota de Morte). */
   fundo?: string
   titulo: string
   /** Simbolo do elemento, que fica atras do titulo. */
@@ -43,11 +42,12 @@ type Arte = {
 }
 
 /**
- * Arte de cada elemento. Morte tem fundo proprio; os outros usam o fundo que a ficha ja
- * tem. O simbolo de Morte e o da roda de escolha, e o de Energia e o sigilo roxo.
+ * Arte de cada elemento. Conhecimento e Morte deixam aparecer o fundo animado da ficha;
+ * os outros usam a imagem de fundo do elemento. O simbolo de Morte e o da roda de escolha,
+ * e o de Energia e o sigilo roxo.
  */
 export const ARTES: Record<string, Arte> = {
-  morte: { fundo: morteFundo, titulo: morteTitulo, simbolo: morteSimbolo },
+  morte: { titulo: morteTitulo, simbolo: morteSimbolo },
   sangue: { fundo: bgSangue, titulo: sangueTitulo, simbolo: sangueSimbolo },
   conhecimento: { titulo: conhecimentoTitulo, simbolo: conhecimentoSimbolo },
   medo: { fundo: bgMedo, titulo: medoTitulo, simbolo: medoSimbolo },

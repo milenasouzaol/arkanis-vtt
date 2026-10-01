@@ -57,8 +57,8 @@ describe('artes por elemento', () => {
     }
   })
 
-  // Conhecimento não tem fundo próprio: deixa aparecer o ouro derretido da ficha.
-  it('só Conhecimento usa o fundo da ficha', () => {
-    expect(Object.keys(ARTES).filter((e) => !ARTES[e].fundo)).toEqual(['conhecimento'])
+  // Conhecimento e Morte não têm fundo próprio: deixam aparecer o fundo animado da ficha.
+  it('Conhecimento e Morte usam o fundo da ficha', () => {
+    expect(Object.keys(ARTES).filter((e) => !ARTES[e].fundo).sort()).toEqual(['conhecimento', 'morte'])
   })
 })

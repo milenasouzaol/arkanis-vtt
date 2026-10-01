@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import OuroLiquido from './OuroLiquido'
+import GotaMorte from './GotaMorte'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { Attributes } from '../../lib/rules'
@@ -160,6 +161,11 @@ export default function CharacterSheet() {
         // Conhecimento: o ouro derretido com os veios em movimento, no lugar da imagem.
         <div className="sheet-bg sheet-bg-ouro">
           <OuroLiquido parado={!bgAnimated} />
+        </div>
+      ) : elemento === 'morte' ? (
+        // Morte: a gota caindo na agua, no lugar da imagem.
+        <div className="sheet-bg afin-fundo-morte">
+          <GotaMorte parado={!bgAnimated} />
         </div>
       ) : (
         <div
