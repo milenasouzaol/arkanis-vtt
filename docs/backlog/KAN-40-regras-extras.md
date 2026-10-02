@@ -1,7 +1,7 @@
 ---
 id: KAN-40
 titulo: Aba Regras Extras: compêndio de consulta
-status: em revisão da Millie
+status: concluído
 camada: front
 depende_de: []
 ---

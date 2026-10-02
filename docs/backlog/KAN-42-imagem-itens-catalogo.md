@@ -1,7 +1,7 @@
 ---
 id: KAN-42
 titulo: Imagem nos itens do catálogo e nos aliados
-status: em revisão da Millie
+status: concluído
 camada: back + front
 depende_de: [KAN-41]
 ---

@@ -1,7 +1,7 @@
 ---
 id: KAN-44
 titulo: Bugs da revisão geral: NEX a mais nos máximos, descanso sem limite e erros calados
-status: em revisão da Millie
+status: concluído
 camada: regra + front
 depende_de: []
 ---

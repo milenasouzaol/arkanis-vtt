@@ -1,7 +1,7 @@
 ---
 id: KAN-41
 titulo: Arquivos Secretos 09 (Hell Hunters): conteúdo no banco
-status: em revisão da Millie
+status: concluído
 camada: back
 depende_de: []
 ---

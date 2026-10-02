@@ -1,7 +1,7 @@
 ---
 id: KAN-45
 titulo: Extras do AS05, AS06 e AS07: arte, tokens, fichas que faltavam e itens amaldiçoados especiais
-status: em revisão da Millie
+status: concluído
 camada: back + front
 depende_de: [KAN-42, KAN-43]
 ---

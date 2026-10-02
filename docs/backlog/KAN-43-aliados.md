@@ -1,7 +1,7 @@
 ---
 id: KAN-43
 titulo: Aliados na ficha (inclui o sistema de drone)
-status: em revisão da Millie
+status: concluído
 camada: back + front
 depende_de: [KAN-41]
 ---
