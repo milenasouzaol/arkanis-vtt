@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext'
 import ProtectedRoute from './lib/ProtectedRoute'
 import Navbar from './components/Navbar'
+import AvisoErroBanco from './components/AvisoErroBanco'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Perfil from './pages/Perfil'
@@ -28,6 +29,7 @@ function App() {
           <Route path="/personagem/criar/:system" element={<ProtectedRoute><CharacterCreate /></ProtectedRoute>} />
           <Route path="/personagem/:id" element={<ProtectedRoute><CharacterSheet /></ProtectedRoute>} />
         </Routes>
+        <AvisoErroBanco />
       </BrowserRouter>
     </AuthProvider>
   )

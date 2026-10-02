@@ -96,8 +96,16 @@ export function rollDiceFormula(formula: string, diceMultiplier = 1): { rolls: n
   return { rolls, modifier, total }
 }
 
+/**
+ * Quantos aumentos "a cada novo NEX" o personagem ja recebeu. No NEX 5% ele tem so os
+ * valores iniciais da classe; cada passo depois disso soma um aumento (99% = 19 aumentos).
+ */
+export function nexAumentos(nexPercent: number): number {
+  return Math.max(0, nexSteps(nexPercent) - 1)
+}
+
 export function computeDerivedStats(cls: ClassLike, attributes: Attributes, nexPercent: number) {
-  const steps = nexSteps(nexPercent)
+  const steps = nexAumentos(nexPercent)
   return {
     maxPv: (cls.pv_initial ?? 0) + attrValue(attributes, cls.pv_initial_attr) + steps * ((cls.pv_per_nex ?? 0) + attrValue(attributes, cls.pv_per_nex_attr)),
     maxPe: (cls.pe_initial ?? 0) + attrValue(attributes, cls.pe_initial_attr) + steps * ((cls.pe_per_nex ?? 0) + attrValue(attributes, cls.pe_per_nex_attr)),
@@ -105,6 +113,15 @@ export function computeDerivedStats(cls: ClassLike, attributes: Attributes, nexP
     // maxPd aqui é a fórmula de "Jogando sem Sanidade" (fonte confirmada, ver 5.8) — PD por NEX.
     maxPd: (cls.pd_initial ?? 0) + attrValue(attributes, cls.pd_initial_attr) + steps * ((cls.pd_per_nex ?? 0) + attrValue(attributes, cls.pd_per_nex_attr)),
   }
+}
+
+/**
+ * Recuperacao que para no maximo da ficha. Se o valor atual ja estiver acima (ajuste a
+ * mao ou bonus), a recuperacao nao tira nada dele.
+ */
+export function recuperarAteMaximo(atual: number, recuperacao: number, maximo: number | null): number {
+  if (maximo == null) return atual + recuperacao
+  return Math.max(atual, Math.min(maximo, atual + recuperacao))
 }
 
 export type Patente = 'sem_patente' | 'recruta' | 'operador' | 'agente_especial' | 'oficial_operacoes' | 'agente_elite'

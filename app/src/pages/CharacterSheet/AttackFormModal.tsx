@@ -379,7 +379,7 @@ export default function AttackFormModal({
       general_info: { tipo: draft.tipo || null, empunhadura: draft.empunhadura || null, alcance: draft.alcance || null, tipo_municao: draft.tipoMunicao || null },
       image_url: imageUrl,
       modifiers,
-      alternative_attacks: alternatives.map(({ id, ...alt }) => ({
+      alternative_attacks: alternatives.map(({ id: _id, ...alt }) => ({
         name: alt.name,
         skill_id: alt.skillId || null,
         attribute: alt.attribute,

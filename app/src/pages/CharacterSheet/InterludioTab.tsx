@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { recordRoll } from '../../lib/rollHistory'
-import { attrValue, nexSteps, rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
+import { attrValue, computeDerivedStats, nexSteps, recuperarAteMaximo, rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
 import RollResult, { type RollResultData } from './RollResult'
 import { elementoPorChave } from './elementosParanormais'
+import { useClasseDaFicha } from './useClasseDaFicha'
 import { ALTURA_CENA, LARGURA_CENA, OBJETOS, centroDe } from './interludioCena'
 import esconderijo from '../../assets/interludio/esconderijo.webp'
 
@@ -94,22 +95,30 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
   }
 
   const limitePE = Math.max(1, nexSteps(character.nex_percent))
+  const classe = useClasseDaFicha(character)
 
   async function confirmar() {
     const patches: Record<string, number | string | null> = {}
 
     const semSanidade = character.optional_rules.sem_sanidade
+    // O descanso para no maximo que a ficha mostra (com os ajustes a mao de maximo).
+    const formula = classe ? computeDerivedStats(classe, character.attributes, character.nex_percent) : null
+    const maxPv = character.max_pv_override ?? formula?.maxPv ?? null
+    const maxSanity = character.max_sanity_override ?? formula?.maxSanity ?? null
+    const maxPe = formula?.maxPe ?? null
+    const maxPd = formula?.maxPd ?? null
 
     if (selectedActions.includes('dormir')) {
       const base = CONDICOES.find((c) => c.key === condicao)!.mult
       const pvMult = base + (prato === 'nutritivo' ? 1 : 0)
-      patches.current_pv = (character.current_pv ?? 0) + Math.round(limitePE * pvMult)
+      patches.current_pv = recuperarAteMaximo(character.current_pv ?? 0, Math.round(limitePE * pvMult), maxPv)
       // "Jogando sem Sanidade": dormir só recupera PV (PE não existe nessa regra).
       if (!semSanidade) {
         const peMult = base + (prato === 'energetico' ? 1 : 0)
-        patches.current_pe = (character.current_pe ?? 0) + Math.round(limitePE * peMult)
+        patches.current_pe = recuperarAteMaximo(character.current_pe ?? 0, Math.round(limitePE * peMult), maxPe)
       }
 
+      // O vinculo da Regra da Paixao aumenta o maximo e o atual, entao soma por cima do limite.
       if (paixaoChecked && parceiroNome) {
         const rolled = rollDiceFormula('1d8')!
         patches.vinculo_parceiro = parceiroNome
@@ -128,9 +137,9 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
       const bonus = prato === 'favorito' ? 2 : 0
       // "Jogando sem Sanidade": relaxar recupera PD em vez de Sanidade.
       if (semSanidade) {
-        patches.current_pd = (character.current_pd ?? 0) + Math.round(limitePE * base) + bonus
+        patches.current_pd = recuperarAteMaximo(character.current_pd ?? 0, Math.round(limitePE * base) + bonus, maxPd)
       } else {
-        patches.current_sanity = (character.current_sanity ?? 0) + Math.round(limitePE * base) + bonus
+        patches.current_sanity = recuperarAteMaximo(character.current_sanity ?? 0, Math.round(limitePE * base) + bonus, maxSanity)
       }
     }
 

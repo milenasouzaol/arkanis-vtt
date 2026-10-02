@@ -11283,3 +11283,62 @@ textarea.inter-input {
   margin: 0.2em auto 0.6em;
   object-fit: contain;
 }
+
+/* ===== Aviso de erro do banco (KAN-44) ===== */
+
+.aviso-erro-pilha {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  width: min(360px, calc(100vw - 32px));
+}
+
+.aviso-erro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  padding: 0.7em 2.4em 0.7em 0.9em;
+  border: 1px solid color-mix(in srgb, var(--danger) 55%, transparent);
+  border-left: 3px solid var(--danger);
+  background: rgba(19, 17, 24, 0.94);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  font-family: var(--raleway);
+  color: var(--text);
+}
+
+.aviso-erro strong {
+  font-size: 13px;
+  color: #fff;
+}
+
+.aviso-erro span {
+  font-size: 12px;
+  color: var(--text-dim);
+  word-break: break-word;
+}
+
+.aviso-erro button {
+  position: absolute;
+  top: 0.55em;
+  right: 0.55em;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.aviso-erro button svg {
+  width: 10px;
+  height: 10px;
+}

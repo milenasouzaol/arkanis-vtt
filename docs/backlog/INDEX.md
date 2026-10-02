@@ -64,5 +64,6 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 | [KAN-41](KAN-41-as09-conteudo.md) | Arquivos Secretos 09: conteúdo no banco | back | em revisão | [KAN-41](https://arkaniss.atlassian.net/browse/KAN-41) |
 | [KAN-42](KAN-42-imagem-itens-catalogo.md) | Imagem nos itens do catálogo e nos aliados | back + front | em revisão | [KAN-42](https://arkaniss.atlassian.net/browse/KAN-42) |
 | [KAN-43](KAN-43-aliados.md) | Aliados na ficha (inclui drone) | back + front | em revisão | [KAN-43](https://arkaniss.atlassian.net/browse/KAN-43) |
+| [KAN-44](KAN-44-bugs-revisao.md) | Bugs da revisão: NEX a mais, descanso sem limite, erros calados | regra + front | em revisão | [KAN-44](https://arkaniss.atlassian.net/browse/KAN-44) |
 
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._
