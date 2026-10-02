@@ -31,7 +31,7 @@ const ITEM_CATEGORIES = ['0', 'I', 'II', 'III', 'IV']
 
 export type EquipmentPickResult =
   | { kind: 'catalog'; id: string }
-  | { kind: 'custom'; name: string; type: EquipmentType; category: string; spaces: number; description: string; stats?: Record<string, unknown> }
+  | { kind: 'custom'; name: string; type: EquipmentType; category: string; spaces: number; description: string; stats?: Record<string, unknown>; image_url?: string | null }
 
 type Item = {
   id: string
@@ -43,6 +43,8 @@ type Item = {
   stats: Record<string, unknown>
   sourceSlug?: string | null
   image_url?: string | null
+  /** Item amaldiçoado especial (tabela própria): entra na ficha como cópia. */
+  especial?: boolean
 }
 
 // Dropdown proprio: o <select> nativo abre a lista branca do sistema, que nao estiliza.
@@ -115,12 +117,12 @@ export default function EquipmentPickerModal({
       return
     }
 
-    supabase
+    const catalogo = supabase
       .from('equipment_items')
       .select('id, name, description, category, spaces, type, stats, image_url, sources(slug)')
       .eq('type', category)
       .order('name')
-      .then(({ data }) => setItems((data ?? []).map((r: any) => ({
+      .then(({ data }) => (data ?? []).map((r: any): Item => ({
         id: r.id,
         name: r.name,
         description: r.description,
@@ -130,7 +132,34 @@ export default function EquipmentPickerModal({
         stats: r.stats ?? {},
         sourceSlug: r.sources?.slug ?? null,
         image_url: r.image_url ?? null,
-      }))))
+      })))
+
+    // Os itens amaldiçoados especiais dos livros (Anel Invertido, Larva da Fúria...) ficam
+    // numa tabela própria e não apareciam em lugar nenhum: entram junto em Itens Amaldiçoados.
+    const especiais = category !== 'paranormal'
+      ? Promise.resolve([] as Item[])
+      : supabase
+        .from('cursed_items_special')
+        .select('id, name, description, category, spaces, image_url, sources(slug)')
+        .order('name')
+        .then(({ data }) => (data ?? []).map((r: any): Item => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          category: r.category,
+          spaces: r.spaces,
+          type: 'paranormal',
+          stats: {},
+          sourceSlug: r.sources?.slug ?? null,
+          image_url: r.image_url ?? null,
+          especial: true,
+        })))
+
+    let ativo = true
+    Promise.all([catalogo, especiais]).then(([a, b]) => {
+      if (ativo) setItems([...a, ...b].sort((x, y) => x.name.localeCompare(y.name, 'pt-BR')))
+    })
+    return () => { ativo = false }
   }, [category, sourceFilter, characterId])
 
   function matchesSource(item: Item): boolean {
@@ -169,6 +198,20 @@ export default function EquipmentPickerModal({
         spaces: selectedItem.spaces ?? 0,
         description: selectedItem.description ?? '',
         stats: selectedItem.stats,
+      })
+      return
+    }
+    if (selectedItem.especial) {
+      // Não existe em equipment_items: vira uma cópia na ficha, como os itens homebrew.
+      onAdd({
+        kind: 'custom',
+        name: selectedItem.name,
+        type: 'paranormal',
+        category: selectedItem.category ?? 'I',
+        spaces: selectedItem.spaces ?? 0,
+        description: selectedItem.description ?? '',
+        stats: {},
+        image_url: selectedItem.image_url ?? null,
       })
       return
     }
