@@ -451,6 +451,11 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     }
   }
 
+  async function virarComoDono(o: ObjetoCena, flipH: boolean, flipV: boolean) {
+    obj.alterarVarios({ [o.id]: { flip_h: flipH, flip_v: flipV } }, false)
+    if (!(await obj.virarComoJogador(o.id, flipH, flipV))) obj.alterarVarios({ [o.id]: { flip_h: o.flip_h, flip_v: o.flip_v } }, false)
+  }
+
   function abrirMenu(clientX: number, clientY: number, objeto: ObjetoCena | null) {
     setMenu({ x: clientX, y: clientY, mapa: pontoNoMapa(clientX, clientY), objeto })
   }
@@ -512,6 +517,19 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       return [
         ...pingItens,
         ...doPersonagem,
+        // Dono do token (jogador): também vira na horizontal/vertical (12.8).
+        ...(o && !souMestre && podeMover(o)
+          ? [
+              { tipo: 'linha' } as ItemMenu,
+              {
+                tipo: 'sub', rotulo: 'Transformação Avançada', icone: faSlidersH,
+                itens: [
+                  { rotulo: 'Virar Horizontalmente', icone: faLeftRight, onClick: () => virarComoDono(o, !o.flip_h, o.flip_v) },
+                  { rotulo: 'Virar Verticalmente', icone: faUpDown, onClick: () => virarComoDono(o, o.flip_h, !o.flip_v) },
+                ],
+              } as ItemMenu,
+            ]
+          : []),
         ...(souMestre
           ? [
               { tipo: 'linha' } as ItemMenu,

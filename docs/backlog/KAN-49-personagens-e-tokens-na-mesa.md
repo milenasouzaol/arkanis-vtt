@@ -91,3 +91,10 @@ spec: docs/VTT_Mesa.md (12.7, 12.8)
   `pode_ver_ficha` / `pode_editar_ficha`. Vê: dono, mestre, e membros se a ficha não estiver
   oculta (NPC: Observador ou Dono). Edita: dono, mestre, e membros com "Editável para outros
   jogadores" (NPC: Dono). Quem não é o dono não troca o dono, a campanha nem os toggles.
+
+## Ajuste da Millie (05/10): jogador vira o próprio token
+
+- A amiga dela (jogadora) não conseguia virar o token: Virar Horizontalmente/Verticalmente era
+  só do mestre. Agora o dono do token (ou quem o mestre liberou) tem, no botão direito,
+  "Transformação Avançada › Virar Horizontalmente / Verticalmente", pela função `virar_objeto`
+  (migration `0102_virar_token.sql`, aplicada), que só mexe no espelhamento.
