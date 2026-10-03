@@ -212,10 +212,10 @@ export default function Mesa() {
     return userId ? enviarImagemDoChat(userId, arquivo) : Promise.resolve(null)
   }
 
-  // Mestre ativa a cena pra todos; jogador só olha a cena que escolheu na navegação.
+  // Clicar na cena só abre ela pra quem clicou; quem muda a cena de todo mundo é o
+  // "Ativar Cena" do botão direito (mestre).
   function abrirCena(c: Cena) {
-    if (souMestre) cenas.ativar(c.id)
-    else cenas.setVendo(c.id === cenas.ativa ? null : c.id)
+    cenas.setVendo(c.id === cenas.ativa ? null : c.id)
   }
 
   async function criarCena(nome: string, pastaId: string | null) {
@@ -442,6 +442,7 @@ export default function Mesa() {
                 vendo={cenas.vendo}
                 onAbrir={abrirCena}
                 onEditar={(c) => setEditandoCena(c.id)}
+                onAtivar={(c) => cenas.ativar(c.id)}
                 onTrazerTodos={(c) => cenas.ativar(c.id)}
                 onExcluir={(c) => cenas.excluirCena(c.id)}
                 onDuplicar={cenas.duplicarCena}

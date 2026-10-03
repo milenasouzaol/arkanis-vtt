@@ -53,3 +53,11 @@ spec: docs/VTT_Mesa.md (12.5)
 - Imagem de outra aba: usa o `<img>` de verdade (não o link da página em volta) e guarda
   uma cópia no nosso bucket; se o site não deixa copiar, usa o endereço dele.
 - Aviso no palco: "Enviando imagem…" e quando o que foi arrastado não é imagem.
+
+## Ajuste da Millie (04/10): cena ativa
+
+- Ao entrar na mesa, a cena ativa não aparecia ("Nenhuma cena ativa"), mesmo salva no banco:
+  a mesa montava antes de saber a campanha e ficava sem nenhuma. Agora ela lê a cena ativa
+  do banco ao entrar, e a cena fica ativa até o mestre ativar outra.
+- Clicar numa cena só abre ela pra quem clicou (mestre ou jogador). Pra mudar a cena de
+  todo mundo, o mestre usa botão direito › "Ativar Cena" (a ativa aparece como "Cena Ativa").

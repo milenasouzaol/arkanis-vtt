@@ -14066,3 +14066,12 @@ button.character-tile-link {
 .ficha-ameaca-adicionar {
   margin: 0 16px 14px;
 }
+
+.mesa-menu button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.mesa-menu button:disabled:hover {
+  background: none;
+}

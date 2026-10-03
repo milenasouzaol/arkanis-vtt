@@ -10,8 +10,8 @@ type Alvo = { tipo: 'cena'; cena: Cena } | { tipo: 'pasta'; pasta: Pasta }
 type Menu = { x: number; y: number } & Alvo
 
 // Aba Cenas (12.5): Criar Cena / Criar Pasta, pastas com subpastas e as miniaturas.
-// O mestre clica numa cena pra ativá-la pra todo mundo; o jogador clica pra olhar.
-export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, onAbrir, onEditar, onTrazerTodos, onExcluir, onDuplicar, onCriarCena, onCriarPasta, onSalvarPasta, onExcluirPasta }: {
+// Clicar abre a cena só pra quem clicou; o mestre muda a de todo mundo com "Ativar Cena".
+export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, onAbrir, onEditar, onAtivar, onTrazerTodos, onExcluir, onDuplicar, onCriarCena, onCriarPasta, onSalvarPasta, onExcluirPasta }: {
   souMestre: boolean
   cenas: Cena[]
   pastas: Pasta[]
@@ -19,6 +19,7 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
   vendo: string | null
   onAbrir: (c: Cena) => void
   onEditar: (c: Cena) => void
+  onAtivar: (c: Cena) => void
   onTrazerTodos: (c: Cena) => void
   onExcluir: (c: Cena) => void
   onDuplicar: (c: Cena) => void
@@ -65,7 +66,7 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
         onClick={() => onAbrir(c)}
         onContextMenu={(e) => abrirMenu(e, { tipo: 'cena', cena: c })}
         aria-label={c.name}
-        title={souMestre ? 'Clique pra ativar pra todos; botão direito pra mais opções' : undefined}
+        title={souMestre ? 'Clique pra olhar; botão direito › Ativar Cena pra mostrar pra todos' : undefined}
       >
         <span>{c.name}</span>
         {c.id === ativa && <FontAwesomeIcon icon={faCheck} className="cena-cartao-ativa" aria-label="Cena ativa" />}
@@ -135,6 +136,7 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
           <ul className="mesa-menu" style={{ left: menu.x, top: menu.y }}>
             {menu.tipo === 'cena' ? (
               <>
+                <li><button type="button" disabled={menu.cena.id === ativa} onClick={() => { onAtivar(menu.cena); setMenu(null) }}><FontAwesomeIcon icon={faCheck} /> {menu.cena.id === ativa ? 'Cena Ativa' : 'Ativar Cena'}</button></li>
                 <li><button type="button" onClick={() => { onEditar(menu.cena); setMenu(null) }}><FontAwesomeIcon icon={faPenToSquare} /> Editar</button></li>
                 <li><button type="button" onClick={() => { onTrazerTodos(menu.cena); setMenu(null) }}><FontAwesomeIcon icon={faPeopleArrows} /> Trazer todos pra cá</button></li>
                 <li>

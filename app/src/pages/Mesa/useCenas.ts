@@ -28,6 +28,10 @@ export function useCenas(campanhaId: string | undefined, ativaInicial: string | 
   useEffect(() => {
     if (!campanhaId) return
     recarregarCenas()
+    // A cena ativa vem do banco ao entrar na mesa: fica a mesma até o mestre ativar outra.
+    supabase.from('campaigns').select('active_scene_id').eq('id', campanhaId).maybeSingle().then(({ data }) => {
+      if (data) setAtiva(data.active_scene_id)
+    })
     supabase.from('scene_folders').select(CAMPOS_PASTA).eq('campaign_id', campanhaId).then(({ data }) => setPastas((data ?? []) as Pasta[]))
 
     const filtro = `campaign_id=eq.${campanhaId}`
