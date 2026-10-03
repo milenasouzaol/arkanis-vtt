@@ -73,11 +73,15 @@ export default function ChatMensagem({ mensagem, souMestre, nomeMestre, agora, o
       {r && (
         <div className="chat-rolagem">
           <p className="chat-rolagem-rotulo">{r.label}</p>
-          <div className="chat-rolagem-formula">{formulaDaRolagem(r)}</div>
-          <button type="button" className="chat-rolagem-total" aria-expanded={detalhe} onClick={() => setDetalhe((v) => !v)}>
-            <span>{r.total}</span>
-            <FontAwesomeIcon icon={detalhe ? faChevronDown : faChevronRight} />
-          </button>
+          {!r.sem_rolagem && (
+            <>
+              <div className="chat-rolagem-formula">{formulaDaRolagem(r)}</div>
+              <button type="button" className="chat-rolagem-total" aria-expanded={detalhe} onClick={() => setDetalhe((v) => !v)}>
+                <span>{r.total}</span>
+                <FontAwesomeIcon icon={detalhe ? faChevronDown : faChevronRight} />
+              </button>
+            </>
+          )}
           {detalhe && (
             <div className="chat-rolagem-dados">
               {r.dice?.length
@@ -90,6 +94,7 @@ export default function ChatMensagem({ mensagem, souMestre, nomeMestre, agora, o
               {r.bonus ? <span className="chat-rolagem-bonus">{r.bonus > 0 ? `+${r.bonus}` : r.bonus}</span> : null}
             </div>
           )}
+          {r.nota && <p className="chat-rolagem-nota">{r.nota}</p>}
         </div>
       )}
 

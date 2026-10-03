@@ -54,19 +54,25 @@ export default function RitualCard({
   onRoll,
   onRemove,
   onEdit,
+  custo,
+  sigla = 'PE',
 }: {
   ritual: RitualView
   expanded: boolean
   onToggle: () => void
-  onRoll: (mode: 'normal' | 'discente' | 'verdadeiro', formula: string) => void
+  // Conjura no modo escolhido; formula = null quando o ritual não rola dados.
+  onRoll: (mode: 'normal' | 'discente' | 'verdadeiro', formula: string | null) => void
+  custo?: (mode: 'normal' | 'discente' | 'verdadeiro') => number
+  sigla?: string
   onRemove: () => void
   onEdit: () => void
 }) {
   const texture = ritual.elemento ? ELEMENT_TEXTURE[ritual.elemento] : undefined
-  const modes: { key: 'normal' | 'discente' | 'verdadeiro'; label: string; formula: string | null }[] = [
-    { key: 'normal', label: 'Normal', formula: ritual.dice },
-    { key: 'discente', label: 'Discente', formula: ritual.diceDiscente },
-    { key: 'verdadeiro', label: 'Verdadeiro', formula: ritual.diceVerdadeiro },
+  // Cada modo que o ritual tem pode ser conjurado, com ou sem dados.
+  const modes: { key: 'normal' | 'discente' | 'verdadeiro'; label: string; formula: string | null; existe: boolean }[] = [
+    { key: 'normal', label: 'Normal', formula: ritual.dice, existe: true },
+    { key: 'discente', label: 'Discente', formula: ritual.diceDiscente, existe: !!(ritual.diceDiscente || ritual.discenteEffect) },
+    { key: 'verdadeiro', label: 'Verdadeiro', formula: ritual.diceVerdadeiro, existe: !!(ritual.diceVerdadeiro || ritual.verdadeiroEffect) },
   ]
 
   const meta: { label: string; value: string | null }[] = [
@@ -99,11 +105,12 @@ export default function RitualCard({
                 key={m.key}
                 type="button"
                 className="ritual-roll-btn"
-                disabled={!m.formula}
-                onClick={() => m.formula && onRoll(m.key, m.formula)}
+                disabled={!m.existe}
+                title={m.existe ? `Conjurar${m.key === 'normal' ? '' : ` (${m.label})`}${custo ? `: ${custo(m.key)} ${sigla}` : ''}` : undefined}
+                onClick={() => m.existe && onRoll(m.key, m.formula)}
               >
-                <span className="ritual-roll-formula">{m.formula ?? '—'}</span>
-                <span className="ritual-roll-label">{m.label}</span>
+                <span className="ritual-roll-formula">{m.formula ?? (m.existe ? 'Conjurar' : '—')}</span>
+                <span className="ritual-roll-label">{m.label}{m.existe && custo ? ` · ${custo(m.key)} ${sigla}` : ''}</span>
               </button>
             ))}
           </div>

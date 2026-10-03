@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { recordRoll } from '../../lib/rollHistory'
+import { custoDoRitual, notaDoGasto, recursoDoRitual, type ModoRitual } from './ritualCusto'
 import { attrValue, rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
 import RollResult, { RollCard, type RollCardDie, type RollResultData } from './RollResult'
@@ -75,7 +76,7 @@ type CharacterRitual = {
 const ELEMENTOS = ['sangue', 'morte', 'conhecimento', 'energia', 'medo'] as const
 const CIRCULOS = [1, 2, 3, 4]
 
-export default function RituaisTab({ character }: { character: CharacterRecord }) {
+export default function RituaisTab({ character, onGastar }: { character: CharacterRecord; onGastar: (campo: 'current_pe' | 'current_pd', valor: number) => Promise<void> }) {
   const { session } = useAuth()
   const [known, setKnown] = useState<CharacterRitual[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -87,7 +88,8 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
   const [ocultismoSkill, setOcultismoSkill] = useState<{ id: string; default_attribute: string } | null>(null)
   const [ocultismoBonus, setOcultismoBonus] = useState({ training: 'nenhum' as Training, extra_bonus: 0, attribute_override: null as string | null })
   const [roll, setRoll] = useState<RollResultData | null>(null)
-  const [ritualRoll, setRitualRoll] = useState<{ title: string; subtitle: string; total: number; dice: RollCardDie[]; bonus: number } | null>(null)
+  const [ritualRoll, setRitualRoll] = useState<{ title: string; subtitle: string; total: number; dice: RollCardDie[]; bonus: number; nota: string } | null>(null)
+  const [avisoGasto, setAvisoGasto] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.from('skills').select('id, default_attribute').eq('name', 'Ocultismo').single().then(({ data }) => {
@@ -222,23 +224,42 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
     }
   }
 
-  function rollRitual(name: string, mode: 'normal' | 'discente' | 'verdadeiro', formula: string) {
-    const rolled = rollDiceFormula(formula)
-    if (!rolled) return
-    // O RollResult e feito pra teste de pericia e assume d20; rolagem de ritual usa a
-    // formula do proprio ritual (3d6, 8d6...), entao vai pelo RollCard com os lados certos.
-    const sides = Number(formula.match(/d(\d+)/i)?.[1] ?? 20)
-    const dice: RollCardDie[] = rolled.rolls.map((v) => ({ sides, value: v }))
+  // Conjurar (Normal / Discente / Verdadeiro): desconta o custo do PE (ou da Determinação, em
+  // "Jogando sem Sanidade"), rola os dados se o ritual tiver e registra tudo no chat e no
+  // Histórico com o gasto embaixo.
+  async function conjurar(ritual: RitualView, mode: ModoRitual, formula: string | null) {
+    const custo = custoDoRitual(ritual.circle, mode, ritual.discenteCost, ritual.verdadeiroCost)
+    const recurso = recursoDoRitual(character.optional_rules)
+    const antes = (character as unknown as Record<string, number | null>)[recurso.campo] ?? 0
+    if (antes < custo && !window.confirm(`Você tem ${antes} ${recurso.sigla} e o ritual custa ${custo}. Conjurar mesmo assim?`)) return
+    const depois = Math.max(0, antes - custo)
+    await onGastar(recurso.campo, depois)
+    const nota = notaDoGasto(custo, recurso.sigla, antes, depois)
+
     const modeLabel = mode === 'normal' ? '' : mode === 'discente' ? ' (Discente)' : ' (Verdadeiro)'
-    const label = `Ritual: ${name}${modeLabel}`
-    setRitualRoll({ title: character.name, subtitle: label, total: rolled.total, dice, bonus: rolled.modifier })
-    if (session) {
-      recordRoll({
-        characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
-        label, total: rolled.total, detail: `${formula}: ${rolled.rolls.join(', ')}${rolled.modifier ? ` ${rolled.modifier > 0 ? '+' : ''}${rolled.modifier}` : ''}`,
-        dice,
-        bonus: rolled.modifier,
-      })
+    const label = `Ritual: ${ritual.name}${modeLabel}`
+    const rolled = formula ? rollDiceFormula(formula) : null
+    if (rolled && formula) {
+      // O RollResult e feito pra teste de pericia e assume d20; rolagem de ritual usa a
+      // formula do proprio ritual (3d6, 8d6...), entao vai pelo RollCard com os lados certos.
+      const sides = Number(formula.match(/d(\d+)/i)?.[1] ?? 20)
+      const dice: RollCardDie[] = rolled.rolls.map((v) => ({ sides, value: v }))
+      setRitualRoll({ title: character.name, subtitle: label, total: rolled.total, dice, bonus: rolled.modifier, nota })
+      if (session) {
+        recordRoll({
+          characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
+          label, total: rolled.total, detail: `${formula}: ${rolled.rolls.join(', ')}${rolled.modifier ? ` ${rolled.modifier > 0 ? '+' : ''}${rolled.modifier}` : ''}`,
+          dice, bonus: rolled.modifier, nota,
+        })
+      }
+    } else {
+      setAvisoGasto(`${label} — ${nota}`)
+      if (session) {
+        recordRoll({
+          characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
+          label, total: 0, detail: '', nota, semRolagem: true,
+        })
+      }
     }
   }
 
@@ -261,9 +282,17 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
           total={ritualRoll.total}
           dice={ritualRoll.dice}
           bonus={ritualRoll.bonus}
+          extraLines={[ritualRoll.nota]}
           background={character.dice_tray && character.dice_tray !== 'padrao' ? character.dice_tray : undefined}
           onClose={() => setRitualRoll(null)}
         />
+      )}
+
+      {avisoGasto && (
+        <p className="rituais-aviso-gasto" role="status">
+          {avisoGasto}
+          <button type="button" aria-label="Fechar" onClick={() => setAvisoGasto(null)}>×</button>
+        </p>
       )}
 
       <div className="rituais-toolbar">
@@ -330,7 +359,9 @@ export default function RituaisTab({ character }: { character: CharacterRecord }
               ritual={view}
               expanded={expanded === cr.id}
               onToggle={() => setExpanded(expanded === cr.id ? null : cr.id)}
-              onRoll={(mode, formula) => rollRitual(view.name, mode, formula)}
+              onRoll={(mode, formula) => conjurar(view, mode, formula)}
+              custo={(mode) => custoDoRitual(view.circle, mode, view.discenteCost, view.verdadeiroCost)}
+              sigla={recursoDoRitual(character.optional_rules).sigla}
               onRemove={() => removeRitual(cr.id)}
               onEdit={() => setEditing(cr)}
             />

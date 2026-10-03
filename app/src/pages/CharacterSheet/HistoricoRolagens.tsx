@@ -15,6 +15,8 @@ type RollRow = {
   detail: string
   dice: RollCardDie[] | null
   bonus: number
+  nota: string | null
+  sem_rolagem: boolean
   created_at: string
   characters: { avatar_url: string | null; dice_tray: string | null } | { avatar_url: string | null; dice_tray: string | null }[] | null
 }
@@ -65,8 +67,9 @@ function HistoryEntry({ row, playerName }: { row: RollRow; playerName: string })
           background={c?.dice_tray && c.dice_tray !== 'padrao' ? c.dice_tray : undefined}
         />
       ) : (
-        <p className="historico-detail-fallback">{row.label}: {row.total} ({row.detail})</p>
+        <p className="historico-detail-fallback">{row.sem_rolagem ? row.label : `${row.label}: ${row.total} (${row.detail})`}</p>
       )}
+      {row.nota && <p className="historico-nota">{row.nota}</p>}
     </div>
   )
 }
@@ -82,7 +85,7 @@ export default function HistoricoRolagens({ character, onClose }: { character: C
     function fetchRows() {
       let query = supabase
         .from('character_rolls')
-        .select('id, character_id, character_name, user_id, label, total, detail, dice, bonus, created_at, characters(avatar_url, dice_tray)')
+        .select('id, character_id, character_name, user_id, label, total, detail, dice, bonus, nota, sem_rolagem, created_at, characters(avatar_url, dice_tray)')
         .order('created_at', { ascending: false })
         .limit(50)
 

@@ -14111,3 +14111,42 @@ button.character-tile-link {
 .mesa-menu button:disabled:hover {
   background: none;
 }
+
+/* Gasto de PE/PD embaixo da rolagem (rituais) */
+.chat-rolagem-nota {
+  margin: 4px 0 0;
+  padding: 3px 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.historico-nota {
+  margin: 4px 0 0;
+  color: var(--text-dim);
+  font-size: 0.85em;
+  text-align: center;
+}
+
+.rituais-aviso-gasto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  background: var(--accent-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.rituais-aviso-gasto button {
+  padding: 0 4px;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}

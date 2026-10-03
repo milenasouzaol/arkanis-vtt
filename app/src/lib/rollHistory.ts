@@ -23,6 +23,10 @@ export async function recordRoll(params: {
   detail: string
   dice?: { sides: number; value: number; discarded?: boolean }[]
   bonus?: number
+  // Texto embaixo da rolagem (ex.: "Gastou 3 PE (12 → 9)").
+  nota?: string | null
+  // Registro sem dados (ex.: ritual sem dano): aparece só com o nome e a nota.
+  semRolagem?: boolean
 }) {
   await supabase.from('character_rolls').insert({
     character_id: params.characterId,
@@ -34,6 +38,8 @@ export async function recordRoll(params: {
     detail: params.detail,
     dice: params.dice ?? null,
     bonus: params.bonus ?? 0,
+    nota: params.nota ?? null,
+    sem_rolagem: params.semRolagem ?? false,
   })
   window.dispatchEvent(new CustomEvent('vtt-roll-recorded'))
 }

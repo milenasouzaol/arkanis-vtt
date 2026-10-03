@@ -16,6 +16,10 @@ export type Rolagem = {
   detail: string
   dice: { sides: number; value: number; discarded?: boolean }[] | null
   bonus: number
+  // Gasto embaixo da rolagem (ex.: "Gastou 3 PE (12 → 9)").
+  nota?: string | null
+  // Registro sem dados (ritual sem dano): só o nome e a nota.
+  sem_rolagem?: boolean
 }
 
 export type Mensagem = {
