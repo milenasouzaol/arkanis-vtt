@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAnglesLeft, faAnglesRight, faChevronLeft, faChevronRight, faDiceD20, faPlus, faSkull } from '@fortawesome/free-solid-svg-icons'
+import { faAnglesLeft, faAnglesRight, faChevronLeft, faChevronRight, faComment, faDiceD20, faPlus, faSkull } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../../lib/supabase'
 import { lerPericias, lerTeste, rolarDano, rolarTeste } from './combate'
 import type { Rolagem } from './chat'
@@ -42,9 +42,9 @@ type Aba = 'status' | 'combate' | 'descricao'
 const ATRIBUTOS = ['agi', 'for', 'int', 'pre', 'vig']
 
 // Ficha de Ameaça (12.4): cabeçalho, Vida com as setas e as abas Status / Combate / Descrição.
-// As setas e os dados só funcionam com a ameaça dentro de um combate rodando (podeRolar /
-// onMudarPv); na escolha de ameaças ela é só pra ver, com o botão Adicionar no rodapé.
-export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, podeRolar = false, nome, onMudarPv, onRolar, onAdicionar }: {
+// O mestre rola atributos, perícias, testes e danos e manda ações/poderes pro chat
+// (podeRolar); na escolha de ameaças ela é só pra ver, com o botão Adicionar no rodapé.
+export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, podeRolar = false, nome, onMudarPv, onRolar, onMostrar, onAdicionar }: {
   criaturaId: string
   pvAtual: number | null
   pvMax?: number | null
@@ -53,6 +53,8 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
   nome?: string
   onMudarPv?: (pv: number) => void
   onRolar?: (rolagem: Rolagem, autor: { nome: string; foto: string | null }) => void
+  // Manda uma ação/poder pro chat (nome, tipo, teste, dano e descrição).
+  onMostrar?: (html: string, autor: { nome: string; foto: string | null }) => void
   onAdicionar?: () => void
 }) {
   const [c, setC] = useState<Criatura | null>(null)
@@ -82,14 +84,36 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
   }
 
   function rolarDanoDaAcao(a: Acao) {
-    if (!podeRolar || !onRolar || !a.dano) return
-    const d = rolarDano(a.dano)
+    if (!a.dano) return
+    rolarDanoTexto(`Dano: ${a.nome}`, a.dano)
+  }
+
+  function rolarDanoTexto(rotulo: string, texto: string) {
+    if (!podeRolar || !onRolar) return
+    const d = rolarDano(texto)
     if (!d) return
-    onRolar({ label: `Dano: ${a.nome}${d.tipo ? ` (${d.tipo})` : ''}`, total: d.total, bonus: 0, detail: d.detalhe, dice: null }, autor)
+    onRolar({ label: `${rotulo}${d.tipo ? ` (${d.tipo})` : ''}`, total: d.total, bonus: 0, detail: d.detalhe, dice: null }, autor)
+  }
+
+  // Teste de atributo: d20 igual ao valor do atributo, fica com o maior (igual à ficha).
+  function rolarAtributo(sigla: string, valor: number) {
+    rolarPericia(`Teste de ${sigla.toUpperCase()}`, `+0 (${valor}d20)`)
+  }
+
+  function mostrar(a: Acao) {
+    if (!onMostrar) return
+    const esc = (t: string) => t.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]!)
+    const linhas = [
+      `<b>${esc(a.tipo ? `${a.tipo.toUpperCase()} - ${a.nome}` : a.nome)}</b>`,
+      a.teste ? `<b>Teste:</b> ${esc(a.teste)}` : '',
+      a.dano ? `<b>Dano:</b> ${esc(a.dano)}` : '',
+      a.descricao ? esc(a.descricao) : '',
+    ].filter(Boolean)
+    onMostrar(linhas.join('<br>'), autor)
   }
 
   const dado = (onClick: () => void, rotulo: string) => (
-    <button type="button" className="ficha-ameaca-dado" disabled={!podeRolar} aria-label={rotulo} title={podeRolar ? rotulo : 'Só rola com a ameaça num combate rodando'} onClick={onClick}>
+    <button type="button" className="ficha-ameaca-dado" disabled={!podeRolar} aria-label={rotulo} title={podeRolar ? rotulo : undefined} onClick={onClick}>
       <FontAwesomeIcon icon={faDiceD20} />
     </button>
   )
@@ -145,7 +169,16 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
             {c.atributos && (
               <div className="ficha-ameaca-atributos">
                 {ATRIBUTOS.map((k) => (
-                  <div key={k}><span>{k.toUpperCase()}</span><strong>{c.atributos?.[k] ?? 0}</strong></div>
+                  <button
+                    key={k}
+                    type="button"
+                    className="ficha-ameaca-atributo"
+                    disabled={!podeRolar}
+                    title={podeRolar ? `Rolar teste de ${k.toUpperCase()}` : undefined}
+                    onClick={() => rolarAtributo(k, c.atributos?.[k] ?? 0)}
+                  >
+                    <span>{k.toUpperCase()}</span><strong>{c.atributos?.[k] ?? 0}</strong>
+                  </button>
                 ))}
               </div>
             )}
@@ -177,6 +210,7 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
               <p className="ficha-ameaca-presenca">
                 <strong>Presença Perturbadora:</strong> DT {c.presenca_dt}{c.presenca_dano ? ` - ${c.presenca_dano}` : ''}
                 {c.presenca_nex_imune ? ` (NEX ${c.presenca_nex_imune}% imune)` : ''}
+                {c.presenca_dano && rolarDano(c.presenca_dano) !== null && dado(() => rolarDanoTexto('Presença Perturbadora', c.presenca_dano!), 'Rolar dano da Presença Perturbadora')}
               </p>
             )}
             <nav className="ficha-ameaca-subabas">
@@ -193,6 +227,11 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
                   <p className="ficha-ameaca-linha"><strong>Dano:</strong> {a.dano} {rolarDano(a.dano) !== null && dado(() => rolarDanoDaAcao(a), `Rolar dano de ${a.nome}`)}</p>
                 )}
                 {a.descricao && <p>{a.descricao}</p>}
+                {podeRolar && onMostrar && (
+                  <button type="button" className="mesa-botao ficha-ameaca-mostrar" onClick={() => mostrar(a)}>
+                    <FontAwesomeIcon icon={faComment} /> Mostrar no chat
+                  </button>
+                )}
               </details>
             ))}
             {!lista.length && <p className="janela-dica">Nada cadastrado.</p>}

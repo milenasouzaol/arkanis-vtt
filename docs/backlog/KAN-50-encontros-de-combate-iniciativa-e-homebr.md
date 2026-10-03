@@ -64,3 +64,13 @@ spec: docs/VTT_Mesa.md (12.4)
   apagados (mais apagados quanto mais longe; até 3 de cada lado, as pontas somem num degradê).
   Ao passar o turno a fila desliza suave pro lado e o próximo chega ao centro; quem dá a volta
   da rodada troca de ponta sem atravessar a fila.
+
+## Ajuste da Millie (04/10): mestre usa a ficha da ameaça a qualquer hora
+
+- Os dados da Ficha de Ameaça não ficam mais presos à vez da ameaça no combate: o mestre rola
+  sempre — na ficha aberta pelo combate e pela aba Personagens (que antes nem mandava nada
+  pro chat).
+- Atributos (AGI/FOR/INT/PRE/VIG) rolam o teste (d20 igual ao valor, fica com o maior).
+- Presença Perturbadora ganha o dado do dano ("8d6 mental").
+- Ações e poderes ganham "Mostrar no chat" (nome, tipo, teste, dano e descrição), com o nome e
+  a foto da ameaça, no modo de envio marcado no chat.

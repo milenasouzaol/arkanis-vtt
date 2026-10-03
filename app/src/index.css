@@ -13404,10 +13404,32 @@ button.character-tile-link {
   text-align: center;
 }
 
-.ficha-ameaca-atributos div {
+.ficha-ameaca-atributos div,
+.ficha-ameaca-atributo {
   padding: 6px 0;
   background: #1d1b21;
   border-radius: 4px;
+}
+
+.ficha-ameaca-atributo {
+  border: 1px solid transparent;
+  color: var(--mesa-creme);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ficha-ameaca-atributo:hover:not(:disabled) {
+  border-color: var(--mesa-creme-dim);
+}
+
+.ficha-ameaca-atributo:disabled {
+  cursor: default;
+}
+
+.ficha-ameaca-mostrar {
+  margin-top: 8px;
+  min-height: 28px;
+  font-size: 0.78rem;
 }
 
 .ficha-ameaca-atributos span {

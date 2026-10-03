@@ -341,6 +341,11 @@ export default function Mesa() {
     if (userId) chat.enviarRolagem({ userId, modo, autor, rolagem })
   }
 
+  // Ação/poder de uma ameaça mostrado no chat, com o nome e a foto dela.
+  function mostrarNoChat(html: string, autor: { nome: string; foto: string | null }) {
+    if (userId) chat.enviar({ userId, modo, autor, personagemId: null, html })
+  }
+
   const cenaEditada = cenas.cenas.find((c) => c.id === editandoCena)
   const jogadoresParaCena = estado.membros
     .filter((m) => m.papel === 'jogador')
@@ -539,8 +544,6 @@ export default function Mesa() {
         const c = combate.ordem.find((x) => x.id === fichaCombate)
         if (!c || !c.creature_id || !souMestre) return null
         const vida = combate.vidas[c.id]
-        // O dado só rola na vez da ameaça (12.4).
-        const vez = combate.ativo?.turno_atual === c.id
         return (
           <Janela titulo={c.name} icone={faSkull} largura={440} altura={640} inicial={{ x: Math.max(16, window.innerWidth - 820), y: 40 }} onFechar={() => setFichaCombate(null)}>
             <FichaAmeaca
@@ -549,9 +552,10 @@ export default function Mesa() {
               pvAtual={vida?.pv_atual ?? null}
               pvMax={vida?.pv_max ?? null}
               podeEditar
-              podeRolar={vez}
+              podeRolar
               onMudarPv={(pv) => combate.mudarVida(c.id, pv)}
               onRolar={rolarNoChat}
+              onMostrar={mostrarNoChat}
             />
           </Janela>
         )
@@ -647,7 +651,17 @@ export default function Mesa() {
             </Janela>
           )
         }
-        return <FichaPortatil key={id} ator={a} podeEditar={nivel === 'dono'} onMudarPv={(pv) => atores.salvar(a.id, { pv_atual: pv })} onFechar={fechar} />
+        return (
+          <FichaPortatil
+            key={id}
+            ator={a}
+            podeEditar={nivel === 'dono'}
+            onMudarPv={(pv) => atores.salvar(a.id, { pv_atual: pv })}
+            onRolar={rolarNoChat}
+            onMostrar={mostrarNoChat}
+            onFechar={fechar}
+          />
+        )
       })}
 
       <PainelSessao conectados={online} latencia={latencia} fps={fps} />
