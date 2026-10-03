@@ -74,12 +74,21 @@ export function vdTotal(ids: string[], criaturas: Pick<CriaturaLista, 'id' | 'vd
   return ids.reduce((soma, id) => soma + (vd.get(id) ?? 0), 0)
 }
 
-// "+5 (2d20)" → 2 dados, +5. "+5" sozinho = 1 dado. "-1 (0d20)" = 0 dados (rola 2 e fica com o menor).
+// O bestiário escreve os testes de vários jeitos; todos viram { dados, bonus }:
+//   "+5 (2d20)" → 2 dados, +5        "+5" → 1 dado, +5
+//   "1d20+15" / "+2d20+10" → 1 ou 2 dados, +15 / +10
+//   "2d20+10, Visão no Escuro" → 2 dados, +10 (o resto é texto)
+//   "-1 (0d20)" → 0 dados (rola 2 e fica com o menor)   "—" ou vazio → 1 dado, +0
 export function lerTeste(texto: string | null | undefined): { dados: number; bonus: number } {
   if (!texto) return { dados: 1, bonus: 0 }
-  const bonus = Number(/^\s*([+-]?\s*\d+)/.exec(texto)?.[1]?.replace(/\s/g, '') ?? 0)
-  const dados = /\((-?\d+)d20\)/i.exec(texto)?.[1]
-  return { dados: dados === undefined ? 1 : Number(dados), bonus }
+  const t = texto.replace(/\s+/g, '')
+  const entreParenteses = /^([+-]?\d+)\((-?\d+)d20\)/i.exec(t)
+  if (entreParenteses) return { dados: Number(entreParenteses[2]), bonus: Number(entreParenteses[1]) }
+  const formula = /^\+?(\d+)d20([+-]\d+)?/i.exec(t)
+  if (formula) return { dados: Number(formula[1]), bonus: Number(formula[2] ?? 0) }
+  const numero = /^([+-]?\d+)/.exec(t)
+  if (numero) return { dados: 1, bonus: Number(numero[1]) }
+  return { dados: 1, bonus: 0 }
 }
 
 // Mesmo teste da ficha: d20 igual ao número de dados, fica com o maior (0 ou menos: 2 e o menor).

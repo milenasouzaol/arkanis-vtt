@@ -42,6 +42,14 @@ describe('testes da ameaça', () => {
     expect(lerTeste('+0')).toEqual({ dados: 1, bonus: 0 })
     expect(lerTeste('-2 (1d20)')).toEqual({ dados: 1, bonus: -2 })
     expect(lerTeste(null)).toEqual({ dados: 1, bonus: 0 })
+    // Outros jeitos que aparecem no bestiário (o Memento Mori é "1d20+15")
+    expect(lerTeste('1d20+15')).toEqual({ dados: 1, bonus: 15 })
+    expect(lerTeste('+2d20+10')).toEqual({ dados: 2, bonus: 10 })
+    expect(lerTeste('2d20')).toEqual({ dados: 2, bonus: 0 })
+    expect(lerTeste('2d20+10, Visão no Escuro')).toEqual({ dados: 2, bonus: 10 })
+    expect(lerTeste('5d20+30')).toEqual({ dados: 5, bonus: 30 })
+    expect(lerTeste('+5 (1d20)')).toEqual({ dados: 1, bonus: 5 })
+    expect(lerTeste('—')).toEqual({ dados: 1, bonus: 0 })
   })
 
   it('rola como a ficha: fica com o maior d20', () => {

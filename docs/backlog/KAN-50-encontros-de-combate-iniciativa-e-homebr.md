@@ -39,3 +39,11 @@ spec: docs/VTT_Mesa.md (12.4)
 
 - Homebrew global de ameaças (limite 50) e as abas Habilidades / Rituais / Itens.
 - "Configurações" do combate (a spec cita o botão, mas não diz o que ele faz).
+
+## Bugs achados pela Millie (04/10)
+
+- Iniciativa errada: o bestiário escreve os testes de vários jeitos ("+5 (2d20)", "1d20+15",
+  "+2d20+10", "2d20+10, Visão no Escuro"…) e só o primeiro era entendido — o Memento Mori
+  ("1d20+15") virava d20+1. Agora todos os formatos do banco são lidos (testados um a um).
+- Foto cortada/vazando na linha do combate (e nas outras listas com miniatura): a imagem
+  fica presa no quadrado dela.
