@@ -13,7 +13,7 @@ import {
 } from './cenas'
 import {
   ALCAS, anguloAte, camposAtuais, comGrupo, deslocamentoDaTecla, desfazer as passoDesfazer, HISTORICO_VAZIO, ordemParaFrente,
-  ordemParaTras, redimensionarPorAlca, refazer as passoRefazer, registrar, type Alca, type CamposObjeto, type Historico, type Passo,
+  ordemParaTras, redimensionarPorAlca, refazer as passoRefazer, registrar, tocaNaCaixa, type Alca, type CamposObjeto, type Historico, type Passo,
 } from './tokens'
 import type { Ping, useObjetos } from './useObjetos'
 
@@ -32,9 +32,10 @@ type Gesto =
   | { tipo: 'mover'; x: number; y: number; ids: string[]; inicio: Record<string, { x: number; y: number }>; dx: number; dy: number }
   | { tipo: 'tamanho'; x: number; y: number; alca: Alca; o: ObjetoCena; ultimo?: CamposObjeto }
   | { tipo: 'girar'; o: ObjetoCena; ultimo?: number }
+  | { tipo: 'caixa'; inicio: { x: number; y: number }; somar: boolean }
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
-// Arrastar o fundo move o mapa (botão esquerdo ou direito), a rodinha dá zoom.
+// Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
 export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem }: {
   cena: Cena | null
   souMestre: boolean
@@ -59,6 +60,22 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const ultimoEnvio = useRef(0)
   // Arrastar com o botão direito move o mapa; aí o menu não abre.
   const panouComDireito = useRef(false)
+  const [caixa, setCaixa] = useState<{ a: { x: number; y: number }; b: { x: number; y: number } } | null>(null)
+  // Arrasto que começou dentro da própria página (texto, imagem do chat…) não é imagem nova.
+  const arrastoInterno = useRef(false)
+
+  useEffect(() => {
+    const comeca = () => (arrastoInterno.current = true)
+    const acaba = () => (arrastoInterno.current = false)
+    window.addEventListener('dragstart', comeca)
+    window.addEventListener('dragend', acaba)
+    window.addEventListener('drop', acaba)
+    return () => {
+      window.removeEventListener('dragstart', comeca)
+      window.removeEventListener('dragend', acaba)
+      window.removeEventListener('drop', acaba)
+    }
+  }, [])
   const historico = useRef<Historico>(HISTORICO_VAZIO)
   const [, setVersaoHistorico] = useState(0)
   const copiados = useRef<ObjetoCena[]>([])
@@ -281,9 +298,15 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
 
   function comecarNoMapa(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0 && e.button !== 2) return
-    if (e.button === 0) setSelecionados([])
     panouComDireito.current = false
-    gesto.current = { tipo: 'mapa', x: e.clientX, y: e.clientY, vx: vista.x, vy: vista.y, botao: e.button, andou: false }
+    if (e.button === 0) {
+      // Esquerdo no vazio: caixa de seleção (o fundo não se mexe).
+      if (!e.shiftKey) setSelecionados([])
+      if (!cena) return
+      gesto.current = { tipo: 'caixa', inicio: pontoNoMapa(e.clientX, e.clientY), somar: e.shiftKey }
+    } else {
+      gesto.current = { tipo: 'mapa', x: e.clientX, y: e.clientY, vx: vista.x, vy: vista.y, botao: e.button, andou: false }
+    }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
 
@@ -331,6 +354,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   function mover(e: React.PointerEvent<HTMLDivElement>) {
     const g = gesto.current
     if (!g) return
+    if (g.tipo === 'caixa') {
+      setCaixa({ a: g.inicio, b: pontoNoMapa(e.clientX, e.clientY) })
+      return
+    }
     if (g.tipo === 'mapa') {
       if (Math.abs(e.clientX - g.x) + Math.abs(e.clientY - g.y) > 4) {
         g.andou = true
@@ -364,6 +391,14 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     gesto.current = null
     if (!g) return
     if (g.tipo === 'mapa') return
+    if (g.tipo === 'caixa') {
+      const c = caixa
+      setCaixa(null)
+      if (!c) return
+      const pegos = visiveis.filter((o) => podeMover(o) && tocaNaCaixa(o, c.a, c.b)).map((o) => o.id)
+      setSelecionados((atual) => (g.somar ? [...new Set([...atual, ...pegos])] : pegos))
+      return
+    }
     if (g.tipo === 'mover') {
       if (!g.dx && !g.dy) return
       if (souMestre) {
@@ -406,7 +441,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
 
   function soltar(e: React.DragEvent<HTMLDivElement>) {
     setSoltando(false)
-    if (!souMestre) return
+    if (!souMestre || arrastoInterno.current) return
     e.preventDefault()
     const origem = imagemDoArrasto({
       arquivos: Array.from(e.dataTransfer.files),
@@ -507,8 +542,9 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
         e.preventDefault()
         if (!panouComDireito.current) abrirMenu(e.clientX, e.clientY, null)
       }}
+      onDragStart={(e) => e.preventDefault()}
       onDragOver={(e) => {
-        if (!souMestre) return
+        if (!souMestre || arrastoInterno.current) return
         e.preventDefault()
         setSoltando(true)
       }}
@@ -568,6 +604,19 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
               ))}
               <span className="mesa-giro" style={{ width: alcaPx * 1.6, height: alcaPx * 1.6, top: -alcaPx * 2.2, right: -alcaPx * 2.2 }} onPointerDown={(e) => pegarGiro(e, unico)} title="Girar" />
             </div>
+          )}
+
+          {caixa && (
+            <div
+              className="mesa-caixa-selecao"
+              style={{
+                left: Math.min(caixa.a.x, caixa.b.x),
+                top: Math.min(caixa.a.y, caixa.b.y),
+                width: Math.abs(caixa.b.x - caixa.a.x),
+                height: Math.abs(caixa.b.y - caixa.a.y),
+                ['--borda' as string]: `${1.5 / vista.escala}px`,
+              }}
+            />
           )}
 
           {pings.map((p) => (

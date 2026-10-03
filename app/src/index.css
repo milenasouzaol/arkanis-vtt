@@ -12352,12 +12352,8 @@ button.character-tile-link {
 /* Palco: a cena ativa, com zoom e arrasto */
 .mesa-palco {
   overflow: hidden;
-  cursor: grab;
+  cursor: default;
   touch-action: none;
-}
-
-.mesa-palco:active {
-  cursor: grabbing;
 }
 
 .mesa-mundo {
@@ -13040,4 +13036,15 @@ button.character-tile-link {
   height: 1px;
   margin: 4px 2px;
   background: #d6d6db;
+}
+
+.mesa-caixa-selecao {
+  position: absolute;
+  background: rgba(107, 124, 255, 0.12);
+  outline: var(--borda, 1px) solid #6b7cff;
+  pointer-events: none;
+}
+
+.mesa-palco {
+  user-select: none;
 }

@@ -35,3 +35,10 @@ spec: docs/VTT_Mesa.md (12.7, 12.8)
   personagem pro mapa.
 - No menu do token de personagem: Ficha de Personagem e Variação de Token.
 - Dono do personagem configurando a propriedade do próprio token.
+
+## Ajuste da Millie (03/10)
+
+- O fundo não se mexe mais com o botão esquerdo: arrastar no vazio faz a caixa de seleção
+  (12.13), Shift soma à seleção. Mover a visão do mapa é com o botão direito, como no Foundry.
+- Arrasto que começa dentro da própria página (texto, a imagem de fundo, imagens do chat)
+  não mostra mais "Solte pra colocar…" nem "Isso não é uma imagem".

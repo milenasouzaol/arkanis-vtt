@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   anguloAte, camposAtuais, comGrupo, deslocamentoDaTecla, desfazer, HISTORICO_VAZIO, ordemParaFrente, ordemParaTras,
-  redimensionarPorAlca, refazer, registrar, type Passo,
+  redimensionarPorAlca, refazer, registrar, tocaNaCaixa, type Passo,
 } from './tokens'
 import type { ObjetoCena } from './cenas'
 
@@ -96,4 +96,10 @@ describe('desfazer e refazer', () => {
   it('guarda só os campos que mudam', () => {
     expect(camposAtuais({ id: 'a', x: 1, y: 2, width: 3 } as ObjetoCena, { x: 9, width: 8 })).toEqual({ x: 1, width: 3 })
   })
+})
+
+it('caixa de seleção pega o que encosta nela, em qualquer direção', () => {
+  expect(tocaNaCaixa(caixa, { x: 0, y: 0 }, { x: 150, y: 150 })).toBe(true)
+  expect(tocaNaCaixa(caixa, { x: 350, y: 250 }, { x: 250, y: 150 })).toBe(true)
+  expect(tocaNaCaixa(caixa, { x: 0, y: 0 }, { x: 90, y: 90 })).toBe(false)
 })

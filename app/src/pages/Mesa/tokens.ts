@@ -110,3 +110,12 @@ export function refazer(h: Historico): { historico: Historico; aplicar: Passo } 
 export function camposAtuais(o: ObjetoCena & { group_id?: string | null }, campos: CamposObjeto): CamposObjeto {
   return Object.fromEntries(Object.keys(campos).map((k) => [k, (o as Record<string, unknown>)[k]])) as CamposObjeto
 }
+
+// Caixa de seleção (12.13: clique+arraste seleciona): pega o que encosta na caixa.
+export function tocaNaCaixa(o: Caixa, a: { x: number; y: number }, b: { x: number; y: number }): boolean {
+  const x0 = Math.min(a.x, b.x)
+  const x1 = Math.max(a.x, b.x)
+  const y0 = Math.min(a.y, b.y)
+  const y1 = Math.max(a.y, b.y)
+  return o.x < x1 && o.x + o.width > x0 && o.y < y1 && o.y + o.height > y0
+}
