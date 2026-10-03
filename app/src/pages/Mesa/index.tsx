@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
-import BarraIcones from './BarraIcones'
+import BarraIcones, { BotaoIcone } from './BarraIcones'
+import PainelConfig from './PainelConfig'
 import PainelSessao from './PainelSessao'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
 import {
   ABAS_DIREITA,
   CATEGORIAS_ESQUERDA,
+  FERRAMENTAS,
   conectados as filtrarConectados,
   linkDeConvite,
   type AbaDireita,
@@ -36,9 +38,11 @@ export default function Mesa() {
   const navigate = useNavigate()
   const userId = session?.user.id
   const [estado, setEstado] = useState<Estado>({ tipo: 'carregando' })
-  const [aba, setAba] = useState<AbaDireita | null>(null)
-  const [categoria, setCategoria] = useState<CategoriaEsquerda | null>(null)
-  const [menuAberto, setMenuAberto] = useState(false)
+  // Como no Foundry, a mesa abre com o chat à mostra.
+  const [aba, setAba] = useState<AbaDireita>('chat')
+  const [recolhida, setRecolhida] = useState(false)
+  const [categoria, setCategoria] = useState<CategoriaEsquerda>('tokens')
+  const [ferramenta, setFerramenta] = useState('selecionar')
   const [copiado, setCopiado] = useState(false)
 
   useEffect(() => {
@@ -106,53 +110,48 @@ export default function Mesa() {
     setTimeout(() => setCopiado(false), 2000)
   }
 
+  function escolherAba(a: AbaDireita) {
+    // Clicar na aba aberta recolhe o painel, como o Foundry faz.
+    if (a === aba && !recolhida) setRecolhida(true)
+    else {
+      setAba(a)
+      setRecolhida(false)
+    }
+  }
+
   return (
     <main className="mesa" style={campanha.accent_color ? ({ '--mesa-destaque': campanha.accent_color } as React.CSSProperties) : undefined}>
       <div className="mesa-palco" aria-label="Cena">
         <p className="mesa-palco-vazio">Nenhuma cena ativa</p>
       </div>
 
-      <header className="mesa-topo">
-        <strong className="mesa-nome">{campanha.name}</strong>
-        <div className="mesa-config">
-          <button type="button" className="mesa-icone" aria-label="Configurações da mesa" aria-expanded={menuAberto} onClick={() => setMenuAberto((v) => !v)}>
-            <span className="mesa-icone-sigla" aria-hidden>Cf</span>
-            <span className="mesa-icone-rotulo" role="tooltip">Configurações</span>
-          </button>
-          {menuAberto && (
-            <ul className="mesa-config-menu">
-              {souMestre && (
-                <li><button type="button" onClick={copiarConvite}>{copiado ? 'Link copiado!' : 'Copiar link de convite'}</button></li>
-              )}
-              <li><button type="button" onClick={() => navigate('/jogar')}>Sair</button></li>
-            </ul>
-          )}
+      <nav className="mesa-controles" aria-label="Ferramentas de cena">
+        <div className="mesa-coluna">
+          <BarraIcones lado="esquerda" itens={CATEGORIAS_ESQUERDA} ativo={categoria} onEscolher={setCategoria} />
         </div>
-      </header>
+        <div className="mesa-coluna">
+          {FERRAMENTAS[categoria].map((f) => (
+            <BotaoIcone key={f.id} id={f.id} rotulo={f.rotulo} lado="esquerda" ativo={ferramenta === f.id} onClick={() => setFerramenta(f.id)} />
+          ))}
+        </div>
+      </nav>
 
-      <BarraIcones
-        lado="esquerda"
-        itens={CATEGORIAS_ESQUERDA}
-        ativo={categoria}
-        onEscolher={(c) => setCategoria((atual) => (atual === c ? null : c))}
-      />
+      <div className={`mesa-lateral${recolhida ? ' recolhida' : ''}`}>
+        <nav className="mesa-barra" aria-label="Abas da mesa">
+          <BarraIcones lado="direita" itens={ABAS_DIREITA} ativo={recolhida ? null : aba} onEscolher={escolherAba} />
+          <BotaoIcone id="recolher" rotulo={recolhida ? 'Expandir' : 'Recolher'} lado="direita" onClick={() => setRecolhida((v) => !v)} />
+        </nav>
 
-      <BarraIcones
-        lado="direita"
-        itens={ABAS_DIREITA}
-        ativo={aba}
-        onEscolher={(a) => setAba((atual) => (atual === a ? null : a))}
-      />
-
-      {abaAtual && (
-        <aside className="mesa-painel" aria-label={abaAtual.rotulo}>
-          <header className="mesa-painel-topo">
-            <h2>{abaAtual.rotulo}</h2>
-            <button type="button" className="mesa-painel-fechar" aria-label="Fechar" onClick={() => setAba(null)}>×</button>
-          </header>
-          <p className="mesa-painel-vazio">Em construção ({abaAtual.card}).</p>
-        </aside>
-      )}
+        {!recolhida && abaAtual && (
+          <aside className="mesa-painel" aria-label={abaAtual.rotulo}>
+            {aba === 'config' ? (
+              <PainelConfig souMestre={souMestre} copiado={copiado} onCopiarConvite={copiarConvite} onSair={() => navigate('/jogar')} />
+            ) : (
+              <p className="mesa-painel-vazio">{abaAtual.rotulo}: em construção ({abaAtual.card}).</p>
+            )}
+          </aside>
+        )}
+      </div>
 
       <PainelSessao conectados={online} latencia={latencia} fps={fps} />
     </main>

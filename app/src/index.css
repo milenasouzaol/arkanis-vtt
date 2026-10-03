@@ -11344,8 +11344,9 @@ textarea.inter-input {
 }
 
 /* ============================================================
-   Mesa (KAN-46) — estrutura. Cores só dos tokens já existentes;
-   a estética final vem das referências da Millie.
+   Mesa (KAN-46) — layout e estética das referências do Foundry que a
+   Millie mandou (02/10): fundo vinho, botões escuros com ícone creme,
+   borda laranja no ativo e painel escuro na borda direita.
    ============================================================ */
 
 .character-tile-link {
@@ -11355,12 +11356,21 @@ textarea.inter-input {
 }
 
 .mesa {
-  --mesa-destaque: var(--accent);
+  --mesa-fundo: #2e0101;
+  --mesa-painel: #110d14;
+  --mesa-botao: #170f13;
+  --mesa-borda: #3b2b2c;
+  --mesa-creme: #f0e2cd;
+  --mesa-creme-dim: #a8927f;
+  --mesa-destaque: #e8622f;
+  --mesa-online: #d9a521;
+  --mesa-verde: #8fd16a;
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--mesa-fundo);
+  color: var(--mesa-creme);
+  font-family: 'Signika', var(--sans);
 }
 
 .mesa-aviso {
@@ -11382,100 +11392,69 @@ textarea.inter-input {
 }
 
 .mesa-palco-vazio {
-  color: var(--text-dim);
+  color: var(--mesa-creme-dim);
 }
 
-.mesa-topo {
+/* Barra esquerda: categorias numa coluna, ferramentas da categoria na outra */
+.mesa-controles {
   position: absolute;
-  top: 12px;
-  left: 64px;
-  right: 64px;
+  top: 16px;
+  left: 16px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.mesa-topo > * {
-  pointer-events: auto;
-}
-
-.mesa-nome {
-  color: var(--text-dim);
-  font-weight: 500;
-}
-
-.mesa-config {
-  position: relative;
-}
-
-.mesa-config-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 200px;
-  margin: 0;
-  padding: 6px;
-  list-style: none;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  z-index: 20;
-}
-
-.mesa-config-menu button {
-  width: 100%;
-  padding: 8px 10px;
-  text-align: left;
-  background: none;
-  border: 0;
-  border-radius: 6px;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.mesa-config-menu button:hover {
-  background: var(--accent-bg);
-}
-
-.mesa-barra {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
   flex-wrap: nowrap;
-  gap: 6px;
+  gap: 8px;
   z-index: 16;
 }
 
-.mesa-barra-esquerda {
-  left: 12px;
+.mesa-coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.mesa-barra-direita {
-  right: 12px;
+/* Lateral direita: coluna de ícones colada no painel, que fica na borda da tela */
+.mesa-lateral {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+  z-index: 16;
+}
+
+.mesa-barra {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 16px 8px;
 }
 
 .mesa-icone {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
+  flex: none;
   padding: 0;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  opacity: 0.45;
+  background: var(--mesa-botao);
+  border: 1px solid var(--mesa-borda);
+  border-radius: 5px;
+  color: var(--mesa-creme);
+  font-size: 15px;
   cursor: pointer;
+}
+
+.mesa-icone > svg {
+  opacity: 0.55;
   transition: opacity 0.15s;
 }
 
-.mesa-icone:hover,
-.mesa-icone:focus-visible,
-.mesa-icone.ativo {
+.mesa-icone:hover > svg,
+.mesa-icone:focus-visible > svg,
+.mesa-icone.ativo > svg {
   opacity: 1;
 }
 
@@ -11483,32 +11462,27 @@ textarea.inter-input {
   border-color: var(--mesa-destaque);
 }
 
-.mesa-icone-sigla {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
 .mesa-icone-rotulo {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   white-space: nowrap;
-  padding: 4px 8px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.8rem;
+  padding: 6px 12px;
+  background: var(--mesa-painel);
+  border-radius: 4px;
+  color: var(--mesa-creme);
+  font-size: 0.85rem;
+  font-weight: 600;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s;
 }
 
-.mesa-barra-direita .mesa-icone-rotulo,
-.mesa-config .mesa-icone-rotulo {
+.mesa-icone-direita .mesa-icone-rotulo {
   right: calc(100% + 8px);
 }
 
-.mesa-barra-esquerda .mesa-icone-rotulo {
+.mesa-icone-esquerda .mesa-icone-rotulo {
   left: calc(100% + 8px);
 }
 
@@ -11518,97 +11492,128 @@ textarea.inter-input {
 }
 
 .mesa-painel {
-  position: absolute;
-  top: 64px;
-  right: 64px;
-  bottom: 12px;
-  width: min(340px, calc(100vw - 92px));
+  width: min(300px, calc(100vw - 64px));
   display: flex;
   flex-direction: column;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  z-index: 15;
-}
-
-.mesa-painel-topo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
-}
-
-.mesa-painel-topo h2 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.mesa-painel-fechar {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  background: none;
-  border: 0;
-  color: var(--text-dim);
-  font-size: 1.3rem;
-  line-height: 1;
-  cursor: pointer;
+  overflow-y: auto;
+  background: var(--mesa-painel);
 }
 
 .mesa-painel-vazio {
   padding: 14px;
-  color: var(--text-dim);
+  color: var(--mesa-creme-dim);
 }
 
+/* Painel de Configurações */
+.mesa-config {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 14px;
+}
+
+.mesa-config-marca {
+  text-align: center;
+}
+
+.mesa-config-marca h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+}
+
+.mesa-config-marca span {
+  color: var(--mesa-creme-dim);
+  font-size: 0.8rem;
+}
+
+.mesa-secao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 4px;
+  font-size: 1.1rem;
+  font-variant: small-caps;
+  white-space: nowrap;
+}
+
+.mesa-secao::before,
+.mesa-secao::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--mesa-creme-dim));
+}
+
+.mesa-secao::after {
+  background: linear-gradient(90deg, var(--mesa-creme-dim), transparent);
+}
+
+.mesa-botao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 10px;
+  background: var(--mesa-botao);
+  border: 1px solid var(--mesa-creme-dim);
+  border-radius: 4px;
+  color: var(--mesa-creme);
+  font: 600 0.9rem 'Signika', var(--sans);
+  cursor: pointer;
+}
+
+.mesa-botao:hover:not(:disabled) {
+  border-color: var(--mesa-destaque);
+}
+
+.mesa-botao:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Painel de sessão (rodapé esquerdo) */
 .mesa-sessao {
   position: absolute;
-  left: 12px;
-  bottom: 12px;
-  max-width: calc(100vw - 24px);
+  left: 16px;
+  bottom: 16px;
+  max-width: calc(100vw - 32px);
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 8px 12px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 0.85rem;
+  background: var(--mesa-painel);
+  border: 1px solid var(--mesa-borda);
+  border-radius: 5px;
+  font-size: 0.8rem;
   z-index: 10;
 }
 
-.mesa-sessao-mestre,
-.mesa-sessao-jogador {
+.mesa-sessao-pessoa {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   white-space: nowrap;
 }
 
 .mesa-sessao-metricas {
-  color: var(--text-dim);
+  font-family: var(--mono);
   font-size: 0.75rem;
 }
 
-.mesa-sessao-ponto {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--mesa-destaque);
-  flex: none;
+.mesa-sessao-metricas b {
+  margin-right: 8px;
+  color: var(--mesa-verde);
+  font-weight: 400;
 }
 
-@media (max-width: 600px) {
-  .mesa-topo {
-    left: 60px;
-    right: 12px;
-  }
-
-  .mesa-painel {
-    left: 60px;
-    right: 60px;
-    width: auto;
-  }
+.mesa-sessao-ponto {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid #000;
+  background: var(--mesa-online);
+  flex: none;
 }

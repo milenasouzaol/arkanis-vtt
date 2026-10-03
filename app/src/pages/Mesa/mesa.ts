@@ -10,27 +10,40 @@ export type AbaDireita =
   | 'itens'
   | 'diario'
   | 'playlist'
+  | 'config'
 
 export type CategoriaEsquerda = 'tokens' | 'desenho' | 'som'
 
 // Ordem da barra direita conforme a spec (12.3 a 12.12), com o card que constrói cada uma.
-export const ABAS_DIREITA: { id: AbaDireita; rotulo: string; sigla: string; card: string }[] = [
-  { id: 'chat', rotulo: 'Mensagens de Chat', sigla: 'Ch', card: 'KAN-47' },
-  { id: 'combate', rotulo: 'Encontros de Combate', sigla: 'Co', card: 'KAN-50' },
-  { id: 'cenas', rotulo: 'Cenas', sigla: 'Ce', card: 'KAN-48' },
-  { id: 'posicionaveis', rotulo: 'Posicionáveis', sigla: 'Po', card: 'KAN-53' },
-  { id: 'personagens', rotulo: 'Personagens', sigla: 'Pe', card: 'KAN-49' },
-  { id: 'itens', rotulo: 'Itens', sigla: 'It', card: 'KAN-53' },
-  { id: 'diario', rotulo: 'Diário', sigla: 'Di', card: 'KAN-53' },
-  { id: 'playlist', rotulo: 'Lista de Reprodução', sigla: 'Mu', card: 'KAN-53' },
+export const ABAS_DIREITA: { id: AbaDireita; rotulo: string; card: string }[] = [
+  { id: 'chat', rotulo: 'Mensagens de Chat', card: 'KAN-47' },
+  { id: 'combate', rotulo: 'Encontros de Combate', card: 'KAN-50' },
+  { id: 'cenas', rotulo: 'Cenas', card: 'KAN-48' },
+  { id: 'posicionaveis', rotulo: 'Posicionáveis', card: 'KAN-53' },
+  { id: 'personagens', rotulo: 'Personagens', card: 'KAN-49' },
+  { id: 'itens', rotulo: 'Itens', card: 'KAN-53' },
+  { id: 'diario', rotulo: 'Diário', card: 'KAN-53' },
+  { id: 'playlist', rotulo: 'Lista de Reprodução', card: 'KAN-53' },
+  { id: 'config', rotulo: 'Configurações', card: 'KAN-54' },
 ]
 
 // Categorias da barra esquerda (12.13). Paredes e Iluminação estão fora do escopo.
-export const CATEGORIAS_ESQUERDA: { id: CategoriaEsquerda; rotulo: string; sigla: string }[] = [
-  { id: 'tokens', rotulo: 'Controles de Token', sigla: 'To' },
-  { id: 'desenho', rotulo: 'Ferramentas de Desenho', sigla: 'De' },
-  { id: 'som', rotulo: 'Controles de Som Ambiente', sigla: 'So' },
+export const CATEGORIAS_ESQUERDA: { id: CategoriaEsquerda; rotulo: string }[] = [
+  { id: 'tokens', rotulo: 'Controles de Token' },
+  { id: 'desenho', rotulo: 'Ferramentas de Desenho' },
+  { id: 'som', rotulo: 'Controles de Som Ambiente' },
 ]
+
+// Ferramentas de cada categoria (12.13). As de desenho e som entram no KAN-52.
+export const FERRAMENTAS: Record<CategoriaEsquerda, { id: string; rotulo: string }[]> = {
+  tokens: [
+    { id: 'selecionar', rotulo: 'Selecionar Tokens' },
+    { id: 'alvos', rotulo: 'Selecionar Alvos' },
+    { id: 'medir', rotulo: 'Medir Distância' },
+  ],
+  desenho: [],
+  som: [],
+}
 
 export type Papel = 'mestre' | 'jogador'
 

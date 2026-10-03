@@ -53,7 +53,7 @@ describe('calcularFps', () => {
 
 describe('barra direita', () => {
   it('segue a ordem da spec, começando pelo chat', () => {
-    expect(ABAS_DIREITA.map((a) => a.id)).toEqual(['chat', 'combate', 'cenas', 'posicionaveis', 'personagens', 'itens', 'diario', 'playlist'])
+    expect(ABAS_DIREITA.map((a) => a.id)).toEqual(['chat', 'combate', 'cenas', 'posicionaveis', 'personagens', 'itens', 'diario', 'playlist', 'config'])
   })
 })
 

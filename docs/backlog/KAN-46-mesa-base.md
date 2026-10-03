@@ -23,4 +23,4 @@ spec: docs/VTT_Mesa.md (12.1, 12.2, 12.14, 12.15)
 
 ## Falta (depende da Millie)
 
-- Ícones das barras: hoje mostram a sigla da aba. Estética final da mesa a partir das referências dela.
+- Estética das referências do Foundry que a Millie mandou (02/10): fundo vinho, botões escuros com ícone creme (Font Awesome, como o Foundry), borda laranja no ativo, painel escuro colado na borda direita, Configurações como aba da barra direita, fonte Signika.

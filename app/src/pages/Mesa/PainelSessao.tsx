@@ -11,15 +11,15 @@ export default function PainelSessao({ conectados, latencia, fps }: {
 
   return (
     <section className="mesa-sessao" aria-label="Painel de sessão">
-      <div className="mesa-sessao-mestre">
-        <span className="mesa-sessao-ponto" aria-hidden />
-        <strong>{mestre ? mestre.nomeConta : 'Mestre ausente'}</strong>
-        <span className="mesa-sessao-metricas">
-          {latencia === null ? '— ms' : `${latencia} ms`} · {fps} FPS
-        </span>
+      <div className="mesa-sessao-pessoa">
+        <span className="mesa-sessao-ponto mesa-sessao-ponto-mestre" aria-hidden />
+        <strong>{mestre ? mestre.nomeConta : 'Mestre ausente'} [Mestre]</strong>
+      </div>
+      <div className="mesa-sessao-metricas">
+        Latência <b>{latencia === null ? '—' : `${latencia}ms`}</b> FPS <b>{fps}</b>
       </div>
       {jogadores.map((j) => (
-        <div key={j.userId} className="mesa-sessao-jogador">
+        <div key={j.userId} className="mesa-sessao-pessoa">
           <span className="mesa-sessao-ponto" aria-hidden />
           {rotuloJogador(j)}
         </div>
