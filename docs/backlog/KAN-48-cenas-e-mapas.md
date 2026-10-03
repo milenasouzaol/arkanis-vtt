@@ -1,7 +1,7 @@
 ---
 id: KAN-48
 titulo: "Mesa: Cenas e Mapas"
-status: em análise
+status: concluído
 camada: back + front
 spec: docs/VTT_Mesa.md (12.5)
 ---
