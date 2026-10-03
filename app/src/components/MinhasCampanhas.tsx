@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { fallbackAvatarColor } from '../lib/color'
@@ -15,6 +15,7 @@ type CampaignItem = {
 
 export default function MinhasCampanhas() {
   const { session } = useAuth()
+  const navigate = useNavigate()
   const [campaigns, setCampaigns] = useState<CampaignItem[] | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
@@ -55,11 +56,8 @@ export default function MinhasCampanhas() {
       return
     }
     await supabase.from('campaign_members').insert({ campaign_id: data.id, user_id: session.user.id, role: 'mestre' })
-    setNewName('')
-    setNewDescription('')
-    setShowCreate(false)
-    setError(null)
-    loadCampaigns()
+    // 12.1: ao criar, o mestre vai direto pra dentro da mesa.
+    navigate(`/mesa/${data.id}`)
   }
 
   async function handleCopiarLink(c: CampaignItem) {
@@ -115,6 +113,7 @@ export default function MinhasCampanhas() {
                 </>
               )}
             </div>
+            <Link to={`/mesa/${c.id}`} className="character-tile-link" aria-label={`Abrir a mesa de ${c.name}`} />
             <div className="character-tile-info">
               <strong>{c.name}</strong>
               <span>{c.owner_id === session?.user.id ? 'Mestre' : 'Jogador'}</span>

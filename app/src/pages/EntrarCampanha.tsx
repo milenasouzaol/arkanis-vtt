@@ -46,7 +46,7 @@ export default function EntrarCampanha() {
     if (!selected || !campaignId) return
     setSaving(true)
     await supabase.from('characters').update({ campaign_id: campaignId }).eq('id', selected)
-    navigate(`/personagem/${selected}`)
+    navigate(`/mesa/${campaignId}`)
   }
 
   if (loading) {

@@ -21,7 +21,8 @@ export default function Navbar() {
 
   const isSheetRoute = /^\/personagem\/[^/]+$/.test(location.pathname) && location.pathname !== '/personagem/criar'
   const isCreationWizard = /^\/personagem\/criar\/[^/]+$/.test(location.pathname)
-  if (isSheetRoute || isCreationWizard) return null
+  const isMesa = location.pathname.startsWith('/mesa/')
+  if (isSheetRoute || isCreationWizard || isMesa) return null
 
   return (
     <nav className="navbar">

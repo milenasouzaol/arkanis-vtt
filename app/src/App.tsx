@@ -12,6 +12,7 @@ import SystemSelect from './pages/SystemSelect'
 import CharacterCreate from './pages/CharacterCreate'
 import CharacterSheet from './pages/CharacterSheet'
 import EntrarCampanha from './pages/EntrarCampanha'
+import Mesa from './pages/Mesa'
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/perfil/editar" element={<ProtectedRoute><EditarPerfil /></ProtectedRoute>} />
           <Route path="/jogar" element={<ProtectedRoute><Jogar /></ProtectedRoute>} />
           <Route path="/campanha/entrar/:code" element={<ProtectedRoute><EntrarCampanha /></ProtectedRoute>} />
+          <Route path="/mesa/:id" element={<ProtectedRoute><Mesa /></ProtectedRoute>} />
           <Route path="/personagem/criar" element={<ProtectedRoute><SystemSelect /></ProtectedRoute>} />
           <Route path="/personagem/criar/:system" element={<ProtectedRoute><CharacterCreate /></ProtectedRoute>} />
           <Route path="/personagem/:id" element={<ProtectedRoute><CharacterSheet /></ProtectedRoute>} />

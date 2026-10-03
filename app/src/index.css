@@ -11342,3 +11342,273 @@ textarea.inter-input {
   width: 10px;
   height: 10px;
 }
+
+/* ============================================================
+   Mesa (KAN-46) — estrutura. Cores só dos tokens já existentes;
+   a estética final vem das referências da Millie.
+   ============================================================ */
+
+.character-tile-link {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.mesa {
+  --mesa-destaque: var(--accent);
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.mesa-aviso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1em;
+  padding: 0 16px;
+  text-align: center;
+}
+
+.mesa-palco {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mesa-palco-vazio {
+  color: var(--text-dim);
+}
+
+.mesa-topo {
+  position: absolute;
+  top: 12px;
+  left: 64px;
+  right: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.mesa-topo > * {
+  pointer-events: auto;
+}
+
+.mesa-nome {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.mesa-config {
+  position: relative;
+}
+
+.mesa-config-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  z-index: 20;
+}
+
+.mesa-config-menu button {
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.mesa-config-menu button:hover {
+  background: var(--accent-bg);
+}
+
+.mesa-barra {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 6px;
+  z-index: 16;
+}
+
+.mesa-barra-esquerda {
+  left: 12px;
+}
+
+.mesa-barra-direita {
+  right: 12px;
+}
+
+.mesa-icone {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.mesa-icone:hover,
+.mesa-icone:focus-visible,
+.mesa-icone.ativo {
+  opacity: 1;
+}
+
+.mesa-icone.ativo {
+  border-color: var(--mesa-destaque);
+}
+
+.mesa-icone-sigla {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.mesa-icone-rotulo {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  padding: 4px 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.mesa-barra-direita .mesa-icone-rotulo,
+.mesa-config .mesa-icone-rotulo {
+  right: calc(100% + 8px);
+}
+
+.mesa-barra-esquerda .mesa-icone-rotulo {
+  left: calc(100% + 8px);
+}
+
+.mesa-icone:hover .mesa-icone-rotulo,
+.mesa-icone:focus-visible .mesa-icone-rotulo {
+  opacity: 1;
+}
+
+.mesa-painel {
+  position: absolute;
+  top: 64px;
+  right: 64px;
+  bottom: 12px;
+  width: min(340px, calc(100vw - 92px));
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  z-index: 15;
+}
+
+.mesa-painel-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mesa-painel-topo h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.mesa-painel-fechar {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text-dim);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mesa-painel-vazio {
+  padding: 14px;
+  color: var(--text-dim);
+}
+
+.mesa-sessao {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  max-width: calc(100vw - 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  z-index: 10;
+}
+
+.mesa-sessao-mestre,
+.mesa-sessao-jogador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.mesa-sessao-metricas {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.mesa-sessao-ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mesa-destaque);
+  flex: none;
+}
+
+@media (max-width: 600px) {
+  .mesa-topo {
+    left: 60px;
+    right: 12px;
+  }
+
+  .mesa-painel {
+    left: 60px;
+    right: 60px;
+    width: auto;
+  }
+}

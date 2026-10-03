@@ -707,3 +707,4 @@ Toda referência cruzada neste documento (ex.: "ver 11.4") aponta pra seção de
 - O mestre cria uma campanha (ver 4.4) e escolhe o **livro/sistema** que vai mestrar — hoje só aparece Ordem Paranormal como opção, já que é o único sistema pronto (ver 1, 4.2).
 - Ao confirmar, a pessoa é redirecionada direto pra dentro da mesa — a mesa carrega.
 - A mesa é o ambiente onde o mestre constrói tudo relacionado à sessão de RPG (mapas, desafios etc. — a detalhar nos próximos envios).
+*(02/10) O restante da seção 12 (12.2 a 12.15) se perdeu nesta cópia e foi restaurado em **`VTT_Mesa.md`**, a partir do extrato que a Millie mandou.*
