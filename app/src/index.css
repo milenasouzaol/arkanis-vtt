@@ -2537,6 +2537,10 @@ code, .counter {
 .vtt-avatar-wrap {
   position: relative;
   width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0 auto 1.3em;
 }
 
@@ -2553,8 +2557,8 @@ code, .counter {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 172px;
-  height: 172px;
+  width: 196px;
+  height: 196px;
   transform: translate(-50%, -50%);
   pointer-events: none;
   object-fit: contain;

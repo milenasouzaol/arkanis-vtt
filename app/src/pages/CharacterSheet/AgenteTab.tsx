@@ -7,6 +7,7 @@ import type { CharacterRecord } from './index'
 import RollResult, { type RollResultData } from './RollResult'
 import HabilidadesTab from './HabilidadesTab'
 import RituaisTab from './RituaisTab'
+import { fotoNaMoldura } from './molduras'
 import InventarioTab from './InventarioTab'
 import { efeitosValendo, penalidadeDeCarga, type AlvoDeBonus } from './itemMods'
 import CombateTab from './CombateTab'
@@ -359,7 +360,13 @@ export default function AgenteTab({
       <div className="vtt-col-side">
         <div className="vtt-card" style={{ textAlign: 'center' }}>
           <div className="vtt-avatar-wrap">
-            <img className="vtt-avatar" src={character.avatar_url ?? undefined} alt="" />
+            {/* Com moldura, a foto encolhe pro tamanho do furo dela e a moldura não cobre a foto. */}
+            <img
+              className="vtt-avatar"
+              src={character.avatar_url ?? undefined}
+              alt=""
+              style={character.avatar_frame ? { width: fotoNaMoldura(character.avatar_frame), height: fotoNaMoldura(character.avatar_frame) } : undefined}
+            />
             {character.avatar_frame && <img className="vtt-avatar-frame" src={character.avatar_frame} alt="" />}
           </div>
           {editMode && (
