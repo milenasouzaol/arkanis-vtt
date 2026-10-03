@@ -38,3 +38,13 @@ spec: docs/VTT_Mesa.md (12.3)
 - Abrir a ficha de dentro da mesa (janela portátil) é do KAN-49; hoje a rolagem feita na
   ficha aberta noutra aba já cai no chat.
 - "Modesto Condensed" não é fonte gratuita; no menu ela cai na fonte padrão.
+
+## Ajuste da Millie (02/10): menu Formato em cascata
+
+- Formato abre um menu com Em Linha / Fonte / Tamanho / Formato, cada um com ">" e um
+  submenu ao passar o mouse, como no print do Foundry (Cabeçalhos, Bloco, Alinhamento e
+  Tabela ficam fora, pela spec; Listas também, por não estar na spec).
+- O que se marca fica marcado (✓) e vale pra todas as próximas mensagens até a pessoa
+  desmarcar — inclusive depois de recarregar (guardado no navegador). O campo já mostra o
+  formato; "Formato" fica sublinhado quando há algo marcado. Limpar Formatação desmarca tudo.
+- O submenu abre pra esquerda quando não cabe à direita (o chat fica na borda da tela).

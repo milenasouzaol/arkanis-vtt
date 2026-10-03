@@ -1,33 +1,58 @@
 import { useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faImage, faMinus, faTextSlash } from '@fortawesome/free-solid-svg-icons'
-import { vazio } from './chat'
+import { faCheck, faChevronDown, faChevronRight, faImage, faMinus, faTextSlash } from '@fortawesome/free-solid-svg-icons'
+import { aplicarFormato, alternarEmLinha, estiloDoCampo, FORMATO_PADRAO, formatoVazio, vazio, type EmLinha, type FormatoAtivo } from './chat'
 
 const TAMANHOS = [
   { rotulo: 'Pequeno', px: 12 },
-  { rotulo: 'Normal', px: 15 },
+  { rotulo: 'Normal', px: null },
   { rotulo: 'Grande', px: 20 },
   { rotulo: 'Enorme', px: 28 },
 ]
 
-// Fontes do menu Parágrafo (12.3).
+// Fontes do menu Formato (12.3).
 export const FONTES = [
   'Amiri', 'Arial', 'Bruno Ace', 'Courier', 'Courier New', 'Modesto Condensed', 'Roboto',
   'Roboto Condensed', 'Roboto Slab', 'Signika', 'Times', 'Times New Roman',
 ]
 
-const EM_LINHA = [
-  { rotulo: 'Negrito', comando: 'bold' },
-  { rotulo: 'Itálico', comando: 'italic' },
-  { rotulo: 'Código', comando: 'code' },
-  { rotulo: 'Sublinhado', comando: 'underline' },
-  { rotulo: 'Tachado', comando: 'strikeThrough' },
-  { rotulo: 'Sobrescrito', comando: 'superscript' },
-  { rotulo: 'Subscrito', comando: 'subscript' },
+const EM_LINHA: { rotulo: string; chave: EmLinha }[] = [
+  { rotulo: 'Negrito', chave: 'negrito' },
+  { rotulo: 'Itálico', chave: 'italico' },
+  { rotulo: 'Código', chave: 'codigo' },
+  { rotulo: 'Sublinhado', chave: 'sublinhado' },
+  { rotulo: 'Tachado', chave: 'tachado' },
+  { rotulo: 'Sobrescrito', chave: 'sobrescrito' },
+  { rotulo: 'Subscrito', chave: 'subscrito' },
 ]
+
+type Submenu = 'emLinha' | 'fonte' | 'tamanho' | 'formato'
+
+const SUBMENUS: { id: Submenu; rotulo: string }[] = [
+  { id: 'emLinha', rotulo: 'Em Linha' },
+  { id: 'fonte', rotulo: 'Fonte' },
+  { id: 'tamanho', rotulo: 'Tamanho' },
+  { id: 'formato', rotulo: 'Formato' },
+]
+
+const CHAVE_FORMATO = 'arkanis:chat-formato'
+
+// O formato marcado é uma preferência de quem digita: fica no navegador.
+function formatoSalvo(): FormatoAtivo {
+  try {
+    const salvo = JSON.parse(localStorage.getItem(CHAVE_FORMATO) ?? 'null')
+    return salvo && Array.isArray(salvo.emLinha) ? { ...FORMATO_PADRAO, ...salvo } : FORMATO_PADRAO
+  } catch {
+    return FORMATO_PADRAO
+  }
+}
 
 function ehImagem(f: File) {
   return f.type.startsWith('image/')
+}
+
+function Marca({ ligada }: { ligada: boolean }) {
+  return <span className="chat-formato-marca">{ligada && <FontAwesomeIcon icon={faCheck} />}</span>
 }
 
 // Caixa de mensagem do chat: Enter envia, Shift+Enter quebra linha. Imagem entra pelo
@@ -40,10 +65,22 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
   const campoRef = useRef<HTMLDivElement>(null)
   const arquivoRef = useRef<HTMLInputElement>(null)
   const selecaoRef = useRef<Range | null>(null)
-  const [formato, setFormato] = useState(false)
-  const [cor, setCor] = useState('#000000')
+  const [menu, setMenu] = useState(false)
+  const [submenu, setSubmenu] = useState<Submenu | null>(null)
+  // Sem espaço à direita (o chat fica na borda da tela), o submenu abre pra esquerda.
+  const [subAEsquerda, setSubAEsquerda] = useState(false)
+  const [formato, setFormatoBruto] = useState<FormatoAtivo>(formatoSalvo)
   const [enviando, setEnviando] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
+
+  function setFormato(novo: FormatoAtivo) {
+    setFormatoBruto(novo)
+    try {
+      localStorage.setItem(CHAVE_FORMATO, JSON.stringify(novo))
+    } catch {
+      // sem armazenamento, o formato vale só até recarregar a página
+    }
+  }
 
   function guardarSelecao() {
     const sel = window.getSelection()
@@ -63,36 +100,22 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
 
   function comando(nome: string, valor?: string) {
     voltarSelecao()
-    if (nome === 'code') {
-      const sel = window.getSelection()
-      if (!sel?.rangeCount || sel.isCollapsed) return
-      const range = sel.getRangeAt(0)
-      const code = document.createElement('code')
-      code.appendChild(range.extractContents())
-      range.insertNode(code)
-    } else {
-      document.execCommand(nome, false, valor)
-    }
+    document.execCommand(nome, false, valor)
     guardarSelecao()
   }
 
-  // execCommand só conhece tamanhos 1-7: marca com 7 e troca por px de verdade.
-  function tamanho(px: number) {
-    comando('fontSize', '7')
-    campoRef.current?.querySelectorAll('font[size="7"]').forEach((f) => {
-      const span = document.createElement('span')
-      span.style.fontSize = `${px}px`
-      span.append(...Array.from(f.childNodes))
-      f.replaceWith(span)
-    })
-    setFormato(false)
+  // Limpar Formatação tira o que está marcado no menu e o que veio colado no texto.
+  function limparFormatacao() {
+    setFormato(FORMATO_PADRAO)
+    const campo = campoRef.current
+    if (campo) {
+      campo.querySelectorAll('b, i, u, s, strike, sup, sub, code, span, font, strong, em').forEach((el) => el.replaceWith(...Array.from(el.childNodes)))
+    }
   }
 
   function tamanhoPersonalizado() {
-    const valor = window.prompt('Tamanho da fonte, em pixels:', '18')
-    const px = Number(valor)
-    if (px >= 6 && px <= 96) tamanho(Math.round(px))
-    else setFormato(false)
+    const px = Number(window.prompt('Tamanho da fonte, em pixels:', String(formato.tamanho ?? 18)))
+    if (px >= 6 && px <= 96) setFormato({ ...formato, tamanho: Math.round(px) })
   }
 
   async function inserirImagens(arquivos: File[]) {
@@ -116,7 +139,7 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
     const campo = campoRef.current
     if (!campo || enviando || vazio(campo.innerHTML)) return
     setEnviando(true)
-    const ok = await onEnviar(campo.innerHTML)
+    const ok = await onEnviar(aplicarFormato(campo.innerHTML, formato))
     setEnviando(false)
     if (ok) {
       campo.innerHTML = ''
@@ -159,46 +182,108 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
   // Botões da barra não podem tirar o foco do campo, senão a seleção se perde.
   const manterFoco = (e: React.MouseEvent) => e.preventDefault()
 
+  function fecharMenu() {
+    setMenu(false)
+    setSubmenu(null)
+  }
+
   return (
     <div className={`chat-entrada${compacto ? ' compacta' : ''}`}>
       {!compacto && (
         <div className="chat-barra-formato">
           <div className="chat-formato">
-            <button type="button" className="chat-formato-botao" aria-expanded={formato} onMouseDown={manterFoco} onClick={() => setFormato((v) => !v)}>
+            <button
+              type="button"
+              className={`chat-formato-botao${formatoVazio(formato) ? '' : ' marcado'}`}
+              aria-expanded={menu}
+              onMouseDown={manterFoco}
+              onClick={(e) => {
+                if (menu) return fecharMenu()
+                setSubAEsquerda(e.currentTarget.getBoundingClientRect().left + 150 + 180 > window.innerWidth)
+                setMenu(true)
+              }}
+            >
               Formato <FontAwesomeIcon icon={faChevronDown} />
             </button>
-            {formato && (
+            {menu && (
               <>
-                <div className="dropdown-backdrop" onClick={() => setFormato(false)} />
-                <div className="chat-formato-menu" onMouseDown={manterFoco}>
-                  <p className="chat-formato-secao">Tamanho</p>
-                  {TAMANHOS.map((t) => (
-                    <button key={t.rotulo} type="button" onClick={() => tamanho(t.px)}>{t.rotulo}</button>
-                  ))}
-                  <button type="button" onClick={tamanhoPersonalizado}>Personalizado</button>
+                <div className="dropdown-backdrop" onClick={fecharMenu} />
+                <ul className={`chat-formato-menu${subAEsquerda ? ' sub-esquerda' : ''}`} role="menu" onMouseDown={manterFoco}>
+                  {SUBMENUS.map((s) => (
+                    <li key={s.id} className="chat-formato-item" onMouseEnter={() => setSubmenu(s.id)}>
+                      <button type="button" role="menuitem" aria-haspopup="true" aria-expanded={submenu === s.id} onClick={() => setSubmenu(s.id)}>
+                        {s.rotulo} <FontAwesomeIcon icon={faChevronRight} />
+                      </button>
 
-                  <p className="chat-formato-secao">Fonte</p>
-                  {FONTES.map((f) => (
-                    <button key={f} type="button" style={{ fontFamily: f }} onClick={() => { comando('fontName', f); setFormato(false) }}>{f}</button>
-                  ))}
+                      {submenu === s.id && (
+                        <ul className="chat-formato-sub" role="menu">
+                          {s.id === 'emLinha' &&
+                            EM_LINHA.map((c) => (
+                              <li key={c.chave}>
+                                <button type="button" role="menuitemcheckbox" aria-checked={formato.emLinha.includes(c.chave)} onClick={() => setFormato(alternarEmLinha(formato, c.chave))}>
+                                  <Marca ligada={formato.emLinha.includes(c.chave)} /> {c.rotulo}
+                                </button>
+                              </li>
+                            ))}
 
-                  <p className="chat-formato-secao">Formato</p>
-                  <label className="chat-formato-cor">
-                    Cor
-                    <input
-                      type="color"
-                      value={cor}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onChange={(e) => setCor(e.target.value)}
-                    />
-                    <button type="button" onClick={() => { comando('foreColor', cor); setFormato(false) }}>Aplicar</button>
-                  </label>
+                          {s.id === 'fonte' &&
+                            FONTES.map((f) => (
+                              <li key={f}>
+                                <button type="button" role="menuitemradio" aria-checked={formato.fonte === f} style={{ fontFamily: `'${f}'` }} onClick={() => setFormato({ ...formato, fonte: formato.fonte === f ? null : f })}>
+                                  <Marca ligada={formato.fonte === f} /> {f}
+                                </button>
+                              </li>
+                            ))}
 
-                  <p className="chat-formato-secao">Em Linha</p>
-                  {EM_LINHA.map((c) => (
-                    <button key={c.comando} type="button" onClick={() => { comando(c.comando); setFormato(false) }}>{c.rotulo}</button>
+                          {s.id === 'tamanho' && (
+                            <>
+                              {TAMANHOS.map((t) => (
+                                <li key={t.rotulo}>
+                                  <button type="button" role="menuitemradio" aria-checked={formato.tamanho === t.px} onClick={() => setFormato({ ...formato, tamanho: t.px })}>
+                                    <Marca ligada={formato.tamanho === t.px} /> {t.rotulo}
+                                  </button>
+                                </li>
+                              ))}
+                              <li>
+                                <button
+                                  type="button"
+                                  role="menuitemradio"
+                                  aria-checked={formato.tamanho !== null && !TAMANHOS.some((t) => t.px === formato.tamanho)}
+                                  onClick={tamanhoPersonalizado}
+                                >
+                                  <Marca ligada={formato.tamanho !== null && !TAMANHOS.some((t) => t.px === formato.tamanho)} />
+                                  Personalizado{formato.tamanho !== null && !TAMANHOS.some((t) => t.px === formato.tamanho) ? ` (${formato.tamanho}px)` : ''}
+                                </button>
+                              </li>
+                            </>
+                          )}
+
+                          {s.id === 'formato' && (
+                            <>
+                              <li className="chat-formato-cor">
+                                <Marca ligada={formato.cor !== null} /> Cor
+                                <input
+                                  type="color"
+                                  aria-label="Cor da fonte"
+                                  value={formato.cor ?? '#000000'}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onChange={(e) => setFormato({ ...formato, cor: e.target.value })}
+                                />
+                              </li>
+                              {formato.cor && (
+                                <li>
+                                  <button type="button" onClick={() => setFormato({ ...formato, cor: null })}>
+                                    <Marca ligada={false} /> Tirar cor
+                                  </button>
+                                </li>
+                              )}
+                            </>
+                          )}
+                        </ul>
+                      )}
+                    </li>
                   ))}
-                </div>
+                </ul>
               </>
             )}
           </div>
@@ -208,7 +293,7 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
           <button type="button" className="chat-barra-icone" aria-label="Inserir imagem" title="Inserir imagem" onMouseDown={manterFoco} onClick={() => { guardarSelecao(); arquivoRef.current?.click() }}>
             <FontAwesomeIcon icon={faImage} />
           </button>
-          <button type="button" className="chat-barra-icone" aria-label="Limpar Formatação" title="Limpar Formatação" onMouseDown={manterFoco} onClick={() => comando('removeFormat')}>
+          <button type="button" className="chat-barra-icone" aria-label="Limpar Formatação" title="Limpar Formatação" onMouseDown={manterFoco} onClick={limparFormatacao}>
             <FontAwesomeIcon icon={faTextSlash} />
           </button>
           <input
@@ -227,6 +312,7 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
       <div
         ref={campoRef}
         className="chat-campo"
+        style={estiloDoCampo(formato)}
         contentEditable
         role="textbox"
         aria-multiline="true"

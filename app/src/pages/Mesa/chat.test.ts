@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  aplicarFormato,
+  alternarEmLinha,
   autoria,
+  estiloDoCampo,
+  FORMATO_PADRAO,
+  formatoVazio,
+  type EmLinha,
   destinatario,
   ehPrivada,
   exportarRegistro,
@@ -139,5 +145,40 @@ describe('formulaDaRolagem', () => {
 
   it('sem dados usa o detalhe', () => {
     expect(formulaDaRolagem({ label: '', total: 5, detail: 'd20: 5', bonus: 0, dice: null })).toBe('d20: 5')
+  })
+})
+
+describe('formato que fica marcado', () => {
+  it('liga e desliga, e sobrescrito tira subscrito', () => {
+    let f = alternarEmLinha(FORMATO_PADRAO, 'negrito')
+    expect(f.emLinha).toEqual(['negrito'])
+    f = alternarEmLinha(f, 'subscrito')
+    f = alternarEmLinha(f, 'sobrescrito')
+    expect(f.emLinha).toEqual(['negrito', 'sobrescrito'])
+    f = alternarEmLinha(f, 'negrito')
+    expect(f.emLinha).toEqual(['sobrescrito'])
+  })
+
+  it('envolve a mensagem no formato marcado', () => {
+    const f = { emLinha: ['italico', 'negrito'] as EmLinha[], fonte: 'Roboto Slab', tamanho: 20, cor: '#ff0000' }
+    expect(aplicarFormato('oi', f)).toBe('<span style="font-family: \'Roboto Slab\'; font-size: 20px; color: #ff0000"><b><i>oi</i></b></span>')
+    expect(aplicarFormato('oi', FORMATO_PADRAO)).toBe('oi')
+  })
+
+  it('o que sai continua passando no filtro', () => {
+    const html = aplicarFormato('oi', { emLinha: ['codigo', 'sublinhado'], fonte: null, tamanho: 12, cor: null })
+    expect(sanitizarHtml(html)).toBe('<span style="font-size: 12px"><u><code>oi</code></u></span>')
+  })
+
+  it('não deixa injetar nada pela fonte ou pela cor', () => {
+    const html = aplicarFormato('oi', { emLinha: [], fonte: `x'"><script>`, tamanho: null, cor: 'red;background:url(x)' })
+    expect(html).toBe(`<span style="font-family: 'xscript'">oi</span>`)
+  })
+
+  it('mostra o formato no campo', () => {
+    expect(estiloDoCampo({ emLinha: ['negrito', 'sublinhado', 'tachado'], fonte: null, tamanho: 28, cor: '#00ff00' })).toEqual({
+      fontWeight: '700', textDecoration: 'underline line-through', fontSize: '28px', color: '#00ff00',
+    })
+    expect(formatoVazio(FORMATO_PADRAO)).toBe(true)
   })
 })

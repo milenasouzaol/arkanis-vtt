@@ -213,3 +213,62 @@ export function formulaDaRolagem(r: Rolagem): string {
   if (r.bonus) partes.push(String(Math.abs(r.bonus)))
   return partes.join(' + ').replace(/ \+ (\d+)$/, r.bonus < 0 ? ' − $1' : ' + $1')
 }
+
+// Formato do menu "Formato" (12.3): o que for marcado fica valendo pras próximas mensagens
+// até a pessoa desmarcar.
+export type EmLinha = 'negrito' | 'italico' | 'codigo' | 'sublinhado' | 'tachado' | 'sobrescrito' | 'subscrito'
+
+export type FormatoAtivo = {
+  emLinha: EmLinha[]
+  fonte: string | null
+  tamanho: number | null
+  cor: string | null
+}
+
+export const FORMATO_PADRAO: FormatoAtivo = { emLinha: [], fonte: null, tamanho: null, cor: null }
+
+export function alternarEmLinha(f: FormatoAtivo, chave: EmLinha): FormatoAtivo {
+  if (f.emLinha.includes(chave)) return { ...f, emLinha: f.emLinha.filter((c) => c !== chave) }
+  // Sobrescrito e subscrito não andam juntos.
+  const oposto: EmLinha | null = chave === 'sobrescrito' ? 'subscrito' : chave === 'subscrito' ? 'sobrescrito' : null
+  return { ...f, emLinha: [...f.emLinha.filter((c) => c !== oposto), chave] }
+}
+
+export function formatoVazio(f: FormatoAtivo): boolean {
+  return !f.emLinha.length && !f.fonte && !f.tamanho && !f.cor
+}
+
+const TAG_EM_LINHA: Record<EmLinha, string> = {
+  negrito: 'b', italico: 'i', codigo: 'code', sublinhado: 'u', tachado: 's', sobrescrito: 'sup', subscrito: 'sub',
+}
+
+const ORDEM_EM_LINHA: EmLinha[] = ['negrito', 'italico', 'sublinhado', 'tachado', 'codigo', 'sobrescrito', 'subscrito']
+
+// Envolve a mensagem inteira no formato marcado, na hora de enviar.
+export function aplicarFormato(html: string, f: FormatoAtivo): string {
+  let saida = html
+  for (const chave of ORDEM_EM_LINHA.filter((c) => f.emLinha.includes(c)).reverse()) {
+    const tag = TAG_EM_LINHA[chave]
+    saida = `<${tag}>${saida}</${tag}>`
+  }
+  const estilo = [
+    f.fonte && `font-family: '${f.fonte.replace(/['"<>;]/g, '')}'`,
+    f.tamanho && `font-size: ${Math.round(f.tamanho)}px`,
+    f.cor && /^#[0-9a-f]{6}$/i.test(f.cor) && `color: ${f.cor}`,
+  ].filter(Boolean)
+  return estilo.length ? `<span style="${estilo.join('; ')}">${saida}</span>` : saida
+}
+
+// Estilo do campo de digitação, pra pessoa já ver como a mensagem vai sair.
+export function estiloDoCampo(f: FormatoAtivo): Record<string, string> {
+  const e: Record<string, string> = {}
+  if (f.emLinha.includes('negrito')) e.fontWeight = '700'
+  if (f.emLinha.includes('italico')) e.fontStyle = 'italic'
+  const linhas = [f.emLinha.includes('sublinhado') && 'underline', f.emLinha.includes('tachado') && 'line-through'].filter(Boolean)
+  if (linhas.length) e.textDecoration = linhas.join(' ')
+  if (f.emLinha.includes('codigo')) e.fontFamily = 'ui-monospace, Consolas, monospace'
+  if (f.fonte) e.fontFamily = `'${f.fonte}'`
+  if (f.tamanho) e.fontSize = `${f.tamanho}px`
+  if (f.cor) e.color = f.cor
+  return e
+}
