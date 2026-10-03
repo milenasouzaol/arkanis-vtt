@@ -12624,8 +12624,13 @@ button.character-tile-link {
 }
 
 .janela-link {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--mesa-creme);
   font-size: 0.8rem;
   text-decoration: underline;
+  cursor: pointer;
 }
 
 .janela-cor input[type='color'] {
@@ -13047,4 +13052,397 @@ button.character-tile-link {
 
 .mesa-palco {
   user-select: none;
+}
+
+.janela.redimensionavel {
+  resize: both;
+  overflow: hidden;
+  min-width: 320px;
+  min-height: 240px;
+}
+
+.janela.redimensionavel .janela-corpo {
+  flex: 1;
+  padding: 0;
+}
+
+/* ---- Aba Personagens (KAN-49 parte 2), a partir do print "Atores" do Foundry ---- */
+
+.ator-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 4px 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #1a181d;
+  color: var(--mesa-creme);
+  font: 600 0.95rem 'Signika', var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ator-linha:hover {
+  background: #17151a;
+}
+
+.ator-linha[draggable='true'] {
+  cursor: grab;
+}
+
+.ator-token {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--mesa-creme-dim);
+  font-size: 1.2rem;
+}
+
+.ator-token img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ator-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Criar Personagem */
+.criar-personagem-tipos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.criar-personagem-tipo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #4a4650;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.criar-personagem-tipo input {
+  display: none;
+}
+
+.criar-personagem-tipo.ativo {
+  border-color: var(--mesa-creme);
+  background: #1d1b21;
+}
+
+.criar-personagem-bestiario {
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #2c2a30;
+  border-radius: 6px;
+}
+
+.criar-personagem-bestiario button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 4px 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #1a181d;
+  color: var(--mesa-creme);
+  text-align: left;
+  cursor: pointer;
+}
+
+.criar-personagem-bestiario button.ativo,
+.criar-personagem-bestiario button:hover {
+  background: #1d1b21;
+}
+
+.criar-personagem-bestiario .ator-token {
+  width: 36px;
+  height: 36px;
+}
+
+.criar-personagem-nome {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.88rem;
+}
+
+.criar-personagem-nome small {
+  color: var(--mesa-creme-dim);
+}
+
+/* Configurar Token */
+.token-principal {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.token-quadro {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  background: #0b0a0d;
+  border: 1px dashed #4a4650;
+  border-radius: 6px;
+  color: var(--mesa-creme-dim);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.token-quadro img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.token-variacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.token-variacao {
+  position: relative;
+  margin: 0;
+  width: 96px;
+}
+
+.token-variacao .token-quadro {
+  border-style: solid;
+  cursor: context-menu;
+}
+
+.token-variacao figcaption {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.token-tirar {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: #2b2830;
+  border: 1px solid #4a4650;
+  border-radius: 50%;
+  color: var(--mesa-creme);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.token-mais {
+  font-size: 1.3rem;
+}
+
+/* Ficha portátil */
+.ficha-portatil {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0 0 6px 6px;
+  background: #000;
+}
+
+.ator-previa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.ator-previa img {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Ficha de Ameaça (versão da aba Personagens) */
+.ficha-ameaca {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.ficha-ameaca-topo {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px 8px;
+}
+
+.ficha-ameaca-topo h3 {
+  margin: 0 0 2px;
+  font: 700 1.2rem 'Signika', var(--sans);
+}
+
+.ficha-ameaca-topo p {
+  margin: 0;
+  color: var(--mesa-creme-dim);
+  font-size: 0.85rem;
+}
+
+.ficha-ameaca-foto {
+  width: 72px;
+  height: 72px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #0b0a0d;
+  border-radius: 6px;
+  color: var(--mesa-creme-dim);
+  font-size: 1.6rem;
+}
+
+.ficha-ameaca-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ficha-ameaca-vida {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 16px 8px;
+}
+
+.ficha-ameaca-vida button {
+  padding: 2px 6px;
+  background: none;
+  border: 0;
+  color: var(--mesa-creme);
+  cursor: pointer;
+}
+
+.ficha-ameaca-barra {
+  position: relative;
+  flex: 1;
+  height: 22px;
+  overflow: hidden;
+  background: #2b2830;
+  border-radius: 4px;
+}
+
+.ficha-ameaca-barra span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--red);
+}
+
+.ficha-ameaca-barra strong {
+  position: relative;
+  display: block;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 22px;
+}
+
+.ficha-ameaca-abas {
+  margin: 0;
+}
+
+.ficha-ameaca-corpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 16px 16px;
+  font-size: 0.88rem;
+}
+
+.ficha-ameaca-atributos {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.ficha-ameaca-atributos div {
+  padding: 6px 0;
+  background: #1d1b21;
+  border-radius: 4px;
+}
+
+.ficha-ameaca-atributos span {
+  display: block;
+  color: var(--mesa-creme-dim);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ficha-ameaca-atributos strong {
+  font-size: 1.1rem;
+}
+
+.ficha-ameaca-lista {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.ficha-ameaca-lista dt {
+  font-weight: 700;
+}
+
+.ficha-ameaca-lista dd {
+  margin: 0;
+}
+
+.ficha-ameaca-presenca {
+  margin: 0 0 10px;
+}
+
+.ficha-ameaca-acao {
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  background: #1d1b21;
+  border-radius: 4px;
+}
+
+.ficha-ameaca-acao summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ficha-ameaca-acao summary span {
+  color: var(--mesa-creme-dim);
+}
+
+.ficha-ameaca-acao p {
+  margin: 6px 0 0;
+}
+
+.ficha-ameaca-texto {
+  margin: 0;
+  white-space: pre-line;
 }

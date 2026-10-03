@@ -27,6 +27,8 @@ export default function MeusPersonagens({ variant = 'perfil' }: { variant?: 'per
       .from('characters')
       .select('id, name, avatar_url, historico')
       .eq('user_id', session.user.id)
+      // NPCs do mestre vivem na aba Personagens da mesa, não aqui.
+      .eq('npc', false)
       .order('created_at', { ascending: false })
     setCharacters(data ?? [])
   }

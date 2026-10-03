@@ -32,6 +32,8 @@ export default function EscolherPersonagem({ campanha, codigoConvite, voltarPara
       .from('characters')
       .select('id, name, avatar_url, campaign_id')
       .eq('user_id', session.user.id)
+      // NPCs do mestre vivem na aba Personagens da mesa, não aqui.
+      .eq('npc', false)
       .order('created_at', { ascending: false })
       .then(({ data }) => setOpcoes(data ?? []))
   }, [session])

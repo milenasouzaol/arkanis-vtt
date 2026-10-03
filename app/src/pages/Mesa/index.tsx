@@ -7,11 +7,16 @@ import PainelConfig from './PainelConfig'
 import PainelSessao from './PainelSessao'
 import EscolherPersonagem from '../../components/EscolherPersonagem'
 import PalcoCena from './PalcoCena'
-import PainelCenas from './PainelCenas'
+import PainelCenas, { CriarPasta } from './PainelCenas'
 import EditorCena from './EditorCena'
 import { enviarImagemDaCena, useCenas } from './useCenas'
 import { useObjetos, type Ping } from './useObjetos'
-import { tamanhoInicial } from './cenas'
+import { tamanhoInicial, type Pasta } from './cenas'
+import PainelPersonagens from './PainelPersonagens'
+import { ConfigurarPropriedadeAtor, ConfigurarToken, ConfirmarExclusao, CriarPersonagem, FichaPortatil } from './JanelasAtor'
+import { colocarToken, enviarImagemDeToken, trocarVariacao, useAtores } from './useAtores'
+import { imagemDoToken, nivelDoJogador, nivelNaFichaDoJogador, variacoesDoToken, type Ator, type NivelAcesso } from './atores'
+import Janela from './Janela'
 import type { Cena } from './cenas'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
 import { autoria, type ModoEnvio } from './chat'
@@ -121,6 +126,13 @@ export default function Mesa() {
     setTimeout(() => setPings((l) => l.filter((x) => x.id !== p.id)), 2600)
   }, [])
   const objetos = useObjetos(cenas.atual?.id ?? null, receberPing)
+  const atores = useAtores(pronta?.campanha.id)
+  const [criandoAtor, setCriandoAtor] = useState<{ pasta: string | null } | null>(null)
+  const [pastaAtor, setPastaAtor] = useState<{ pai: string | null; editando?: Pasta } | null>(null)
+  const [propriedadeAtor, setPropriedadeAtor] = useState<string | null>(null)
+  const [tokenAtor, setTokenAtor] = useState<string | null>(null)
+  const [excluindoAtor, setExcluindoAtor] = useState<string | null>(null)
+  const [fichasAbertas, setFichasAbertas] = useState<string[]>([])
   const [avisoPalco, setAvisoPalco] = useState<string | null>(null)
 
   if (estado.tipo === 'carregando') {
@@ -262,6 +274,32 @@ export default function Mesa() {
     avisar(null)
   }
 
+  // ---- Personagens (12.7) ----
+
+  function nivelNoAtor(a: Ator): NivelAcesso {
+    if (souMestre) return 'dono'
+    const ficha = a.character_id ? atores.fichas[a.character_id] : undefined
+    if (a.tipo === 'jogador') return ficha ? nivelNaFichaDoJogador(ficha.user_id === userId, ficha) : 'limitado'
+    return nivelDoJogador(a, userId ?? '')
+  }
+
+  function abrirFicha(atorId: string) {
+    setFichasAbertas((l) => (l.includes(atorId) ? l : [...l, atorId]))
+  }
+
+  async function colocarAtor(atorId: string, ponto: { x: number; y: number }) {
+    if (!cenas.atual) return
+    const erro = await colocarToken(atorId, cenas.atual.id, ponto.x, ponto.y, cenas.atual.grid_size)
+    if (erro) avisar(erro, true)
+  }
+
+  async function criarNPC(nome: string, pasta: string | null) {
+    setCriandoAtor(null)
+    if (!userId) return
+    const novo = await atores.criarNPC(userId, nome, pasta)
+    if (novo) abrirFicha(novo.id)
+  }
+
   const cenaEditada = cenas.cenas.find((c) => c.id === editandoCena)
   const jogadoresParaCena = estado.membros
     .filter((m) => m.papel === 'jogador')
@@ -290,6 +328,15 @@ export default function Mesa() {
         pings={pings}
         focoPing={focoPing}
         onSoltarImagem={soltarImagem}
+        onColocarAtor={colocarAtor}
+        onAbrirFicha={abrirFicha}
+        variacoesDe={(id) => {
+          const a = atores.atores.find((x) => x.id === id)
+          return a ? variacoesDoToken(a) : []
+        }}
+        onVariacao={async (tokenId, url) => {
+          if (!(await trocarVariacao(tokenId, url))) avisar('Não deu pra trocar a imagem do token.', true)
+        }}
       />
 
       {destaque && destaque.id !== destaqueFechado && (
@@ -364,6 +411,26 @@ export default function Mesa() {
                 onSalvarPasta={cenas.salvarPasta}
                 onExcluirPasta={(p, comCenas) => cenas.excluirPasta(p.id, comCenas)}
               />
+            ) : aba === 'personagens' ? (
+              <PainelPersonagens
+                souMestre={souMestre}
+                userId={userId ?? ''}
+                atores={atores.atores}
+                pastas={atores.pastas}
+                fichas={atores.fichas}
+                criaturas={atores.criaturas}
+                acoes={{
+                  onAbrir: (a) => abrirFicha(a.id),
+                  onPropriedade: (a) => setPropriedadeAtor(a.id),
+                  onToken: (a) => setTokenAtor(a.id),
+                  onExcluir: (a) => setExcluindoAtor(a.id),
+                  onDuplicar: (a) => userId && atores.duplicar(a, userId),
+                  onCriar: (pasta) => setCriandoAtor({ pasta }),
+                  onCriarPasta: (pai) => setPastaAtor({ pai }),
+                  onEditarPasta: (p) => setPastaAtor({ pai: p.parent_id, editando: p }),
+                  onExcluirPasta: (p) => window.confirm(`Remover a pasta "${p.name}"? Os personagens dela ficam soltos.`) && atores.excluirPasta(p.id),
+                }}
+              />
             ) : aba === 'config' ? (
               <PainelConfig souMestre={souMestre} copiado={copiado} onCopiarConvite={copiarConvite} onSair={() => navigate('/jogar')} />
             ) : (
@@ -383,6 +450,80 @@ export default function Mesa() {
           onFechar={() => setEditandoCena(null)}
         />
       )}
+
+      {criandoAtor && (
+        <CriarPersonagem
+          pastas={atores.pastas}
+          pastaInicial={criandoAtor.pasta}
+          onCriarNPC={criarNPC}
+          onCriarAmeaca={async (c, pasta) => { setCriandoAtor(null); const novo = await atores.criarAmeaca(c, pasta); if (novo) abrirFicha(novo.id) }}
+          onFechar={() => setCriandoAtor(null)}
+        />
+      )}
+
+      {pastaAtor && (
+        <CriarPasta
+          inicial={pastaAtor.editando}
+          onCriar={(campos) => {
+            if (pastaAtor.editando) atores.salvarPasta(pastaAtor.editando.id, campos)
+            else atores.criarPasta({ ...campos, parent_id: pastaAtor.pai })
+            setPastaAtor(null)
+          }}
+          onFechar={() => setPastaAtor(null)}
+        />
+      )}
+
+      {(() => {
+        const a = atores.atores.find((x) => x.id === propriedadeAtor)
+        return a ? (
+          <ConfigurarPropriedadeAtor
+            ator={a}
+            jogadores={jogadoresParaCena}
+            onSalvar={(campos) => { atores.salvar(a.id, campos); setPropriedadeAtor(null) }}
+            onFechar={() => setPropriedadeAtor(null)}
+          />
+        ) : null
+      })()}
+
+      {(() => {
+        const a = atores.atores.find((x) => x.id === tokenAtor)
+        return a ? (
+          <ConfigurarToken
+            ator={a}
+            onEnviar={(f) => (userId ? enviarImagemDeToken(userId, f) : Promise.resolve(null))}
+            onSalvar={(campos) => { atores.salvar(a.id, campos); setTokenAtor(null) }}
+            onFechar={() => setTokenAtor(null)}
+          />
+        ) : null
+      })()}
+
+      {(() => {
+        const a = atores.atores.find((x) => x.id === excluindoAtor)
+        return a ? (
+          <ConfirmarExclusao ator={a} onSim={() => { atores.excluir(a); setExcluindoAtor(null) }} onNao={() => setExcluindoAtor(null)} />
+        ) : null
+      })()}
+
+      {fichasAbertas.map((id) => {
+        const a = atores.atores.find((x) => x.id === id)
+        if (!a) return null
+        const nivel = nivelNoAtor(a)
+        const fechar = () => setFichasAbertas((l) => l.filter((x) => x !== id))
+        // Limitado: só o card de prévia (5.8), sem abrir a ficha inteira.
+        if (nivel === 'limitado' || nivel === 'nenhum') {
+          const img = imagemDoToken(a, (a.character_id && atores.fichas[a.character_id]?.avatar_url) || null)
+          return (
+            <Janela key={id} titulo={a.name} largura={300} onFechar={fechar}>
+              <div className="ator-previa">
+                {img && <img src={img} alt="" />}
+                <strong>{a.name}</strong>
+                <p className="janela-dica">A ficha deste personagem está oculta pra você.</p>
+              </div>
+            </Janela>
+          )
+        }
+        return <FichaPortatil key={id} ator={a} podeEditar={nivel === 'dono'} onMudarPv={(pv) => atores.salvar(a.id, { pv_atual: pv })} onFechar={fechar} />
+      })}
 
       <PainelSessao conectados={online} latencia={latencia} fps={fps} />
     </main>

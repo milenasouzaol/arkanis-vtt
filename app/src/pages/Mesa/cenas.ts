@@ -70,8 +70,11 @@ export function copiaDaCena(c: Cena): CamposCena & { campaign_id: string } {
   return { ...camposDaCena(c), campaign_id: c.campaign_id, name: `${c.name} (cópia)` }
 }
 
-export type NoPasta = { pasta: Pasta; pastas: NoPasta[]; cenas: Cena[] }
-export type Arvore = { pastas: NoPasta[]; cenas: Cena[] }
+// Itens que moram em pastas (cenas, personagens…).
+export type ItemDePasta = { id: string; folder_id: string | null; name: string; sort: number; created_at: string }
+
+export type NoPasta<T extends ItemDePasta = Cena> = { pasta: Pasta; pastas: NoPasta<T>[]; cenas: T[] }
+export type Arvore<T extends ItemDePasta = Cena> = { pastas: NoPasta<T>[]; cenas: T[] }
 
 const porNome = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
 const porOrdem = (a: { sort: number; created_at: string }, b: { sort: number; created_at: string }) => a.sort - b.sort || a.created_at.localeCompare(b.created_at)
@@ -82,16 +85,16 @@ function normalizar(t: string) {
 
 // Pastas e subpastas com as cenas dentro, na ordem de cada pasta (alfabética ou manual).
 // Com busca, só ficam as cenas que batem e as pastas que levam até elas.
-export function montarArvore(pastas: Pasta[], cenas: Cena[], busca = '', ordemRaiz: 'alfabetica' | 'manual' = 'alfabetica'): Arvore {
+export function montarArvore<T extends ItemDePasta = Cena>(pastas: Pasta[], cenas: T[], busca = '', ordemRaiz: 'alfabetica' | 'manual' = 'alfabetica'): Arvore<T> {
   const termo = normalizar(busca.trim())
-  const bate = (c: Cena) => !termo || normalizar(c.name).includes(termo)
+  const bate = (c: T) => !termo || normalizar(c.name).includes(termo)
   const ids = new Set(pastas.map((p) => p.id))
 
-  function no(p: Pasta, visitadas: Set<string>): NoPasta | null {
+  function no(p: Pasta, visitadas: Set<string>): NoPasta<T> | null {
     if (visitadas.has(p.id)) return null
     const dentro = new Set(visitadas).add(p.id)
     const ordem = p.sort_mode === 'manual' ? porOrdem : porNome
-    const filhas = pastas.filter((f) => f.parent_id === p.id).sort(ordem).map((f) => no(f, dentro)).filter((n): n is NoPasta => n !== null)
+    const filhas = pastas.filter((f) => f.parent_id === p.id).sort(ordem).map((f) => no(f, dentro)).filter((n): n is NoPasta<T> => n !== null)
     const suas = cenas.filter((c) => c.folder_id === p.id && bate(c)).sort(ordem)
     if (termo && !suas.length && !filhas.length) return null
     return { pasta: p, pastas: filhas, cenas: suas }
@@ -100,7 +103,7 @@ export function montarArvore(pastas: Pasta[], cenas: Cena[], busca = '', ordemRa
   const ordem = ordemRaiz === 'manual' ? porOrdem : porNome
   return {
     // Pasta cuja mãe sumiu sobe pra raiz.
-    pastas: pastas.filter((p) => !p.parent_id || !ids.has(p.parent_id)).sort(ordem).map((p) => no(p, new Set())).filter((n): n is NoPasta => n !== null),
+    pastas: pastas.filter((p) => !p.parent_id || !ids.has(p.parent_id)).sort(ordem).map((p) => no(p, new Set())).filter((n): n is NoPasta<T> => n !== null),
     cenas: cenas.filter((c) => (!c.folder_id || !ids.has(c.folder_id)) && bate(c)).sort(ordem),
   }
 }
@@ -225,6 +228,7 @@ export type ObjetoCena = {
   flip_v: boolean
   character_id: string | null
   group_id: string | null
+  actor_id: string | null
   move_permission: 'dono' | 'todos' | 'jogadores'
   movable_by: string[]
   created_at: string

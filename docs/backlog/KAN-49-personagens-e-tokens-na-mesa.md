@@ -1,7 +1,7 @@
 ---
 id: KAN-49
 titulo: "Mesa: Personagens e Tokens na mesa"
-status: em andamento
+status: em análise
 camada: back + front
 spec: docs/VTT_Mesa.md (12.7, 12.8)
 ---
@@ -28,13 +28,35 @@ spec: docs/VTT_Mesa.md (12.7, 12.8)
 - Atalhos: Delete apaga, Ctrl+C/Ctrl+V, Ctrl+Z / Ctrl+Y (ou Ctrl+Shift+Z), Esc solta.
 - Regras puras em `src/pages/Mesa/tokens.ts`, testadas em `tokens.test.ts`.
 
-## Falta (parte 2)
+## Parte 2 — aba Personagens (03/10)
 
-- Aba Personagens (12.7): lista com jogadores automáticos, NPC e Ameaça, ficha portátil,
-  Configurar Propriedade da ficha, Configurar Token (principal + variáveis), arrastar o
-  personagem pro mapa.
-- No menu do token de personagem: Ficha de Personagem e Variação de Token.
-- Dono do personagem configurando a propriedade do próprio token.
+- Migration `0095_personagens_mesa.sql` (testada num Postgres local com RLS de verdade):
+  `campaign_actors` (jogador / NPC / Ameaça, tokens principal + variáveis, acesso por
+  jogador), `actor_folders`, `characters.npc`, `scene_tokens.actor_id`; personagem de
+  jogador entra e sai da lista sozinho (trigger) e o nome acompanha a ficha; Nenhum esconde
+  da lista; o dono configura os tokens do próprio personagem mas não mexe no acesso;
+  `colocar_token` (mestre, ou o dono com o próprio personagem) e `trocar_variacao` (só
+  imagens cadastradas no personagem); bucket `token_images`.
+- Aba Personagens no visual do print "Atores" do Foundry, com "Personagem" no lugar de
+  "Ator": Criar Personagem e Criar Pasta, pastas/subpastas, linhas com a miniatura do token.
+- Criar Personagem: NPC (abre a ficha completa de Ordem Paranormal numa janela flutuante e
+  redimensionável, sem as 5 etapas) ou Ameaça/Monstro (escolhida do bestiário, com busca).
+- Botão direito: Editar, Configurar Propriedade (Mostrar Usuários Mestres; Todos os Jogadores
+  + cada jogador; Nenhum / Limitado / Observador / Dono), Configurar Token (principal +
+  variáveis, botão direito renomeia), Duplicar, Excluir (com o texto da spec, Sim / Não).
+- Arrastar o personagem da lista pro mapa coloca o token principal onde soltar (o jogador
+  também, com o próprio). No token: duplo clique ou "Ficha de Personagem" abre a ficha;
+  "Variação de Token" troca a imagem.
+- Personagem de jogador segue os toggles da ficha (5.8): oculta → os outros só veem o card.
+- Ficha de Ameaça (Status / Combate / Descrição, Vida com as setas); a versão com rolagens no
+  turno vem com os Encontros de Combate (KAN-50).
+- NPCs não aparecem em "Meus Personagens" nem na escolha de personagem do convite.
+
+## Falta
+
+- Edição por jogador com nível "Dono" num NPC: hoje a ficha abre, mas o banco só deixa o
+  mestre salvar (precisa liberar nas tabelas da ficha).
+- Duplicar NPC copia a ficha principal, não perícias/inventário/rituais.
 
 ## Ajuste da Millie (03/10)
 

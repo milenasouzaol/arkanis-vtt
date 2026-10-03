@@ -221,7 +221,7 @@ function CriarCena({ pastas, pastaInicial, sugestao, onCriar, onFechar }: {
   )
 }
 
-function CriarPasta({ inicial, onCriar, onFechar }: {
+export function CriarPasta({ inicial, onCriar, onFechar }: {
   inicial?: Pasta
   onCriar: (p: Pick<Pasta, 'name' | 'color' | 'sort_mode'>) => void
   onFechar: () => void

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   faArrowDownWideShort, faArrowUpWideShort, faBullseye, faCopy, faCrosshairs, faLayerGroup, faLock, faLockOpen, faObjectGroup,
-  faObjectUngroup, faPaste, faRotateLeft, faRotateRight, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear,
+  faObjectUngroup, faPaste, faIdCard, faImages, faRotateLeft, faRotateRight, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import EfeitoClimatico from './EfeitoClimatico'
@@ -16,6 +16,8 @@ import {
   ordemParaTras, redimensionarPorAlca, refazer as passoRefazer, registrar, tocaNaCaixa, type Alca, type CamposObjeto, type Historico, type Passo,
 } from './tokens'
 import type { Ping, useObjetos } from './useObjetos'
+import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
+import type { Variacao } from './atores'
 
 const MAPA_PADRAO = { w: 4000, h: 3000 }
 const ORDEM_CAMADA: Record<Camada, number> = { mapa: 0, token: 1, mestre: 2 }
@@ -36,7 +38,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onVariacao }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -48,6 +50,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   pings: Ping[]
   focoPing: Ping | null
   onSoltarImagem: (origem: File | string, ponto: { x: number; y: number }, mapa: { w: number; h: number }) => void
+  onColocarAtor: (atorId: string, ponto: { x: number; y: number }) => void
+  onAbrirFicha: (atorId: string) => void
+  variacoesDe: (atorId: string) => Variacao[]
+  onVariacao: (tokenId: string, url: string) => void
 }) {
   const palcoRef = useRef<HTMLDivElement>(null)
   const [mapa, setMapa] = useState(MAPA_PADRAO)
@@ -441,6 +447,13 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
 
   function soltar(e: React.DragEvent<HTMLDivElement>) {
     setSoltando(false)
+    // Personagem arrastado da aba Personagens (12.8).
+    const ator = e.dataTransfer.getData(TIPO_ARRASTO_ATOR)
+    if (ator) {
+      e.preventDefault()
+      if (cena) onColocarAtor(ator, pontoNoMapa(e.clientX, e.clientY))
+      return
+    }
     if (!souMestre || arrastoInterno.current) return
     e.preventDefault()
     const origem = imagemDoArrasto({
@@ -467,9 +480,23 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
         ]
       : []
     const o = menu.objeto
+    // Token de personagem: abrir a ficha e trocar a aparência (12.8).
+    const doPersonagem: ItemMenu[] = o?.actor_id
+      ? [
+          { tipo: 'linha' },
+          { rotulo: 'Ficha de Personagem', icone: faIdCard, onClick: () => onAbrirFicha(o.actor_id!) },
+          ...(podeMover(o) && variacoesDe(o.actor_id).length > 1
+            ? [{
+                tipo: 'sub', rotulo: 'Variação de Token', icone: faImages,
+                itens: variacoesDe(o.actor_id).map((v) => ({ rotulo: `${v.url === o.image_url ? '✓ ' : ''}${v.nome}`, onClick: () => onVariacao(o.id, v.url) })),
+              } as ItemMenu]
+            : []),
+        ]
+      : []
     if (!o || !souMestre) {
       return [
         ...pingItens,
+        ...doPersonagem,
         ...(souMestre
           ? [
               { tipo: 'linha' } as ItemMenu,
@@ -493,6 +520,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       { rotulo: 'Copiar', icone: faCopy, onClick: () => copiar(ids) },
       { rotulo: 'Colar', icone: faPaste, desativado: !copiados.current.length, onClick: () => colar(menu.mapa) },
       ...historicoItens,
+      ...doPersonagem,
       { tipo: 'linha' },
       { rotulo: 'Configurar Propriedade', icone: faUserGear, onClick: () => setPropriedade(o) },
       {
@@ -544,6 +572,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       }}
       onDragStart={(e) => e.preventDefault()}
       onDragOver={(e) => {
+        if (e.dataTransfer.types.includes(TIPO_ARRASTO_ATOR)) {
+          e.preventDefault()
+          return
+        }
         if (!souMestre || arrastoInterno.current) return
         e.preventDefault()
         setSoltando(true)
@@ -582,6 +614,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
                 style={{ left: o.x, top: o.y, width: o.width, height: o.height, transform: `rotate(${o.rotation}deg)`, ['--borda' as string]: `${2 / vista.escala}px` }}
                 onPointerDown={(e) => pegarObjeto(e, o)}
                 onContextMenu={(e) => menuDoObjeto(e, o)}
+                onDoubleClick={() => o.actor_id && onAbrirFicha(o.actor_id)}
               >
                 <img src={o.image_url} alt={o.name ?? ''} draggable={false} style={{ transform: `scale(${o.flip_h ? -1 : 1}, ${o.flip_v ? -1 : 1})` }} />
                 {o.locked && selecionados.includes(o.id) && <FontAwesomeIcon icon={faLock} className="mesa-objeto-trava" style={{ fontSize: 16 / vista.escala }} />}
