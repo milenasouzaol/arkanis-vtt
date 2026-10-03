@@ -4,9 +4,6 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { SISTEMAS } from '../lib/sistemas'
 
-// Cores de destaque da referência que a Millie mandou (02/10).
-export const CORES_DESTAQUE = ['#b48af0', '#ff6b6b', '#ff69b4', '#4d9fff', '#00b39b', '#00c13f', '#dfb300', '#ff6433', '#a3a3a3']
-
 // Criar Campanha (spec 4.4): nome, descrição, capa, cor de destaque e o jogo.
 // O card seleciona o jogo; ao criar, o mestre entra direto na mesa (12.1).
 export default function CriarCampanha() {
@@ -16,7 +13,7 @@ export default function CriarCampanha() {
   const [nome, setNome] = useState('Nova Campanha')
   const [descricao, setDescricao] = useState('')
   const [capa, setCapa] = useState<string | null>(null)
-  const [cor, setCor] = useState(CORES_DESTAQUE[0])
+  const [cor, setCor] = useState('#b48af0')
   const [jogo, setJogo] = useState<string | null>(null)
   const [enviandoCapa, setEnviandoCapa] = useState(false)
   const [criando, setCriando] = useState(false)
@@ -105,20 +102,7 @@ export default function CriarCampanha() {
         </div>
         <div className="cc-linha">
           <span className="cc-rotulo">Cor de Destaque</span>
-          <div className="cc-cores" role="radiogroup" aria-label="Cor de Destaque">
-            {CORES_DESTAQUE.map((c) => (
-              <button
-                key={c}
-                type="button"
-                role="radio"
-                aria-checked={cor === c}
-                aria-label={c}
-                className={`cc-cor${cor === c ? ' ativa' : ''}`}
-                style={{ background: c }}
-                onClick={() => setCor(c)}
-              />
-            ))}
-          </div>
+          <input type="color" className="cc-cor-rgb" value={cor} aria-label="Cor de Destaque" onChange={(e) => setCor(e.target.value)} />
         </div>
       </section>
 

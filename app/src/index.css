@@ -11668,7 +11668,7 @@ textarea.inter-input {
   font-size: 0.95rem;
 }
 
-.cc-linha input,
+.cc-linha input:not([type='color']),
 .cc-linha textarea {
   width: 100%;
   padding: 0.35em 0.6em;
@@ -11721,23 +11721,9 @@ textarea.inter-input {
   cursor: default;
 }
 
-.cc-cores {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-}
-
-.cc-cor {
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.cc-cor.ativa {
-  box-shadow: 0 0 0 3px #fff;
+/* Mesmo seletor RGB do Editar Perfil (estilo padrão dos inputs do site). */
+.cc-cor-rgb {
+  justify-self: start;
 }
 
 .cc-jogos {
