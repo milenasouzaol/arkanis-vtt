@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { destinoDepoisDoConvite } from '../../lib/convitePendente'
 import { useAuth } from '../../lib/AuthContext'
 import { emptyDraft, type Attributes, type CharacterDraft } from './types'
 import Step1Intro from './Step1Intro'
@@ -102,7 +103,8 @@ export default function CharacterCreate() {
     if (abilityRows.length) await supabase.from('character_abilities').insert(abilityRows)
 
     setFinishing(false)
-    navigate(`/personagem/${character.id}`)
+    // Quem veio de um convite volta pra ele pra levar o personagem novo pra campanha.
+    navigate(destinoDepoisDoConvite(`/personagem/${character.id}`))
   }
 
   if (system !== 'ordem-paranormal') {

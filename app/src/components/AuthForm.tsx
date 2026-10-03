@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Provider } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { destinoDepoisDoConvite } from '../lib/convitePendente'
 import arkanisLogo from '../assets/icons/arkanis-logo.png'
 
 export default function AuthForm({
@@ -23,7 +24,7 @@ export default function AuthForm({
     setError(null)
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/jogar` },
+      options: { redirectTo: `${window.location.origin}${destinoDepoisDoConvite('/jogar')}` },
     })
     if (error) setError(error.message)
   }
@@ -42,7 +43,7 @@ export default function AuthForm({
         return
       }
       onDone?.()
-      navigate('/jogar')
+      navigate(destinoDepoisDoConvite('/jogar'))
     } else {
       const { error } = await supabase.auth.signUp({ email, password })
       setSubmitting(false)

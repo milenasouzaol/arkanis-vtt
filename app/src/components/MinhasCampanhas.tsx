@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { fallbackAvatarColor } from '../lib/color'
+import EscolherPersonagem from './EscolherPersonagem'
 import arkanisLogo from '../assets/icons/arkanis-logo.png'
 
 type CampaignItem = {
@@ -20,6 +21,9 @@ export default function MinhasCampanhas() {
   const [accentColor, setAccentColor] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  // Campanhas em que tenho personagem; nas outras (como jogador), clicar pede o personagem.
+  const [comPersonagem, setComPersonagem] = useState<Set<string>>(new Set())
+  const [escolhendo, setEscolhendo] = useState<CampaignItem | null>(null)
 
   async function loadCampaigns() {
     if (!session) return
@@ -28,6 +32,8 @@ export default function MinhasCampanhas() {
       .select('campaigns(id, name, description, invite_code, owner_id, cover_image_url)')
       .eq('user_id', session.user.id)
     setCampaigns((data ?? []).map((row) => row.campaigns as unknown as CampaignItem).filter(Boolean))
+    const { data: meus } = await supabase.from('characters').select('campaign_id').eq('user_id', session.user.id).not('campaign_id', 'is', null)
+    setComPersonagem(new Set((meus ?? []).map((c) => c.campaign_id as string)))
   }
 
   useEffect(() => {
@@ -73,6 +79,8 @@ export default function MinhasCampanhas() {
         {campaigns?.map((c) => (
           <div key={c.id} className="character-tile" style={c.cover_image_url ? { backgroundImage: `url(${c.cover_image_url})` } : { backgroundColor: fallbackAvatarColor(c.id) }}>
             {!c.cover_image_url && <img className="character-tile-watermark" src={arkanisLogo} alt="" />}
+            {/* Só o mestre convida gente pra campanha. */}
+            {c.owner_id === session?.user.id && (
             <div className="character-card-menu" onClick={(e) => e.preventDefault()}>
               <button
                 type="button"
@@ -91,7 +99,12 @@ export default function MinhasCampanhas() {
                 </>
               )}
             </div>
-            <Link to={`/mesa/${c.id}`} className="character-tile-link" aria-label={`Abrir a mesa de ${c.name}`} />
+            )}
+            {c.owner_id === session?.user.id || comPersonagem.has(c.id) ? (
+              <Link to={`/mesa/${c.id}`} className="character-tile-link" aria-label={`Abrir a mesa de ${c.name}`} />
+            ) : (
+              <button type="button" className="character-tile-link" aria-label={`Escolher personagem pra ${c.name}`} onClick={() => setEscolhendo(c)} />
+            )}
             <div className="character-tile-info">
               <strong>{c.name}</strong>
               <span>{c.owner_id === session?.user.id ? 'Mestre' : 'Jogador'}</span>
@@ -100,6 +113,9 @@ export default function MinhasCampanhas() {
         ))}
       </div>
 
+      {escolhendo && (
+        <EscolherPersonagem janela campanha={escolhendo} voltarPara={`/mesa/${escolhendo.id}`} onFechar={() => setEscolhendo(null)} />
+      )}
     </section>
   )
 }

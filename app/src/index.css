@@ -12298,3 +12298,51 @@ textarea.inter-input {
   line-height: 1;
   cursor: pointer;
 }
+
+/* ---- Escolher personagem pra entrar na campanha (convite, Minhas Campanhas, mesa) ---- */
+
+button.character-tile-link {
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.escolher-personagem {
+  text-align: left;
+}
+
+.modal-box.escolher-personagem {
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.escolher-personagem-ou {
+  margin: 1.4em 0 0.6em;
+  color: var(--text-dim);
+}
+
+.escolher-personagem-lista .character-tile {
+  width: 160px;
+  height: 160px;
+}
+
+.convite-capa {
+  width: 100%;
+  max-width: 640px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 1em;
+}
+
+.mesa-sem-personagem {
+  overflow-y: auto;
+  padding: 2em 16px;
+  font-family: var(--poppins);
+}
+
+.mesa-sem-personagem .escolher-personagem {
+  max-width: 640px;
+}

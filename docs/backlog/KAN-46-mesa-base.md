@@ -24,3 +24,15 @@ spec: docs/VTT_Mesa.md (12.1, 12.2, 12.14, 12.15)
 ## Falta (depende da Millie)
 
 - Estética das referências do Foundry que a Millie mandou (02/10): fundo preto e ícones, textos e bordas em cinza claro (o vinho dos prints era só exemplo; ícones Font Awesome, como o Foundry), painel escuro colado na borda direita, Configurações como aba da barra direita, fonte Signika.
+
+## Bugs achados pela Millie (03/10)
+
+- Abrir o link de convite já colocava a pessoa na campanha, mesmo sem personagem. Agora o
+  link só mostra a campanha (função `campaign_by_invite`, migration `0091`) e a pessoa vira
+  membro quando confirma o personagem.
+- Sem personagem: "Criar personagem de Ordem Paranormal" ou adicionar um que já tem. Depois
+  de criar, volta pro convite (ou pra mesa) sozinha. Quem não estava logado volta pro
+  convite depois de entrar ou criar a conta.
+- Jogador que já é da campanha mas sem personagem: clicar na campanha (Minhas Campanhas)
+  ou abrir a mesa mostra a janelinha de escolher personagem; só depois entra na mesa.
+- "Copiar link de convite" só aparece pro mestre (no card da campanha e na mesa).

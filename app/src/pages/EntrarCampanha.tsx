@@ -1,101 +1,73 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
-import { fallbackAvatarColor } from '../lib/color'
-import arkanisLogo from '../assets/icons/arkanis-logo.png'
+import { esquecerDestino, guardarConvite } from '../lib/convitePendente'
+import EscolherPersonagem from '../components/EscolherPersonagem'
 
-type CharacterOption = {
-  id: string
-  name: string | null
-  avatar_url: string | null
-}
+type Previa = { id: string; name: string; cover_image_url: string | null; owner_name: string | null; ja_membro: boolean }
 
+// Link de convite: mostra a campanha e pede o personagem. A pessoa só vira membro
+// quando confirma o personagem (antes, abrir o link já colocava ela na campanha).
 export default function EntrarCampanha() {
   const { code } = useParams()
   const { session } = useAuth()
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [campaignId, setCampaignId] = useState<string | null>(null)
-  const [campaignName, setCampaignName] = useState<string | null>(null)
-  const [characters, setCharacters] = useState<CharacterOption[]>([])
-  const [selected, setSelected] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const [previa, setPrevia] = useState<Previa | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
     if (!session || !code) return
-    supabase.rpc('join_campaign_by_code', { p_invite_code: code }).then(async ({ data, error: joinError }) => {
-      if (joinError) {
-        setError(joinError.message)
-        setLoading(false)
+    // Guarda o convite pra voltar aqui depois de criar o personagem.
+    guardarConvite(code)
+    ;(async () => {
+      const { data, error } = await supabase.rpc('campaign_by_invite', { p_invite_code: code })
+      const campanha = (data as Previa[] | null)?.[0]
+      if (error || !campanha) {
+        esquecerDestino()
+        setErro('Esse link de convite não é válido. Peça um novo pra quem está mestrando.')
         return
       }
-      setCampaignId(data)
-      const [{ data: campaign }, { data: chars }] = await Promise.all([
-        supabase.from('campaigns').select('name').eq('id', data).single(),
-        supabase.from('characters').select('id, name, avatar_url').eq('user_id', session.user.id),
-      ])
-      setCampaignName(campaign?.name ?? null)
-      setCharacters(chars ?? [])
-      setLoading(false)
-    })
-  }, [session, code])
+      if (campanha.ja_membro) {
+        // Já é da campanha: com personagem lá, vai direto pra mesa.
+        const { count } = await supabase
+          .from('characters')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', session.user.id)
+          .eq('campaign_id', campanha.id)
+        if (count) {
+          esquecerDestino()
+          navigate(`/mesa/${campanha.id}`, { replace: true })
+          return
+        }
+      }
+      setPrevia(campanha)
+    })()
+  }, [session, code, navigate])
 
-  async function handleConfirm() {
-    if (!selected || !campaignId) return
-    setSaving(true)
-    await supabase.from('characters').update({ campaign_id: campaignId }).eq('id', selected)
-    navigate(`/mesa/${campaignId}`)
-  }
-
-  if (loading) {
+  if (erro) {
     return (
       <main className="page-shell font-ashigea">
-        <p>Entrando na campanha…</p>
+        <h1>Não deu pra entrar</h1>
+        <p role="alert">{erro}</p>
       </main>
     )
   }
 
-  if (error) {
+  if (!previa || !code) {
     return (
       <main className="page-shell font-ashigea">
-        <h1>Não deu pra entrar</h1>
-        <p role="alert">{error}</p>
+        <p>Abrindo o convite…</p>
       </main>
     )
   }
 
   return (
     <main className="page-shell font-ashigea">
-      <h1>Você entrou em {campaignName ?? 'uma campanha'}!</h1>
-      <p className="character-list-desc">Escolha qual personagem vai levar pra essa campanha.</p>
-
-      {characters.length === 0 ? (
-        <p>Você ainda não tem nenhum personagem. Crie um primeiro pra poder entrar na campanha.</p>
-      ) : (
-        <div className="character-tile-grid">
-          {characters.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`character-tile character-tile-selectable${selected === c.id ? ' selected' : ''}`}
-              style={c.avatar_url ? { backgroundImage: `url(${c.avatar_url})` } : { backgroundColor: fallbackAvatarColor(c.id) }}
-              onClick={() => setSelected(c.id)}
-            >
-              {!c.avatar_url && <img className="character-tile-watermark" src={arkanisLogo} alt="" />}
-              <div className="character-tile-info">
-                <strong>{c.name || 'Sem nome'}</strong>
-                <span>Ordem Paranormal</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      <button type="button" className="btn-pill" style={{ marginTop: '1.4em' }} disabled={!selected || saving} onClick={handleConfirm}>
-        {saving ? 'Entrando...' : 'Confirmar'}
-      </button>
+      {previa.cover_image_url && <img className="convite-capa" src={previa.cover_image_url} alt="" />}
+      <h1>Você foi convidado pra {previa.name}</h1>
+      {previa.owner_name && <p className="character-list-desc">Mestrada por {previa.owner_name}.</p>}
+      <EscolherPersonagem campanha={previa} codigoConvite={code} voltarPara={`/campanha/entrar/${encodeURIComponent(code)}`} />
     </main>
   )
 }

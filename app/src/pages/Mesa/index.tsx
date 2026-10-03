@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/AuthContext'
 import BarraIcones, { BotaoIcone } from './BarraIcones'
 import PainelConfig from './PainelConfig'
 import PainelSessao from './PainelSessao'
+import EscolherPersonagem from '../../components/EscolherPersonagem'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
 import { autoria, type ModoEnvio } from './chat'
 import { enviarImagemDoChat, useChat } from './useChat'
@@ -118,6 +119,16 @@ export default function Mesa() {
 
   const { campanha } = estado
   const souMestre = campanha.owner_id === userId
+  const meu = estado.membros.find((m) => m.userId === userId)
+
+  // Jogador só entra na mesa com um personagem na campanha.
+  if (!souMestre && !meu?.personagemId) {
+    return (
+      <main className="mesa mesa-aviso mesa-sem-personagem">
+        <EscolherPersonagem campanha={campanha} voltarPara={`/mesa/${campanha.id}`} onFechar={() => navigate('/jogar')} />
+      </main>
+    )
+  }
   const abaAtual = ABAS_DIREITA.find((a) => a.id === aba)
 
   async function copiarConvite() {
