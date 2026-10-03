@@ -11371,6 +11371,8 @@ textarea.inter-input {
   background: var(--mesa-fundo);
   color: var(--mesa-creme);
   font-family: 'Signika', var(--sans);
+  /* O :root usa 145% (vira px fixo); aqui a altura da linha cresce junto com a letra. */
+  line-height: 1.4;
 }
 
 .mesa-aviso {
@@ -12104,10 +12106,23 @@ textarea.inter-input {
 }
 
 /* Menu Formato em cascata, como no print do Foundry (02/10) */
+/* Formato com algo marcado: texto mais claro e um pontinho, sem cara de campo de texto */
 .chat-formato-botao.marcado {
   color: #fff;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+}
+
+.chat-formato-botao.marcado::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.chat-barra-formato,
+.chat-formato-menu {
+  caret-color: transparent;
+  user-select: none;
 }
 
 .chat-formato-menu,
@@ -12214,10 +12229,13 @@ textarea.inter-input {
   border-color: var(--mesa-creme-dim);
 }
 
+/* O texto de exemplo não pega o formato marcado. */
 .chat-campo:empty::before {
   content: attr(data-placeholder);
   display: block;
   margin-top: 30px;
+  font: italic 400 0.9rem/1.4 'Signika', var(--sans);
+  text-decoration: none;
   color: var(--mesa-creme-dim);
   font-style: italic;
   text-align: center;

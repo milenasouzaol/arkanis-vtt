@@ -71,6 +71,8 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
   const [subAEsquerda, setSubAEsquerda] = useState(false)
   const [formato, setFormatoBruto] = useState<FormatoAtivo>(formatoSalvo)
   const [enviando, setEnviando] = useState(false)
+  // Sublinhado/tachado do campo passariam pro texto de exemplo; o formato só entra com algo escrito.
+  const [campoVazio, setCampoVazio] = useState(true)
   const [aviso, setAviso] = useState<string | null>(null)
 
   function setFormato(novo: FormatoAtivo) {
@@ -143,6 +145,7 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
     setEnviando(false)
     if (ok) {
       campo.innerHTML = ''
+      setCampoVazio(true)
       setAviso(null)
     } else setAviso('Não deu pra enviar a mensagem.')
   }
@@ -312,7 +315,8 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
       <div
         ref={campoRef}
         className="chat-campo"
-        style={estiloDoCampo(formato)}
+        style={campoVazio ? undefined : estiloDoCampo(formato)}
+        onInput={(e) => setCampoVazio(e.currentTarget.innerHTML === '' || e.currentTarget.innerHTML === '<br>')}
         contentEditable
         role="textbox"
         aria-multiline="true"
