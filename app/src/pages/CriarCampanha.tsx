@@ -21,17 +21,18 @@ export default function CriarCampanha() {
   const [enviandoCapa, setEnviandoCapa] = useState(false)
   const [criando, setCriando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
+  const [erroCapa, setErroCapa] = useState<string | null>(null)
 
   async function escolherCapa(e: ChangeEvent<HTMLInputElement>) {
     const arquivo = e.target.files?.[0]
     if (!arquivo || !session) return
     setEnviandoCapa(true)
-    setErro(null)
+    setErroCapa(null)
     const caminho = `${session.user.id}/${Date.now()}-${arquivo.name.replace(/[^\w.-]/g, '_')}`
     const { error } = await supabase.storage.from('campaign_covers').upload(caminho, arquivo)
     setEnviandoCapa(false)
     if (error) {
-      setErro(`Não deu pra enviar a imagem: ${error.message}`)
+      setErroCapa(`Não deu pra enviar a imagem: ${error.message}`)
       return
     }
     setCapa(supabase.storage.from('campaign_covers').getPublicUrl(caminho).data.publicUrl)
@@ -99,6 +100,7 @@ export default function CriarCampanha() {
               </svg>
               {enviandoCapa ? 'Enviando…' : capa ? 'Trocar imagem' : 'Escolher imagem'}
             </button>
+            {erroCapa && <p role="alert" className="cc-erro">{erroCapa}</p>}
           </div>
         </div>
         <div className="cc-linha">
