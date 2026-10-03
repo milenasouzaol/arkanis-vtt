@@ -224,6 +224,9 @@ export type ObjetoCena = {
   flip_h: boolean
   flip_v: boolean
   character_id: string | null
+  group_id: string | null
+  move_permission: 'dono' | 'todos' | 'jogadores'
+  movable_by: string[]
   created_at: string
 }
 

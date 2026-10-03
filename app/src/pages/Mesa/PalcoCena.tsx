@@ -1,47 +1,81 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import {
+  faArrowDownWideShort, faArrowUpWideShort, faBullseye, faCopy, faCrosshairs, faLayerGroup, faLock, faLockOpen, faObjectGroup,
+  faObjectUngroup, faPaste, faRotateLeft, faRotateRight, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear,
+} from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import EfeitoClimatico from './EfeitoClimatico'
-import { ajustarVista, filtroAmbiente, imagemDoArrasto, ladrilhoHex, redimensionarProporcional, telaParaMapa, tracoDaGrade, zoomEm, type Cena, type ObjetoCena, type Vista } from './cenas'
+import MenuContexto, { type ItemMenu } from './MenuContexto'
+import Janela, { Campo } from './Janela'
+import {
+  ajustarVista, filtroAmbiente, imagemDoArrasto, ladrilhoHex, telaParaMapa, tracoDaGrade, zoomEm,
+  type Camada, type Cena, type ObjetoCena, type Vista,
+} from './cenas'
+import {
+  ALCAS, anguloAte, camposAtuais, comGrupo, deslocamentoDaTecla, desfazer as passoDesfazer, HISTORICO_VAZIO, ordemParaFrente,
+  ordemParaTras, redimensionarPorAlca, refazer as passoRefazer, registrar, type Alca, type CamposObjeto, type Historico, type Passo,
+} from './tokens'
+import type { Ping, useObjetos } from './useObjetos'
 
-const ORDEM_CAMADA = { mapa: 0, token: 1, mestre: 2 }
-
-// Tamanho do mapa quando a cena não tem imagem de fundo.
 const MAPA_PADRAO = { w: 4000, h: 3000 }
+const ORDEM_CAMADA: Record<Camada, number> = { mapa: 0, token: 1, mestre: 2 }
+const CAMADAS: { id: Camada; rotulo: string }[] = [
+  { id: 'token', rotulo: 'Tokens' },
+  { id: 'mestre', rotulo: 'Mestre (DM)' },
+  { id: 'mapa', rotulo: 'Mapa' },
+]
 
-// Centro da mesa: a cena com imagem, grade, objetos, escuridão, ambiente e clima.
-// Arrastar o fundo move o mapa, a rodinha do mouse dá zoom. O mestre solta imagens aqui:
-// sem fundo, a imagem vira o fundo; com fundo, entra por cima onde foi solta.
-export default function PalcoCena({ cena, souMestre, objetos, aviso, onSoltarImagem, onAlterarObjeto, onExcluirObjeto }: {
+type Objetos = ReturnType<typeof useObjetos>
+
+type Gesto =
+  | { tipo: 'mapa'; x: number; y: number; vx: number; vy: number; botao: number; andou: boolean }
+  | { tipo: 'mover'; x: number; y: number; ids: string[]; inicio: Record<string, { x: number; y: number }>; dx: number; dy: number }
+  | { tipo: 'tamanho'; x: number; y: number; alca: Alca; o: ObjetoCena; ultimo?: CamposObjeto }
+  | { tipo: 'girar'; o: ObjetoCena; ultimo?: number }
+
+// Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
+// Arrastar o fundo move o mapa (botão esquerdo ou direito), a rodinha dá zoom.
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem }: {
   cena: Cena | null
   souMestre: boolean
-  objetos: ObjetoCena[]
+  userId: string
+  nomeUsuario: string
+  meusPersonagens: string[]
+  jogadores: { userId: string; rotulo: string }[]
+  obj: Objetos
   aviso: string | null
+  pings: Ping[]
+  focoPing: Ping | null
   onSoltarImagem: (origem: File | string, ponto: { x: number; y: number }, mapa: { w: number; h: number }) => void
-  onAlterarObjeto: (id: string, campos: Partial<Pick<ObjetoCena, 'x' | 'y' | 'width' | 'height'>>, salvar: boolean) => void
-  onExcluirObjeto: (id: string) => void
 }) {
   const palcoRef = useRef<HTMLDivElement>(null)
   const [mapa, setMapa] = useState(MAPA_PADRAO)
   const [vista, setVista] = useState<Vista>({ x: 0, y: 0, escala: 1 })
   const [soltando, setSoltando] = useState(false)
-  const arrasto = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null)
-  const [selecionado, setSelecionado] = useState<string | null>(null)
-  // Objeto sendo movido ou redimensionado pelo mestre.
-  const mexendo = useRef<{ id: string; modo: 'mover' | 'tamanho'; x: number; y: number; o: ObjetoCena; ultimo?: Partial<ObjetoCena> } | null>(null)
+  const [selecionados, setSelecionados] = useState<string[]>([])
+  const [menu, setMenu] = useState<{ x: number; y: number; mapa: { x: number; y: number }; objeto: ObjetoCena | null } | null>(null)
+  const [propriedade, setPropriedade] = useState<ObjetoCena | null>(null)
+  const gesto = useRef<Gesto | null>(null)
+  const ultimoEnvio = useRef(0)
+  // Arrastar com o botão direito move o mapa; aí o menu não abre.
+  const panouComDireito = useRef(false)
+  const historico = useRef<Historico>(HISTORICO_VAZIO)
+  const [, setVersaoHistorico] = useState(0)
+  const copiados = useRef<ObjetoCena[]>([])
+  const objetos = obj.objetos
+  const visiveis = objetos.filter((o) => souMestre || o.layer !== 'mestre')
 
-  // Delete apaga o objeto selecionado (fora de campos de texto).
-  useEffect(() => {
-    if (!selecionado || !souMestre) return
-    const tecla = (e: KeyboardEvent) => {
-      if (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"]')) return
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        onExcluirObjeto(selecionado)
-        setSelecionado(null)
-      }
-      if (e.key === 'Escape') setSelecionado(null)
-    }
-    window.addEventListener('keydown', tecla)
-    return () => window.removeEventListener('keydown', tecla)
-  }, [selecionado, souMestre, onExcluirObjeto])
+  // Quem pode mexer em cada objeto: o mestre sempre; o jogador no próprio personagem ou
+  // quando o mestre liberou (Configurar Propriedade). O banco confere de novo.
+  const podeMover = useCallback(
+    (o: ObjetoCena) =>
+      souMestre ||
+      (!o.locked && o.layer !== 'mestre' &&
+        ((o.character_id !== null && meusPersonagens.includes(o.character_id)) ||
+          o.move_permission === 'todos' ||
+          (o.move_permission === 'jogadores' && o.movable_by.includes(userId)))),
+    [souMestre, meusPersonagens, userId],
+  )
 
   // Tamanho real da imagem de fundo.
   useEffect(() => {
@@ -54,60 +88,320 @@ export default function PalcoCena({ cena, souMestre, objetos, aviso, onSoltarIma
     img.src = cena.background_url
   }, [cena?.background_url])
 
-  // Trocou de cena ou de imagem: o mapa se ajusta à tela.
+  // Trocou de cena ou de imagem: o mapa se ajusta à tela e a seleção some.
   useLayoutEffect(() => {
     const palco = palcoRef.current
     if (palco) setVista(ajustarVista(mapa.w, mapa.h, palco.clientWidth, palco.clientHeight))
+    setSelecionados([])
+    historico.current = HISTORICO_VAZIO
   }, [cena?.id, mapa])
 
-  // Rodinha do mouse = zoom no ponto do mouse (listener próprio pra poder impedir a rolagem).
+  // Ping de Foco (12.8): a câmera de todo mundo vai pro ponto.
+  useEffect(() => {
+    const palco = palcoRef.current
+    if (!focoPing || !palco) return
+    setVista((v) => ({ ...v, x: palco.clientWidth / 2 - focoPing.x * v.escala, y: palco.clientHeight / 2 - focoPing.y * v.escala }))
+  }, [focoPing])
+
+  const pontoNoMapa = useCallback(
+    (clientX: number, clientY: number) => {
+      const r = palcoRef.current?.getBoundingClientRect()
+      return r ? telaParaMapa(clientX - r.left, clientY - r.top, vista) : { x: 0, y: 0 }
+    },
+    [vista],
+  )
+
+  // ---- Aplicar mudanças (com desfazer) ----
+
+  const aplicar = useCallback(
+    async (passo: Passo) => {
+      if (passo.tipo === 'alterar') await obj.alterarVarios(passo.depois)
+      else if (passo.tipo === 'criar') await obj.criarVarios(passo.objetos)
+      else await obj.excluirVarios(passo.objetos.map((o) => o.id))
+    },
+    [obj],
+  )
+
+  const fazer = useCallback(
+    async (passo: Passo) => {
+      historico.current = registrar(historico.current, passo)
+      setVersaoHistorico((v) => v + 1)
+      await aplicar(passo)
+    },
+    [aplicar],
+  )
+
+  const alterar = useCallback(
+    (mudancas: Record<string, CamposObjeto>) => {
+      const antes = Object.fromEntries(
+        Object.entries(mudancas).flatMap(([id, c]) => {
+          const o = objetos.find((x) => x.id === id)
+          return o ? [[id, camposAtuais(o, c)]] : []
+        }),
+      )
+      return fazer({ tipo: 'alterar', antes, depois: mudancas })
+    },
+    [objetos, fazer],
+  )
+
+  const desfazer = useCallback(() => {
+    const r = passoDesfazer(historico.current)
+    if (!r) return
+    historico.current = r.historico
+    setVersaoHistorico((v) => v + 1)
+    aplicar(r.aplicar)
+  }, [aplicar])
+
+  const refazer = useCallback(() => {
+    const r = passoRefazer(historico.current)
+    if (!r) return
+    historico.current = r.historico
+    setVersaoHistorico((v) => v + 1)
+    aplicar(r.aplicar)
+  }, [aplicar])
+
+  const eliminar = useCallback(
+    (ids: string[]) => {
+      const lista = objetos.filter((o) => ids.includes(o.id))
+      if (!lista.length) return
+      setSelecionados([])
+      fazer({ tipo: 'excluir', objetos: lista })
+    },
+    [objetos, fazer],
+  )
+
+  const copiar = useCallback((ids: string[]) => {
+    copiados.current = objetos.filter((o) => ids.includes(o.id))
+  }, [objetos])
+
+  // Colar: as cópias entram em volta do ponto, mantendo a posição de uma em relação à outra.
+  const colar = useCallback(
+    (ponto: { x: number; y: number } | null) => {
+      if (!cena || !copiados.current.length) return
+      const base = copiados.current
+      const minX = Math.min(...base.map((o) => o.x))
+      const minY = Math.min(...base.map((o) => o.y))
+      const destino = ponto ?? { x: minX + cena.grid_size, y: minY + cena.grid_size }
+      const grupos = new Map<string, string>()
+      const novos = base.map((o) => ({
+        ...o,
+        id: crypto.randomUUID(),
+        scene_id: cena.id,
+        x: Math.round(destino.x + (o.x - minX)),
+        y: Math.round(destino.y + (o.y - minY)),
+        group_id: o.group_id ? grupos.get(o.group_id) ?? grupos.set(o.group_id, crypto.randomUUID()).get(o.group_id)! : null,
+        created_at: new Date().toISOString(),
+      }))
+      setSelecionados(novos.map((o) => o.id))
+      fazer({ tipo: 'criar', objetos: novos })
+    },
+    [cena, fazer],
+  )
+
+  const moverPor = useCallback(
+    async (ids: string[], dx: number, dy: number) => {
+      const todos = comGrupo(objetos, ids)
+      if (souMestre) {
+        await alterar(Object.fromEntries(todos.map((id) => {
+          const o = objetos.find((x) => x.id === id)!
+          return [id, { x: Math.round(o.x + dx), y: Math.round(o.y + dy) }]
+        })))
+      } else {
+        obj.alterarVarios(Object.fromEntries(todos.map((id) => {
+          const o = objetos.find((x) => x.id === id)!
+          return [id, { x: o.x + dx, y: o.y + dy }]
+        })), false)
+        await obj.moverComoJogador(ids, dx, dy)
+      }
+    },
+    [objetos, souMestre, alterar, obj],
+  )
+
+  // ---- Teclado (12.8 e 12.13) ----
+
+  useEffect(() => {
+    const tecla = (e: KeyboardEvent) => {
+      if (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"]')) return
+      const ctrl = e.ctrlKey || e.metaKey
+      if (souMestre && ctrl && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) refazer()
+        else desfazer()
+        return
+      }
+      if (souMestre && ctrl && e.key.toLowerCase() === 'y') {
+        e.preventDefault()
+        refazer()
+        return
+      }
+      if (souMestre && ctrl && e.key.toLowerCase() === 'v') {
+        colar(null)
+        return
+      }
+      if (!selecionados.length) return
+      if (e.key === 'Escape') setSelecionados([])
+      if (souMestre && ctrl && e.key.toLowerCase() === 'c') copiar(selecionados)
+      if (souMestre && (e.key === 'Delete' || e.key === 'Backspace')) eliminar(selecionados)
+      const d = deslocamentoDaTecla(e.key, cena?.grid_size ?? 100)
+      if (d) {
+        e.preventDefault()
+        const ids = selecionados.filter((id) => {
+          const o = objetos.find((x) => x.id === id)
+          return o && podeMover(o) && !o.locked
+        })
+        if (ids.length) moverPor(ids, d.dx, d.dy)
+      }
+    }
+    window.addEventListener('keydown', tecla)
+    return () => window.removeEventListener('keydown', tecla)
+  }, [selecionados, souMestre, objetos, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer])
+
+  // Rodinha: zoom no ponto do mouse; com Shift ou Ctrl em cima de algo selecionado, gira (12.13).
   useEffect(() => {
     const palco = palcoRef.current
     if (!palco) return
     const roda = (e: WheelEvent) => {
       e.preventDefault()
+      if ((e.shiftKey || e.ctrlKey) && souMestre && selecionados.length) {
+        const passo = e.deltaY < 0 ? -15 : 15
+        alterar(Object.fromEntries(selecionados.map((id) => {
+          const o = objetos.find((x) => x.id === id)
+          return [id, { rotation: (((o?.rotation ?? 0) + passo) % 360 + 360) % 360 }]
+        })))
+        return
+      }
       const r = palco.getBoundingClientRect()
       setVista((v) => zoomEm(v, e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX - r.left, e.clientY - r.top))
     }
     palco.addEventListener('wheel', roda, { passive: false })
     return () => palco.removeEventListener('wheel', roda)
-  }, [])
+  }, [souMestre, selecionados, objetos, alterar])
 
-  function comecar(e: React.PointerEvent<HTMLDivElement>) {
+  // ---- Mouse ----
+
+  function comecarNoMapa(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0 && e.button !== 2) return
-    setSelecionado(null)
-    arrasto.current = { x: e.clientX, y: e.clientY, vx: vista.x, vy: vista.y }
+    if (e.button === 0) setSelecionados([])
+    panouComDireito.current = false
+    gesto.current = { tipo: 'mapa', x: e.clientX, y: e.clientY, vx: vista.x, vy: vista.y, botao: e.button, andou: false }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
 
-  function mover(e: React.PointerEvent<HTMLDivElement>) {
-    const m = mexendo.current
-    if (m) {
-      const dx = (e.clientX - m.x) / vista.escala
-      const dy = (e.clientY - m.y) / vista.escala
-      const campos = m.modo === 'mover' ? { x: Math.round(m.o.x + dx), y: Math.round(m.o.y + dy) } : redimensionarProporcional(m.o, dx, dy)
-      m.ultimo = campos
-      onAlterarObjeto(m.id, campos, false)
+  function pegarObjeto(e: React.PointerEvent, o: ObjetoCena) {
+    // Botão direito no objeto é só pro menu dele, não move o mapa.
+    if (e.button === 2) {
+      e.stopPropagation()
       return
     }
-    const a = arrasto.current
-    if (a) setVista((v) => ({ ...v, x: a.vx + e.clientX - a.x, y: a.vy + e.clientY - a.y }))
-  }
-
-  function terminar() {
-    const m = mexendo.current
-    if (m?.ultimo) onAlterarObjeto(m.id, m.ultimo, true)
-    mexendo.current = null
-    arrasto.current = null
-  }
-
-  function pegarObjeto(e: React.PointerEvent, o: ObjetoCena, modo: 'mover' | 'tamanho') {
-    if (!souMestre || e.button !== 0) return
+    if (e.button !== 0 || !podeMover(o)) return
     e.stopPropagation()
-    setSelecionado(o.id)
-    if (o.locked) return
-    mexendo.current = { id: o.id, modo, x: e.clientX, y: e.clientY, o }
+    let sel = selecionados
+    if (e.shiftKey) sel = sel.includes(o.id) ? sel.filter((id) => id !== o.id) : [...sel, o.id]
+    else if (!sel.includes(o.id)) sel = [o.id]
+    setSelecionados(sel)
+    const ids = comGrupo(objetos, sel).filter((id) => {
+      const x = objetos.find((y) => y.id === id)
+      return x && podeMover(x) && !x.locked
+    })
+    if (!ids.length) return
+    gesto.current = {
+      tipo: 'mover', x: e.clientX, y: e.clientY, ids, dx: 0, dy: 0,
+      inicio: Object.fromEntries(ids.map((id) => {
+        const x = objetos.find((y) => y.id === id)!
+        return [id, { x: x.x, y: x.y }]
+      })),
+    }
     palcoRef.current?.setPointerCapture(e.pointerId)
+  }
+
+  function pegarAlca(e: React.PointerEvent, o: ObjetoCena, alca: Alca) {
+    if (e.button !== 0) return
+    e.stopPropagation()
+    gesto.current = { tipo: 'tamanho', x: e.clientX, y: e.clientY, alca, o }
+    palcoRef.current?.setPointerCapture(e.pointerId)
+  }
+
+  function pegarGiro(e: React.PointerEvent, o: ObjetoCena) {
+    if (e.button !== 0) return
+    e.stopPropagation()
+    gesto.current = { tipo: 'girar', o }
+    palcoRef.current?.setPointerCapture(e.pointerId)
+  }
+
+  function mover(e: React.PointerEvent<HTMLDivElement>) {
+    const g = gesto.current
+    if (!g) return
+    if (g.tipo === 'mapa') {
+      if (Math.abs(e.clientX - g.x) + Math.abs(e.clientY - g.y) > 4) {
+        g.andou = true
+        if (g.botao === 2) panouComDireito.current = true
+      }
+      setVista((v) => ({ ...v, x: g.vx + e.clientX - g.x, y: g.vy + e.clientY - g.y }))
+    } else if (g.tipo === 'mover') {
+      g.dx = Math.round((e.clientX - g.x) / vista.escala)
+      g.dy = Math.round((e.clientY - g.y) / vista.escala)
+      const posicoes = Object.fromEntries(g.ids.map((id) => [id, { x: g.inicio[id].x + g.dx, y: g.inicio[id].y + g.dy }]))
+      obj.alterarVarios(posicoes, false)
+      // Todo mundo vê o arrasto ao vivo, uns 20 quadros por segundo.
+      if (performance.now() - ultimoEnvio.current > 50) {
+        ultimoEnvio.current = performance.now()
+        obj.transmitirArrasto(posicoes)
+      }
+    } else if (g.tipo === 'tamanho') {
+      const dx = (e.clientX - g.x) / vista.escala
+      const dy = (e.clientY - g.y) / vista.escala
+      g.ultimo = redimensionarPorAlca(g.o, g.alca, dx, dy)
+      obj.alterarVarios({ [g.o.id]: g.ultimo }, false)
+    } else {
+      const p = pontoNoMapa(e.clientX, e.clientY)
+      g.ultimo = anguloAte(g.o, p.x, p.y, e.shiftKey)
+      obj.alterarVarios({ [g.o.id]: { rotation: g.ultimo } }, false)
+    }
+  }
+
+  async function terminar() {
+    const g = gesto.current
+    gesto.current = null
+    if (!g) return
+    if (g.tipo === 'mapa') return
+    if (g.tipo === 'mover') {
+      if (!g.dx && !g.dy) return
+      if (souMestre) {
+        // volta pro início e grava pelo histórico (desfazer devolve pra cá)
+        historico.current = registrar(historico.current, {
+          tipo: 'alterar',
+          antes: Object.fromEntries(g.ids.map((id) => [id, g.inicio[id]])),
+          depois: Object.fromEntries(g.ids.map((id) => [id, { x: g.inicio[id].x + g.dx, y: g.inicio[id].y + g.dy }])),
+        })
+        setVersaoHistorico((v) => v + 1)
+        await obj.alterarVarios(Object.fromEntries(g.ids.map((id) => [id, { x: g.inicio[id].x + g.dx, y: g.inicio[id].y + g.dy }])))
+      } else {
+        const ok = await obj.moverComoJogador(g.ids, g.dx, g.dy)
+        if (!ok) obj.alterarVarios(Object.fromEntries(g.ids.map((id) => [id, g.inicio[id]])), false)
+      }
+      return
+    }
+    if (g.tipo === 'tamanho' && g.ultimo) {
+      historico.current = registrar(historico.current, { tipo: 'alterar', antes: { [g.o.id]: camposAtuais(g.o, g.ultimo) }, depois: { [g.o.id]: g.ultimo } })
+      setVersaoHistorico((v) => v + 1)
+      await obj.alterarVarios({ [g.o.id]: g.ultimo })
+    }
+    if (g.tipo === 'girar' && g.ultimo !== undefined) {
+      historico.current = registrar(historico.current, { tipo: 'alterar', antes: { [g.o.id]: { rotation: g.o.rotation } }, depois: { [g.o.id]: { rotation: g.ultimo } } })
+      setVersaoHistorico((v) => v + 1)
+      await obj.alterarVarios({ [g.o.id]: { rotation: g.ultimo } })
+    }
+  }
+
+  function abrirMenu(clientX: number, clientY: number, objeto: ObjetoCena | null) {
+    setMenu({ x: clientX, y: clientY, mapa: pontoNoMapa(clientX, clientY), objeto })
+  }
+
+  function menuDoObjeto(e: React.MouseEvent, o: ObjetoCena) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!selecionados.includes(o.id) && podeMover(o)) setSelecionados([o.id])
+    abrirMenu(e.clientX, e.clientY, o)
   }
 
   function soltar(e: React.DragEvent<HTMLDivElement>) {
@@ -119,14 +413,85 @@ export default function PalcoCena({ cena, souMestre, objetos, aviso, onSoltarIma
       html: e.dataTransfer.getData('text/html'),
       uris: e.dataTransfer.getData('text/uri-list'),
     })
-    const r = palcoRef.current?.getBoundingClientRect()
-    const ponto = r ? telaParaMapa(e.clientX - r.left, e.clientY - r.top, vista) : { x: 0, y: 0 }
-    onSoltarImagem(origem ?? '', ponto, mapa)
+    onSoltarImagem(origem ?? '', pontoNoMapa(e.clientX, e.clientY), mapa)
+  }
+
+  // ---- Menu do botão direito (12.8) ----
+
+  function itensDoMenu(): ItemMenu[] {
+    if (!menu) return []
+    const ping = (foco: boolean) => obj.pingar({ id: crypto.randomUUID(), x: menu.mapa.x, y: menu.mapa.y, foco, nome: nomeUsuario })
+    const pingItens: ItemMenu[] = [
+      { rotulo: 'Ping Todos', icone: faTowerBroadcast, onClick: () => ping(false) },
+      ...(souMestre ? [{ rotulo: 'Ping de Foco', icone: faCrosshairs, onClick: () => ping(true) } as ItemMenu] : []),
+    ]
+    const historicoItens: ItemMenu[] = souMestre
+      ? [
+          { rotulo: 'Desfazer', icone: faRotateLeft, desativado: historico.current.posicao === 0, onClick: desfazer },
+          { rotulo: 'Refazer', icone: faRotateRight, desativado: historico.current.posicao >= historico.current.passos.length, onClick: refazer },
+        ]
+      : []
+    const o = menu.objeto
+    if (!o || !souMestre) {
+      return [
+        ...pingItens,
+        ...(souMestre
+          ? [
+              { tipo: 'linha' } as ItemMenu,
+              { rotulo: 'Colar', icone: faPaste, desativado: !copiados.current.length, onClick: () => colar(menu.mapa) } as ItemMenu,
+              ...historicoItens,
+            ]
+          : []),
+      ]
+    }
+    const ids = selecionados.includes(o.id) ? selecionados : [o.id]
+    const todosTravados = ids.every((id) => objetos.find((x) => x.id === id)?.locked)
+    const agrupados = ids.some((id) => objetos.find((x) => x.id === id)?.group_id)
+    const cada = (f: (x: ObjetoCena) => CamposObjeto) =>
+      Object.fromEntries(ids.flatMap((id) => {
+        const x = objetos.find((y) => y.id === id)
+        return x ? [[id, f(x)]] : []
+      }))
+    return [
+      ...pingItens,
+      { tipo: 'linha' },
+      { rotulo: 'Copiar', icone: faCopy, onClick: () => copiar(ids) },
+      { rotulo: 'Colar', icone: faPaste, desativado: !copiados.current.length, onClick: () => colar(menu.mapa) },
+      ...historicoItens,
+      { tipo: 'linha' },
+      { rotulo: 'Configurar Propriedade', icone: faUserGear, onClick: () => setPropriedade(o) },
+      {
+        tipo: 'sub', rotulo: 'Alterar Camada', icone: faLayerGroup,
+        itens: CAMADAS.map((c) => ({ rotulo: `${o.layer === c.id ? '✓ ' : ''}${c.rotulo}`, onClick: () => alterar(cada(() => ({ layer: c.id }))) })),
+      },
+      { tipo: 'linha' },
+      { rotulo: 'Trazer para a Frente', icone: faArrowUpWideShort, onClick: () => alterar(Object.fromEntries(Object.entries(ordemParaFrente(objetos, ids)).map(([id, sort]) => [id, { sort }]))) },
+      { rotulo: 'Enviar para Trás', icone: faArrowDownWideShort, onClick: () => alterar(Object.fromEntries(Object.entries(ordemParaTras(objetos, ids)).map(([id, sort]) => [id, { sort }]))) },
+      {
+        rotulo: todosTravados ? 'Desbloquear Posição' : 'Travar Posição', icone: todosTravados ? faLockOpen : faLock,
+        onClick: () => alterar(cada(() => ({ locked: !todosTravados }))),
+      },
+      { tipo: 'linha' },
+      {
+        tipo: 'sub', rotulo: 'Transformação Avançada', icone: faSlidersH,
+        itens: [
+          { rotulo: 'Agrupar', icone: faObjectGroup, desativado: ids.length < 2, onClick: () => { const g = crypto.randomUUID(); alterar(cada(() => ({ group_id: g }))) } },
+          { rotulo: 'Desagrupar', icone: faObjectUngroup, desativado: !agrupados, onClick: () => alterar(cada(() => ({ group_id: null }))) },
+          { tipo: 'linha' },
+          { rotulo: 'Virar Horizontalmente', icone: faLeftRight, onClick: () => alterar(cada((x) => ({ flip_h: !x.flip_h }))) },
+          { rotulo: 'Virar Verticalmente', icone: faUpDown, onClick: () => alterar(cada((x) => ({ flip_v: !x.flip_v }))) },
+        ],
+      },
+      { tipo: 'linha' },
+      { rotulo: 'Eliminar', icone: faTrash, perigo: true, onClick: () => eliminar(ids) },
+    ]
   }
 
   const grade = cena && cena.grid_type !== 'sem' ? cena : null
   const hex = grade?.grid_type === 'hexagono' ? ladrilhoHex(grade.grid_size) : null
   const traco = grade ? tracoDaGrade(grade.grid_style, grade.grid_thickness) : undefined
+  const unico = souMestre && selecionados.length === 1 ? objetos.find((o) => o.id === selecionados[0]) ?? null : null
+  const alcaPx = 10 / vista.escala
 
   return (
     <div
@@ -134,11 +499,14 @@ export default function PalcoCena({ cena, souMestre, objetos, aviso, onSoltarIma
       className={`mesa-palco${soltando ? ' soltando' : ''}`}
       aria-label="Cena"
       style={{ background: cena?.background_color ?? undefined }}
-      onPointerDown={comecar}
+      onPointerDown={comecarNoMapa}
       onPointerMove={mover}
       onPointerUp={terminar}
-      onPointerCancel={terminar}
-      onContextMenu={(e) => e.preventDefault()}
+      onPointerCancel={() => (gesto.current = null)}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        if (!panouComDireito.current) abrirMenu(e.clientX, e.clientY, null)
+      }}
       onDragOver={(e) => {
         if (!souMestre) return
         e.preventDefault()
@@ -161,56 +529,110 @@ export default function PalcoCena({ cena, souMestre, objetos, aviso, onSoltarIma
           {grade && (
             <svg className="mesa-grade" width={mapa.w} height={mapa.h} aria-hidden>
               <defs>
-                <pattern
-                  id={`grade-${grade.id}`}
-                  width={hex ? hex.largura : grade.grid_size}
-                  height={hex ? hex.altura : grade.grid_size}
-                  patternUnits="userSpaceOnUse"
-                >
-                  <path
-                    d={hex ? hex.caminho : `M${grade.grid_size} 0H0V${grade.grid_size}`}
-                    fill="none"
-                    stroke={grade.grid_color}
-                    strokeWidth={grade.grid_thickness}
-                    strokeDasharray={traco}
-                  />
+                <pattern id={`grade-${grade.id}`} width={hex ? hex.largura : grade.grid_size} height={hex ? hex.altura : grade.grid_size} patternUnits="userSpaceOnUse">
+                  <path d={hex ? hex.caminho : `M${grade.grid_size} 0H0V${grade.grid_size}`} fill="none" stroke={grade.grid_color} strokeWidth={grade.grid_thickness} strokeDasharray={traco} />
                 </pattern>
               </defs>
               <rect width="100%" height="100%" fill={`url(#grade-${grade.id})`} opacity={grade.grid_opacity} />
             </svg>
           )}
-          {[...objetos]
-            .filter((o) => souMestre || o.layer !== 'mestre')
+
+          {[...visiveis]
             .sort((a, b) => ORDEM_CAMADA[a.layer] - ORDEM_CAMADA[b.layer] || a.sort - b.sort)
             .map((o) => (
               <div
                 key={o.id}
-                className={`mesa-objeto${o.id === selecionado ? ' selecionado' : ''}${o.layer === 'mestre' ? ' camada-mestre' : ''}${souMestre ? ' mexivel' : ''}`}
-                style={{
-                  left: o.x,
-                  top: o.y,
-                  width: o.width,
-                  height: o.height,
-                  transform: `rotate(${o.rotation}deg) scale(${o.flip_h ? -1 : 1}, ${o.flip_v ? -1 : 1})`,
-                }}
-                onPointerDown={(e) => pegarObjeto(e, o, 'mover')}
+                className={`mesa-objeto${selecionados.includes(o.id) ? ' selecionado' : ''}${o.layer === 'mestre' ? ' camada-mestre' : ''}${podeMover(o) && !o.locked ? ' mexivel' : ''}`}
+                style={{ left: o.x, top: o.y, width: o.width, height: o.height, transform: `rotate(${o.rotation}deg)`, ['--borda' as string]: `${2 / vista.escala}px` }}
+                onPointerDown={(e) => pegarObjeto(e, o)}
+                onContextMenu={(e) => menuDoObjeto(e, o)}
               >
-                <img src={o.image_url} alt={o.name ?? ''} draggable={false} />
-                {o.id === selecionado && souMestre && !o.locked && (
-                  <span className="mesa-objeto-alca" style={{ width: 14 / vista.escala, height: 14 / vista.escala }} onPointerDown={(e) => pegarObjeto(e, o, 'tamanho')} />
-                )}
+                <img src={o.image_url} alt={o.name ?? ''} draggable={false} style={{ transform: `scale(${o.flip_h ? -1 : 1}, ${o.flip_v ? -1 : 1})` }} />
+                {o.locked && selecionados.includes(o.id) && <FontAwesomeIcon icon={faLock} className="mesa-objeto-trava" style={{ fontSize: 16 / vista.escala }} />}
               </div>
             ))}
+
+          {/* Alças de tamanho e a bolinha de girar, por cima de tudo (12.8) */}
+          {unico && !unico.locked && (
+            <div
+              className="mesa-selecao"
+              style={{ left: unico.x, top: unico.y, width: unico.width, height: unico.height, transform: `rotate(${unico.rotation}deg)`, ['--borda' as string]: `${2 / vista.escala}px` }}
+            >
+              {ALCAS.map((a) => (
+                <span
+                  key={`${a.hx}${a.hy}`}
+                  className="mesa-alca"
+                  style={{ width: alcaPx, height: alcaPx, left: `${(a.hx + 1) * 50}%`, top: `${(a.hy + 1) * 50}%`, cursor: a.hx === 0 ? 'ns-resize' : a.hy === 0 ? 'ew-resize' : a.hx === a.hy ? 'nwse-resize' : 'nesw-resize' }}
+                  onPointerDown={(e) => pegarAlca(e, unico, a)}
+                />
+              ))}
+              <span className="mesa-giro" style={{ width: alcaPx * 1.6, height: alcaPx * 1.6, top: -alcaPx * 2.2, right: -alcaPx * 2.2 }} onPointerDown={(e) => pegarGiro(e, unico)} title="Girar" />
+            </div>
+          )}
+
+          {pings.map((p) => (
+            <span key={p.id} className="mesa-ping" style={{ left: p.x, top: p.y, ['--escala' as string]: String(1 / vista.escala) }}>
+              <span className="mesa-ping-nome">{p.nome}</span>
+            </span>
+          ))}
         </div>
       ) : (
-        <p className="mesa-palco-vazio">
-          {souMestre ? 'Nenhuma cena ativa. Crie uma na aba Cenas ou arraste uma imagem pra cá.' : 'Nenhuma cena ativa'}
-        </p>
+        <p className="mesa-palco-vazio">{souMestre ? 'Nenhuma cena ativa. Crie uma na aba Cenas ou arraste uma imagem pra cá.' : 'Nenhuma cena ativa'}</p>
       )}
       {cena && cena.darkness > 0 && <div className="mesa-escuridao" style={{ opacity: cena.darkness * 0.92 }} />}
       {cena?.weather && <EfeitoClimatico key={cena.weather} clima={cena.weather} />}
       {soltando && <div className="mesa-soltar">{cena?.background_url ? 'Solte pra colocar a imagem na cena' : 'Solte pra usar como fundo da cena'}</div>}
       {aviso && !soltando && <div className="mesa-soltar" role="status">{aviso}</div>}
+
+      {/* O menu não pode deixar o clique cair no mapa (o palco captura o ponteiro). */}
+      {menu && (
+        <div onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onContextMenu={(e) => e.stopPropagation()}>
+          <MenuContexto x={menu.x} y={menu.y} itens={itensDoMenu()} onFechar={() => setMenu(null)} />
+        </div>
+      )}
+
+      {propriedade && (
+        <ConfigurarPropriedade
+          objeto={propriedade}
+          jogadores={jogadores}
+          onSalvar={(campos) => { alterar({ [propriedade.id]: campos }); setPropriedade(null) }}
+          onFechar={() => setPropriedade(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+// Configurar Propriedade do token (12.8): quem, além do dono e do mestre, pode movê-lo.
+function ConfigurarPropriedade({ objeto, jogadores, onSalvar, onFechar }: {
+  objeto: ObjetoCena
+  jogadores: { userId: string; rotulo: string }[]
+  onSalvar: (campos: CamposObjeto) => void
+  onFechar: () => void
+}) {
+  const inicial = objeto.move_permission === 'jogadores' ? objeto.movable_by[0] ?? 'dono' : objeto.move_permission
+  const [quem, setQuem] = useState(inicial)
+  return (
+    <div onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onContextMenu={(e) => e.stopPropagation()}>
+      <Janela titulo={`Configurar Propriedade: ${objeto.name || 'Token'}`} icone={faBullseye} largura={420} onFechar={onFechar}>
+        <form
+          className="janela-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (quem === 'dono' || quem === 'todos') onSalvar({ move_permission: quem, movable_by: [] })
+            else onSalvar({ move_permission: 'jogadores', movable_by: [quem] })
+          }}
+        >
+          <Campo rotulo="Quem pode mover" dica="O mestre sempre pode mover. O dono do personagem também.">
+            <select value={quem} aria-label="Quem pode mover" onChange={(e) => setQuem(e.target.value)}>
+              <option value="dono">Somente Eu</option>
+              <option value="todos">Todos os Jogadores</option>
+              {jogadores.map((j) => <option key={j.userId} value={j.userId}>{j.rotulo}</option>)}
+            </select>
+          </Campo>
+          <button type="submit" className="janela-botao">Salvar Alterações</button>
+        </form>
+      </Janela>
     </div>
   )
 }

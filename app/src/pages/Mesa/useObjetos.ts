@@ -1,16 +1,30 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import type { ObjetoCena } from './cenas'
+import type { CamposObjeto } from './tokens'
 
-const CAMPOS = 'id, scene_id, campaign_id, name, image_url, x, y, width, height, rotation, layer, sort, locked, flip_h, flip_v, character_id, created_at'
+const CAMPOS =
+  'id, scene_id, campaign_id, name, image_url, x, y, width, height, rotation, layer, sort, locked, flip_h, flip_v, character_id, group_id, move_permission, movable_by, created_at'
+
+export type Ping = { id: string; x: number; y: number; foco: boolean; nome: string }
 
 function trocar(lista: ObjetoCena[], o: ObjetoCena): ObjetoCena[] {
   return lista.some((x) => x.id === o.id) ? lista.map((x) => (x.id === o.id ? o : x)) : [...lista, o]
 }
 
-// Objetos (imagens e, depois, tokens) da cena que esta pessoa está vendo, em tempo real.
-export function useObjetos(cenaId: string | null) {
+function numeros(o: ObjetoCena): ObjetoCena {
+  // numeric vem como string do Postgres em algumas leituras
+  return { ...o, x: Number(o.x), y: Number(o.y), width: Number(o.width), height: Number(o.height), rotation: Number(o.rotation) }
+}
+
+// Objetos (imagens e tokens) da cena que esta pessoa está vendo, em tempo real.
+// Arrastar e pings passam por broadcast (ao vivo, sem gravar); soltar grava no banco.
+export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
   const [objetos, setObjetos] = useState<ObjetoCena[]>([])
+  const canalRef = useRef<RealtimeChannel | null>(null)
+  const pingRef = useRef(onPing)
+  pingRef.current = onPing
 
   useEffect(() => {
     setObjetos([])
@@ -21,41 +35,77 @@ export function useObjetos(cenaId: string | null) {
       .select(CAMPOS)
       .eq('scene_id', cenaId)
       .then(({ data }) => {
-        if (!cancelado) setObjetos((data ?? []) as ObjetoCena[])
+        if (!cancelado) setObjetos(((data ?? []) as ObjetoCena[]).map(numeros))
       })
 
     const filtro = `scene_id=eq.${cenaId}`
     const canal = supabase
-      .channel(`objetos:${cenaId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scene_tokens', filter: filtro }, (p) => setObjetos((l) => trocar(l, p.new as ObjetoCena)))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'scene_tokens', filter: filtro }, (p) => setObjetos((l) => trocar(l, p.new as ObjetoCena)))
+      .channel(`objetos:${cenaId}`, { config: { broadcast: { self: false } } })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scene_tokens', filter: filtro }, (p) => setObjetos((l) => trocar(l, numeros(p.new as ObjetoCena))))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'scene_tokens', filter: filtro }, (p) => setObjetos((l) => trocar(l, numeros(p.new as ObjetoCena))))
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'scene_tokens' }, (p) => {
         const id = (p.old as { id?: string }).id
         if (id) setObjetos((l) => l.filter((o) => o.id !== id))
       })
+      // Alguém está arrastando: mostra o movimento ao vivo (12.8).
+      .on('broadcast', { event: 'arrastando' }, ({ payload }) => {
+        const posicoes = payload as Record<string, { x: number; y: number }>
+        setObjetos((l) => l.map((o) => (posicoes[o.id] ? { ...o, ...posicoes[o.id] } : o)))
+      })
+      .on('broadcast', { event: 'ping' }, ({ payload }) => pingRef.current(payload as Ping))
       .subscribe()
+    canalRef.current = canal
 
     return () => {
       cancelado = true
+      canalRef.current = null
       supabase.removeChannel(canal)
     }
   }, [cenaId])
 
-  const criar = useCallback(async (dados: Omit<ObjetoCena, 'id' | 'created_at' | 'sort' | 'locked' | 'flip_h' | 'flip_v' | 'rotation' | 'character_id'>) => {
-    const { data } = await supabase.from('scene_tokens').insert({ ...dados, sort: Date.now() % 2147483647 }).select(CAMPOS).single()
-    if (data) setObjetos((l) => trocar(l, data as ObjetoCena))
+  const transmitirArrasto = useCallback((posicoes: Record<string, { x: number; y: number }>) => {
+    canalRef.current?.send({ type: 'broadcast', event: 'arrastando', payload: posicoes })
   }, [])
 
-  // Atualiza na tela na hora (arrastar fica liso) e salva no banco.
-  const alterar = useCallback(async (id: string, campos: Partial<Pick<ObjetoCena, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'layer' | 'locked'>>, salvar = true) => {
-    setObjetos((l) => l.map((o) => (o.id === id ? { ...o, ...campos } : o)))
-    if (salvar) await supabase.from('scene_tokens').update(campos).eq('id', id)
+  const pingar = useCallback((p: Ping) => {
+    pingRef.current(p)
+    canalRef.current?.send({ type: 'broadcast', event: 'ping', payload: p })
   }, [])
 
-  const excluir = useCallback(async (id: string) => {
-    setObjetos((l) => l.filter((o) => o.id !== id))
-    await supabase.from('scene_tokens').delete().eq('id', id)
+  const criar = useCallback(async (dados: Partial<ObjetoCena> & Pick<ObjetoCena, 'scene_id' | 'campaign_id' | 'image_url'>) => {
+    const { data } = await supabase.from('scene_tokens').insert({ sort: Date.now() % 2147483647, ...dados }).select(CAMPOS).single()
+    const novo = data ? numeros(data as ObjetoCena) : null
+    if (novo) setObjetos((l) => trocar(l, novo))
+    return novo
   }, [])
 
-  return { objetos, criar, alterar, excluir }
+  // Recria objetos inteiros (Colar, ou desfazer uma exclusão — com o mesmo id).
+  const criarVarios = useCallback(async (lista: ObjetoCena[]) => {
+    if (!lista.length) return []
+    const { data } = await supabase.from('scene_tokens').insert(lista).select(CAMPOS)
+    const novos = ((data ?? []) as ObjetoCena[]).map(numeros)
+    setObjetos((l) => novos.reduce(trocar, l))
+    return novos
+  }, [])
+
+  // Atualiza na tela na hora (arrastar fica liso) e, se pedido, grava no banco (só o mestre).
+  const alterarVarios = useCallback(async (mudancas: Record<string, CamposObjeto>, salvar = true) => {
+    setObjetos((l) => l.map((o) => (mudancas[o.id] ? { ...o, ...mudancas[o.id] } : o)))
+    if (!salvar) return
+    await Promise.all(Object.entries(mudancas).map(([id, campos]) => supabase.from('scene_tokens').update(campos).eq('id', id)))
+  }, [])
+
+  // Jogador move pela função do banco, que confere a permissão e só mexe na posição.
+  const moverComoJogador = useCallback(async (ids: string[], dx: number, dy: number) => {
+    const { error } = await supabase.rpc('mover_objetos', { p_ids: ids, p_dx: dx, p_dy: dy })
+    return !error
+  }, [])
+
+  const excluirVarios = useCallback(async (ids: string[]) => {
+    if (!ids.length) return
+    setObjetos((l) => l.filter((o) => !ids.includes(o.id)))
+    await supabase.from('scene_tokens').delete().in('id', ids)
+  }, [])
+
+  return { objetos, criar, criarVarios, alterarVarios, moverComoJogador, excluirVarios, transmitirArrasto, pingar }
 }

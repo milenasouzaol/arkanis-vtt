@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
@@ -10,7 +10,7 @@ import PalcoCena from './PalcoCena'
 import PainelCenas from './PainelCenas'
 import EditorCena from './EditorCena'
 import { enviarImagemDaCena, useCenas } from './useCenas'
-import { useObjetos } from './useObjetos'
+import { useObjetos, type Ping } from './useObjetos'
 import { tamanhoInicial } from './cenas'
 import type { Cena } from './cenas'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
@@ -112,7 +112,15 @@ export default function Mesa() {
   const [destaqueFechado, setDestaqueFechado] = useState<string | null>(null)
   const cenas = useCenas(pronta?.campanha.id, pronta?.campanha.active_scene_id ?? null)
   const [editandoCena, setEditandoCena] = useState<string | null>(null)
-  const objetos = useObjetos(cenas.atual?.id ?? null)
+  const [pings, setPings] = useState<Ping[]>([])
+  const [focoPing, setFocoPing] = useState<Ping | null>(null)
+  // Ping (12.8): marca o ponto por uns segundos; o de foco leva a câmera de todos até ele.
+  const receberPing = useCallback((p: Ping) => {
+    setPings((l) => [...l, p])
+    if (p.foco) setFocoPing(p)
+    setTimeout(() => setPings((l) => l.filter((x) => x.id !== p.id)), 2600)
+  }, [])
+  const objetos = useObjetos(cenas.atual?.id ?? null, receberPing)
   const [avisoPalco, setAvisoPalco] = useState<string | null>(null)
 
   if (estado.tipo === 'carregando') {
@@ -273,11 +281,15 @@ export default function Mesa() {
       <PalcoCena
         cena={cenas.atual}
         souMestre={souMestre}
-        objetos={objetos.objetos}
+        userId={userId ?? ''}
+        nomeUsuario={eu?.personagem || eu?.nomeConta || 'Alguém'}
+        meusPersonagens={eu?.personagemId ? [eu.personagemId] : []}
+        jogadores={jogadoresParaCena}
+        obj={objetos}
         aviso={avisoPalco}
+        pings={pings}
+        focoPing={focoPing}
         onSoltarImagem={soltarImagem}
-        onAlterarObjeto={objetos.alterar}
-        onExcluirObjeto={objetos.excluir}
       />
 
       {destaque && destaque.id !== destaqueFechado && (
