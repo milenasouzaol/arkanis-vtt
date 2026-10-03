@@ -60,3 +60,8 @@ describe('barra direita', () => {
 it('monta o link de convite', () => {
   expect(linkDeConvite('https://arkanis.app', 'abc123')).toBe('https://arkanis.app/campanha/entrar/abc123')
 })
+
+it('convite copiado no localhost sai com o endereço público', () => {
+  expect(linkDeConvite('http://localhost:5173', '07ebdc4eac')).toBe('https://arkanis-vtt.vercel.app/campanha/entrar/07ebdc4eac')
+  expect(linkDeConvite('http://127.0.0.1:5173', 'x')).toBe('https://arkanis-vtt.vercel.app/campanha/entrar/x')
+})

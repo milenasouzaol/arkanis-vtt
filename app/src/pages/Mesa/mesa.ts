@@ -93,6 +93,10 @@ export function calcularFps(instantes: number[]): number {
   return Math.round(((instantes.length - 1) * 1000) / duracao)
 }
 
+// Endereço público do site. Convite copiado enquanto se usa o site pelo computador
+// (localhost) sai com ele, senão os amigos não conseguem abrir.
+export const SITE_PUBLICO = 'https://arkanis-vtt.vercel.app'
+
 export function linkDeConvite(origem: string, codigo: string): string {
-  return `${origem}/campanha/entrar/${codigo}`
-}
+  const base = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origem) ? SITE_PUBLICO : origem
+  return `${base}/campanha/entrar/${codigo}`

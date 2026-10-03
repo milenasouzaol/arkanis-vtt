@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { fallbackAvatarColor } from '../lib/color'
 import EscolherPersonagem from './EscolherPersonagem'
+import { linkDeConvite } from '../pages/Mesa/mesa'
 import arkanisLogo from '../assets/icons/arkanis-logo.png'
 
 type CampaignItem = {
@@ -47,7 +48,7 @@ export default function MinhasCampanhas() {
   }, [session])
 
   async function handleCopiarLink(c: CampaignItem) {
-    const url = `${window.location.origin}/campanha/entrar/${c.invite_code}`
+    const url = linkDeConvite(window.location.origin, c.invite_code)
     await navigator.clipboard.writeText(url)
     setCopiedId(c.id)
     setMenuOpen(null)
