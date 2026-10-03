@@ -69,7 +69,7 @@ Este índice espelha o quadro, porque é o arquivo que os agentes leem.
 
 _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o quadro; não são trabalho do Arkanis e podem ser apagadas._
 | [KAN-46](KAN-46-mesa-base.md) | Mesa: rota, acesso e layout base | back + front | em análise | [KAN-46](https://arkaniss.atlassian.net/browse/KAN-46) |
-| [KAN-47](KAN-47-mensagens-de-chat-com-modos-de-envio-e-r.md) | Mesa: Mensagens de Chat com modos de envio e rolagens da ficha | mesa | a fazer | [KAN-47](https://arkaniss.atlassian.net/browse/KAN-47) |
+| [KAN-47](KAN-47-mensagens-de-chat-com-modos-de-envio-e-r.md) | Mesa: Mensagens de Chat com modos de envio e rolagens da ficha | back + front | em análise | [KAN-47](https://arkaniss.atlassian.net/browse/KAN-47) |
 | [KAN-48](KAN-48-cenas-e-mapas.md) | Mesa: Cenas e Mapas | mesa | a fazer | [KAN-48](https://arkaniss.atlassian.net/browse/KAN-48) |
 | [KAN-49](KAN-49-personagens-e-tokens-na-mesa.md) | Mesa: Personagens e Tokens na mesa | mesa | a fazer | [KAN-49](https://arkaniss.atlassian.net/browse/KAN-49) |
 | [KAN-50](KAN-50-encontros-de-combate-iniciativa-e-homebr.md) | Mesa: Encontros de Combate, iniciativa e Homebrew | mesa | a fazer | [KAN-50](https://arkaniss.atlassian.net/browse/KAN-50) |

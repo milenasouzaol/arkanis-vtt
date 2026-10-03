@@ -52,6 +52,9 @@ export type Membro = {
   papel: Papel
   nomeConta: string
   personagem: string | null
+  fotoConta?: string | null
+  personagemId?: string | null
+  fotoPersonagem?: string | null
 }
 
 // O que cada aba aberta da mesa anuncia no canal de presença.

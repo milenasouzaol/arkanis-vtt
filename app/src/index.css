@@ -11770,3 +11770,474 @@ textarea.inter-input {
     gap: 0.4em;
   }
 }
+
+/* ---- Chat da mesa (KAN-47), a partir do print do chat do Foundry ---- */
+
+.mesa-barra .chat-modos.vertical {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mesa-chat-flutuante {
+  position: absolute;
+  right: 100%;
+  bottom: 16px;
+  width: min(300px, calc(100vw - 96px));
+}
+
+.chat-painel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.chat-lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 8px;
+}
+
+.chat-vazio {
+  margin: auto 0;
+  text-align: center;
+  color: var(--mesa-creme-dim);
+}
+
+.chat-msg {
+  position: relative;
+  flex: none;
+  padding: 8px 10px;
+  background: linear-gradient(160deg, #e4e3e0, #cfcdc9);
+  border: 1px solid #8f8d89;
+  border-radius: 5px;
+  color: #191813;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+/* Privadas ficam num tom mais escuro, além do "Para:" */
+.chat-msg-privada {
+  background: linear-gradient(160deg, #c9c8cf, #b3b2ba);
+  border-style: dashed;
+}
+
+.chat-msg-topo {
+  display: grid;
+  grid-template-columns: 36px 1fr auto auto;
+  align-items: start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.chat-msg-foto {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #3a3a3e;
+  color: #e6e6ea;
+}
+
+.chat-msg-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chat-msg-quem {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chat-msg-quem strong {
+  font: 700 1.05rem/1.15 'Roboto Slab', serif;
+}
+
+.chat-msg-quem span {
+  color: #4b4a47;
+  font-size: 0.75rem;
+}
+
+.chat-msg-tempo {
+  color: #4b4a47;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.chat-msg-menu {
+  position: relative;
+}
+
+.chat-msg-menu-botao {
+  width: 16px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: #191813;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.chat-msg-opcoes {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 30;
+  min-width: 190px;
+  margin: 4px 0 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--mesa-painel);
+  border: 1px solid var(--mesa-borda);
+  border-radius: 5px;
+}
+
+.chat-msg-opcoes button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  color: var(--mesa-creme);
+  font: 0.85rem 'Signika', var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-msg-opcoes button:hover {
+  background: var(--mesa-botao);
+}
+
+.chat-msg-texto p,
+.chat-msg-texto div {
+  margin: 0;
+}
+
+.chat-msg-texto hr {
+  margin: 6px 0;
+  border: 0;
+  border-top: 1px solid #7d7b77;
+}
+
+.chat-msg-texto img {
+  display: block;
+  max-width: 100%;
+  margin: 4px 0;
+  border-radius: 4px;
+}
+
+.chat-msg-texto a {
+  color: #3b2f8f;
+}
+
+.chat-msg-texto code {
+  padding: 0 3px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  font-family: var(--mono);
+}
+
+.chat-rolagem-rotulo {
+  margin: 0 0 4px;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.chat-rolagem-formula,
+.chat-rolagem-total {
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid #8f8d89;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+
+.chat-rolagem-total {
+  position: relative;
+  display: block;
+  color: #191813;
+  font: 700 1.5rem/1.4 'Signika', var(--sans);
+  cursor: pointer;
+}
+
+.chat-rolagem-total svg {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 26px;
+  height: 100%;
+  padding: 0 7px;
+  border-left: 1px solid #8f8d89;
+  font-size: 0.8rem;
+  box-sizing: border-box;
+}
+
+.chat-rolagem-dados {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.chat-dado,
+.chat-rolagem-bonus {
+  min-width: 24px;
+  padding: 1px 5px;
+  background: #3a3a3e;
+  border-radius: 3px;
+  color: #f0f0f2;
+  font-weight: 700;
+  text-align: center;
+}
+
+.chat-dado.descartado {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+.chat-rolagem-bonus {
+  background: none;
+  color: #191813;
+}
+
+.chat-controles {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px 0;
+}
+
+.chat-modos:not(.vertical),
+.chat-registro {
+  display: flex;
+}
+
+.chat-modos:not(.vertical) .mesa-icone {
+  border-radius: 0;
+}
+
+.chat-modos:not(.vertical) .mesa-icone:first-child {
+  border-radius: 5px 0 0 5px;
+}
+
+.chat-modos:not(.vertical) .mesa-icone:last-child {
+  border-radius: 0 5px 5px 0;
+}
+
+.chat-registro {
+  gap: 4px;
+}
+
+/* Dentro do painel, o rótulo do modo aparece em cima do ícone */
+.chat-modos:not(.vertical) .mesa-icone-rotulo {
+  top: auto;
+  right: auto;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.chat-entrada {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+}
+
+.chat-barra-formato {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #2a2a2e;
+  border-radius: 5px;
+}
+
+.chat-formato {
+  position: relative;
+  margin-right: auto;
+}
+
+.chat-formato-botao,
+.chat-barra-icone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: none;
+  border: 0;
+  color: var(--mesa-creme);
+  font: 600 0.8rem 'Signika', var(--sans);
+  cursor: pointer;
+}
+
+.chat-barra-icone {
+  opacity: 0.8;
+}
+
+.chat-barra-icone:hover {
+  opacity: 1;
+}
+
+.chat-formato-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: 220px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--mesa-painel);
+  border: 1px solid var(--mesa-borda);
+  border-radius: 5px;
+}
+
+.chat-formato-menu > button {
+  display: block;
+  width: 100%;
+  padding: 4px 8px;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  color: var(--mesa-creme);
+  text-align: left;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.chat-formato-menu > button:hover {
+  background: var(--mesa-botao);
+}
+
+.chat-formato-secao {
+  margin: 8px 8px 2px;
+  color: var(--mesa-creme-dim);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chat-formato-cor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+}
+
+.chat-formato-cor button {
+  margin-left: auto;
+  padding: 2px 8px;
+  background: var(--mesa-botao);
+  border: 1px solid var(--mesa-borda);
+  border-radius: 4px;
+  color: var(--mesa-creme);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.chat-campo {
+  min-height: 96px;
+  max-height: 30vh;
+  overflow-y: auto;
+  padding: 8px 10px;
+  background: #0b0b0d;
+  border: 1px solid var(--mesa-borda);
+  border-radius: 3px;
+  color: var(--mesa-creme);
+  font-size: 0.9rem;
+  outline: none;
+  overflow-wrap: anywhere;
+}
+
+.chat-campo:focus {
+  border-color: var(--mesa-creme-dim);
+}
+
+.chat-campo:empty::before {
+  content: attr(data-placeholder);
+  display: block;
+  margin-top: 30px;
+  color: var(--mesa-creme-dim);
+  font-style: italic;
+  text-align: center;
+  pointer-events: none;
+}
+
+.chat-campo img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+.chat-entrada.compacta {
+  padding: 0;
+}
+
+.chat-entrada.compacta .chat-campo {
+  min-height: 56px;
+  background: rgba(14, 14, 16, 0.85);
+}
+
+.chat-entrada.compacta .chat-campo:empty::before {
+  margin-top: 8px;
+}
+
+.chat-aviso {
+  margin: 0;
+  color: var(--mesa-creme-dim);
+  font-size: 0.75rem;
+}
+
+/* Mensagem destacada pelo mestre, no meio da mesa */
+.mesa-destaque {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 14;
+  width: min(420px, calc(100vw - 32px));
+  transform: translate(-50%, -50%);
+}
+
+.mesa-destaque .chat-msg {
+  font-size: 1.05rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+}
+
+.mesa-destaque-fechar {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: var(--mesa-painel);
+  border: 1px solid var(--mesa-borda);
+  border-radius: 50%;
+  color: var(--mesa-creme);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
