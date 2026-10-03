@@ -88,3 +88,13 @@ it('lê a lista de perícias da ameaça', () => {
   ])
   expect(lerPericias(null)).toEqual([])
 })
+
+it('carrossel: quem está na vez no centro, próximos à direita, os que já foram à esquerda', async () => {
+  const { posicaoNoCarrossel } = await import('./combate')
+  // 5 combatentes, vez do índice 2
+  expect([0, 1, 2, 3, 4].map((i) => posicaoNoCarrossel(i, 2, 5))).toEqual([-2, -1, 0, 1, 2])
+  // vez do último: os primeiros da fila viram "os próximos" (a rodada dá a volta)
+  expect([0, 1, 2, 3, 4].map((i) => posicaoNoCarrossel(i, 4, 5))).toEqual([1, 2, -2, -1, 0])
+  // número par: sobra um a mais à direita
+  expect([0, 1, 2, 3].map((i) => posicaoNoCarrossel(i, 0, 4))).toEqual([0, 1, 2, -1])
+})

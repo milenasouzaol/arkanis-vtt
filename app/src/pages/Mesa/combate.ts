@@ -141,3 +141,12 @@ export function lerPericias(texto: string | null): { nome: string; teste: string
     })
     .filter((p) => p.nome)
 }
+
+// Carrossel do indicador de turno: a posição de cada um em relação a quem está na vez
+// (0 = no centro, positivo = os próximos, à direita; negativo = os que já foram, à esquerda).
+// A fila dá a volta (é por rodada), então metade fica de cada lado.
+export function posicaoNoCarrossel(indice: number, indiceAtual: number, total: number): number {
+  if (total <= 0) return 0
+  const frente = (((indice - indiceAtual) % total) + total) % total
+  return frente > Math.floor(total / 2) ? frente - total : frente
+}

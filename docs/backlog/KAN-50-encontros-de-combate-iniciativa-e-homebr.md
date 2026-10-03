@@ -57,9 +57,10 @@ spec: docs/VTT_Mesa.md (12.4)
   rolagem na ficha alheia no próprio nome). A ficha agora sempre grava a rolagem no nome do
   dono — inclusive quando o mestre rola na ficha do jogador pela mesa.
 
-## Ajuste da Millie (04/10): fila no topo do mapa
+## Ajuste da Millie (04/10): fila no topo do mapa, em carrossel
 
-- O indicador de turno virou a fila inteira do combate, na ordem da iniciativa, em cards
-  verticais (como os tokens em pé). Todos apagados; quem está na vez aceso e maior, com o nome
-  embaixo ("Sua vez" pra quem joga). Ao passar o turno, o destaque anda pro próximo. Com
-  muita gente, a fila rola de lado.
+- O indicador de turno é um carrossel com a fila do combate em cards verticais: quem está
+  na vez sempre no centro, aceso e maior; os próximos à direita e os que já foram à esquerda,
+  apagados (mais apagados quanto mais longe; até 3 de cada lado, as pontas somem num degradê).
+  Ao passar o turno a fila desliza suave pro lado e o próximo chega ao centro; quem dá a volta
+  da rodada troca de ponta sem atravessar a fila.

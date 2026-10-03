@@ -13767,14 +13767,13 @@ button.character-tile-link {
   gap: 8px;
 }
 
-/* Indicador de turno no topo do mapa: a fila do combate em cards verticais (pedido da
-   Millie, 04/10) — todos apagados, quem está na vez aceso e maior. */
+/* Indicador de turno no topo do mapa, em carrossel (pedido da Millie, 04/10): quem está na
+   vez no centro, aceso; a fila desliza pro lado a cada turno. */
 .indicador-turno {
   position: absolute;
   top: 10px;
   left: 50%;
   z-index: 15;
-  max-width: calc(100vw - 420px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -13783,20 +13782,19 @@ button.character-tile-link {
   pointer-events: none;
 }
 
-.indicador-turno-fila {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  max-width: 100%;
-  margin: 0;
-  padding: 2px 4px 4px;
-  overflow-x: auto;
-  list-style: none;
-  pointer-events: auto;
-  scrollbar-width: thin;
+.indicador-turno-trilho {
+  position: relative;
+  width: min(400px, calc(100vw - 140px));
+  height: 96px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
 }
 
-.indicador-turno-card button {
+.indicador-turno-card {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
   width: 44px;
   height: 66px;
   display: flex;
@@ -13809,12 +13807,12 @@ button.character-tile-link {
   border-radius: 6px;
   color: var(--mesa-creme-dim);
   font-size: 1.1rem;
-  opacity: 0.4;
   filter: grayscale(0.7);
-  transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease, filter 0.3s ease, border-color 0.3s ease;
+  pointer-events: auto;
+  transition: transform 0.5s cubic-bezier(0.22, 0.8, 0.3, 1), width 0.5s ease, height 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
 }
 
-.indicador-turno-card button svg {
+.indicador-turno-card svg {
   margin: auto;
 }
 
@@ -13826,22 +13824,17 @@ button.character-tile-link {
   pointer-events: none;
 }
 
-.indicador-turno-card.vez button {
+.indicador-turno-card.vez {
   width: 60px;
-  height: 92px;
+  height: 90px;
   border-color: var(--mesa-creme);
   color: var(--mesa-creme);
-  opacity: 1;
   filter: none;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
-.indicador-turno-card button.pode {
+.indicador-turno-card.pode {
   cursor: pointer;
-}
-
-.indicador-turno-card button.pode:hover {
-  transform: translateY(-2px);
 }
 
 .indicador-turno-nome {
@@ -13853,14 +13846,8 @@ button.character-tile-link {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .indicador-turno-card button {
+  .indicador-turno-card {
     transition: none;
-  }
-}
-
-@media (max-width: 900px) {
-  .indicador-turno {
-    max-width: calc(100vw - 140px);
   }
 }
 

@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBackwardStep, faForwardStep, faPenToSquare, faPlay, faPlus, faSkull, faStop, faTrash, faUser, faXmark } from '@fortawesome/free-solid-svg-icons'
-import { vdTotal, type Combatente } from './combate'
+import { useEffect, useRef } from 'react'
+import { posicaoNoCarrossel, vdTotal, type Combatente } from './combate'
 import type { Barras, Combate, Vida } from './useCombate'
 
 // Aba Encontros de Combate (12.4). Sem combate rodando: a lista dos combates salvos
@@ -130,9 +131,22 @@ export default function PainelCombate({ souMestre, combates, vdDe, ativo, ordem,
   )
 }
 
-// Indicador de turno no topo do mapa (12.4): a fila inteira do combate, na ordem da
-// iniciativa, em cards verticais. Todo mundo fica apagado; quem está na vez fica aceso.
-// Quem está na vez clica no próprio card pra passar o turno, e o destaque anda pro próximo.
+// Indicador de turno no topo do mapa (12.4), em carrossel: quem está na vez fica sempre no
+// centro, aceso; os próximos à direita e os que já foram à esquerda, apagados. Ao passar o
+// turno a fila desliza pro lado e o próximo chega ao centro. Quem está na vez clica no
+// próprio card pra passar.
+const VISIVEIS_DE_CADA_LADO = 3
+const LARGURA_CENTRO = 60
+const LARGURA_LADO = 44
+const ESPACO = 8
+
+function deslocamento(pos: number): number {
+  if (pos === 0) return 0
+  const passo = LARGURA_LADO + ESPACO
+  const primeiro = LARGURA_CENTRO / 2 + ESPACO + LARGURA_LADO / 2
+  return Math.sign(pos) * (primeiro + (Math.abs(pos) - 1) * passo)
+}
+
 export function IndicadorTurno({ ativo, ordem, meusPersonagens, souMestre, onPassar }: {
   ativo: Combate
   ordem: Combatente[]
@@ -140,31 +154,51 @@ export function IndicadorTurno({ ativo, ordem, meusPersonagens, souMestre, onPas
   souMestre: boolean
   onPassar: () => void
 }) {
-  const atual = ordem.find((c) => c.id === ativo.turno_atual)
-  if (!ordem.length) return null
-  const minhaVez = atual?.character_id != null && meusPersonagens.includes(atual.character_id)
+  const indiceAtual = Math.max(0, ordem.findIndex((c) => c.id === ativo.turno_atual))
+  const atual = ordem[indiceAtual]
+  // Posição anterior de cada um: quem dá a volta (sai de uma ponta e entra na outra) muda de
+  // lado sem atravessar a fila.
+  const anteriores = useRef<Record<string, number>>({})
+  const posicoes = Object.fromEntries(ordem.map((c, i) => [c.id, posicaoNoCarrossel(i, indiceAtual, ordem.length)]))
+  useEffect(() => {
+    anteriores.current = posicoes
+  })
+  if (!ordem.length || !atual) return null
+  const minhaVez = atual.character_id != null && meusPersonagens.includes(atual.character_id)
+
   return (
-    <div className="indicador-turno" role="status" aria-live="polite" aria-label={atual ? `Vez de ${atual.name}` : 'Combate'}>
-      <ol className="indicador-turno-fila">
+    <div className="indicador-turno" role="status" aria-live="polite" aria-label={`Vez de ${atual.name}`}>
+      <div className="indicador-turno-trilho">
         {ordem.map((c) => {
-          const vez = c.id === ativo.turno_atual
+          const pos = posicoes[c.id]
+          const antes = anteriores.current[c.id]
+          const deuVolta = antes !== undefined && Math.abs(pos - antes) > 1
+          const vez = pos === 0
           const pode = vez && (minhaVez || souMestre)
+          const distancia = Math.abs(pos)
           return (
-            <li key={c.id} className={`indicador-turno-card${vez ? ' vez' : ''}`}>
-              <button
-                type="button"
-                className={pode ? 'pode' : undefined}
-                disabled={!pode}
-                title={pode ? (minhaVez ? 'Clique pra passar o turno' : 'Passar o turno') : c.name}
-                onClick={onPassar}
-              >
-                {c.image_url ? <img src={c.image_url} alt="" draggable={false} /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}
-              </button>
-            </li>
+            <button
+              key={c.id}
+              type="button"
+              className={`indicador-turno-card${vez ? ' vez' : ''}${pode ? ' pode' : ''}`}
+              disabled={!pode}
+              aria-hidden={distancia > VISIVEIS_DE_CADA_LADO}
+              tabIndex={pode ? 0 : -1}
+              title={pode ? (minhaVez ? 'Clique pra passar o turno' : 'Passar o turno') : c.name}
+              style={{
+                transform: `translateX(calc(-50% + ${deslocamento(pos)}px))`,
+                opacity: distancia > VISIVEIS_DE_CADA_LADO ? 0 : vez ? 1 : Math.max(0.2, 0.55 - (distancia - 1) * 0.12),
+                transition: deuVolta ? 'none' : undefined,
+                zIndex: 10 - distancia,
+              }}
+              onClick={onPassar}
+            >
+              {c.image_url ? <img src={c.image_url} alt="" draggable={false} /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}
+            </button>
           )
         })}
-      </ol>
-      {atual && <span className="indicador-turno-nome">{minhaVez ? 'Sua vez' : atual.name}</span>}
+      </div>
+      <span className="indicador-turno-nome">{minhaVez ? 'Sua vez' : atual.name}</span>
     </div>
   )
 }
