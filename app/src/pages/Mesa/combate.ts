@@ -1,0 +1,134 @@
+// Regras puras dos Encontros de Combate (KAN-50, spec 12.4).
+import { rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
+
+export type FiltroElemento = 'todos' | 'conhecimento' | 'energia' | 'morte' | 'sangue' | 'medo' | 'realidade'
+
+export const FILTROS_ELEMENTO: { id: FiltroElemento; rotulo: string }[] = [
+  { id: 'todos', rotulo: 'Todos' },
+  { id: 'conhecimento', rotulo: 'Conhecimento' },
+  { id: 'energia', rotulo: 'Energia' },
+  { id: 'morte', rotulo: 'Morte' },
+  { id: 'sangue', rotulo: 'Sangue' },
+  { id: 'medo', rotulo: 'Medo' },
+  { id: 'realidade', rotulo: 'Realidade' },
+]
+
+// Cores dos elementos (as mesmas da ficha); Realidade = o cinza de "sem afinidade".
+export const COR_ELEMENTO: Record<Exclude<FiltroElemento, 'todos'>, string> = {
+  sangue: '#c8202b',
+  morte: '#e8e8e8',
+  energia: '#7b2fd6',
+  conhecimento: '#e0b13a',
+  medo: '#8a8a90',
+  realidade: '#8b8596',
+}
+
+export type CriaturaLista = {
+  id: string
+  name: string
+  vd: number | null
+  image_url: string | null
+  tipo_criatura: string | null
+  tamanho: string | null
+  descritores: string[] | null
+  categoria: string | null
+  source_id: string
+  iniciativa: string | null
+  pv_maximo: number | null
+}
+
+// Elemento da criatura: o primeiro descritor que é um elemento; criatura mundana é "Realidade"
+// (12.4: Realidade não é elemento, é o que é do nosso mundo — pessoas, animais…).
+export function elementoDaCriatura(c: Pick<CriaturaLista, 'descritores' | 'categoria'>): Exclude<FiltroElemento, 'todos'> {
+  for (const d of c.descritores ?? []) {
+    const k = d.toLowerCase()
+    if (k === 'sangue' || k === 'morte' || k === 'energia' || k === 'conhecimento' || k === 'medo') return k
+  }
+  return c.categoria === 'paranormal' ? 'medo' : 'realidade'
+}
+
+// Todos os elementos da criatura (uma pode ter mais de um), pro filtro.
+export function elementosDaCriatura(c: Pick<CriaturaLista, 'descritores' | 'categoria'>): Exclude<FiltroElemento, 'todos'>[] {
+  const lista = (c.descritores ?? [])
+    .map((d) => d.toLowerCase())
+    .filter((k): k is 'sangue' | 'morte' | 'energia' | 'conhecimento' | 'medo' => ['sangue', 'morte', 'energia', 'conhecimento', 'medo'].includes(k))
+  return lista.length ? lista : [elementoDaCriatura(c)]
+}
+
+function normalizar(t: string) {
+  return t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
+
+export function filtrarAmeacas(lista: CriaturaLista[], f: { busca: string; elemento: FiltroElemento; fonte: string | null }): CriaturaLista[] {
+  const termo = normalizar(f.busca.trim())
+  return lista.filter(
+    (c) =>
+      (!termo || normalizar(c.name).includes(termo)) &&
+      (f.elemento === 'todos' || elementosDaCriatura(c).includes(f.elemento)) &&
+      (!f.fonte || c.source_id === f.fonte),
+  )
+}
+
+export function vdTotal(ids: string[], criaturas: Pick<CriaturaLista, 'id' | 'vd'>[]): number {
+  const vd = new Map(criaturas.map((c) => [c.id, c.vd ?? 0]))
+  return ids.reduce((soma, id) => soma + (vd.get(id) ?? 0), 0)
+}
+
+// "+5 (2d20)" → 2 dados, +5. "+5" sozinho = 1 dado. "-1 (0d20)" = 0 dados (rola 2 e fica com o menor).
+export function lerTeste(texto: string | null | undefined): { dados: number; bonus: number } {
+  if (!texto) return { dados: 1, bonus: 0 }
+  const bonus = Number(/^\s*([+-]?\s*\d+)/.exec(texto)?.[1]?.replace(/\s/g, '') ?? 0)
+  const dados = /\((-?\d+)d20\)/i.exec(texto)?.[1]
+  return { dados: dados === undefined ? 1 : Number(dados), bonus }
+}
+
+// Mesmo teste da ficha: d20 igual ao número de dados, fica com o maior (0 ou menos: 2 e o menor).
+export function rolarTeste(t: { dados: number; bonus: number }) {
+  const { rolls, kept } = rollAttributeTest(t.dados)
+  return { rolls, kept, bonus: t.bonus, total: kept + t.bonus }
+}
+
+// Iniciativa do jogador: Agilidade em dados + treino + bônus extra da perícia.
+export function testeDeIniciativa(agilidade: number, treino: Training, extra: number): { dados: number; bonus: number } {
+  return { dados: agilidade, bonus: trainingBonus(treino) + extra }
+}
+
+// "1d4+2 perfuração" → rola e devolve o total e o tipo.
+export function rolarDano(texto: string): { total: number; detalhe: string; tipo: string } | null {
+  const m = /^\s*([0-9d+\-\s]+?)\s*([a-zà-ú][a-zà-ú\s]*)?$/i.exec(texto.trim())
+  if (!m) return null
+  const r = rollDiceFormula(m[1].replace(/\s/g, ''))
+  if (!r) return null
+  return { total: r.total, detalhe: `${r.rolls.join(' + ')}${r.modifier ? ` ${r.modifier > 0 ? '+' : '−'} ${Math.abs(r.modifier)}` : ''}`, tipo: (m[2] ?? '').trim() }
+}
+
+export type Combatente = {
+  id: string
+  combat_id: string
+  tipo: 'jogador' | 'ameaca'
+  character_id: string | null
+  creature_id: string | null
+  name: string
+  image_url: string | null
+  iniciativa: number
+  desempate: number
+  created_at: string
+}
+
+// Maior pro menor; empate decide pelo bônus e depois por quem entrou antes.
+export function ordemDeIniciativa<T extends Pick<Combatente, 'iniciativa' | 'desempate' | 'created_at'>>(lista: T[]): T[] {
+  return [...lista].sort((a, b) => b.iniciativa - a.iniciativa || b.desempate - a.desempate || a.created_at.localeCompare(b.created_at))
+}
+
+// "Crime +5 (2d20), Furtividade +5 (2d20)" → [{ nome: 'Crime', teste: '+5 (2d20)' }, …]
+export function lerPericias(texto: string | null): { nome: string; teste: string }[] {
+  if (!texto) return []
+  return texto
+    .split(/,(?![^(]*\))/)
+    .map((p) => p.trim())
+    .map((p) => {
+      const m = /^(.*?)\s*([+-]\s*\d+.*)$/.exec(p)
+      return m ? { nome: m[1].trim(), teste: m[2].trim() } : { nome: p, teste: '' }
+    })
+    .filter((p) => p.nome)
+}

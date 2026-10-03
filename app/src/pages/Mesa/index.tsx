@@ -17,6 +17,12 @@ import { ConfigurarPropriedadeAtor, ConfigurarToken, ConfirmarExclusao, CriarPer
 import { colocarToken, enviarImagemDeToken, trocarVariacao, useAtores } from './useAtores'
 import { imagemDoToken, nivelDoJogador, nivelNaFichaDoJogador, variacoesDoToken, type Ator, type NivelAcesso } from './atores'
 import Janela from './Janela'
+import PainelCombate, { IndicadorTurno } from './PainelCombate'
+import CriarCombate from './CriarCombate'
+import FichaAmeaca from './FichaAmeaca'
+import { useCombate, type Combate } from './useCombate'
+import type { Combatente } from './combate'
+import { faSkull } from '@fortawesome/free-solid-svg-icons'
 import type { Cena } from './cenas'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
 import { autoria, type ModoEnvio } from './chat'
@@ -134,6 +140,19 @@ export default function Mesa() {
   const [excluindoAtor, setExcluindoAtor] = useState<string | null>(null)
   const [fichasAbertas, setFichasAbertas] = useState<string[]>([])
   const [tokenDasVariacoes, setTokenDasVariacoes] = useState<string | null>(null)
+  const combate = useCombate(pronta?.campanha.id, pronta?.campanha.owner_id === userId)
+  const [montandoCombate, setMontandoCombate] = useState<{ editando?: Combate; adicionarEm?: Combate } | null>(null)
+  const [fichaCombate, setFichaCombate] = useState<string | null>(null)
+  const [vdDe, setVdDe] = useState<Record<string, number | null>>({})
+  const idsAmeacas = [...new Set(combate.combates.flatMap((c) => c.ameacas))].sort().join(',')
+  // VD das ameaças dos combates salvos, pro card mostrar o VD total.
+  useEffect(() => {
+    const faltam = idsAmeacas.split(',').filter((id) => id && !(id in vdDe))
+    if (!faltam.length) return
+    supabase.from('creatures').select('id, vd').in('id', faltam).then(({ data }) => {
+      setVdDe((m) => ({ ...m, ...Object.fromEntries((data ?? []).map((c) => [c.id, c.vd])) }))
+    })
+  }, [idsAmeacas, vdDe])
   const [avisoPalco, setAvisoPalco] = useState<string | null>(null)
 
   if (estado.tipo === 'carregando') {
@@ -307,6 +326,21 @@ export default function Mesa() {
     if (novo) abrirFicha(novo.id)
   }
 
+  // ---- Combate (12.4) ----
+
+  const meusPersonagensIds = eu?.personagemId ? [eu.personagemId] : []
+
+  function abrirCombatente(c: Combatente) {
+    if (c.tipo === 'jogador') {
+      const a = atores.atores.find((x) => x.character_id === c.character_id)
+      if (a) abrirFicha(a.id)
+    } else setFichaCombate(c.id)
+  }
+
+  function rolarNoChat(rolagem: Parameters<typeof chat.enviarRolagem>[0]['rolagem'], autor: { nome: string; foto: string | null }) {
+    if (userId) chat.enviarRolagem({ userId, modo, autor, rolagem })
+  }
+
   const cenaEditada = cenas.cenas.find((c) => c.id === editandoCena)
   const jogadoresParaCena = estado.membros
     .filter((m) => m.papel === 'jogador')
@@ -416,6 +450,26 @@ export default function Mesa() {
                 onSalvarPasta={cenas.salvarPasta}
                 onExcluirPasta={(p, comCenas) => cenas.excluirPasta(p.id, comCenas)}
               />
+            ) : aba === 'combate' ? (
+              <PainelCombate
+                souMestre={souMestre}
+                combates={combate.combates}
+                vdDe={vdDe}
+                ativo={combate.ativo}
+                ordem={combate.ordem}
+                vidas={combate.vidas}
+                barras={combate.barras}
+                meusPersonagens={meusPersonagensIds}
+                onCriar={() => setMontandoCombate({})}
+                onEditar={(c) => setMontandoCombate({ editando: c })}
+                onExcluir={(c) => combate.excluir(c.id)}
+                onIniciar={(c) => combate.iniciar(c)}
+                onEncerrar={(c) => combate.encerrar(c)}
+                onAdicionar={(c) => setMontandoCombate({ adicionarEm: c })}
+                onPassar={(c, voltar) => combate.passar(c, voltar)}
+                onRemover={(c, id) => combate.remover(c, id)}
+                onAbrir={abrirCombatente}
+              />
             ) : aba === 'personagens' ? (
               <PainelPersonagens
                 souMestre={souMestre}
@@ -455,6 +509,52 @@ export default function Mesa() {
           onFechar={() => setEditandoCena(null)}
         />
       )}
+
+      {combate.ativo && (
+        <IndicadorTurno
+          ativo={combate.ativo}
+          ordem={combate.ordem}
+          meusPersonagens={meusPersonagensIds}
+          souMestre={souMestre}
+          onPassar={() => combate.ativo && combate.passar(combate.ativo)}
+        />
+      )}
+
+      {montandoCombate && (
+        <CriarCombate
+          inicial={montandoCombate.editando ?? montandoCombate.adicionarEm}
+          modo={montandoCombate.adicionarEm ? 'adicionar' : 'criar'}
+          onSalvar={(nome, ameacas) => {
+            if (montandoCombate.adicionarEm) combate.entrarAmeacas(montandoCombate.adicionarEm, ameacas)
+            else if (montandoCombate.editando) combate.salvar(montandoCombate.editando.id, { name: nome, ameacas })
+            else combate.criar(nome, ameacas)
+            setMontandoCombate(null)
+          }}
+          onFechar={() => setMontandoCombate(null)}
+        />
+      )}
+
+      {(() => {
+        const c = combate.ordem.find((x) => x.id === fichaCombate)
+        if (!c || !c.creature_id || !souMestre) return null
+        const vida = combate.vidas[c.id]
+        // O dado só rola na vez da ameaça (12.4).
+        const vez = combate.ativo?.turno_atual === c.id
+        return (
+          <Janela titulo={c.name} icone={faSkull} largura={440} altura={640} inicial={{ x: Math.max(16, window.innerWidth - 820), y: 40 }} onFechar={() => setFichaCombate(null)}>
+            <FichaAmeaca
+              criaturaId={c.creature_id}
+              nome={c.name}
+              pvAtual={vida?.pv_atual ?? null}
+              pvMax={vida?.pv_max ?? null}
+              podeEditar
+              podeRolar={vez}
+              onMudarPv={(pv) => combate.mudarVida(c.id, pv)}
+              onRolar={rolarNoChat}
+            />
+          </Janela>
+        )
+      })()}
 
       {criandoAtor && (
         <CriarPersonagem

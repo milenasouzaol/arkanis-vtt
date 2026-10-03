@@ -66,6 +66,22 @@ export function useChat(campanhaId: string | undefined) {
     [campanhaId],
   )
 
+  // Rolagem feita na mesa (ex.: o mestre rolando o teste de uma ameaça) vai pro chat (12.3).
+  const enviarRolagem = useCallback(
+    async (dados: { userId: string; modo: ModoEnvio; autor: { nome: string; foto: string | null }; rolagem: Mensagem['rolagem'] }) => {
+      if (!campanhaId) return false
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert({ campaign_id: campanhaId, user_id: dados.userId, modo: dados.modo, autor_nome: dados.autor.nome, autor_foto: dados.autor.foto, rolagem: dados.rolagem })
+        .select(CAMPOS)
+        .single()
+      if (error) return false
+      setMensagens((lista) => juntarMensagem(lista ?? [], data as Mensagem))
+      return true
+    },
+    [campanhaId],
+  )
+
   const alterar = useCallback(async (id: string, campos: Partial<Pick<Mensagem, 'destacada' | 'revelada'>>) => {
     const { data } = await supabase.from('chat_messages').update(campos).eq('id', id).select(CAMPOS).single()
     if (data) setMensagens((lista) => juntarMensagem(lista ?? [], data as Mensagem))
@@ -82,7 +98,7 @@ export function useChat(campanhaId: string | undefined) {
     if (!error) setMensagens([])
   }, [campanhaId])
 
-  return { mensagens, enviar, alterar, excluir, limpar }
+  return { mensagens, enviar, enviarRolagem, alterar, excluir, limpar }
 }
 
 // Imagem colada, arrastada ou escolhida no chat vai pro bucket e volta como URL pública.

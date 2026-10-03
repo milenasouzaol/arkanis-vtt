@@ -1,8 +1,41 @@
 ---
 id: KAN-50
 titulo: "Mesa: Encontros de Combate, iniciativa e Homebrew"
-status: a fazer
+status: em análise
+camada: back + front
 spec: docs/VTT_Mesa.md (12.4)
 ---
 
-Ver a seção 12.4 de docs/VTT_Mesa.md.
+## Parte 1 — combate (04/10)
+
+- Migration `0099_combates.sql` (testada no Postgres local e aplicada pelo conector):
+  `combats` (nome, ameaças, rodada, turno), `combatants` (ordem de iniciativa) e
+  `combatant_vida` (vida dos monstros, só o mestre lê); `passar_turno` (quem está na vez
+  passa o próprio turno; o mestre passa ou volta; a rodada avança na virada). Realtime nas
+  três e em `characters` (as barrinhas acompanham a ficha).
+- Aba Combate: "Sem Combates" + "+ Criar Combate"; combates salvos como cards (Nome + VD +
+  Iniciar, com editar e excluir pro mestre).
+- Criar Combate: Nome*, VD Total somando sozinho (repetidas contam), filtro por livro (os do
+  bestiário — os compêndios da comunidade e "Comunidade" entram quando existirem), por
+  elemento (Todos / Conhecimento / Energia / Morte / Sangue / Medo / Realidade; criatura com
+  dois elementos aparece nos dois), busca sem acento, Ficha e Adicionar; Ameaças Selecionadas
+  com Remover na cor do elemento; Salvar / Sair sem salvar.
+- Iniciar: iniciativa rolada pra todos os personagens de jogador (Agilidade em dados +
+  treino em Iniciativa) e pras ameaças (o "+5 (2d20)" delas); ameaça repetida vira "Bandido 1",
+  "Bandido 2". Ordem do maior pro menor, empate pelo bônus.
+- Rodando: foto, nome, barrinhas de Vida (vermelho) / PE (dourado) / Sanidade (roxo) dos
+  jogadores, iniciativa grande sublinhada; Voltar Turno / Próximo turno / Rodada Atual;
+  Adicionar (ameaças no meio da luta) e Encerrar; X pra tirar ameaça com 0 de vida. Clicar no
+  jogador abre a ficha dele; na ameaça, a ficha completa (só o mestre).
+- Jogador não vê a vida nem abre a ficha dos monstros.
+- Indicador de turno no topo do mapa pra todos, com animação; quem está na vez clica na
+  própria foto pra passar.
+- Ficha de Ameaça completa: Status (atributos, Defesa, Deslocamento, perícias com o dado,
+  elementos, resistências, vulnerabilidades), Combate (Presença Perturbadora; Ações / Poderes
+  com Teste e Dano roláveis), Descrição (+ Enigma do Medo). Os dados só rolam com a ameaça
+  num combate rodando e na vez dela, e o resultado vai pro chat.
+
+## Falta (parte 2)
+
+- Homebrew global de ameaças (limite 50) e as abas Habilidades / Rituais / Itens.
+- "Configurações" do combate (a spec cita o botão, mas não diz o que ele faz).
