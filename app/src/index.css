@@ -14165,3 +14165,148 @@ button.character-tile-link {
   font-size: 0.85em;
   font-weight: 600;
 }
+
+/* Mira (KAN-51): ícone em cima do token marcado como alvo */
+.mesa-mira {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #d8d8dc;
+  opacity: 0.55;
+  filter: drop-shadow(0 0 3px #000);
+}
+
+.mesa-mira svg {
+  width: 46%;
+  height: 46%;
+}
+
+.mesa-mira.minha {
+  color: #f4f4f6;
+  opacity: 0.95;
+}
+
+/* Ataque com mira no chat: "[Atacante] está atacando [Alvo]" com Ataque e Dano */
+.chat-acao-titulo {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+}
+
+.chat-acao-titulo svg {
+  margin-right: 2px;
+}
+
+.chat-acao-botao,
+.chat-acao-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid #8f8d89;
+  border-radius: 3px;
+  color: #191813;
+  font: 600 0.9rem 'Signika', var(--sans);
+  cursor: pointer;
+}
+
+.chat-acao-botao:hover:not(:disabled),
+.chat-acao-mini:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.chat-acao-botao:disabled,
+.chat-acao-mini:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chat-acao-mini {
+  width: auto;
+  margin: 0;
+  padding: 1px 6px;
+  font-size: 0.75rem;
+}
+
+.chat-acao-espera {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  font-style: italic;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.chat-acao-critico {
+  margin: 0 0 4px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.chat-acao-alvos {
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+}
+
+.chat-acao-alvos li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 3px 6px;
+  border-left: 3px solid #8f8d89;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.chat-acao-alvos li + li {
+  margin-top: 2px;
+}
+
+.chat-acao-alvos li.acertou {
+  border-left-color: #2f7a3d;
+}
+
+.chat-acao-alvos li.errou {
+  border-left-color: #9a2b2b;
+  opacity: 0.75;
+}
+
+.chat-acao-alvo {
+  font-weight: 700;
+}
+
+.chat-acao-extra {
+  font-size: 0.75rem;
+}
+
+.chat-acao-dano {
+  width: 100%;
+  font-weight: 700;
+}
+
+.chat-acao-dano small {
+  font-weight: 400;
+}
+
+.chat-acao-erro {
+  margin: 4px 0 0;
+  color: #9a2b2b;
+  font-size: 0.78rem;
+}
+
+/* Aviso de alvo marcado, na ficha e na ficha de ameaça */
+.ficha-mira-aviso {
+  margin: 6px 0;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.82rem;
+}

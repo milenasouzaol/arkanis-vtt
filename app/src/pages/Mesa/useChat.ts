@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { juntarMensagem, linkificar, sanitizarHtml, type Mensagem, type ModoEnvio } from './chat'
 
-const CAMPOS = 'id, campaign_id, user_id, character_id, modo, autor_nome, autor_foto, conteudo, rolagem, destacada, revelada, created_at'
+const CAMPOS = 'id, campaign_id, user_id, character_id, modo, autor_nome, autor_foto, conteudo, rolagem, acao, destacada, revelada, created_at'
 
 // Mensagens do chat da campanha em tempo real. O banco (RLS) já decide quem vê o quê;
 // aqui só se carrega, escuta e envia.

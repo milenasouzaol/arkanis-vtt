@@ -9,6 +9,7 @@ import { agruparVariacoes, NIVEIS, nomeDoArquivo, ROTULO_TIPO, type Ator, type N
 import { pastasEmLista, type Pasta } from './cenas'
 import type { CriaturaResumo } from './useAtores'
 import type { Rolagem } from './chat'
+import type { Alvo, AtaqueDaAcao } from './mira'
 
 // Criar Personagem (12.7): pra Ordem Paranormal só NPC e Ameaça/Monstro.
 export function CriarPersonagem({ pastas, pastaInicial, onCriarNPC, onCriarAmeaca, onFechar }: {
@@ -402,19 +403,21 @@ export function ConfirmarExclusao({ ator, onSim, onNao }: { ator: Ator; onSim: (
 
 // Ficha portátil (12.7): janela flutuante, redimensionável. NPC e jogador abrem a ficha de
 // Ordem Paranormal inteira (a mesma da seção 5, salvando sozinha); Ameaça abre a ficha dela.
-export function FichaPortatil({ ator, podeEditar, onMudarPv, onRolar, onMostrar, onFechar }: {
+export function FichaPortatil({ ator, podeEditar, onMudarPv, onRolar, onMostrar, onFechar, alvos, onAtacar }: {
   ator: Ator
   podeEditar: boolean
   onMudarPv: (pv: number) => void
   onRolar?: (rolagem: Rolagem, autor: { nome: string; foto: string | null }) => void
   onMostrar?: (html: string, autor: { nome: string; foto: string | null }) => void
   onFechar: () => void
+  alvos?: Alvo[]
+  onAtacar?: (ataque: AtaqueDaAcao, autor: { nome: string; foto: string | null }) => void
 }) {
   const ameaca = ator.tipo === 'ameaca' && ator.creature_id
   return (
     <Janela titulo={ator.name} icone={ameaca ? faSkull : faUser} largura={ameaca ? 440 : 1100} altura={ameaca ? 620 : 760} inicial={{ x: 40, y: 30 }} onFechar={onFechar}>
       {ameaca ? (
-        <FichaAmeaca criaturaId={ator.creature_id!} nome={ator.name} pvAtual={ator.pv_atual} podeEditar={podeEditar} podeRolar={podeEditar} onMudarPv={onMudarPv} onRolar={onRolar} onMostrar={onMostrar} />
+        <FichaAmeaca criaturaId={ator.creature_id!} nome={ator.name} pvAtual={ator.pv_atual} podeEditar={podeEditar} podeRolar={podeEditar} onMudarPv={onMudarPv} onRolar={onRolar} onMostrar={onMostrar} alvos={alvos} onAtacar={onAtacar} />
       ) : (
         <iframe className="ficha-portatil" title={`Ficha de ${ator.name}`} src={`/personagem/${ator.character_id}?mesa=${ator.campaign_id}`} />
       )}

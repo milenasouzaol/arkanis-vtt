@@ -4,6 +4,7 @@ import { faAnglesLeft, faAnglesRight, faChevronLeft, faChevronRight, faComment, 
 import { supabase } from '../../lib/supabase'
 import { lerPericias, lerTeste, rolarDano, rolarTeste } from './combate'
 import type { Rolagem } from './chat'
+import { ataqueDaCriatura, textoDosAlvos, type Alvo, type AtaqueDaAcao } from './mira'
 
 type Acao = { nome: string; tipo?: string; teste?: string; dano?: string; descricao?: string }
 
@@ -44,7 +45,7 @@ const ATRIBUTOS = ['agi', 'for', 'int', 'pre', 'vig']
 // Ficha de Ameaça (12.4): cabeçalho, Vida com as setas e as abas Status / Combate / Descrição.
 // O mestre rola atributos, perícias, testes e danos e manda ações/poderes pro chat
 // (podeRolar); na escolha de ameaças ela é só pra ver, com o botão Adicionar no rodapé.
-export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, podeRolar = false, nome, onMudarPv, onRolar, onMostrar, onAdicionar }: {
+export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, podeRolar = false, nome, onMudarPv, onRolar, onMostrar, onAdicionar, alvos = [], onAtacar }: {
   criaturaId: string
   pvAtual: number | null
   pvMax?: number | null
@@ -56,6 +57,9 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
   // Manda uma ação/poder pro chat (nome, tipo, teste, dano e descrição).
   onMostrar?: (html: string, autor: { nome: string; foto: string | null }) => void
   onAdicionar?: () => void
+  // Mira (12.9): com alvos marcados, o teste de uma ação com dano vira ataque no chat.
+  alvos?: Alvo[]
+  onAtacar?: (ataque: AtaqueDaAcao, autor: { nome: string; foto: string | null }) => void
 }) {
   const [c, setC] = useState<Criatura | null>(null)
   const [aba, setAba] = useState<Aba>('status')
@@ -81,6 +85,13 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
       detail: `d20 mantido: ${r.kept} (rolados: ${r.rolls.join(', ')}) + ${r.bonus}`,
       dice: r.rolls.map((v) => ({ sides: 20, value: v, discarded: v !== r.kept })),
     }, autor)
+  }
+
+  // Ação com teste e dano, com alvo marcado: manda "[Ameaça] está atacando [Alvo]" pro chat.
+  function testarAcao(a: Acao) {
+    const ataque = alvos.length && a.dano && onAtacar ? ataqueDaCriatura(a.nome, a.teste ?? '', a.dano) : null
+    if (ataque && podeRolar) onAtacar!(ataque, autor)
+    else rolarPericia(`Teste: ${a.nome}`, a.teste ?? '')
   }
 
   function rolarDanoDaAcao(a: Acao) {
@@ -213,6 +224,9 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
                 {c.presenca_dano && rolarDano(c.presenca_dano) !== null && dado(() => rolarDanoTexto('Presença Perturbadora', c.presenca_dano!), 'Rolar dano da Presença Perturbadora')}
               </p>
             )}
+            {podeRolar && onAtacar && alvos.length > 0 && (
+              <p className="ficha-mira-aviso">Mirando: <strong>{textoDosAlvos(alvos)}</strong>. O teste das ações com dano vai pro chat como ataque.</p>
+            )}
             <nav className="ficha-ameaca-subabas">
               <button type="button" className={subaba === 'acoes' ? 'ativa' : undefined} onClick={() => setSubaba('acoes')}>Ações</button>
               <button type="button" className={subaba === 'poderes' ? 'ativa' : undefined} onClick={() => setSubaba('poderes')}>Poderes</button>
@@ -221,7 +235,7 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
               <details key={i} className="ficha-ameaca-acao">
                 <summary>{a.tipo ? <span>{a.tipo.toUpperCase()} - </span> : null}{a.nome}</summary>
                 {a.teste && (
-                  <p className="ficha-ameaca-linha"><strong>Teste:</strong> {a.teste} {dado(() => rolarPericia(`Teste: ${a.nome}`, a.teste!), `Rolar teste de ${a.nome}`)}</p>
+                  <p className="ficha-ameaca-linha"><strong>Teste:</strong> {a.teste} {dado(() => testarAcao(a), alvos.length && a.dano && onAtacar ? `Atacar ${textoDosAlvos(alvos)} com ${a.nome}` : `Rolar teste de ${a.nome}`)}</p>
                 )}
                 {a.dano && (
                   <p className="ficha-ameaca-linha"><strong>Dano:</strong> {a.dano} {rolarDano(a.dano) !== null && dado(() => rolarDanoDaAcao(a), `Rolar dano de ${a.nome}`)}</p>

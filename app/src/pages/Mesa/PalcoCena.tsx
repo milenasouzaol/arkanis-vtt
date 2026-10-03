@@ -18,6 +18,7 @@ import {
 import type { Ping, useObjetos } from './useObjetos'
 import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
 import type { Variacao } from './atores'
+import type { MiraDeAlguem } from './useMira'
 
 const MAPA_PADRAO = { w: 4000, h: 3000 }
 const ORDEM_CAMADA: Record<Camada, number> = { mapa: 0, token: 1, mestre: 2 }
@@ -38,7 +39,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -54,6 +55,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   onAbrirFicha: (atorId: string) => void
   variacoesDe: (atorId: string) => Variacao[]
   onAbrirVariacoes: (tokenId: string) => void
+  // Mira (12.9 e 12.13): ferramenta escolhida na barra esquerda e os alvos marcados.
+  ferramenta: string
+  meusAlvos: string[]
+  outrosAlvos: Record<string, MiraDeAlguem>
+  onAlternarAlvo: (ids: string[]) => void
+  onLimparAlvos: () => void
 }) {
   const palcoRef = useRef<HTMLDivElement>(null)
   const [mapa, setMapa] = useState(MAPA_PADRAO)
@@ -63,6 +70,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const [menu, setMenu] = useState<{ x: number; y: number; mapa: { x: number; y: number }; objeto: ObjetoCena | null } | null>(null)
   const [propriedade, setPropriedade] = useState<ObjetoCena | null>(null)
   const gesto = useRef<Gesto | null>(null)
+  // Token embaixo do mouse: o M mira nele (qualquer um mira tokens alheios).
+  const sobre = useRef<string | null>(null)
   const ultimoEnvio = useRef(0)
   // Arrastar com o botão direito move o mapa; aí o menu não abre.
   const panouComDireito = useRef(false)
@@ -261,6 +270,16 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
         colar(null)
         return
       }
+      // M marca/desmarca o alvo: o token embaixo do mouse, ou os selecionados.
+      if (!ctrl && !e.altKey && e.key.toLowerCase() === 'm') {
+        const ids = sobre.current && visiveis.some((o) => o.id === sobre.current) ? [sobre.current] : selecionados
+        if (ids.length) onAlternarAlvo(ids)
+        return
+      }
+      if (e.key === 'Escape' && !selecionados.length) {
+        onLimparAlvos()
+        return
+      }
       if (!selecionados.length) return
       if (e.key === 'Escape') setSelecionados([])
       if (souMestre && ctrl && e.key.toLowerCase() === 'c') copiar(selecionados)
@@ -277,7 +296,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     }
     window.addEventListener('keydown', tecla)
     return () => window.removeEventListener('keydown', tecla)
-  }, [selecionados, souMestre, objetos, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer])
+  }, [selecionados, souMestre, objetos, visiveis, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer, onAlternarAlvo, onLimparAlvos])
 
   // Rodinha: zoom no ponto do mouse; com Shift ou Ctrl em cima de algo selecionado, gira (12.13).
   useEffect(() => {
@@ -331,6 +350,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     // Botão direito no objeto é só pro menu dele, não move o mapa.
     if (e.button === 2) {
       e.stopPropagation()
+      return
+    }
+    // Ferramenta Selecionar Alvos: clicar no token mira nele (12.13).
+    if (e.button === 0 && ferramenta === 'alvos') {
+      e.stopPropagation()
+      if (o.layer !== 'mapa') onAlternarAlvo([o.id])
       return
     }
     if (e.button !== 0 || !podeMover(o)) return
@@ -648,11 +673,24 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
                 className={`mesa-objeto${selecionados.includes(o.id) ? ' selecionado' : ''}${o.layer === 'mestre' ? ' camada-mestre' : ''}${podeMover(o) && !o.locked ? ' mexivel' : ''}`}
                 style={{ left: o.x, top: o.y, width: o.width, height: o.height, transform: `rotate(${o.rotation}deg)`, ['--borda' as string]: `${2 / vista.escala}px` }}
                 onPointerDown={(e) => pegarObjeto(e, o)}
+                onPointerEnter={() => (sobre.current = o.id)}
+                onPointerLeave={() => sobre.current === o.id && (sobre.current = null)}
                 onContextMenu={(e) => menuDoObjeto(e, o)}
                 onDoubleClick={() => o.actor_id && onAbrirFicha(o.actor_id)}
               >
                 <img src={o.image_url} alt={o.name ?? ''} draggable={false} style={{ transform: `scale(${o.flip_h ? -1 : 1}, ${o.flip_v ? -1 : 1})` }} />
                 {o.locked && selecionados.includes(o.id) && <FontAwesomeIcon icon={faLock} className="mesa-objeto-trava" style={{ fontSize: 16 / vista.escala }} />}
+                {(() => {
+                  // Mira em cima do token marcado: a minha mais forte; a dos outros mais apagada, com o nome.
+                  const meu = meusAlvos.includes(o.id)
+                  const deQuem = Object.values(outrosAlvos).filter((m) => m.alvos.includes(o.id)).map((m) => m.nome)
+                  if (!meu && !deQuem.length) return null
+                  return (
+                    <span className={`mesa-mira${meu ? ' minha' : ''}`} title={[meu ? 'Seu alvo' : '', ...deQuem.map((n) => `Alvo de ${n}`)].filter(Boolean).join(' · ')}>
+                      <FontAwesomeIcon icon={faCrosshairs} />
+                    </span>
+                  )
+                })()}
               </div>
             ))}
 

@@ -27,6 +27,8 @@ export async function recordRoll(params: {
   nota?: string | null
   // Registro sem dados (ex.: ritual sem dano): aparece só com o nome e a nota.
   semRolagem?: boolean
+  // Rolagem que já aparece no chat de outro jeito (botões do ataque com mira): só no Histórico.
+  semChat?: boolean
 }) {
   await supabase.from('character_rolls').insert({
     character_id: params.characterId,
@@ -40,6 +42,7 @@ export async function recordRoll(params: {
     bonus: params.bonus ?? 0,
     nota: params.nota ?? null,
     sem_rolagem: params.semRolagem ?? false,
+    sem_chat: params.semChat ?? false,
   })
   window.dispatchEvent(new CustomEvent('vtt-roll-recorded'))
 }

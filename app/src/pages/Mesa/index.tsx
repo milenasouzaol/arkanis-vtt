@@ -31,6 +31,11 @@ import PainelChat from './PainelChat'
 import ChatEntrada from './ChatEntrada'
 import ModosEnvio from './ModosEnvio'
 import ChatMensagem from './ChatMensagem'
+import { QuemVeContexto } from './AcaoNoChat'
+import { useMira } from './useMira'
+import { useAnunciarAlvos } from '../../lib/miraDaMesa'
+import { postarAtaque } from './acoesDeMira'
+import type { Alvo, AtaqueDaAcao } from './mira'
 import {
   ABAS_DIREITA,
   CATEGORIAS_ESQUERDA,
@@ -154,6 +159,22 @@ export default function Mesa() {
     })
   }, [idsAmeacas, vdDe])
   const [avisoPalco, setAvisoPalco] = useState<string | null>(null)
+
+  // ---- Mira (12.9) ----
+  const euNaMesa = pronta?.membros.find((m) => m.userId === userId)
+  const mira = useMira(pronta?.campanha.id, userId, euNaMesa?.personagem || euNaMesa?.nomeConta || 'Alguém')
+  const alvosComNome: Alvo[] = mira.meus.flatMap((id) => {
+    const o = objetos.objetos.find((x) => x.id === id)
+    if (!o) return []
+    const a = o.actor_id ? atores.atores.find((x) => x.id === o.actor_id) : undefined
+    return [{ token_id: id, nome: o.name || a?.name || 'Token' }]
+  })
+  // A ficha (que abre num iframe) fica sabendo dos alvos pra transformar o ataque em ação no chat.
+  useAnunciarAlvos(pronta?.campanha.id, alvosComNome)
+  // Trocou de cena: os alvos da outra cena não valem mais.
+  const cenaVista = cenas.atual?.id
+  const limparAlvos = mira.limpar
+  useEffect(() => limparAlvos(), [cenaVista, limparAlvos])
 
   if (estado.tipo === 'carregando') {
     return <main className="mesa mesa-aviso"><p>Carregando a mesa…</p></main>
@@ -346,6 +367,20 @@ export default function Mesa() {
     if (userId) chat.enviar({ userId, modo, autor, personagemId: null, html })
   }
 
+  // Ameaça atacando os alvos marcados (mestre).
+  function atacarComAmeaca(ataque: AtaqueDaAcao, autor: { nome: string; foto: string | null }) {
+    postarAtaque({ campanhaId: campanha.id, characterId: null, autor, ataque, alvos: alvosComNome }).then((e) => e && avisar(e, true))
+  }
+
+  // Bloquear (12.9): quem pode mexer na ficha do alvo.
+  function controlaAlvo(tokenId: string) {
+    const o = objetos.objetos.find((x) => x.id === tokenId)
+    if (!o) return false
+    const a = o.actor_id ? atores.atores.find((x) => x.id === o.actor_id) : undefined
+    if (a) return !!a.character_id && nivelNoAtor(a) === 'dono'
+    return !!o.character_id && (souMestre || meusPersonagensIds.includes(o.character_id))
+  }
+
   const cenaEditada = cenas.cenas.find((c) => c.id === editandoCena)
   const jogadoresParaCena = estado.membros
     .filter((m) => m.papel === 'jogador')
@@ -361,6 +396,7 @@ export default function Mesa() {
   }
 
   return (
+    <QuemVeContexto.Provider value={{ userId: userId ?? '', souMestre, controlaAlvo }}>
     <main className="mesa" style={campanha.accent_color ? ({ '--mesa-destaque': campanha.accent_color } as React.CSSProperties) : undefined}>
       <PalcoCena
         cena={cenas.atual}
@@ -381,6 +417,11 @@ export default function Mesa() {
           return a ? variacoesDoToken(a) : []
         }}
         onAbrirVariacoes={setTokenDasVariacoes}
+        ferramenta={ferramenta}
+        meusAlvos={alvosComNome.map((a) => a.token_id)}
+        outrosAlvos={mira.outros}
+        onAlternarAlvo={mira.alternar}
+        onLimparAlvos={mira.limpar}
       />
 
       {destaque && destaque.id !== destaqueFechado && (
@@ -556,6 +597,8 @@ export default function Mesa() {
               onMudarPv={(pv) => combate.mudarVida(c.id, pv)}
               onRolar={rolarNoChat}
               onMostrar={mostrarNoChat}
+              alvos={alvosComNome}
+              onAtacar={atacarComAmeaca}
             />
           </Janela>
         )
@@ -659,6 +702,8 @@ export default function Mesa() {
             onMudarPv={(pv) => atores.salvar(a.id, { pv_atual: pv })}
             onRolar={rolarNoChat}
             onMostrar={mostrarNoChat}
+            alvos={alvosComNome}
+            onAtacar={atacarComAmeaca}
             onFechar={fechar}
           />
         )
@@ -666,5 +711,6 @@ export default function Mesa() {
 
       <PainelSessao conectados={online} latencia={latencia} fps={fps} />
     </main>
+    </QuemVeContexto.Provider>
   )
 }

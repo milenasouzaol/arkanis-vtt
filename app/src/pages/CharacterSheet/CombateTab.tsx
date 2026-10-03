@@ -11,6 +11,9 @@ import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
 import AttackCard from './AttackCard'
 import { defesaDeCondicoes, penalidadeDeCondicoes, rotuloComCondicoes } from './condicoes'
 import { defesaDeModificadores, numerosDoAtaque, resistenciasDoItemEquipado, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
+import { useAlvosDaMesa } from '../../lib/miraDaMesa'
+import { postarAtaque } from '../Mesa/acoesDeMira'
+import { textoDosAlvos } from '../Mesa/mira'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
@@ -76,6 +79,9 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const [editingAttack, setEditingAttack] = useState<AttackToEdit | null>(null)
   const [attackSearch, setAttackSearch] = useState('')
   const [pendingAttack, setPendingAttack] = useState<{ attackId: string; isCrit: boolean } | null>(null)
+  // Alvos marcados com a mira na mesa (12.9): com eles, o ataque vira ação no chat.
+  const alvos = useAlvosDaMesa(character.campaign_id)
+  const [avisoMira, setAvisoMira] = useState<string | null>(null)
   const [damageRoll, setDamageRoll] = useState<{ title: string; subtitle: string; total: number; dice: RollCardDie[]; extraLines?: string[]; bonus?: number } | null>(null)
 
   async function loadAttacks() {
@@ -243,6 +249,32 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
 
     const effectiveThreatMargin = attack.threat_margin - threatBonus
     const isCrit = kept >= effectiveThreatMargin
+
+    // Com alvo marcado na mesa: "[Personagem] está atacando [Alvo]" no chat, com os botões
+    // Ataque e Dano; quem rola é o chat (e o dano já sai descontado da Vida do alvo).
+    if (alvos.length && character.campaign_id) {
+      const activeDamageMods = damageMods.filter((m) => m.is_active)
+      postarAtaque({
+        campanhaId: character.campaign_id,
+        characterId: character.id,
+        autor: { nome: character.name, foto: character.avatar_url },
+        alvos,
+        ataque: {
+          nome: rotuloComCondicoes(attack.name, cond.motivos),
+          dados: score,
+          bonus,
+          margem: effectiveThreatMargin,
+          multiplicador: attack.multiplier + activeAttackMods.reduce((sum, m) => sum + m.multiplier_bonus, 0),
+          partes: attack.damage.map((d) => ({ formula: d.formula, tipo: d.tipo })),
+          bonus_dano: activeDamageMods.reduce((sum, m) => sum + m.value_bonus, 0) + (attack.general_info?.damage_bonus_from_mods ?? 0),
+        },
+      }).then((erro) => {
+        setAvisoMira(erro ?? `Ataque contra ${textoDosAlvos(alvos)} enviado pro chat.`)
+        setTimeout(() => setAvisoMira(null), 3500)
+      })
+      if (ammoInv) consumeAmmo(ammoInv)
+      return
+    }
 
     const label = rotuloComCondicoes(`Ataque: ${attack.name}${isCrit ? ' (crítico!)' : ''}`, cond.motivos)
     setRoll({
@@ -491,6 +523,11 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         </div>
         <button type="button" className="combat-add-btn" onClick={() => setAdding(true)}>Adicionar Ataque</button>
       </div>
+
+      {alvos.length > 0 && (
+        <p className="ficha-mira-aviso">Mirando: <strong>{textoDosAlvos(alvos)}</strong>. O ataque vai pro chat da mesa.</p>
+      )}
+      {avisoMira && <p className="ficha-mira-aviso" role="status">{avisoMira}</p>}
 
       {(adding || editingAttack) && (
         <AttackFormModal

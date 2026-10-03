@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faChevronRight, faEllipsisVertical, faEye, faThumbtack, faTrash, faUser } from '@fortawesome/free-solid-svg-icons'
+import AcaoNoChat from './AcaoNoChat'
 import { destinatario, ehPrivada, formulaDaRolagem, sanitizarHtml, tempoRelativo, type Mensagem } from './chat'
 
 // Um card do chat (12.3): foto, nome, "Para:" nas privadas, tempo relativo e o ⋮ do mestre.
@@ -97,6 +98,8 @@ export default function ChatMensagem({ mensagem, souMestre, nomeMestre, agora, o
           {r.nota && <p className="chat-rolagem-nota">{r.nota}</p>}
         </div>
       )}
+
+      {mensagem.acao && <AcaoNoChat mensagem={mensagem} />}
 
       {mensagem.conteudo && (
         <div className="chat-msg-texto" dangerouslySetInnerHTML={{ __html: sanitizarHtml(mensagem.conteudo) }} />

@@ -1,4 +1,5 @@
 // Regras puras do chat da mesa (KAN-47, spec 12.3).
+import type { AcaoAtaque } from './mira'
 
 export type ModoEnvio = 'publico_usuario' | 'privado_mestres' | 'cego_mestres' | 'somente_si' | 'publico_personagem'
 
@@ -32,6 +33,8 @@ export type Mensagem = {
   autor_foto: string | null
   conteudo: string | null
   rolagem: Rolagem | null
+  // Ataque com mira (12.9): os botões Ataque e Dano e o que já saiu deles.
+  acao?: AcaoAtaque | null
   destacada: boolean
   revelada: boolean
   created_at: string
