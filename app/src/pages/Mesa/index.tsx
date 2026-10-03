@@ -18,11 +18,9 @@ import { colocarToken, enviarImagemDeToken, trocarVariacao, useAtores } from './
 import { imagemDoToken, nivelDoJogador, nivelNaFichaDoJogador, variacoesDoToken, type Ator, type NivelAcesso } from './atores'
 import Janela from './Janela'
 import PainelCombate, { IndicadorTurno } from './PainelCombate'
-import CriarCombate from './CriarCombate'
-import FichaAmeaca from './FichaAmeaca'
+import CriarCombate, { type AtorDoCombate } from './CriarCombate'
 import { useCombate, type Combate } from './useCombate'
 import type { Combatente } from './combate'
-import { faSkull } from '@fortawesome/free-solid-svg-icons'
 import type { Cena } from './cenas'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
 import { autoria, type ModoEnvio } from './chat'
@@ -145,9 +143,8 @@ export default function Mesa() {
   const [excluindoAtor, setExcluindoAtor] = useState<string | null>(null)
   const [fichasAbertas, setFichasAbertas] = useState<string[]>([])
   const [tokenDasVariacoes, setTokenDasVariacoes] = useState<string | null>(null)
-  const combate = useCombate(pronta?.campanha.id, pronta?.campanha.owner_id === userId)
+  const combate = useCombate(pronta?.campanha.id)
   const [montandoCombate, setMontandoCombate] = useState<{ editando?: Combate; adicionarEm?: Combate } | null>(null)
-  const [fichaCombate, setFichaCombate] = useState<string | null>(null)
   const [vdDe, setVdDe] = useState<Record<string, number | null>>({})
   const idsAmeacas = [...new Set(combate.combates.flatMap((c) => c.ameacas))].sort().join(',')
   // VD das ameaças dos combates salvos, pro card mostrar o VD total.
@@ -351,12 +348,32 @@ export default function Mesa() {
 
   const meusPersonagensIds = eu?.personagemId ? [eu.personagemId] : []
 
+  // Clicar em alguém do combate abre a ficha do personagem dele (a mesma da aba Personagens).
   function abrirCombatente(c: Combatente) {
-    if (c.tipo === 'jogador') {
-      const a = atores.atores.find((x) => x.character_id === c.character_id)
-      if (a) abrirFicha(a.id)
-    } else setFichaCombate(c.id)
+    const a = c.actor_id ? atores.atores.find((x) => x.id === c.actor_id) : atores.atores.find((x) => x.character_id === c.character_id)
+    if (a) abrirFicha(a.id)
   }
+
+  // Vida da ameaça = a do personagem dela (começa no máximo do bestiário).
+  function vidaDoCombatente(c: Combatente): [number, number | null] | null {
+    const a = c.actor_id ? atores.atores.find((x) => x.id === c.actor_id) : undefined
+    if (!a?.creature_id) return null
+    const max = atores.criaturas[a.creature_id]?.pv_maximo ?? null
+    return [a.pv_atual ?? max ?? 0, max]
+  }
+
+  function vdDoCombate(c: Combate) {
+    const doBestiario = c.ameacas.reduce((s, id) => s + (vdDe[id] ?? 0), 0)
+    const daMesa = c.atores.reduce((s, id) => {
+      const a = atores.atores.find((x) => x.id === id)
+      return s + ((a?.creature_id && atores.criaturas[a.creature_id]?.vd) || 0)
+    }, 0)
+    return doBestiario + daMesa
+  }
+
+  const atoresParaCombate: AtorDoCombate[] = atores.atores
+    .filter((a): a is typeof a & { tipo: 'npc' | 'ameaca' } => a.tipo !== 'jogador')
+    .map((a) => ({ id: a.id, name: a.name, tipo: a.tipo, token_url: a.token_url, creature_id: a.creature_id }))
 
   function rolarNoChat(rolagem: Parameters<typeof chat.enviarRolagem>[0]['rolagem'], autor: { nome: string; foto: string | null }) {
     if (userId) chat.enviarRolagem({ userId, modo, autor, rolagem })
@@ -422,6 +439,12 @@ export default function Mesa() {
         outrosAlvos={mira.outros}
         onAlternarAlvo={mira.alternar}
         onLimparAlvos={mira.limpar}
+        combates={combate.combates}
+        entraEmCombate={(id) => atoresParaCombate.some((a) => a.id === id)}
+        onAdicionarAoCombate={(combateId, atorId) => {
+          const c = combate.combates.find((x) => x.id === combateId)
+          if (c) combate.adicionarAtor(c, atorId)
+        }}
       />
 
       {destaque && destaque.id !== destaqueFechado && (
@@ -501,10 +524,10 @@ export default function Mesa() {
               <PainelCombate
                 souMestre={souMestre}
                 combates={combate.combates}
-                vdDe={vdDe}
+                vdDoCombate={vdDoCombate}
                 ativo={combate.ativo}
                 ordem={combate.ordem}
-                vidas={combate.vidas}
+                vidaDe={vidaDoCombatente}
                 barras={combate.barras}
                 meusPersonagens={meusPersonagensIds}
                 onCriar={() => setMontandoCombate({})}
@@ -516,6 +539,7 @@ export default function Mesa() {
                 onPassar={(c, voltar) => combate.passar(c, voltar)}
                 onRemover={(c, id) => combate.remover(c, id)}
                 onAbrir={abrirCombatente}
+                onSoltarAtor={(c, id) => combate.adicionarAtor(c, id)}
               />
             ) : aba === 'personagens' ? (
               <PainelPersonagens
@@ -571,38 +595,16 @@ export default function Mesa() {
         <CriarCombate
           inicial={montandoCombate.editando ?? montandoCombate.adicionarEm}
           modo={montandoCombate.adicionarEm ? 'adicionar' : 'criar'}
-          onSalvar={(nome, ameacas) => {
-            if (montandoCombate.adicionarEm) combate.entrarAmeacas(montandoCombate.adicionarEm, ameacas)
-            else if (montandoCombate.editando) combate.salvar(montandoCombate.editando.id, { name: nome, ameacas })
-            else combate.criar(nome, ameacas)
+          atores={atoresParaCombate}
+          onSalvar={(nome, ameacas, escolhidos) => {
+            if (montandoCombate.adicionarEm) combate.entrarAmeacas(montandoCombate.adicionarEm, ameacas, escolhidos)
+            else if (montandoCombate.editando) combate.salvar(montandoCombate.editando.id, { name: nome, ameacas, atores: escolhidos })
+            else combate.criar(nome, ameacas, escolhidos)
             setMontandoCombate(null)
           }}
           onFechar={() => setMontandoCombate(null)}
         />
       )}
-
-      {(() => {
-        const c = combate.ordem.find((x) => x.id === fichaCombate)
-        if (!c || !c.creature_id || !souMestre) return null
-        const vida = combate.vidas[c.id]
-        return (
-          <Janela titulo={c.name} icone={faSkull} largura={440} altura={640} inicial={{ x: Math.max(16, window.innerWidth - 820), y: 40 }} onFechar={() => setFichaCombate(null)}>
-            <FichaAmeaca
-              criaturaId={c.creature_id}
-              nome={c.name}
-              pvAtual={vida?.pv_atual ?? null}
-              pvMax={vida?.pv_max ?? null}
-              podeEditar
-              podeRolar
-              onMudarPv={(pv) => combate.mudarVida(c.id, pv)}
-              onRolar={rolarNoChat}
-              onMostrar={mostrarNoChat}
-              alvos={alvosComNome}
-              onAtacar={atacarComAmeaca}
-            />
-          </Janela>
-        )
-      })()}
 
       {criandoAtor && (
         <CriarPersonagem

@@ -1,18 +1,20 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBackwardStep, faForwardStep, faPenToSquare, faPlay, faPlus, faSkull, faStop, faTrash, faUser, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useEffect, useRef } from 'react'
-import { posicaoNoCarrossel, vdTotal, type Combatente } from './combate'
-import type { Barras, Combate, Vida } from './useCombate'
+import { posicaoNoCarrossel, type Combatente } from './combate'
+import type { Barras, Combate } from './useCombate'
+import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
 
 // Aba Encontros de Combate (12.4). Sem combate rodando: a lista dos combates salvos
 // (Nome + VD + Iniciar). Rodando: a ordem de iniciativa, os turnos e a rodada.
-export default function PainelCombate({ souMestre, combates, vdDe, ativo, ordem, vidas, barras, meusPersonagens, onCriar, onEditar, onExcluir, onIniciar, onEncerrar, onAdicionar, onPassar, onRemover, onAbrir }: {
+export default function PainelCombate({ souMestre, combates, vdDoCombate, ativo, ordem, vidaDe, barras, meusPersonagens, onCriar, onEditar, onExcluir, onIniciar, onEncerrar, onAdicionar, onPassar, onRemover, onAbrir, onSoltarAtor }: {
   souMestre: boolean
   combates: Combate[]
-  vdDe: Record<string, number | null>
+  vdDoCombate: (c: Combate) => number
   ativo: Combate | null
   ordem: Combatente[]
-  vidas: Record<string, Vida>
+  // Vida das ameaças: a do personagem delas na aba Personagens.
+  vidaDe: (c: Combatente) => [number, number | null] | null
   barras: (c: Combatente) => Barras | null
   meusPersonagens: string[]
   onCriar: () => void
@@ -24,7 +26,25 @@ export default function PainelCombate({ souMestre, combates, vdDe, ativo, ordem,
   onPassar: (c: Combate, voltar: boolean) => void
   onRemover: (c: Combate, combatenteId: string) => void
   onAbrir: (c: Combatente) => void
+  // Personagem arrastado da aba Personagens pra um combate.
+  onSoltarAtor: (c: Combate, atorId: string) => void
 }) {
+  // Soltar um personagem da aba Personagens em cima do combate coloca ele no combate (mestre).
+  const soltavel = (c: Combate) =>
+    souMestre
+      ? {
+          onDragOver: (e: React.DragEvent) => {
+            if (e.dataTransfer.types.includes(TIPO_ARRASTO_ATOR)) e.preventDefault()
+          },
+          onDrop: (e: React.DragEvent) => {
+            const id = e.dataTransfer.getData(TIPO_ARRASTO_ATOR)
+            if (!id) return
+            e.preventDefault()
+            onSoltarAtor(c, id)
+          },
+        }
+      : {}
+
   if (!ativo) {
     return (
       <div className="cenas-painel combate-painel">
@@ -42,10 +62,10 @@ export default function PainelCombate({ souMestre, combates, vdDe, ativo, ordem,
             )}
             <ul className="combate-lista">
               {combates.map((c) => (
-                <li key={c.id} className="combate-card">
+                <li key={c.id} className="combate-card" {...soltavel(c)}>
                   <div>
                     <strong>{c.name}</strong>
-                    <span>VD: {vdTotal(c.ameacas, Object.entries(vdDe).map(([id, vd]) => ({ id, vd })))}</span>
+                    <span>VD: {vdDoCombate(c)}</span>
                   </div>
                   {souMestre && (
                     <div className="combate-card-acoes">
@@ -72,7 +92,7 @@ export default function PainelCombate({ souMestre, combates, vdDe, ativo, ordem,
   )
 
   return (
-    <div className="cenas-painel combate-painel">
+    <div className="cenas-painel combate-painel" {...soltavel(ativo)}>
       <header className="combate-topo">
         <strong>{ativo.name}</strong>
         {souMestre && (
@@ -88,7 +108,7 @@ export default function PainelCombate({ souMestre, combates, vdDe, ativo, ordem,
           const vez = c.id === ativo.turno_atual
           const meu = c.character_id !== null && meusPersonagens.includes(c.character_id)
           const b = barras(c)
-          const vida = vidas[c.id]
+          const vida = c.tipo === 'jogador' ? null : vidaDe(c)
           // Jogador não vê a vida nem a ficha dos monstros (12.4).
           const verDetalhes = c.tipo === 'jogador' || souMestre
           return (
@@ -97,18 +117,18 @@ export default function PainelCombate({ souMestre, combates, vdDe, ativo, ordem,
                 <span className="ator-token">{c.image_url ? <img src={c.image_url} alt="" /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}</span>
                 <span className="combate-nome">
                   <strong>{c.name}</strong>
-                  {b && (
+                  {b && (c.tipo === 'jogador' || souMestre) && (
                     <span className="combate-barras">
                       {barra(b.pv, 'vida')}
                       {barra(b.pe, 'esforco')}
                       {barra(b.san, 'sanidade')}
                     </span>
                   )}
-                  {souMestre && vida && <span className="combate-barras">{barra([vida.pv_atual, vida.pv_max], 'vida')}</span>}
+                  {souMestre && !b && vida && <span className="combate-barras">{barra(vida, 'vida')}</span>}
                 </span>
               </button>
               <span className="combate-iniciativa" title="Iniciativa">{c.iniciativa}</span>
-              {souMestre && c.tipo === 'ameaca' && vida && vida.pv_atual <= 0 && (
+              {souMestre && c.tipo !== 'jogador' && ((vida && vida[0] <= 0) || (b && b.pv[0] <= 0)) && (
                 <button type="button" className="combate-icone" aria-label={`Tirar ${c.name} do combate`} title="Tirar do combate" onClick={() => onRemover(ativo, c.id)}>
                   <FontAwesomeIcon icon={faXmark} />
                 </button>

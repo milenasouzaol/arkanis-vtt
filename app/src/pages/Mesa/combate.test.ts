@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { elementoDaCriatura, lerPericias, filtrarAmeacas, lerTeste, ordemDeIniciativa, rolarDano, rolarTeste, testeDeIniciativa, vdTotal, type CriaturaLista } from './combate'
+import { elementoDaCriatura, lerPericias, filtrarAmeacas, lerTeste, nomesNumerados, ordemDeIniciativa, rolarDano, rolarTeste, testeDeIniciativa, vdTotal, type CriaturaLista } from './combate'
 
 const c = (p: Partial<CriaturaLista>): CriaturaLista => ({
   id: 'x', name: 'X', vd: 10, image_url: null, tipo_criatura: null, tamanho: null, descritores: [], categoria: 'mundana', source_id: 'base', iniciativa: null, pv_maximo: null, ...p,
@@ -97,4 +97,10 @@ it('carrossel: quem está na vez no centro, próximos à direita, os que já for
   expect([0, 1, 2, 3, 4].map((i) => posicaoNoCarrossel(i, 4, 5))).toEqual([1, 2, -2, -1, 0])
   // número par: sobra um a mais à direita
   expect([0, 1, 2, 3].map((i) => posicaoNoCarrossel(i, 0, 4))).toEqual([0, 1, 2, -1])
+})
+
+
+it('ameaças repetidas ganham número', () => {
+  expect(nomesNumerados(['Zumbi', 'Zumbi', 'Cultista'])).toEqual(['Zumbi 1', 'Zumbi 2', 'Cultista'])
+  expect(nomesNumerados([])).toEqual([])
 })

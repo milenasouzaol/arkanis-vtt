@@ -114,7 +114,8 @@ export function rolarDano(texto: string): { total: number; detalhe: string; tipo
 export type Combatente = {
   id: string
   combat_id: string
-  tipo: 'jogador' | 'ameaca'
+  tipo: 'jogador' | 'ameaca' | 'npc'
+  actor_id: string | null
   character_id: string | null
   creature_id: string | null
   name: string
@@ -149,4 +150,17 @@ export function posicaoNoCarrossel(indice: number, indiceAtual: number, total: n
   if (total <= 0) return 0
   const frente = (((indice - indiceAtual) % total) + total) % total
   return frente > Math.floor(total / 2) ? frente - total : frente
+}
+
+// Ameaças repetidas ganham número: ["Zumbi", "Zumbi", "Cultista"] → ["Zumbi 1", "Zumbi 2", "Cultista"].
+export function nomesNumerados(nomes: string[]): string[] {
+  const total = new Map<string, number>()
+  for (const n of nomes) total.set(n, (total.get(n) ?? 0) + 1)
+  const visto = new Map<string, number>()
+  return nomes.map((n) => {
+    if ((total.get(n) ?? 0) < 2) return n
+    const i = (visto.get(n) ?? 0) + 1
+    visto.set(n, i)
+    return `${n} ${i}`
+  })
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   faArrowDownWideShort, faArrowUpWideShort, faBullseye, faCopy, faCrosshairs, faLayerGroup, faLock, faLockOpen, faObjectGroup,
-  faObjectUngroup, faPaste, faIdCard, faImages, faRotateLeft, faRotateRight, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear,
+  faObjectUngroup, faPaste, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import EfeitoClimatico from './EfeitoClimatico'
@@ -39,7 +39,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -61,6 +61,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   outrosAlvos: Record<string, MiraDeAlguem>
   onAlternarAlvo: (ids: string[]) => void
   onLimparAlvos: () => void
+  // Adicionar ao Combate (mestre): o personagem do token entra no combate escolhido.
+  combates?: { id: string; name: string; ativo: boolean; atores: string[] }[]
+  onAdicionarAoCombate?: (combateId: string, atorId: string) => void
+  entraEmCombate?: (atorId: string) => boolean
 }) {
   const palcoRef = useRef<HTMLDivElement>(null)
   const [mapa, setMapa] = useState(MAPA_PADRAO)
@@ -535,6 +539,17 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
           // Abre o painel lateral com as imagens (12.8), que rola e fica aberto pra trocar rápido.
           ...(podeMover(o) && variacoesDe(o.actor_id).length > 1
             ? [{ rotulo: 'Variação de Token', icone: faImages, onClick: () => onAbrirVariacoes(o.id) } as ItemMenu]
+            : []),
+          // Ameaça/NPC que já está na cena entra no combate (o de jogador entra sozinho).
+          ...(souMestre && onAdicionarAoCombate && combates.length && entraEmCombate?.(o.actor_id)
+            ? [{
+                tipo: 'sub', rotulo: 'Adicionar ao Combate', icone: faShieldHalved,
+                itens: combates.map((c) => ({
+                  rotulo: `${c.atores.includes(o.actor_id!) ? '✓ ' : ''}${c.name}${c.ativo ? ' (rodando)' : ''}`,
+                  desativado: c.atores.includes(o.actor_id!),
+                  onClick: () => onAdicionarAoCombate(c.id, o.actor_id!),
+                })),
+              } as ItemMenu]
             : []),
         ]
       : []

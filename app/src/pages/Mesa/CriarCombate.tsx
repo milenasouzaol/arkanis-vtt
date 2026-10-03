@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFloppyDisk, faMagnifyingGlass, faPlus, faSkull, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faFloppyDisk, faMagnifyingGlass, faPlus, faSkull, faUser, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../../lib/supabase'
 import Janela from './Janela'
 import FichaAmeaca from './FichaAmeaca'
@@ -11,14 +11,21 @@ const CAMPOS = 'id, name, vd, image_url, tipo_criatura, tamanho, descritores, ca
 // Criar Combate (12.4): Nome, VD Total, filtros por livro e elemento, a lista de ameaças
 // (Ficha / Adicionar) e, do lado, as Ameaças Selecionadas com Remover na cor do elemento.
 // No modo "adicionar" (combate já rodando) escolhe ameaças pra entrar no meio da luta.
-export default function CriarCombate({ inicial, modo = 'criar', onSalvar, onFechar }: {
-  inicial?: { name: string; ameacas: string[] }
+// Além do bestiário, dá pra escolher personagens que já estão na aba Personagens (a ameaça
+// que já está com o token na cena, um NPC…): é o mesmo personagem que luta.
+export type AtorDoCombate = { id: string; name: string; tipo: 'npc' | 'ameaca'; token_url: string | null; creature_id: string | null }
+
+export default function CriarCombate({ inicial, modo = 'criar', atores, onSalvar, onFechar }: {
+  inicial?: { name: string; ameacas: string[]; atores: string[] }
   modo?: 'criar' | 'adicionar'
-  onSalvar: (nome: string, ameacas: string[]) => void
+  atores: AtorDoCombate[]
+  onSalvar: (nome: string, ameacas: string[], atores: string[]) => void
   onFechar: () => void
 }) {
   const [nome, setNome] = useState(inicial?.name ?? '')
   const [escolhidas, setEscolhidas] = useState<string[]>(modo === 'adicionar' ? [] : inicial?.ameacas ?? [])
+  const [atoresEscolhidos, setAtoresEscolhidos] = useState<string[]>(modo === 'adicionar' ? [] : inicial?.atores ?? [])
+  const [origem, setOrigem] = useState<'bestiario' | 'personagens'>('bestiario')
   const [criaturas, setCriaturas] = useState<CriaturaLista[]>([])
   const [fontes, setFontes] = useState<{ id: string; name: string }[]>([])
   const [busca, setBusca] = useState('')
@@ -40,14 +47,17 @@ export default function CriarCombate({ inicial, modo = 'criar', onSalvar, onFech
 
   const lista = filtrarAmeacas(criaturas, { busca, elemento, fonte })
   const porId = new Map(criaturas.map((c) => [c.id, c]))
-  const total = vdTotal(escolhidas, criaturas)
+  const atorPorId = new Map(atores.map((a) => [a.id, a]))
+  const jaNoCombate = new Set(modo === 'adicionar' ? inicial?.atores ?? [] : [])
+  const atoresDaLista = atores.filter((a) => !jaNoCombate.has(a.id) && a.name.toLowerCase().includes(busca.trim().toLowerCase()))
+  const total = vdTotal([...escolhidas, ...atoresEscolhidos.map((id) => atorPorId.get(id)?.creature_id ?? '')], criaturas)
 
   function salvar() {
     if (modo === 'criar' && !nome.trim()) {
       setErro('Dê um nome pro combate.')
       return
     }
-    onSalvar(nome.trim(), escolhidas)
+    onSalvar(nome.trim(), escolhidas, atoresEscolhidos)
   }
 
   return (
@@ -72,11 +82,37 @@ export default function CriarCombate({ inicial, modo = 'criar', onSalvar, onFech
 
         <div className="criar-combate-colunas">
           <section className="criar-combate-lista">
-            <h3>Lista de Ameaças</h3>
+            <nav className="ficha-ameaca-subabas criar-combate-origem">
+              <button type="button" className={origem === 'bestiario' ? 'ativa' : undefined} onClick={() => setOrigem('bestiario')}>Bestiário</button>
+              <button type="button" className={origem === 'personagens' ? 'ativa' : undefined} onClick={() => setOrigem('personagens')}>Da aba Personagens</button>
+            </nav>
+            <h3>{origem === 'bestiario' ? 'Lista de Ameaças' : 'Ameaças e NPCs da mesa'}</h3>
             <div className="criar-combate-busca">
               <FontAwesomeIcon icon={faMagnifyingGlass} />
               <input value={busca} placeholder="Procurar por nome" aria-label="Procurar ameaça" onChange={(e) => setBusca(e.target.value)} />
             </div>
+            {origem === 'personagens' ? (
+              <ul>
+                {atoresDaLista.map((a) => {
+                  const escolhido = atoresEscolhidos.includes(a.id)
+                  const vd = a.creature_id ? porId.get(a.creature_id)?.vd : null
+                  return (
+                    <li key={a.id} className="criar-combate-ameaca">
+                      <span className="ator-token">{a.token_url ? <img src={a.token_url} alt="" /> : <FontAwesomeIcon icon={a.tipo === 'npc' ? faUser : faSkull} />}</span>
+                      <span className="criar-personagem-nome">
+                        <strong>{a.name}</strong>
+                        <small>{a.tipo === 'npc' ? 'NPC' : `Ameaça · VD: ${vd ?? '—'}`}</small>
+                      </span>
+                      <button type="button" className="mesa-botao" disabled={escolhido} onClick={() => setAtoresEscolhidos((l) => [...l, a.id])}>
+                        <FontAwesomeIcon icon={faPlus} /> {escolhido ? 'Adicionado' : 'Adicionar'}
+                      </button>
+                    </li>
+                  )
+                })}
+                {!atoresDaLista.length && <li className="janela-dica">Nenhuma ameaça ou NPC na aba Personagens.</li>}
+              </ul>
+            ) : (
+            <>
             <div className="criar-combate-elementos" role="tablist">
               {FILTROS_ELEMENTO.map((f) => (
                 <button key={f.id} type="button" role="tab" aria-selected={elemento === f.id} className={elemento === f.id ? 'ativo' : undefined} onClick={() => setElemento(f.id)}>
@@ -98,11 +134,32 @@ export default function CriarCombate({ inicial, modo = 'criar', onSalvar, onFech
               ))}
               {!lista.length && <li className="janela-dica">Nenhuma ameaça com esse filtro.</li>}
             </ul>
+            </>
+            )}
           </section>
 
           <section className="criar-combate-selecionadas">
             <h3>Ameaças Selecionadas</h3>
             <ul>
+              {atoresEscolhidos.map((id) => {
+                const a = atorPorId.get(id)
+                if (!a) return null
+                const c = a.creature_id ? porId.get(a.creature_id) : undefined
+                return (
+                  <li key={id} className="criar-combate-ameaca">
+                    <span className="ator-token">{a.token_url ? <img src={a.token_url} alt="" /> : <FontAwesomeIcon icon={a.tipo === 'npc' ? faUser : faSkull} />}</span>
+                    <span className="criar-personagem-nome"><strong>{a.name}</strong><small>{a.tipo === 'npc' ? 'NPC' : `VD: ${c?.vd ?? '—'}`} · da aba Personagens</small></span>
+                    <button
+                      type="button"
+                      className="criar-combate-remover"
+                      style={{ ['--cor' as string]: c ? COR_ELEMENTO[elementoDaCriatura(c)] : COR_ELEMENTO.realidade }}
+                      onClick={() => setAtoresEscolhidos((l) => l.filter((x) => x !== id))}
+                    >
+                      <FontAwesomeIcon icon={faXmark} /> Remover
+                    </button>
+                  </li>
+                )
+              })}
               {escolhidas.map((id, i) => {
                 const c = porId.get(id)
                 if (!c) return null
@@ -121,7 +178,7 @@ export default function CriarCombate({ inicial, modo = 'criar', onSalvar, onFech
                   </li>
                 )
               })}
-              {!escolhidas.length && <li className="janela-dica">Adicione ameaças da lista.</li>}
+              {!escolhidas.length && !atoresEscolhidos.length && <li className="janela-dica">Adicione ameaças da lista.</li>}
             </ul>
           </section>
         </div>
@@ -129,7 +186,7 @@ export default function CriarCombate({ inicial, modo = 'criar', onSalvar, onFech
         {erro && <p className="janela-aviso">{erro}</p>}
         <div className="criar-combate-acoes">
           <button type="button" className="janela-botao" onClick={onFechar}><FontAwesomeIcon icon={faXmark} /> Sair sem salvar</button>
-          <button type="button" className="janela-botao" disabled={modo === 'adicionar' && !escolhidas.length} onClick={salvar}>
+          <button type="button" className="janela-botao" disabled={modo === 'adicionar' && !escolhidas.length && !atoresEscolhidos.length} onClick={salvar}>
             <FontAwesomeIcon icon={modo === 'adicionar' ? faPlus : faFloppyDisk} /> {modo === 'adicionar' ? 'Adicionar ao combate' : 'Salvar'}
           </button>
         </div>
