@@ -23,4 +23,4 @@ spec: docs/VTT_Mesa.md (12.1, 12.2, 12.14, 12.15)
 
 ## Falta (depende da Millie)
 
-- Estética das referências do Foundry que a Millie mandou (02/10): fundo vinho, botões escuros com ícone creme (Font Awesome, como o Foundry), borda laranja no ativo, painel escuro colado na borda direita, Configurações como aba da barra direita, fonte Signika.
+- Estética das referências do Foundry que a Millie mandou (02/10): fundo preto e ícones, textos e bordas em cinza claro (o vinho dos prints era só exemplo; ícones Font Awesome, como o Foundry), painel escuro colado na borda direita, Configurações como aba da barra direita, fonte Signika.

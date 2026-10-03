@@ -11344,9 +11344,9 @@ textarea.inter-input {
 }
 
 /* ============================================================
-   Mesa (KAN-46) — layout e estética das referências do Foundry que a
-   Millie mandou (02/10): fundo vinho, botões escuros com ícone creme,
-   borda laranja no ativo e painel escuro na borda direita.
+   Mesa (KAN-46) — layout das referências do Foundry que a Millie mandou
+   (02/10). O vinho dos prints era só exemplo: fundo preto e ícones,
+   textos e bordas em cinza claro.
    ============================================================ */
 
 .character-tile-link {
@@ -11356,13 +11356,13 @@ textarea.inter-input {
 }
 
 .mesa {
-  --mesa-fundo: #2e0101;
-  --mesa-painel: #110d14;
-  --mesa-botao: #170f13;
-  --mesa-borda: #3b2b2c;
-  --mesa-creme: #f0e2cd;
-  --mesa-creme-dim: #a8927f;
-  --mesa-destaque: #e8622f;
+  --mesa-fundo: #000;
+  --mesa-painel: #0e0e10;
+  --mesa-botao: #111113;
+  --mesa-borda: #2c2c30;
+  --mesa-creme: #d6d6da;
+  --mesa-creme-dim: #8a8a90;
+  --mesa-destaque: #e6e6ea;
   --mesa-online: #d9a521;
   --mesa-verde: #8fd16a;
   position: fixed;
