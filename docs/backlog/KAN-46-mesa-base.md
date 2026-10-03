@@ -1,7 +1,7 @@
 ---
 id: KAN-46
 titulo: "Mesa: rota, acesso e layout base (barras, palco da cena, painel de sessão)"
-status: em análise
+status: concluído
 camada: back + front
 spec: docs/VTT_Mesa.md (12.1, 12.2, 12.14, 12.15)
 ---

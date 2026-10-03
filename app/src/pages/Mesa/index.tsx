@@ -6,6 +6,11 @@ import BarraIcones, { BotaoIcone } from './BarraIcones'
 import PainelConfig from './PainelConfig'
 import PainelSessao from './PainelSessao'
 import EscolherPersonagem from '../../components/EscolherPersonagem'
+import PalcoCena from './PalcoCena'
+import PainelCenas from './PainelCenas'
+import EditorCena from './EditorCena'
+import { enviarImagemDaCena, useCenas } from './useCenas'
+import type { Cena } from './cenas'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
 import { autoria, type ModoEnvio } from './chat'
 import { enviarImagemDoChat, useChat } from './useChat'
@@ -30,6 +35,7 @@ type Campanha = {
   owner_id: string
   invite_code: string
   accent_color: string | null
+  active_scene_id: string | null
 }
 
 type Estado =
@@ -59,7 +65,7 @@ export default function Mesa() {
       // RLS só devolve a campanha pra quem é dono ou membro.
       const { data: campanha } = await supabase
         .from('campaigns')
-        .select('id, name, owner_id, invite_code, accent_color')
+        .select('id, name, owner_id, invite_code, accent_color, active_scene_id')
         .eq('id', id)
         .maybeSingle()
       if (cancelado) return
@@ -102,6 +108,8 @@ export default function Mesa() {
   const chat = useChat(pronta?.campanha.id)
   const [modoEscolhido, setModoEscolhido] = useState<ModoEnvio | null>(null)
   const [destaqueFechado, setDestaqueFechado] = useState<string | null>(null)
+  const cenas = useCenas(pronta?.campanha.id, pronta?.campanha.active_scene_id ?? null)
+  const [editandoCena, setEditandoCena] = useState<string | null>(null)
 
   if (estado.tipo === 'carregando') {
     return <main className="mesa mesa-aviso"><p>Carregando a mesa…</p></main>
@@ -160,6 +168,34 @@ export default function Mesa() {
     return userId ? enviarImagemDoChat(userId, arquivo) : Promise.resolve(null)
   }
 
+  // Mestre ativa a cena pra todos; jogador só olha a cena que escolheu na navegação.
+  function abrirCena(c: Cena) {
+    if (souMestre) cenas.ativar(c.id)
+    else cenas.setVendo(c.id === cenas.ativa ? null : c.id)
+  }
+
+  async function criarCena(nome: string, pastaId: string | null) {
+    const nova = await cenas.criarCena({ name: nome, folder_id: pastaId })
+    if (nova) setEditandoCena(nova.id)
+  }
+
+  // Imagem arrastada pra mesa vira o fundo da cena ativa (ou de uma cena nova, se não houver).
+  async function soltarImagem(origem: File | string) {
+    if (!userId) return
+    const url = typeof origem === 'string' ? origem : await enviarImagemDaCena(userId, origem)
+    if (!url) return
+    if (cenas.atual) await cenas.salvarCena(cenas.atual.id, { background_url: url })
+    else {
+      const nova = await cenas.criarCena({ name: `Cena (${cenas.cenas.length + 1})`, background_url: url })
+      if (nova) await cenas.ativar(nova.id)
+    }
+  }
+
+  const cenaEditada = cenas.cenas.find((c) => c.id === editandoCena)
+  const jogadoresParaCena = estado.membros
+    .filter((m) => m.papel === 'jogador')
+    .map((m) => ({ userId: m.userId, rotulo: m.personagem ? `${m.personagem} (${m.nomeConta})` : m.nomeConta }))
+
   function escolherAba(a: AbaDireita) {
     // Clicar na aba aberta recolhe o painel, como o Foundry faz.
     if (a === aba && !recolhida) setRecolhida(true)
@@ -171,9 +207,7 @@ export default function Mesa() {
 
   return (
     <main className="mesa" style={campanha.accent_color ? ({ '--mesa-destaque': campanha.accent_color } as React.CSSProperties) : undefined}>
-      <div className="mesa-palco" aria-label="Cena">
-        <p className="mesa-palco-vazio">Nenhuma cena ativa</p>
-      </div>
+      <PalcoCena cena={cenas.atual} souMestre={souMestre} onSoltarImagem={soltarImagem} />
 
       {destaque && destaque.id !== destaqueFechado && (
         <div className="mesa-destaque" role="status">
@@ -230,6 +264,23 @@ export default function Mesa() {
                 onExcluir={chat.excluir}
                 onLimpar={chat.limpar}
               />
+            ) : aba === 'cenas' ? (
+              <PainelCenas
+                souMestre={souMestre}
+                cenas={cenas.cenas}
+                pastas={cenas.pastas}
+                ativa={cenas.ativa}
+                vendo={cenas.vendo}
+                onAbrir={abrirCena}
+                onEditar={(c) => setEditandoCena(c.id)}
+                onTrazerTodos={(c) => cenas.ativar(c.id)}
+                onExcluir={(c) => cenas.excluirCena(c.id)}
+                onDuplicar={cenas.duplicarCena}
+                onCriarCena={criarCena}
+                onCriarPasta={cenas.criarPasta}
+                onSalvarPasta={cenas.salvarPasta}
+                onExcluirPasta={(p, comCenas) => cenas.excluirPasta(p.id, comCenas)}
+              />
             ) : aba === 'config' ? (
               <PainelConfig souMestre={souMestre} copiado={copiado} onCopiarConvite={copiarConvite} onSair={() => navigate('/jogar')} />
             ) : (
@@ -238,6 +289,17 @@ export default function Mesa() {
           </aside>
         )}
       </div>
+
+      {souMestre && cenaEditada && (
+        <EditorCena
+          key={cenaEditada.id}
+          cena={cenaEditada}
+          jogadores={jogadoresParaCena}
+          onSalvar={(campos) => cenas.salvarCena(cenaEditada.id, campos)}
+          onImagem={(arquivo) => (userId ? enviarImagemDaCena(userId, arquivo) : Promise.resolve(null))}
+          onFechar={() => setEditandoCena(null)}
+        />
+      )}
 
       <PainelSessao conectados={online} latencia={latencia} fps={fps} />
     </main>

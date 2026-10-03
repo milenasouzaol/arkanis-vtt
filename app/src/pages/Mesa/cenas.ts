@@ -1,0 +1,188 @@
+// Regras puras de Cenas / Mapas (KAN-48, spec 12.5).
+
+export type TipoGrade = 'quadrado' | 'sem' | 'hexagono'
+export type EstiloGrade = 'solida' | 'tracejada' | 'pontilhada'
+export type Clima = 'folhas' | 'chuva' | 'tempestade' | 'nevoa' | 'neve' | 'nebulosa'
+export type Visibilidade = 'mestre' | 'todos' | 'jogadores'
+
+export type Cena = {
+  id: string
+  campaign_id: string
+  folder_id: string | null
+  name: string
+  sort: number
+  show_in_nav: boolean
+  visibility: Visibilidade
+  visible_to: string[]
+  background_url: string | null
+  background_color: string
+  grid_type: TipoGrade
+  grid_size: number
+  grid_distance: number
+  grid_units: string
+  grid_style: EstiloGrade
+  grid_thickness: number
+  grid_color: string
+  grid_opacity: number
+  darkness: number
+  weather: Clima | null
+  luminosity: number
+  saturation: number
+  shadows: number
+  created_at: string
+}
+
+export type Pasta = {
+  id: string
+  campaign_id: string
+  parent_id: string | null
+  name: string
+  color: string | null
+  sort_mode: 'alfabetica' | 'manual'
+  sort: number
+  created_at: string
+}
+
+export const CLIMAS: { id: Clima; rotulo: string }[] = [
+  { id: 'folhas', rotulo: 'Folhas de Outono' },
+  { id: 'chuva', rotulo: 'Chuva' },
+  { id: 'tempestade', rotulo: 'Tempestade' },
+  { id: 'nevoa', rotulo: 'Névoa' },
+  { id: 'neve', rotulo: 'Neve' },
+  { id: 'nebulosa', rotulo: 'Nebulosa' },
+]
+
+// Campos que o editor da cena altera (o resto é identidade da linha).
+export const CAMPOS_EDITAVEIS = [
+  'name', 'folder_id', 'show_in_nav', 'visibility', 'visible_to', 'background_url', 'background_color',
+  'grid_type', 'grid_size', 'grid_distance', 'grid_units', 'grid_style', 'grid_thickness', 'grid_color', 'grid_opacity',
+  'darkness', 'weather', 'luminosity', 'saturation', 'shadows',
+] as const
+
+export type CamposCena = Pick<Cena, (typeof CAMPOS_EDITAVEIS)[number]>
+
+export function camposDaCena(c: Cena): CamposCena {
+  return Object.fromEntries(CAMPOS_EDITAVEIS.map((k) => [k, c[k]])) as CamposCena
+}
+
+// Cópia pro "Duplicar": mesmos campos, nome com "(cópia)".
+export function copiaDaCena(c: Cena): CamposCena & { campaign_id: string } {
+  return { ...camposDaCena(c), campaign_id: c.campaign_id, name: `${c.name} (cópia)` }
+}
+
+export type NoPasta = { pasta: Pasta; pastas: NoPasta[]; cenas: Cena[] }
+export type Arvore = { pastas: NoPasta[]; cenas: Cena[] }
+
+const porNome = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
+const porOrdem = (a: { sort: number; created_at: string }, b: { sort: number; created_at: string }) => a.sort - b.sort || a.created_at.localeCompare(b.created_at)
+
+function normalizar(t: string) {
+  return t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
+
+// Pastas e subpastas com as cenas dentro, na ordem de cada pasta (alfabética ou manual).
+// Com busca, só ficam as cenas que batem e as pastas que levam até elas.
+export function montarArvore(pastas: Pasta[], cenas: Cena[], busca = '', ordemRaiz: 'alfabetica' | 'manual' = 'alfabetica'): Arvore {
+  const termo = normalizar(busca.trim())
+  const bate = (c: Cena) => !termo || normalizar(c.name).includes(termo)
+  const ids = new Set(pastas.map((p) => p.id))
+
+  function no(p: Pasta, visitadas: Set<string>): NoPasta | null {
+    if (visitadas.has(p.id)) return null
+    const dentro = new Set(visitadas).add(p.id)
+    const ordem = p.sort_mode === 'manual' ? porOrdem : porNome
+    const filhas = pastas.filter((f) => f.parent_id === p.id).sort(ordem).map((f) => no(f, dentro)).filter((n): n is NoPasta => n !== null)
+    const suas = cenas.filter((c) => c.folder_id === p.id && bate(c)).sort(ordem)
+    if (termo && !suas.length && !filhas.length) return null
+    return { pasta: p, pastas: filhas, cenas: suas }
+  }
+
+  const ordem = ordemRaiz === 'manual' ? porOrdem : porNome
+  return {
+    // Pasta cuja mãe sumiu sobe pra raiz.
+    pastas: pastas.filter((p) => !p.parent_id || !ids.has(p.parent_id)).sort(ordem).map((p) => no(p, new Set())).filter((n): n is NoPasta => n !== null),
+    cenas: cenas.filter((c) => (!c.folder_id || !ids.has(c.folder_id)) && bate(c)).sort(ordem),
+  }
+}
+
+// Pastas em lista achatada com recuo, pro seletor "Pasta" do Criar Cena.
+export function pastasEmLista(pastas: Pasta[]): { id: string; rotulo: string }[] {
+  const saida: { id: string; rotulo: string }[] = []
+  const visitar = (pai: string | null, nivel: number, vistas: Set<string>) => {
+    for (const p of pastas.filter((x) => x.parent_id === pai).sort(porNome)) {
+      if (vistas.has(p.id)) continue
+      saida.push({ id: p.id, rotulo: `${'— '.repeat(nivel)}${p.name}` })
+      visitar(p.id, nivel + 1, new Set(vistas).add(p.id))
+    }
+  }
+  visitar(null, 0, new Set())
+  return saida
+}
+
+// ---- Vista do mapa: deslocamento e zoom ----
+
+export type Vista = { x: number; y: number; escala: number }
+
+export const ZOOM_MIN = 0.1
+export const ZOOM_MAX = 5
+
+// A imagem se ajusta à tela inteira, centralizada (12.5: "se ajusta ao tamanho geral da tela").
+export function ajustarVista(larguraMapa: number, alturaMapa: number, larguraTela: number, alturaTela: number): Vista {
+  if (larguraMapa <= 0 || alturaMapa <= 0 || larguraTela <= 0 || alturaTela <= 0) return { x: 0, y: 0, escala: 1 }
+  const escala = Math.min(larguraTela / larguraMapa, alturaTela / alturaMapa)
+  return { x: (larguraTela - larguraMapa * escala) / 2, y: (alturaTela - alturaMapa * escala) / 2, escala }
+}
+
+// Zoom mantendo parado o ponto debaixo do mouse.
+export function zoomEm(v: Vista, fator: number, px: number, py: number): Vista {
+  const escala = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v.escala * fator))
+  const real = escala / v.escala
+  return { escala, x: px - (px - v.x) * real, y: py - (py - v.y) * real }
+}
+
+// ---- Ambiente (12.5): luminosidade e saturação de -1 a 1, sombras de 0 a 1 ----
+
+export function filtroAmbiente(luminosidade: number, saturacao: number, sombras: number): string {
+  const partes: string[] = []
+  if (luminosidade) partes.push(`brightness(${round(1 + luminosidade * 0.8)})`)
+  if (saturacao) partes.push(`saturate(${round(1 + saturacao)})`)
+  // Sombras: escurece mais o que já é escuro (contraste pra cima, um pouco menos de brilho).
+  if (sombras) partes.push(`contrast(${round(1 + sombras * 0.7)})`, `brightness(${round(1 - sombras * 0.25)})`)
+  return partes.join(' ') || 'none'
+}
+
+function round(n: number) {
+  return Math.round(n * 1000) / 1000
+}
+
+// ---- Grade ----
+
+export function tracoDaGrade(estilo: EstiloGrade, espessura: number): string | undefined {
+  if (estilo === 'tracejada') return `${espessura * 6} ${espessura * 4}`
+  if (estilo === 'pontilhada') return `${espessura} ${espessura * 3}`
+  return undefined
+}
+
+// Hexágonos "de ponta pra cima" com largura = tamanho da grade. Devolve o tamanho do
+// ladrilho que se repete e o desenho de um ladrilho (que encaixa sem buracos).
+export function ladrilhoHex(tamanho: number): { largura: number; altura: number; caminho: string } {
+  const w = tamanho
+  const r = w / Math.sqrt(3) // raio (centro até a ponta)
+  const h = r * 2
+  const altura = h * 1.5 // duas fileiras, a segunda deslocada meia largura
+  const p = (x: number, y: number) => `${round(x)},${round(y)}`
+  const hex = (cx: number, cy: number) => {
+    const pts = [0, 1, 2, 3, 4, 5].map((i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2
+      return p(cx + r * Math.cos(a), cy + r * Math.sin(a))
+    })
+    return `M${pts.join('L')}Z`
+  }
+  return { largura: w, altura: round(altura), caminho: [hex(w / 2, r), hex(0, r * 2.5), hex(w, r * 2.5)].join(' ') }
+}
+
+// Distância em quadrados → texto na unidade da cena (12.5, Medidas).
+export function distanciaEmUnidades(quadrados: number, c: Pick<Cena, 'grid_distance' | 'grid_units'>): string {
+  const valor = Math.round(quadrados * c.grid_distance * 10) / 10
+  return `${valor.toLocaleString('pt-BR')} ${c.grid_units}`
+}
