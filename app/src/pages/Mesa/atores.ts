@@ -3,7 +3,8 @@
 export type TipoAtor = 'jogador' | 'npc' | 'ameaca'
 export type NivelAcesso = 'nenhum' | 'limitado' | 'observador' | 'dono'
 
-export type Variacao = { id: string; nome: string; url: string }
+export type Variacao = { id: string; nome: string; url: string; pasta?: string | null }
+export type PastaDeVariacao = { id: string; nome: string }
 
 export type Ator = {
   id: string
@@ -15,6 +16,7 @@ export type Ator = {
   name: string
   token_url: string | null
   token_variacoes: Variacao[]
+  token_pastas: PastaDeVariacao[]
   acesso_padrao: NivelAcesso
   acesso_jogadores: Record<string, NivelAcesso>
   mostrar_mestres: boolean
@@ -63,4 +65,12 @@ export function nomeDoArquivo(nome: string): string {
 export function copiaDoAtor(a: Ator): Omit<Ator, 'id' | 'created_at' | 'character_id'> {
   const { id: _id, created_at: _c, character_id: _p, ...resto } = a
   return { ...resto, name: `${a.name} (cópia)` }
+}
+
+// Variações separadas por pasta, na ordem das pastas; as sem pasta (ou de pasta apagada) no fim.
+export function agruparVariacoes(variacoes: Variacao[], pastas: PastaDeVariacao[]): { pasta: PastaDeVariacao | null; itens: Variacao[] }[] {
+  const ids = new Set(pastas.map((p) => p.id))
+  const grupos = pastas.map((p) => ({ pasta: p as PastaDeVariacao | null, itens: variacoes.filter((v) => v.pasta === p.id) }))
+  grupos.push({ pasta: null, itens: variacoes.filter((v) => !v.pasta || !ids.has(v.pasta)) })
+  return grupos
 }

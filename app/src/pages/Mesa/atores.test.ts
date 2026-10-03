@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { copiaDoAtor, imagemDoToken, nivelDoJogador, nivelNaFichaDoJogador, nomeDoArquivo, variacoesDoToken, type Ator } from './atores'
+import { agruparVariacoes, copiaDoAtor, imagemDoToken, nivelDoJogador, nivelNaFichaDoJogador, nomeDoArquivo, variacoesDoToken, type Ator } from './atores'
 
 const base: Ator = {
   id: 'a', campaign_id: 'c', folder_id: null, tipo: 'npc', character_id: 'ch', creature_id: null, name: 'Velho',
-  token_url: 'https://x/p.png', token_variacoes: [{ id: '1', nome: 'ferido', url: 'https://x/f.png' }],
+  token_url: 'https://x/p.png', token_variacoes: [{ id: '1', nome: 'ferido', url: 'https://x/f.png' }], token_pastas: [],
   acesso_padrao: 'nenhum', acesso_jogadores: { j: 'observador' }, mostrar_mestres: true, pv_atual: null, sort: 0, created_at: '',
 }
 
@@ -44,4 +44,18 @@ it('duplicar copia sem levar a ficha nem o id', () => {
   expect(c.name).toBe('Velho (cópia)')
   expect('id' in c || 'character_id' in c).toBe(false)
   expect(c.token_variacoes).toEqual(base.token_variacoes)
+})
+
+it('agrupa as variações por pasta, com as soltas no fim', () => {
+  const pastas = [{ id: 'r', nome: 'Roupas pretas' }, { id: 'e', nome: 'Emoções' }]
+  const v = [
+    { id: '1', nome: 'feliz', url: 'a', pasta: 'e' },
+    { id: '2', nome: 'casaco', url: 'b', pasta: 'r' },
+    { id: '3', nome: 'solta', url: 'c' },
+    { id: '4', nome: 'de pasta apagada', url: 'd', pasta: 'x' },
+  ]
+  const g = agruparVariacoes(v, pastas)
+  expect(g.map((x) => x.pasta?.nome ?? null)).toEqual(['Roupas pretas', 'Emoções', null])
+  expect(g[0].itens.map((x) => x.nome)).toEqual(['casaco'])
+  expect(g[2].itens.map((x) => x.nome)).toEqual(['solta', 'de pasta apagada'])
 })

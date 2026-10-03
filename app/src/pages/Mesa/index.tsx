@@ -13,7 +13,7 @@ import { enviarImagemDaCena, useCenas } from './useCenas'
 import { useObjetos, type Ping } from './useObjetos'
 import { tamanhoInicial, type Pasta } from './cenas'
 import PainelPersonagens from './PainelPersonagens'
-import { ConfigurarPropriedadeAtor, ConfigurarToken, ConfirmarExclusao, CriarPersonagem, FichaPortatil } from './JanelasAtor'
+import { ConfigurarPropriedadeAtor, ConfigurarToken, ConfirmarExclusao, CriarPersonagem, FichaPortatil, PainelVariacoes } from './JanelasAtor'
 import { colocarToken, enviarImagemDeToken, trocarVariacao, useAtores } from './useAtores'
 import { imagemDoToken, nivelDoJogador, nivelNaFichaDoJogador, variacoesDoToken, type Ator, type NivelAcesso } from './atores'
 import Janela from './Janela'
@@ -133,6 +133,7 @@ export default function Mesa() {
   const [tokenAtor, setTokenAtor] = useState<string | null>(null)
   const [excluindoAtor, setExcluindoAtor] = useState<string | null>(null)
   const [fichasAbertas, setFichasAbertas] = useState<string[]>([])
+  const [tokenDasVariacoes, setTokenDasVariacoes] = useState<string | null>(null)
   const [avisoPalco, setAvisoPalco] = useState<string | null>(null)
 
   if (estado.tipo === 'carregando') {
@@ -340,13 +341,7 @@ export default function Mesa() {
           const a = atores.atores.find((x) => x.id === id)
           return a ? variacoesDoToken(a) : []
         }}
-        onVariacao={async (tokenId, url) => {
-          // Mantém a largura do token e acompanha o formato da nova imagem.
-          const token = objetos.objetos.find((o) => o.id === tokenId)
-          const nat = await tamanhoDaImagem(url)
-          const altura = token && nat.w > 0 ? Math.round((token.width * nat.h) / nat.w) : null
-          if (!(await trocarVariacao(tokenId, url, altura))) avisar('Não deu pra trocar a imagem do token.', true)
-        }}
+        onAbrirVariacoes={setTokenDasVariacoes}
       />
 
       {destaque && destaque.id !== destaqueFechado && (
@@ -512,6 +507,25 @@ export default function Mesa() {
         return a ? (
           <ConfirmarExclusao ator={a} onSim={() => { atores.excluir(a); setExcluindoAtor(null) }} onNao={() => setExcluindoAtor(null)} />
         ) : null
+      })()}
+
+      {(() => {
+        const token = objetos.objetos.find((o) => o.id === tokenDasVariacoes)
+        const a = token?.actor_id ? atores.atores.find((x) => x.id === token.actor_id) : undefined
+        if (!token || !a) return null
+        return (
+          <PainelVariacoes
+            ator={a}
+            atual={token.image_url}
+            onEscolher={async (url) => {
+              // Mantém a largura do token e acompanha o formato da nova imagem.
+              const nat = await tamanhoDaImagem(url)
+              const altura = nat.w > 0 ? Math.round((token.width * nat.h) / nat.w) : null
+              if (!(await trocarVariacao(token.id, url, altura))) avisar('Não deu pra trocar a imagem do token.', true)
+            }}
+            onFechar={() => setTokenDasVariacoes(null)}
+          />
+        )
       })()}
 
       {fichasAbertas.map((id) => {

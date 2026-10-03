@@ -38,7 +38,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onVariacao }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -53,7 +53,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   onColocarAtor: (atorId: string, ponto: { x: number; y: number }) => void
   onAbrirFicha: (atorId: string) => void
   variacoesDe: (atorId: string) => Variacao[]
-  onVariacao: (tokenId: string, url: string) => void
+  onAbrirVariacoes: (tokenId: string) => void
 }) {
   const palcoRef = useRef<HTMLDivElement>(null)
   const [mapa, setMapa] = useState(MAPA_PADRAO)
@@ -502,11 +502,9 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       ? [
           { tipo: 'linha' },
           { rotulo: 'Ficha de Personagem', icone: faIdCard, onClick: () => onAbrirFicha(o.actor_id!) },
+          // Abre o painel lateral com as imagens (12.8), que rola e fica aberto pra trocar rápido.
           ...(podeMover(o) && variacoesDe(o.actor_id).length > 1
-            ? [{
-                tipo: 'sub', rotulo: 'Variação de Token', icone: faImages,
-                itens: variacoesDe(o.actor_id).map((v) => ({ rotulo: `${v.url === o.image_url ? '✓ ' : ''}${v.nome}`, onClick: () => onVariacao(o.id, v.url) })),
-              } as ItemMenu]
+            ? [{ rotulo: 'Variação de Token', icone: faImages, onClick: () => onAbrirVariacoes(o.id) } as ItemMenu]
             : []),
         ]
       : []

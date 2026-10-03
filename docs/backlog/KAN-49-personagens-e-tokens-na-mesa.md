@@ -72,3 +72,13 @@ spec: docs/VTT_Mesa.md (12.7, 12.8)
 - Dono do token também redimensiona e gira (12.8), pela função `transformar_objeto`
   (migration `0096_token_proporcional.sql`).
 - Seleção discreta: linha fina tracejada cinza-clara, alças pequenas e redondas, sem azul.
+
+## Ajuste da Millie (04/10): muitas variações e pastas de variações
+
+- "Variação de Token" virou um painel lateral (como a spec descreve, 12.8): miniaturas
+  separadas por pasta, rola quando tem muita coisa e fica aberto pra trocar rápido.
+- Configurar Token ganhou pastas ("Roupas pretas", "Emoções"…): Criar Pasta, arrastar a
+  variação pra outra pasta, "+" dentro da pasta adiciona nela, botão direito na variação
+  (Renomear, Mover para a pasta, Usar como Token Principal, Tirar) e na pasta (Renomear,
+  Excluir — as variações vão pra "Sem pasta"). Migration `0097_pastas_de_variacoes.sql`.
+- Janelas nunca passam do fim da tela; submenus compridos rolam.

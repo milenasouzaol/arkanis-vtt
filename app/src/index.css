@@ -13459,3 +13459,105 @@ button.character-tile-link {
   margin: 0;
   white-space: pre-line;
 }
+
+/* Pastas de variações (Configurar Token) e o painel de Variação de Token */
+.token-config {
+  max-height: calc(100vh - 200px);
+}
+
+.token-variacoes-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.token-variacoes-topo .janela-dica {
+  flex: 1;
+}
+
+.token-variacoes-topo .mesa-botao {
+  flex: none;
+  white-space: nowrap;
+}
+
+.token-pasta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.token-pasta.sobre {
+  background: rgba(240, 240, 242, 0.06);
+  outline: 1px dashed rgba(240, 240, 242, 0.35);
+}
+
+.token-pasta-nome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #2c2a30;
+  color: var(--mesa-creme);
+  font: 600 0.9rem 'Signika', var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.token-pasta-nome small {
+  color: var(--mesa-creme-dim);
+  font-weight: 400;
+}
+
+.token-variacao[draggable='true'] {
+  cursor: grab;
+}
+
+.variacoes-painel {
+  padding: 12px 14px;
+}
+
+.variacoes-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+}
+
+.variacao-escolha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--mesa-creme);
+  font-size: 0.75rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.variacao-escolha .token-quadro {
+  width: 76px;
+  height: 76px;
+  border-style: solid;
+}
+
+.variacao-escolha:hover {
+  background: #1d1b21;
+}
+
+.variacao-escolha.ativa {
+  border-color: rgba(240, 240, 242, 0.5);
+}
+
+/* Submenu comprido rola em vez de sair da tela */
+.menu-ctx.sub {
+  max-height: 60vh;
+  overflow-y: auto;
+}

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck, faFloppyDisk, faImage, faPlus, faSkull, faUser, faUserGear, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faCheck, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faImage, faImages, faPlus, faSkull, faUser, faUserGear, faXmark } from '@fortawesome/free-solid-svg-icons'
+import MenuContexto, { type ItemMenu } from './MenuContexto'
 import { supabase } from '../../lib/supabase'
 import Janela, { Campo } from './Janela'
 import FichaAmeaca from './FichaAmeaca'
-import { NIVEIS, nomeDoArquivo, ROTULO_TIPO, type Ator, type NivelAcesso, type Variacao } from './atores'
+import { agruparVariacoes, NIVEIS, nomeDoArquivo, ROTULO_TIPO, type Ator, type NivelAcesso, type PastaDeVariacao, type Variacao } from './atores'
 import { pastasEmLista, type Pasta } from './cenas'
 import type { CriaturaResumo } from './useAtores'
 
@@ -148,18 +149,26 @@ export function ConfigurarPropriedadeAtor({ ator, jogadores, onSalvar, onFechar 
   )
 }
 
-// Configurar Token (12.7): Token Principal + Tokens Variáveis, renomeáveis com o botão direito.
+// Configurar Token (12.7): Token Principal + Tokens Variáveis, organizados em pastas
+// ("Roupas pretas", "Emoções"…). Arrastar uma variação pra outra pasta muda ela de pasta;
+// o botão direito renomeia, move ou tira; o botão direito na pasta renomeia ou exclui.
 export function ConfigurarToken({ ator, onEnviar, onSalvar, onFechar }: {
   ator: Ator
   onEnviar: (arquivo: File) => Promise<string | null>
-  onSalvar: (campos: Pick<Ator, 'token_url' | 'token_variacoes'>) => void
+  onSalvar: (campos: Pick<Ator, 'token_url' | 'token_variacoes' | 'token_pastas'>) => void
   onFechar: () => void
 }) {
   const [principal, setPrincipal] = useState(ator.token_url)
   const [variacoes, setVariacoes] = useState<Variacao[]>(ator.token_variacoes)
+  const [pastas, setPastas] = useState<PastaDeVariacao[]>(ator.token_pastas ?? [])
   const [aviso, setAviso] = useState<string | null>(null)
+  const [menu, setMenu] = useState<{ x: number; y: number; itens: ItemMenu[] } | null>(null)
+  const [fechadas, setFechadas] = useState<Set<string>>(new Set())
+  const [sobre, setSobre] = useState<string | null>(null)
   const principalRef = useRef<HTMLInputElement>(null)
   const variacaoRef = useRef<HTMLInputElement>(null)
+  // Pasta em que entram as próximas imagens enviadas pelo "+".
+  const destinoRef = useRef<string | null>(null)
 
   async function enviar(arquivos: File[], comoPrincipal: boolean) {
     const imagens = arquivos.filter((f) => f.type.startsWith('image/'))
@@ -172,19 +181,71 @@ export function ConfigurarToken({ ator, onEnviar, onSalvar, onFechar }: {
         return
       }
       if (comoPrincipal) setPrincipal(url)
-      else setVariacoes((v) => [...v, { id: crypto.randomUUID(), nome: nomeDoArquivo(f.name), url }])
+      else setVariacoes((v) => [...v, { id: crypto.randomUUID(), nome: nomeDoArquivo(f.name), url, pasta: destinoRef.current }])
     }
     setAviso(null)
   }
 
-  function renomear(v: Variacao) {
-    const nome = window.prompt('Nome da variação:', v.nome)
-    if (nome?.trim()) setVariacoes((l) => l.map((x) => (x.id === v.id ? { ...x, nome: nome.trim() } : x)))
+  function criarPasta() {
+    const nome = window.prompt('Nome da pasta:', 'Nova pasta')
+    if (nome?.trim()) setPastas((l) => [...l, { id: crypto.randomUUID(), nome: nome.trim() }])
   }
 
+  const mover = (id: string, pasta: string | null) => setVariacoes((l) => l.map((x) => (x.id === id ? { ...x, pasta } : x)))
+
+  function menuDaVariacao(e: React.MouseEvent, v: Variacao) {
+    e.preventDefault()
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      itens: [
+        {
+          rotulo: 'Renomear', onClick: () => {
+            const nome = window.prompt('Nome da variação:', v.nome)
+            if (nome?.trim()) setVariacoes((l) => l.map((x) => (x.id === v.id ? { ...x, nome: nome.trim() } : x)))
+          },
+        },
+        {
+          tipo: 'sub', rotulo: 'Mover para a pasta',
+          itens: [
+            ...pastas.map((p) => ({ rotulo: `${v.pasta === p.id ? '✓ ' : ''}${p.nome}`, onClick: () => mover(v.id, p.id) })),
+            { rotulo: `${!v.pasta ? '✓ ' : ''}Sem pasta`, onClick: () => mover(v.id, null) },
+          ],
+        },
+        { rotulo: 'Usar como Token Principal', onClick: () => setPrincipal(v.url) },
+        { tipo: 'linha' },
+        { rotulo: 'Tirar', perigo: true, onClick: () => setVariacoes((l) => l.filter((x) => x.id !== v.id)) },
+      ],
+    })
+  }
+
+  function menuDaPasta(e: React.MouseEvent, p: PastaDeVariacao) {
+    e.preventDefault()
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      itens: [
+        {
+          rotulo: 'Renomear Pasta', onClick: () => {
+            const nome = window.prompt('Nome da pasta:', p.nome)
+            if (nome?.trim()) setPastas((l) => l.map((x) => (x.id === p.id ? { ...x, nome: nome.trim() } : x)))
+          },
+        },
+        {
+          rotulo: 'Excluir Pasta', perigo: true, onClick: () => {
+            setPastas((l) => l.filter((x) => x.id !== p.id))
+            setVariacoes((l) => l.map((x) => (x.pasta === p.id ? { ...x, pasta: null } : x)))
+          },
+        },
+      ],
+    })
+  }
+
+  const grupos = agruparVariacoes(variacoes, pastas)
+
   return (
-    <Janela titulo={`Configurar Token: ${ator.name}`} icone={faImage} largura={520} onFechar={onFechar}>
-      <div className="janela-form">
+    <Janela titulo={`Configurar Token: ${ator.name}`} icone={faImage} largura={560} onFechar={onFechar}>
+      <div className="janela-form janela-rolagem token-config">
         <fieldset className="janela-grupo">
           <legend>Token Principal</legend>
           <p className="janela-dica">A imagem que vai pro mapa quando o personagem é arrastado, e a miniatura da lista.</p>
@@ -199,28 +260,125 @@ export function ConfigurarToken({ ator, onEnviar, onSalvar, onFechar }: {
 
         <fieldset className="janela-grupo">
           <legend>Tokens Variáveis</legend>
-          <p className="janela-dica">Outras aparências pra trocar em jogo (botão direito no token › Variação de Token). Botão direito aqui renomeia.</p>
-          <div className="token-variacoes">
-            {variacoes.map((v) => (
-              <figure key={v.id} className="token-variacao" onContextMenu={(e) => { e.preventDefault(); renomear(v) }}>
-                <div className="token-quadro"><img src={v.url} alt="" /></div>
-                <figcaption>{v.nome}</figcaption>
-                <button type="button" className="token-tirar" aria-label={`Tirar ${v.nome}`} onClick={() => setVariacoes((l) => l.filter((x) => x.id !== v.id))}>
-                  <FontAwesomeIcon icon={faXmark} />
-                </button>
-              </figure>
-            ))}
-            <button type="button" className="token-quadro token-mais" aria-label="Adicionar variação" onClick={() => variacaoRef.current?.click()}>
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
+          <div className="token-variacoes-topo">
+            <p className="janela-dica">Arraste uma variação pra outra pasta pra mudar ela de lugar. Botão direito renomeia, move ou tira.</p>
+            <button type="button" className="mesa-botao" onClick={criarPasta}><FontAwesomeIcon icon={faFolderPlus} /> Criar Pasta</button>
           </div>
+
+          {grupos.map(({ pasta, itens }) => {
+            const chave = pasta?.id ?? 'sem'
+            if (!pasta && !itens.length && pastas.length) return null
+            const aberta = !fechadas.has(chave)
+            return (
+              <section
+                key={chave}
+                className={`token-pasta${sobre === chave ? ' sobre' : ''}`}
+                onDragOver={(e) => { if (e.dataTransfer.types.includes('application/x-arkanis-variacao')) { e.preventDefault(); setSobre(chave) } }}
+                onDragLeave={() => setSobre((s) => (s === chave ? null : s))}
+                onDrop={(e) => {
+                  const id = e.dataTransfer.getData('application/x-arkanis-variacao')
+                  setSobre(null)
+                  if (id) mover(id, pasta?.id ?? null)
+                }}
+              >
+                {(pasta || pastas.length > 0) && (
+                  <button
+                    type="button"
+                    className="token-pasta-nome"
+                    aria-expanded={aberta}
+                    onClick={() => setFechadas((s) => { const n = new Set(s); if (n.has(chave)) n.delete(chave); else n.add(chave); return n })}
+                    onContextMenu={(e) => pasta && menuDaPasta(e, pasta)}
+                  >
+                    <FontAwesomeIcon icon={aberta ? faFolderOpen : faFolder} /> {pasta?.nome ?? 'Sem pasta'} <small>({itens.length})</small>
+                  </button>
+                )}
+                {aberta && (
+                  <div className="token-variacoes">
+                    {itens.map((v) => (
+                      <figure
+                        key={v.id}
+                        className="token-variacao"
+                        draggable
+                        onDragStart={(e) => e.dataTransfer.setData('application/x-arkanis-variacao', v.id)}
+                        onContextMenu={(e) => menuDaVariacao(e, v)}
+                      >
+                        <div className="token-quadro"><img src={v.url} alt="" draggable={false} /></div>
+                        <figcaption>{v.nome}</figcaption>
+                        <button type="button" className="token-tirar" aria-label={`Tirar ${v.nome}`} onClick={() => setVariacoes((l) => l.filter((x) => x.id !== v.id))}>
+                          <FontAwesomeIcon icon={faXmark} />
+                        </button>
+                      </figure>
+                    ))}
+                    <button
+                      type="button"
+                      className="token-quadro token-mais"
+                      aria-label={`Adicionar variação${pasta ? ` em ${pasta.nome}` : ''}`}
+                      onClick={() => { destinoRef.current = pasta?.id ?? null; variacaoRef.current?.click() }}
+                    >
+                      <FontAwesomeIcon icon={faPlus} />
+                    </button>
+                  </div>
+                )}
+              </section>
+            )
+          })}
           <input ref={variacaoRef} type="file" accept="image/*" multiple hidden onChange={(e) => { enviar(Array.from(e.target.files ?? []), false); e.target.value = '' }} />
         </fieldset>
 
         {aviso && <p className="janela-aviso">{aviso}</p>}
-        <button type="button" className="janela-botao" onClick={() => onSalvar({ token_url: principal, token_variacoes: variacoes })}>
-          <FontAwesomeIcon icon={faFloppyDisk} /> Salvar Alterações
-        </button>
+      </div>
+      <button type="button" className="janela-botao" onClick={() => onSalvar({ token_url: principal, token_variacoes: variacoes, token_pastas: pastas })}>
+        <FontAwesomeIcon icon={faFloppyDisk} /> Salvar Alterações
+      </button>
+
+      {menu && <MenuContexto x={menu.x} y={menu.y} itens={menu.itens} onFechar={() => setMenu(null)} />}
+    </Janela>
+  )
+}
+
+// Variação de Token (12.8): painel lateral com as imagens do personagem, separadas por pasta.
+// Fica aberto pra trocar rápido; clicar numa imagem troca o token no mapa.
+export function PainelVariacoes({ ator, atual, onEscolher, onFechar }: {
+  ator: Ator
+  atual: string
+  onEscolher: (url: string) => void
+  onFechar: () => void
+}) {
+  const principal = ator.token_url ? [{ id: 'principal', nome: 'Token Principal', url: ator.token_url }] : []
+  const grupos = agruparVariacoes(ator.token_variacoes.filter((v) => v.url !== ator.token_url), ator.token_pastas ?? [])
+  const [fechadas, setFechadas] = useState<Set<string>>(new Set())
+
+  const miniatura = (v: Variacao) => (
+    <button key={v.id} type="button" className={`variacao-escolha${v.url === atual ? ' ativa' : ''}`} onClick={() => onEscolher(v.url)} title={v.nome}>
+      <span className="token-quadro"><img src={v.url} alt="" draggable={false} /></span>
+      <span>{v.nome}</span>
+    </button>
+  )
+
+  return (
+    <Janela titulo={`Variação de Token: ${ator.name}`} icone={faImages} largura={340} altura={620} inicial={{ x: Math.max(16, window.innerWidth - 740), y: 60 }} onFechar={onFechar}>
+      <div className="janela-rolagem variacoes-painel">
+        {principal.length > 0 && <div className="variacoes-grade">{principal.map(miniatura)}</div>}
+        {grupos.map(({ pasta, itens }) => {
+          if (!itens.length) return null
+          const chave = pasta?.id ?? 'sem'
+          const aberta = !fechadas.has(chave)
+          return (
+            <section key={chave} className="token-pasta">
+              {(pasta || (ator.token_pastas ?? []).length > 0) && (
+                <button
+                  type="button"
+                  className="token-pasta-nome"
+                  aria-expanded={aberta}
+                  onClick={() => setFechadas((s) => { const n = new Set(s); if (n.has(chave)) n.delete(chave); else n.add(chave); return n })}
+                >
+                  <FontAwesomeIcon icon={aberta ? faFolderOpen : faFolder} /> {pasta?.nome ?? 'Sem pasta'} <small>({itens.length})</small>
+                </button>
+              )}
+              {aberta && <div className="variacoes-grade">{itens.map(miniatura)}</div>}
+            </section>
+          )
+        })}
       </div>
     </Janela>
   )

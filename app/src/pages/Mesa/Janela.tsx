@@ -34,7 +34,7 @@ export default function Janela({ titulo, icone, largura = 420, altura, inicial, 
       className={`janela${altura ? ' redimensionavel' : ''}`}
       role="dialog"
       aria-label={titulo}
-      style={{ left: pos.x, top: pos.y, width: `min(${largura}px, calc(100vw - 32px))`, height: altura ? `min(${altura}px, calc(100vh - 32px))` : undefined }}
+      style={{ left: pos.x, top: pos.y, width: `min(${largura}px, calc(100vw - 32px))`, height: altura ? `min(${altura}px, calc(100vh - ${pos.y + 16}px))` : undefined, maxHeight: `calc(100vh - ${pos.y + 16}px)` }}
     >
       <header className="janela-topo" onPointerDown={comecar} onPointerMove={mover} onPointerUp={() => (arrasto.current = null)}>
         {icone && <FontAwesomeIcon icon={icone} />}
