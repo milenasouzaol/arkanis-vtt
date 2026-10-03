@@ -11617,3 +11617,169 @@ textarea.inter-input {
   background: var(--mesa-online);
   flex: none;
 }
+
+/* ---- Criar Campanha (referência da Millie, 02/10) ---- */
+
+.criar-campanha {
+  width: 100%;
+  max-width: 922px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 2.2em 16px 4em;
+  font-family: var(--poppins);
+  color: #fff;
+}
+
+.criar-campanha h1,
+.criar-campanha h2 {
+  font-family: var(--poppins);
+}
+
+.criar-campanha .system-card-left h2 {
+  font-family: var(--ashigea);
+}
+
+.criar-campanha h1 {
+  margin: 0 0 1.2em;
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.criar-campanha h2 {
+  margin: 1.6em 0 0.9em;
+  font-size: 1.9rem;
+  font-weight: 500;
+}
+
+.criar-campanha section:first-of-type h2 {
+  margin-top: 0;
+}
+
+.cc-linha {
+  display: grid;
+  grid-template-columns: 228px 1fr;
+  align-items: start;
+  margin-bottom: 1.4em;
+}
+
+.cc-rotulo {
+  padding-top: 0.2em;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.cc-linha input,
+.cc-linha textarea {
+  width: 100%;
+  padding: 0.35em 0.6em;
+  background: #2f303d;
+  border: 1px solid #5a5c6b;
+  border-radius: 3px;
+  color: #fff;
+  font: 0.9rem var(--sans);
+}
+
+.cc-linha textarea {
+  min-height: 108px;
+  resize: vertical;
+}
+
+.cc-linha textarea::placeholder {
+  color: #9a9cab;
+}
+
+.cc-capa {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.8em;
+}
+
+.cc-capa-previa {
+  width: 260px;
+  height: 146px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #5a5c6b;
+}
+
+.cc-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.65em 1.6em;
+  background: var(--cc-destaque);
+  border: 0;
+  border-radius: 4px;
+  color: #131118;
+  font: 500 1rem var(--poppins);
+  cursor: pointer;
+}
+
+.cc-botao:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cc-cores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.cc-cor {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.cc-cor.ativa {
+  box-shadow: 0 0 0 3px #fff;
+}
+
+.cc-jogos {
+  justify-content: flex-start;
+  margin-top: 1.4em;
+}
+
+.cc-erro {
+  color: var(--danger);
+}
+
+.cc-jogo-escolhido .system-card {
+  border-color: var(--cc-destaque);
+  box-shadow: 0 0 0 2px var(--cc-destaque);
+}
+
+.cc-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 2em;
+}
+
+.cc-criar {
+  padding: 0.55em 0.9em;
+}
+
+.cc-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.55em 0.9em;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .cc-linha {
+    grid-template-columns: 1fr;
+    gap: 0.4em;
+  }
+}

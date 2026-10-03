@@ -13,6 +13,7 @@ import CharacterCreate from './pages/CharacterCreate'
 import CharacterSheet from './pages/CharacterSheet'
 import EntrarCampanha from './pages/EntrarCampanha'
 import Mesa from './pages/Mesa'
+import CriarCampanha from './pages/CriarCampanha'
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
           <Route path="/perfil/editar" element={<ProtectedRoute><EditarPerfil /></ProtectedRoute>} />
           <Route path="/jogar" element={<ProtectedRoute><Jogar /></ProtectedRoute>} />
+          <Route path="/campanha/criar" element={<ProtectedRoute><CriarCampanha /></ProtectedRoute>} />
           <Route path="/campanha/entrar/:code" element={<ProtectedRoute><EntrarCampanha /></ProtectedRoute>} />
           <Route path="/mesa/:id" element={<ProtectedRoute><Mesa /></ProtectedRoute>} />
           <Route path="/personagem/criar" element={<ProtectedRoute><SystemSelect /></ProtectedRoute>} />

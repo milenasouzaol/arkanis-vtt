@@ -1,16 +1,7 @@
 import { Link } from 'react-router-dom'
-import cardOrdemParanormal from '../assets/backgrounds/card-ordem-paranormal.webp'
+import { SISTEMAS as SYSTEMS } from '../lib/sistemas'
 import bgSystemSelect from '../assets/backgrounds/bg-systemselect.png'
 
-const SYSTEMS = [
-  {
-    slug: 'ordem-paranormal',
-    name: 'Ordem Paranormal',
-    description: 'Se torne um agente da Ordo Realitas, especializado em defender o nosso mundo das forças do Outro Lado.',
-    version: 'Atualizado v0.1',
-    image: cardOrdemParanormal,
-  },
-]
 
 export default function SystemSelect() {
   return (
