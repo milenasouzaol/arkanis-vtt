@@ -130,8 +130,9 @@ export default function PainelCombate({ souMestre, combates, vdDe, ativo, ordem,
   )
 }
 
-// Indicador de turno no topo do mapa (12.4): a foto de quem age, pra todo mundo.
-// Quem está na vez clica na própria foto pra passar o turno.
+// Indicador de turno no topo do mapa (12.4): a fila inteira do combate, na ordem da
+// iniciativa, em cards verticais. Todo mundo fica apagado; quem está na vez fica aceso.
+// Quem está na vez clica no próprio card pra passar o turno, e o destaque anda pro próximo.
 export function IndicadorTurno({ ativo, ordem, meusPersonagens, souMestre, onPassar }: {
   ativo: Combate
   ordem: Combatente[]
@@ -140,22 +141,30 @@ export function IndicadorTurno({ ativo, ordem, meusPersonagens, souMestre, onPas
   onPassar: () => void
 }) {
   const atual = ordem.find((c) => c.id === ativo.turno_atual)
-  if (!atual) return null
-  const meu = atual.character_id !== null && meusPersonagens.includes(atual.character_id)
-  const pode = meu || souMestre
+  if (!ordem.length) return null
+  const minhaVez = atual?.character_id != null && meusPersonagens.includes(atual.character_id)
   return (
-    <div className="indicador-turno" role="status" aria-live="polite">
-      <button
-        key={atual.id}
-        type="button"
-        className={`indicador-turno-foto${pode ? ' pode' : ''}`}
-        disabled={!pode}
-        title={meu ? 'Clique pra passar o turno' : souMestre ? 'Passar o turno' : undefined}
-        onClick={onPassar}
-      >
-        {atual.image_url ? <img src={atual.image_url} alt="" /> : <FontAwesomeIcon icon={atual.tipo === 'ameaca' ? faSkull : faUser} />}
-      </button>
-      <span className="indicador-turno-nome">{meu ? 'Sua vez' : atual.name}</span>
+    <div className="indicador-turno" role="status" aria-live="polite" aria-label={atual ? `Vez de ${atual.name}` : 'Combate'}>
+      <ol className="indicador-turno-fila">
+        {ordem.map((c) => {
+          const vez = c.id === ativo.turno_atual
+          const pode = vez && (minhaVez || souMestre)
+          return (
+            <li key={c.id} className={`indicador-turno-card${vez ? ' vez' : ''}`}>
+              <button
+                type="button"
+                className={pode ? 'pode' : undefined}
+                disabled={!pode}
+                title={pode ? (minhaVez ? 'Clique pra passar o turno' : 'Passar o turno') : c.name}
+                onClick={onPassar}
+              >
+                {c.image_url ? <img src={c.image_url} alt="" draggable={false} /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+      {atual && <span className="indicador-turno-nome">{minhaVez ? 'Sua vez' : atual.name}</span>}
     </div>
   )
 }

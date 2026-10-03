@@ -56,3 +56,10 @@ spec: docs/VTT_Mesa.md (12.4)
   rolagem dela, sempre em nome do dono. Fecha uma brecha antiga (qualquer um registrava
   rolagem na ficha alheia no próprio nome). A ficha agora sempre grava a rolagem no nome do
   dono — inclusive quando o mestre rola na ficha do jogador pela mesa.
+
+## Ajuste da Millie (04/10): fila no topo do mapa
+
+- O indicador de turno virou a fila inteira do combate, na ordem da iniciativa, em cards
+  verticais (como os tokens em pé). Todos apagados; quem está na vez aceso e maior, com o nome
+  embaixo ("Sua vez" pra quem joga). Ao passar o turno, o destaque anda pro próximo. Com
+  muita gente, a fila rola de lado.
