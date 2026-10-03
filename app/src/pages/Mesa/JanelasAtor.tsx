@@ -12,11 +12,13 @@ import type { Rolagem } from './chat'
 import type { Alvo, AtaqueDaAcao } from './mira'
 
 // Criar Personagem (12.7): pra Ordem Paranormal só NPC e Ameaça/Monstro.
-export function CriarPersonagem({ pastas, pastaInicial, onCriarNPC, onCriarAmeaca, onFechar }: {
+export function CriarPersonagem({ pastas, pastaInicial, onCriarNPC, onCriarAmeaca, onCriarHomebrew, onFechar }: {
   pastas: Pasta[]
   pastaInicial: string | null
   onCriarNPC: (nome: string, pasta: string | null) => void
   onCriarAmeaca: (c: CriaturaResumo & { pv_maximo: number | null }, pasta: string | null) => void
+  // Ameaça que não está no bestiário: abre o editor de Homebrew.
+  onCriarHomebrew: (pasta: string | null) => void
   onFechar: () => void
 }) {
   const [tipo, setTipo] = useState<'npc' | 'ameaca'>('npc')
@@ -63,7 +65,10 @@ export function CriarPersonagem({ pastas, pastaInicial, onCriarNPC, onCriarAmeac
           </Campo>
         ) : (
           <>
-            <input value={busca} placeholder="Procurar no bestiário" aria-label="Procurar no bestiário" onChange={(e) => setBusca(e.target.value)} />
+            <div className="criar-combate-titulo">
+              <input value={busca} placeholder="Procurar no bestiário" aria-label="Procurar no bestiário" onChange={(e) => setBusca(e.target.value)} />
+              <button type="button" className="mesa-botao" onClick={() => onCriarHomebrew(pasta || null)}><FontAwesomeIcon icon={faPlus} /> Criar Ameaça</button>
+            </div>
             <ul className="criar-personagem-bestiario">
               {lista.map((c) => (
                 <li key={c.id}>
@@ -403,7 +408,7 @@ export function ConfirmarExclusao({ ator, onSim, onNao }: { ator: Ator; onSim: (
 
 // Ficha portátil (12.7): janela flutuante, redimensionável. NPC e jogador abrem a ficha de
 // Ordem Paranormal inteira (a mesma da seção 5, salvando sozinha); Ameaça abre a ficha dela.
-export function FichaPortatil({ ator, podeEditar, onMudarPv, onRolar, onMostrar, onFechar, alvos, onAtacar }: {
+export function FichaPortatil({ ator, podeEditar, onMudarPv, onRolar, onMostrar, onFechar, alvos, onAtacar, meuId, onEditarAmeaca }: {
   ator: Ator
   podeEditar: boolean
   onMudarPv: (pv: number) => void
@@ -412,12 +417,14 @@ export function FichaPortatil({ ator, podeEditar, onMudarPv, onRolar, onMostrar,
   onFechar: () => void
   alvos?: Alvo[]
   onAtacar?: (ataque: AtaqueDaAcao, autor: { nome: string; foto: string | null }) => void
+  meuId?: string
+  onEditarAmeaca?: (criaturaId: string) => void
 }) {
   const ameaca = ator.tipo === 'ameaca' && ator.creature_id
   return (
     <Janela titulo={ator.name} icone={ameaca ? faSkull : faUser} largura={ameaca ? 440 : 1100} altura={ameaca ? 620 : 760} inicial={{ x: 40, y: 30 }} onFechar={onFechar}>
       {ameaca ? (
-        <FichaAmeaca criaturaId={ator.creature_id!} nome={ator.name} pvAtual={ator.pv_atual} podeEditar={podeEditar} podeRolar={podeEditar} onMudarPv={onMudarPv} onRolar={onRolar} onMostrar={onMostrar} alvos={alvos} onAtacar={onAtacar} />
+        <FichaAmeaca criaturaId={ator.creature_id!} nome={ator.name} pvAtual={ator.pv_atual} podeEditar={podeEditar} podeRolar={podeEditar} onMudarPv={onMudarPv} onRolar={onRolar} onMostrar={onMostrar} alvos={alvos} onAtacar={onAtacar} meuId={meuId} onEditar={onEditarAmeaca} />
       ) : (
         <iframe className="ficha-portatil" title={`Ficha de ${ator.name}`} src={`/personagem/${ator.character_id}?mesa=${ator.campaign_id}`} />
       )}

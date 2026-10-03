@@ -19,6 +19,7 @@ import { imagemDoToken, nivelDoJogador, nivelNaFichaDoJogador, variacoesDoToken,
 import Janela from './Janela'
 import PainelCombate, { IndicadorTurno } from './PainelCombate'
 import CriarCombate, { type AtorDoCombate } from './CriarCombate'
+import EditorAmeaca, { carregarParaEditar, criaturaVazia, type CriaturaEditavel } from './EditorAmeaca'
 import { useCombate, type Combate } from './useCombate'
 import type { Combatente } from './combate'
 import type { Cena } from './cenas'
@@ -156,6 +157,7 @@ export default function Mesa() {
     })
   }, [idsAmeacas, vdDe])
   const [avisoPalco, setAvisoPalco] = useState<string | null>(null)
+  const [editorAmeaca, setEditorAmeaca] = useState<{ inicial: CriaturaEditavel; depois?: (id: string) => void } | null>(null)
 
   // ---- Mira (12.9) ----
   const euNaMesa = pronta?.membros.find((m) => m.userId === userId)
@@ -398,6 +400,23 @@ export default function Mesa() {
     return !!o.character_id && (souMestre || meusPersonagensIds.includes(o.character_id))
   }
 
+  // Homebrew (KAN-50): criar do zero, duplicar do bestiário ou editar uma do mestre.
+  async function editarAmeaca(origem: { criar: true } | { id: string; duplicar: boolean }, depois?: (id: string) => void) {
+    const inicial = 'criar' in origem ? criaturaVazia() : await carregarParaEditar(origem.id, origem.duplicar)
+    if (inicial) setEditorAmeaca({ inicial, depois })
+  }
+
+  // Ameaça Homebrew criada pelo Criar Personagem já vira personagem na aba.
+  function criarHomebrewNaAba(pasta: string | null) {
+    setCriandoAtor(null)
+    editarAmeaca({ criar: true }, async (id) => {
+      const { data } = await supabase.from('creatures').select('id, name, vd, image_url, tipo_criatura, tamanho, pv_maximo').eq('id', id).single()
+      if (!data) return
+      const novo = await atores.criarAmeaca(data, pasta)
+      if (novo) abrirFicha(novo.id)
+    })
+  }
+
   const cenaEditada = cenas.cenas.find((c) => c.id === editandoCena)
   const jogadoresParaCena = estado.membros
     .filter((m) => m.papel === 'jogador')
@@ -596,6 +615,8 @@ export default function Mesa() {
           inicial={montandoCombate.editando ?? montandoCombate.adicionarEm}
           modo={montandoCombate.adicionarEm ? 'adicionar' : 'criar'}
           atores={atoresParaCombate}
+          meuId={userId ?? ''}
+          onEditarAmeaca={editarAmeaca}
           onSalvar={(nome, ameacas, escolhidos) => {
             if (montandoCombate.adicionarEm) combate.entrarAmeacas(montandoCombate.adicionarEm, ameacas, escolhidos)
             else if (montandoCombate.editando) combate.salvar(montandoCombate.editando.id, { name: nome, ameacas, atores: escolhidos })
@@ -611,6 +632,7 @@ export default function Mesa() {
           pastas={atores.pastas}
           pastaInicial={criandoAtor.pasta}
           onCriarNPC={criarNPC}
+          onCriarHomebrew={criarHomebrewNaAba}
           onCriarAmeaca={async (c, pasta) => { setCriandoAtor(null); const novo = await atores.criarAmeaca(c, pasta); if (novo) abrirFicha(novo.id) }}
           onFechar={() => setCriandoAtor(null)}
         />
@@ -706,10 +728,26 @@ export default function Mesa() {
             onMostrar={mostrarNoChat}
             alvos={alvosComNome}
             onAtacar={atacarComAmeaca}
+            meuId={userId}
+            onEditarAmeaca={(id) => editarAmeaca({ id, duplicar: false })}
             onFechar={fechar}
           />
         )
       })}
+
+      {editorAmeaca && userId && (
+        <EditorAmeaca
+          userId={userId}
+          inicial={editorAmeaca.inicial}
+          onEnviarImagem={(f) => enviarImagemDeToken(userId, f)}
+          onSalvo={(id) => {
+            window.dispatchEvent(new CustomEvent('arkanis-ameaca-salva', { detail: id }))
+            editorAmeaca.depois?.(id)
+            setEditorAmeaca(null)
+          }}
+          onFechar={() => setEditorAmeaca(null)}
+        />
+      )}
 
       <PainelSessao conectados={online} latencia={latencia} fps={fps} />
     </main>

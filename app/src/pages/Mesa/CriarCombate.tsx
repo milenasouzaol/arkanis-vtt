@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFloppyDisk, faMagnifyingGlass, faPlus, faSkull, faUser, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faClone, faFloppyDisk, faMagnifyingGlass, faPenToSquare, faPlus, faSkull, faUser, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../../lib/supabase'
 import Janela from './Janela'
 import FichaAmeaca from './FichaAmeaca'
 import { COR_ELEMENTO, elementoDaCriatura, filtrarAmeacas, FILTROS_ELEMENTO, vdTotal, type CriaturaLista, type FiltroElemento } from './combate'
 
-const CAMPOS = 'id, name, vd, image_url, tipo_criatura, tamanho, descritores, categoria, source_id, iniciativa, pv_maximo'
+const CAMPOS = 'id, name, vd, image_url, tipo_criatura, tamanho, descritores, categoria, source_id, iniciativa, pv_maximo, owner_id'
 
 // Criar Combate (12.4): Nome, VD Total, filtros por livro e elemento, a lista de ameaças
 // (Ficha / Adicionar) e, do lado, as Ameaças Selecionadas com Remover na cor do elemento.
@@ -15,10 +15,13 @@ const CAMPOS = 'id, name, vd, image_url, tipo_criatura, tamanho, descritores, ca
 // que já está com o token na cena, um NPC…): é o mesmo personagem que luta.
 export type AtorDoCombate = { id: string; name: string; tipo: 'npc' | 'ameaca'; token_url: string | null; creature_id: string | null }
 
-export default function CriarCombate({ inicial, modo = 'criar', atores, onSalvar, onFechar }: {
+export default function CriarCombate({ inicial, modo = 'criar', atores, meuId, onEditarAmeaca, onSalvar, onFechar }: {
   inicial?: { name: string; ameacas: string[]; atores: string[] }
   modo?: 'criar' | 'adicionar'
   atores: AtorDoCombate[]
+  meuId: string
+  // Homebrew: abre o editor (criar do zero, duplicar ou editar) e avisa o id salvo.
+  onEditarAmeaca: (origem: { criar: true } | { id: string; duplicar: boolean }, depois: (id: string) => void) => void
   onSalvar: (nome: string, ameacas: string[], atores: string[]) => void
   onFechar: () => void
 }) {
@@ -34,8 +37,15 @@ export default function CriarCombate({ inicial, modo = 'criar', atores, onSalvar
   const [ficha, setFicha] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
 
+  const carregar = () => supabase.from('creatures').select(CAMPOS).order('name').then(({ data }) => setCriaturas((data ?? []) as CriaturaLista[]))
+  // Ameaça criada/duplicada aqui já entra na lista e nas selecionadas.
+  const depoisDeSalvar = (novo: boolean) => (id: string) => {
+    carregar()
+    if (novo) setEscolhidas((l) => [...l, id])
+  }
+
   useEffect(() => {
-    supabase.from('creatures').select(CAMPOS).order('name').then(({ data }) => setCriaturas((data ?? []) as CriaturaLista[]))
+    carregar()
     supabase.from('sources').select('id, name').then(({ data }) => setFontes(data ?? []))
   }, [])
 
@@ -86,7 +96,14 @@ export default function CriarCombate({ inicial, modo = 'criar', atores, onSalvar
               <button type="button" className={origem === 'bestiario' ? 'ativa' : undefined} onClick={() => setOrigem('bestiario')}>Bestiário</button>
               <button type="button" className={origem === 'personagens' ? 'ativa' : undefined} onClick={() => setOrigem('personagens')}>Da aba Personagens</button>
             </nav>
-            <h3>{origem === 'bestiario' ? 'Lista de Ameaças' : 'Ameaças e NPCs da mesa'}</h3>
+            <div className="criar-combate-titulo">
+              <h3>{origem === 'bestiario' ? 'Lista de Ameaças' : 'Ameaças e NPCs da mesa'}</h3>
+              {origem === 'bestiario' && (
+                <button type="button" className="mesa-botao" onClick={() => onEditarAmeaca({ criar: true }, depoisDeSalvar(true))}>
+                  <FontAwesomeIcon icon={faPlus} /> Criar Ameaça
+                </button>
+              )}
+            </div>
             <div className="criar-combate-busca">
               <FontAwesomeIcon icon={faMagnifyingGlass} />
               <input value={busca} placeholder="Procurar por nome" aria-label="Procurar ameaça" onChange={(e) => setBusca(e.target.value)} />
@@ -129,6 +146,15 @@ export default function CriarCombate({ inicial, modo = 'criar', atores, onSalvar
                     <small>VD: {c.vd ?? '—'} · {[c.tipo_criatura, c.tamanho].filter(Boolean).join(' - ')}</small>
                   </span>
                   <button type="button" className="mesa-botao" onClick={() => setFicha(c.id)}>Ficha</button>
+                  {c.owner_id === meuId ? (
+                    <button type="button" className="combate-icone" aria-label={`Editar ${c.name}`} title="Editar" onClick={() => onEditarAmeaca({ id: c.id, duplicar: false }, depoisDeSalvar(false))}>
+                      <FontAwesomeIcon icon={faPenToSquare} />
+                    </button>
+                  ) : (
+                    <button type="button" className="combate-icone" aria-label={`Duplicar ${c.name} pra editar`} title="Duplicar e editar (Homebrew)" onClick={() => onEditarAmeaca({ id: c.id, duplicar: true }, depoisDeSalvar(true))}>
+                      <FontAwesomeIcon icon={faClone} />
+                    </button>
+                  )}
                   <button type="button" className="mesa-botao" onClick={() => setEscolhidas((l) => [...l, c.id])}><FontAwesomeIcon icon={faPlus} /> Adicionar</button>
                 </li>
               ))}

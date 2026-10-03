@@ -14310,3 +14310,140 @@ button.character-tile-link {
   background: rgba(255, 255, 255, 0.06);
   font-size: 0.82rem;
 }
+
+/* Editor de Ameaça Homebrew (KAN-50) */
+.editor-ameaca {
+  padding: 4px 2px 8px;
+}
+
+.editor-ameaca textarea {
+  width: 100%;
+  padding: 6px 9px;
+  background: #2b2830;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--mesa-creme);
+  font: 0.88rem 'Signika', var(--sans);
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.editor-ameaca textarea:focus {
+  outline: none;
+  border-color: var(--mesa-creme-dim);
+}
+
+.editor-ameaca-topo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.editor-ameaca-foto {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  background: #1d1b21;
+  border: 1px dashed var(--mesa-creme-dim);
+  border-radius: 6px;
+  color: var(--mesa-creme-dim);
+  font-size: 1.6rem;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.editor-ameaca-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.editor-ameaca-grade {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 12px;
+}
+
+.editor-ameaca-elementos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 0.82rem;
+}
+
+.editor-ameaca-elementos label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.editor-ameaca .ficha-ameaca-atributo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+  cursor: default;
+}
+
+.editor-ameaca .ficha-ameaca-atributo input {
+  text-align: center;
+}
+
+.editor-ameaca-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-ameaca-lista .mesa-botao {
+  align-self: flex-start;
+}
+
+.editor-ameaca-acao {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: #1d1b21;
+  border-radius: 4px;
+}
+
+.editor-ameaca-linha {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.criar-combate-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.criar-combate-titulo h3 {
+  margin: 0;
+}
+
+.criar-combate-titulo input {
+  flex: 1;
+}
+
+.ficha-ameaca-topo {
+  position: relative;
+}
+
+.ficha-ameaca-editar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.editor-ameaca-grade .janela-campo {
+  grid-template-columns: 1fr;
+}

@@ -35,6 +35,7 @@ export type CriaturaLista = {
   source_id: string
   iniciativa: string | null
   pv_maximo: number | null
+  owner_id?: string | null // Homebrew do mestre
 }
 
 // Elemento da criatura: o primeiro descritor que é um elemento; criatura mundana é "Realidade"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAnglesLeft, faAnglesRight, faChevronLeft, faChevronRight, faComment, faDiceD20, faPlus, faSkull } from '@fortawesome/free-solid-svg-icons'
+import { faAnglesLeft, faAnglesRight, faChevronLeft, faChevronRight, faComment, faDiceD20, faPenToSquare, faPlus, faSkull } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../../lib/supabase'
 import { lerPericias, lerTeste, rolarDano, rolarTeste } from './combate'
 import type { Rolagem } from './chat'
@@ -34,6 +34,7 @@ type Criatura = {
   acoes: Acao[] | null
   habilidades: Acao[] | null
   enigma_medo: string | null
+  owner_id: string | null
   flavor_text: string | null
   description: string | null
 }
@@ -45,7 +46,7 @@ const ATRIBUTOS = ['agi', 'for', 'int', 'pre', 'vig']
 // Ficha de Ameaça (12.4): cabeçalho, Vida com as setas e as abas Status / Combate / Descrição.
 // O mestre rola atributos, perícias, testes e danos e manda ações/poderes pro chat
 // (podeRolar); na escolha de ameaças ela é só pra ver, com o botão Adicionar no rodapé.
-export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, podeRolar = false, nome, onMudarPv, onRolar, onMostrar, onAdicionar, alvos = [], onAtacar }: {
+export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, podeRolar = false, nome, onMudarPv, onRolar, onMostrar, onAdicionar, alvos = [], onAtacar, meuId, onEditar }: {
   criaturaId: string
   pvAtual: number | null
   pvMax?: number | null
@@ -60,13 +61,21 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
   // Mira (12.9): com alvos marcados, o teste de uma ação com dano vira ataque no chat.
   alvos?: Alvo[]
   onAtacar?: (ataque: AtaqueDaAcao, autor: { nome: string; foto: string | null }) => void
+  // Homebrew do próprio mestre: Editar abre o editor.
+  meuId?: string
+  onEditar?: (criaturaId: string) => void
 }) {
   const [c, setC] = useState<Criatura | null>(null)
   const [aba, setAba] = useState<Aba>('status')
   const [subaba, setSubaba] = useState<'acoes' | 'poderes'>('acoes')
 
   useEffect(() => {
-    supabase.from('creatures').select('*').eq('id', criaturaId).single().then(({ data }) => setC(data as Criatura | null))
+    const carregar = () => supabase.from('creatures').select('*').eq('id', criaturaId).single().then(({ data }) => setC(data as Criatura | null))
+    carregar()
+    // Homebrew editada: a ficha aberta acompanha.
+    const editada = (e: Event) => (e as CustomEvent<string>).detail === criaturaId && carregar()
+    window.addEventListener('arkanis-ameaca-salva', editada)
+    return () => window.removeEventListener('arkanis-ameaca-salva', editada)
   }, [criaturaId])
 
   if (!c) return <p className="mesa-painel-vazio">Carregando…</p>
@@ -143,6 +152,11 @@ export default function FichaAmeaca({ criaturaId, pvAtual, pvMax, podeEditar, po
           <p>VD: {c.vd ?? '—'}</p>
           <p>{[c.tipo_criatura, c.tamanho].filter(Boolean).join(' - ')}</p>
         </div>
+        {onEditar && meuId && c.owner_id === meuId && (
+          <button type="button" className="combate-icone ficha-ameaca-editar" aria-label="Editar ameaça" title="Editar (Homebrew)" onClick={() => onEditar(c.id)}>
+            <FontAwesomeIcon icon={faPenToSquare} />
+          </button>
+        )}
       </header>
 
       {maximo > 0 && (
