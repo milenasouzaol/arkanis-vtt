@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { recordRoll } from '../../lib/rollHistory'
 import { custoDoRitual, notaDoGasto, recursoDoRitual, type ModoRitual } from './ritualCusto'
+import { custoExtraDeCondicoes, penalidadeDeCondicoes, rotuloComCondicoes } from './condicoes'
 import { attrValue, rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
 import RollResult, { RollCard, type RollCardDie, type RollResultData } from './RollResult'
@@ -110,10 +111,11 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
   function rollOcultismo() {
     if (!ocultismoSkill) return
     const attr = ocultismoBonus.attribute_override ?? ocultismoSkill.default_attribute
-    const score = attrValue(character.attributes, attr)
+    const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: 'Ocultismo' })
+    const score = attrValue(character.attributes, attr) + cond.dados
     const { rolls, kept } = rollAttributeTest(score)
     const bonus = trainingBonus(ocultismoBonus.training) + ocultismoBonus.extra_bonus
-    const label = 'Teste de Ocultismo'
+    const label = rotuloComCondicoes('Teste de Ocultismo', cond.motivos)
     setRoll({ label, rolls, kept, bonus, characterName: character.name, diceTray: character.dice_tray })
     if (session) {
       recordRoll({
@@ -228,7 +230,8 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
   // "Jogando sem Sanidade"), rola os dados se o ritual tiver e registra tudo no chat e no
   // Histórico com o gasto embaixo.
   async function conjurar(ritual: RitualView, mode: ModoRitual, formula: string | null) {
-    const custo = custoDoRitual(ritual.circle, mode, ritual.discenteCost, ritual.verdadeiroCost)
+    // Alquebrado: +1 PE no custo.
+    const custo = custoDoRitual(ritual.circle, mode, ritual.discenteCost, ritual.verdadeiroCost) + custoExtraDeCondicoes(character.conditions)
     const recurso = recursoDoRitual(character.optional_rules)
     const antes = (character as unknown as Record<string, number | null>)[recurso.campo] ?? 0
     if (antes < custo && !window.confirm(`Você tem ${antes} ${recurso.sigla} e o ritual custa ${custo}. Conjurar mesmo assim?`)) return
@@ -360,7 +363,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
               expanded={expanded === cr.id}
               onToggle={() => setExpanded(expanded === cr.id ? null : cr.id)}
               onRoll={(mode, formula) => conjurar(view, mode, formula)}
-              custo={(mode) => custoDoRitual(view.circle, mode, view.discenteCost, view.verdadeiroCost)}
+              custo={(mode) => custoDoRitual(view.circle, mode, view.discenteCost, view.verdadeiroCost) + custoExtraDeCondicoes(character.conditions)}
               sigla={recursoDoRitual(character.optional_rules).sigla}
               onRemove={() => removeRitual(cr.id)}
               onEdit={() => setEditing(cr)}

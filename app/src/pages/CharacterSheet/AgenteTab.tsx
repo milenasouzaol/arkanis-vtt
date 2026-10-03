@@ -8,6 +8,7 @@ import RollResult, { type RollResultData } from './RollResult'
 import HabilidadesTab from './HabilidadesTab'
 import RituaisTab from './RituaisTab'
 import { fotoNaMoldura } from './molduras'
+import { penalidadeDeCondicoes, rotuloComCondicoes } from './condicoes'
 import InventarioTab from './InventarioTab'
 import { efeitosValendo, penalidadeDeCarga, type AlvoDeBonus } from './itemMods'
 import CombateTab from './CombateTab'
@@ -305,9 +306,11 @@ export default function AgenteTab({
   }
 
   function rollAttribute(key: AttributeKey, abbr: string) {
-    const score = character.attributes[key]
+    // Condições (Frustrado, Fraco…) tiram dados sozinhas, e a rolagem diz por quê.
+    const cond = penalidadeDeCondicoes(character.conditions, { atributo: key })
+    const score = character.attributes[key] + cond.dados
     const { rolls, kept } = rollAttributeTest(score)
-    const label = `Teste de ${abbr}`
+    const label = rotuloComCondicoes(`Teste de ${abbr}`, cond.motivos)
     setRoll({ label, rolls, kept, bonus: 0, characterName: character.name, diceTray: character.dice_tray })
     if (session) {
       recordRoll({
@@ -332,10 +335,11 @@ export default function AgenteTab({
   function rollSkill(skill: SkillRow) {
     const cs = charSkills[skill.id] ?? { skill_id: skill.id, training: 'nenhum' as const, attribute_override: null, extra_bonus: 0 }
     const attr = cs.attribute_override ?? skill.default_attribute
-    const score = attrValue(character.attributes, attr) + testDiceBonus
+    const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: skill.name })
+    const score = attrValue(character.attributes, attr) + testDiceBonus + cond.dados
     const { rolls, kept } = rollAttributeTest(score)
     const bonus = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus
-    const label = `Teste de ${skill.name}`
+    const label = rotuloComCondicoes(`Teste de ${skill.name}`, cond.motivos)
     setRoll({ label, rolls, kept, bonus, characterName: character.name, diceTray: character.dice_tray })
     if (session) {
       recordRoll({
@@ -365,7 +369,7 @@ export default function AgenteTab({
               className="vtt-avatar"
               src={character.avatar_url ?? undefined}
               alt=""
-              style={character.avatar_frame ? { width: fotoNaMoldura(character.avatar_frame), height: fotoNaMoldura(character.avatar_frame) } : undefined}
+              style={character.avatar_frame ? { width: fotoNaMoldura(character.avatar_frame, 150), height: fotoNaMoldura(character.avatar_frame, 150) } : undefined}
             />
             {character.avatar_frame && <img className="vtt-avatar-frame" src={character.avatar_frame} alt="" />}
           </div>
@@ -574,6 +578,7 @@ export default function AgenteTab({
             charSkills={charSkills}
             attributes={character.attributes}
             testDiceBonus={testDiceBonus}
+            dadosDeCondicoes={(nome, atributo) => penalidadeDeCondicoes(character.conditions, { atributo, pericia: nome }).dados}
             testValueBonus={testValueBonus}
             cargaPenalty={cargaPenalty}
             bonusDeItens={bonusDeItens}

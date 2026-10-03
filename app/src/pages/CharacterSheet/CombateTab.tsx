@@ -9,6 +9,7 @@ import { type Modifier } from './ModifiersPanel'
 import CombateModifiersPanel from './CombateModifiersPanel'
 import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
 import AttackCard from './AttackCard'
+import { defesaDeCondicoes, penalidadeDeCondicoes, rotuloComCondicoes } from './condicoes'
 import { defesaDeModificadores, numerosDoAtaque, resistenciasDoItemEquipado, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
@@ -232,7 +233,10 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
     const attackValueBonus = activeAttackMods.reduce((sum, m) => sum + m.value_bonus, 0) + activeTestMods.reduce((sum, m) => sum + m.value_bonus, 0)
     const threatBonus = activeAttackMods.reduce((sum, m) => sum + m.threat_margin_bonus, 0)
 
-    const score = attrValue(character.attributes, attack.attribute) + attackDiceBonus
+    // Condições: Fraco/Debilitado no atributo do ataque, Caído no corpo a corpo, Ofuscado…
+    const corpo = /corpo/i.test(attack.general_info?.tipo ?? '') || /corpo/i.test(attack.general_info?.alcance ?? '')
+    const cond = penalidadeDeCondicoes(character.conditions, { atributo: attack.attribute, ataque: corpo ? 'corpo' : 'distancia' })
+    const score = attrValue(character.attributes, attack.attribute) + attackDiceBonus + cond.dados
     const { rolls, kept } = rollAttributeTest(score)
     const skillBonus = attack.skill_id ? (charSkillBonus[attack.skill_id] ?? 0) : 0
     const bonus = skillBonus + attack.d20_bonus + attackValueBonus
@@ -240,7 +244,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
     const effectiveThreatMargin = attack.threat_margin - threatBonus
     const isCrit = kept >= effectiveThreatMargin
 
-    const label = `Ataque: ${attack.name}${isCrit ? ' (crítico!)' : ''}`
+    const label = rotuloComCondicoes(`Ataque: ${attack.name}${isCrit ? ' (crítico!)' : ''}`, cond.motivos)
     setRoll({
       label,
       rolls,
@@ -305,7 +309,9 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   }
 
   const agilidade = character.attributes.agilidade
-  const defenseTotal = equippedDefense + character.defense_other_bonus + agilidade + 10
+  // Condições (Vulnerável -2, Desprevenido -5, Indefeso -10) entram sozinhas na Defesa.
+  const defesaCondicoes = defesaDeCondicoes(character.conditions)
+  const defenseTotal = equippedDefense + character.defense_other_bonus + agilidade + 10 + defesaCondicoes.valor
   const fortitudeSkill = skills.find((s) => s.name === 'Fortitude')
   const reflexosSkill = skills.find((s) => s.name === 'Reflexos')
   const bloqueioAuto = fortitudeSkill ? (charSkillBonus[fortitudeSkill.id] ?? 0) : 0
@@ -357,6 +363,11 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
               />
               <span className="combat-defense-sub">Outros</span>
               <span className="combat-defense-fixed">+AGI({agilidade})+10</span>
+              {defesaCondicoes.valor !== 0 && (
+                <span className="combat-defense-condicoes" title={defesaCondicoes.motivos.join(', ')}>
+                  {defesaCondicoes.valor} Condições
+                </span>
+              )}
             </div>
           </div>
 

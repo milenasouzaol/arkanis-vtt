@@ -1875,7 +1875,8 @@ code, .counter {
 
 .vtt-name {
   font-family: 'Dico Typewriter', var(--heading);
-  font-size: 1.7em;
+  font-size: 1.3em;
+  margin: 0.2em 0 0;
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -1969,7 +1970,7 @@ code, .counter {
   border: none;
   border-radius: 0;
   padding: 0;
-  margin-bottom: 0.9em;
+  margin-bottom: 0.6em;
 }
 
 .vtt-card + .vtt-card {
@@ -2534,10 +2535,12 @@ code, .counter {
   border-color: #fff;
 }
 
+/* Coluna da esquerda mais enxuta (pedido da Millie, 05/10): foto, nome e atributos menores,
+   pra Condições e Efeitos aparecer sem rolar tanto. */
 .vtt-avatar-wrap {
   position: relative;
-  width: 140px;
-  height: 140px;
+  width: 104px;
+  height: 104px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2545,8 +2548,8 @@ code, .counter {
 }
 
 .vtt-avatar {
-  width: 140px;
-  height: 140px;
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, var(--accent-strong), var(--accent) 60%, #3a2a55 100%);
   display: block;
@@ -2557,8 +2560,8 @@ code, .counter {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 196px;
-  height: 196px;
+  width: 150px;
+  height: 150px;
   transform: translate(-50%, -50%);
   pointer-events: none;
   object-fit: contain;
@@ -3102,7 +3105,8 @@ code, .counter {
   width: 248px;
   height: 250px;
   flex-shrink: 0;
-  margin: 0.5em auto;
+  margin: 0.2em auto;
+  zoom: 0.84;
 }
 
 .attr-diagram img {
@@ -14153,4 +14157,11 @@ button.character-tile-link {
   color: var(--text);
   font-size: 1.1rem;
   cursor: pointer;
+}
+
+.combat-defense-condicoes {
+  margin-left: 6px;
+  color: #e0393e;
+  font-size: 0.85em;
+  font-weight: 600;
 }

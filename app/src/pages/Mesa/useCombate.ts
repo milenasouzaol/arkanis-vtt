@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { computeDerivedStats, type Training } from '../../lib/rules'
 import { lerTeste, ordemDeIniciativa, rolarTeste, testeDeIniciativa, type Combatente } from './combate'
+import { penalidadeDeCondicoes, rotuloComCondicoes } from '../CharacterSheet/condicoes'
 
 export type Combate = {
   id: string
@@ -170,7 +171,7 @@ export function useCombate(campanhaId: string | undefined, souMestre: boolean) {
   const iniciar = useCallback(async (combate: Combate) => {
     if (!campanhaId) return
     const { data: pericia } = await supabase.from('skills').select('id').eq('name', 'Iniciativa').maybeSingle()
-    const { data: jogadores } = await supabase.from('characters').select('id, user_id, name, avatar_url, attributes').eq('campaign_id', campanhaId).eq('npc', false)
+    const { data: jogadores } = await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions').eq('campaign_id', campanhaId).eq('npc', false)
     const ids = (jogadores ?? []).map((j) => j.id)
     const { data: treinos } = pericia && ids.length
       ? await supabase.from('character_skills').select('character_id, training, extra_bonus').eq('skill_id', pericia.id).in('character_id', ids)
@@ -179,13 +180,16 @@ export function useCombate(campanhaId: string | undefined, souMestre: boolean) {
     const rolagens: Record<string, unknown>[] = []
     const linhas = (jogadores ?? []).map((j) => {
       const t = treino.get(j.id)
-      const teste = testeDeIniciativa((j.attributes as Record<string, number>)?.agilidade ?? 1, (t?.training ?? 'nenhum') as Training, t?.extra_bonus ?? 0)
+      const base = testeDeIniciativa((j.attributes as Record<string, number>)?.agilidade ?? 1, (t?.training ?? 'nenhum') as Training, t?.extra_bonus ?? 0)
+      // Condições do jogador (Surdo -2d20 em Iniciativa, Fraco/Debilitado na Agilidade…).
+      const cond = penalidadeDeCondicoes(j.conditions as string[] | null, { atributo: 'agilidade', pericia: 'Iniciativa' })
+      const teste = { ...base, dados: base.dados + cond.dados }
       const r = rolarTeste(teste)
       // O teste de cada jogador vai pro chat e pro Histórico de Rolagens, como se ele tivesse
       // rolado na ficha (no nome dele e no modo de envio dele).
       rolagens.push({
         character_id: j.id, user_id: j.user_id, campaign_id: campanhaId, character_name: j.name || 'Sem nome',
-        label: 'Teste de Iniciativa', total: r.total, bonus: r.bonus,
+        label: rotuloComCondicoes('Teste de Iniciativa', cond.motivos), total: r.total, bonus: r.bonus,
         detail: `d20 mantido: ${r.kept} (rolados: ${r.rolls.join(', ')}) + bônus ${r.bonus}`,
         dice: r.rolls.map((v) => ({ sides: 20, value: v, discarded: v !== r.kept })),
       })

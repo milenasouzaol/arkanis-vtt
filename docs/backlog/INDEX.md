@@ -78,3 +78,4 @@ _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o 
 | [KAN-53](KAN-53-posicionaveis-itens-diario-playlist.md) | Mesa: Posicionáveis, Itens, Diário e Lista de Reprodução | mesa | a fazer | [KAN-53](https://arkaniss.atlassian.net/browse/KAN-53) |
 | [KAN-54](KAN-54-configuracoes-da-campanha.md) | Mesa: Configurações da campanha e painel do mestre | mesa | a fazer | [KAN-54](https://arkaniss.atlassian.net/browse/KAN-54) |
 | [KAN-55](KAN-55-gasto-de-pe-nos-rituais.md) | Ficha: gasto automático de PE/PD ao conjurar ritual | back + front | em análise | [KAN-55](https://arkaniss.atlassian.net/browse/KAN-55) |
+| [KAN-56](KAN-56-condicoes-automaticas.md) | Ficha: condições automáticas nos testes e na Defesa | front | em análise | [KAN-56](https://arkaniss.atlassian.net/browse/KAN-56) |

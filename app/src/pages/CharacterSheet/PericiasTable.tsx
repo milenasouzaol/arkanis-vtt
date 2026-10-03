@@ -75,6 +75,7 @@ export default function PericiasTable({
   charSkills,
   attributes,
   testDiceBonus,
+  dadosDeCondicoes,
   testValueBonus,
   cargaPenalty,
   bonusDeItens,
@@ -85,6 +86,8 @@ export default function PericiasTable({
   charSkills: Record<string, CharacterSkillRow>
   attributes: Attributes
   testDiceBonus: number
+  /** Dados a mais/menos por causa das condições, por perícia (Frustrado, Fraco…). */
+  dadosDeCondicoes?: (pericia: string, atributo: string | null) => number
   testValueBonus: number
   /** Penalidade da proteção equipada nas perícias afetadas por carga (negativo, ex.: -5). */
   cargaPenalty: number
@@ -151,10 +154,11 @@ export default function PericiasTable({
 
       <div className="pericias-list">
         {rows.map(({ skill, cs, attr, total, penalidade, doItem }) => {
-          const effectiveScore = attr ? attrValue(attributes, attr) + testDiceBonus : 0
+          const dadosExtras = testDiceBonus + (dadosDeCondicoes?.(skill.name, attr) ?? 0)
+          const effectiveScore = attr ? attrValue(attributes, attr) + dadosExtras : 0
           const diceCount = effectiveScore > 0 ? effectiveScore : 2
-          const bonusPips = Math.min(Math.abs(testDiceBonus), diceCount)
-          const bonusPipIcon = testDiceBonus < 0 ? ellipsisRedIcon : ellipsisGreenIcon
+          const bonusPips = Math.min(Math.abs(dadosExtras), diceCount)
+          const bonusPipIcon = dadosExtras < 0 ? ellipsisRedIcon : ellipsisGreenIcon
 
           return (
             <div key={skill.id} className="pericias-row" data-training={cs.training}>
@@ -166,7 +170,7 @@ export default function PericiasTable({
                 <span className="pericias-row-name">
                   {skill.name}
                   <span className="pericias-row-formula">
-                    <span style={{ color: testDiceBonus > 0 ? '#3ecf6e' : testDiceBonus < 0 ? '#e0393e' : undefined }}>{diceCount}d20</span>
+                    <span style={{ color: dadosExtras > 0 ? '#3ecf6e' : dadosExtras < 0 ? '#e0393e' : undefined }}>{diceCount}d20</span>
                     {Array.from({ length: diceCount }).map((_, i) => (
                       <img key={i} src={i < diceCount - bonusPips ? ellipsisIcon : bonusPipIcon} alt="" className="pericias-pip" />
                     ))}

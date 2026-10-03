@@ -8,9 +8,9 @@ it('acha o nome da moldura no endereço gerado pelo Vite', () => {
 })
 
 it('a foto cabe no furo da moldura', () => {
-  expect(fotoNaMoldura('/assets/frame-anfitriao-B2kq9xZa.png')).toBe(112)
+  expect(fotoNaMoldura('/assets/frame-anfitriao-B2kq9xZa.png')).toBe(86)
   // moldura muito fechada não deixa a foto sumir
-  expect(fotoNaMoldura('/assets/frame-nidere-B2kq9xZa.png')).toBe(84)
+  expect(fotoNaMoldura('/assets/frame-nidere-B2kq9xZa.png')).toBe(64)
   // moldura desconhecida usa o meio-termo
-  expect(fotoNaMoldura('/assets/frame-nova-B2kq9xZa.png')).toBe(100)
+  expect(fotoNaMoldura('/assets/frame-nova-B2kq9xZa.png')).toBe(77)
 })
