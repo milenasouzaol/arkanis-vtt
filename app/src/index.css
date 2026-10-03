@@ -12838,3 +12838,39 @@ button.character-tile-link {
 .mesa-menu svg {
   width: 14px;
 }
+
+/* Objetos por cima do mapa (imagens soltas na cena; depois, tokens) */
+.mesa-objeto {
+  position: absolute;
+  transform-origin: center;
+}
+
+.mesa-objeto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  pointer-events: none;
+}
+
+.mesa-objeto.mexivel {
+  cursor: move;
+}
+
+.mesa-objeto.selecionado {
+  outline: calc(2px / var(--escala, 1)) solid var(--mesa-creme);
+}
+
+.mesa-objeto.camada-mestre {
+  opacity: 0.55;
+}
+
+.mesa-objeto-alca {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  transform: translate(50%, 50%);
+  background: var(--mesa-creme);
+  border: 1px solid #000;
+  cursor: nwse-resize;
+}

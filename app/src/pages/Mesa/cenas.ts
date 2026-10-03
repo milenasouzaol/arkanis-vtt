@@ -186,3 +186,62 @@ export function distanciaEmUnidades(quadrados: number, c: Pick<Cena, 'grid_dista
   const valor = Math.round(quadrados * c.grid_distance * 10) / 10
   return `${valor.toLocaleString('pt-BR')} ${c.grid_units}`
 }
+
+// ---- Imagem arrastada pra mesa (12.2: drag-and-drop universal) ----
+
+const EXTENSAO_IMAGEM = /\.(png|jpe?g|gif|webp|avif|bmp|svg)(\?|#|$)/i
+
+// O que veio no arrasto: um arquivo do computador, ou o endereço da imagem de outra aba.
+// Imagem dentro de link (Google Imagens, Pinterest…) manda o link da página no
+// text/uri-list; o endereço da imagem de verdade vem no <img> do text/html.
+export function imagemDoArrasto(dados: { arquivos: File[]; html: string; uris: string }): File | string | null {
+  const arquivo = dados.arquivos.find((f) => f.type.startsWith('image/'))
+  if (arquivo) return arquivo
+  const src = /<img[^>]+src=["']([^"']+)["']/i.exec(dados.html)?.[1]?.replace(/&amp;/g, '&')
+  if (src && /^(https?:|data:image\/)/i.test(src)) return src
+  const uri = dados.uris.split(/\r?\n/).map((l) => l.trim()).find((l) => /^https?:\/\//i.test(l) && !l.startsWith('#'))
+  return uri && EXTENSAO_IMAGEM.test(uri) ? uri : null
+}
+
+// ---- Objetos por cima do mapa ----
+
+export type Camada = 'mapa' | 'token' | 'mestre'
+
+export type ObjetoCena = {
+  id: string
+  scene_id: string
+  campaign_id: string
+  name: string | null
+  image_url: string
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  layer: Camada
+  sort: number
+  locked: boolean
+  flip_h: boolean
+  flip_v: boolean
+  character_id: string | null
+  created_at: string
+}
+
+// Ponto da tela (relativo ao palco) → ponto do mapa.
+export function telaParaMapa(px: number, py: number, v: Vista): { x: number; y: number } {
+  return { x: (px - v.x) / v.escala, y: (py - v.y) / v.escala }
+}
+
+// Tamanho com que a imagem solta entra: o natural, mas no máximo 40% do mapa.
+export function tamanhoInicial(largura: number, altura: number, mapaW: number, mapaH: number): { width: number; height: number } {
+  if (largura <= 0 || altura <= 0) return { width: 200, height: 200 }
+  const k = Math.min(1, (mapaW * 0.4) / largura, (mapaH * 0.4) / altura)
+  return { width: Math.round(largura * k), height: Math.round(altura * k) }
+}
+
+// Redimensionar pelo canto mantendo a proporção (12.8: não estica nem distorce).
+export function redimensionarProporcional(o: Pick<ObjetoCena, 'width' | 'height'>, dx: number, dy: number, minimo = 10): { width: number; height: number } {
+  const razao = o.width / o.height
+  const largura = Math.max(minimo, Math.abs(dx) > Math.abs(dy * razao) ? o.width + dx : o.width + dy * razao)
+  return { width: Math.round(largura), height: Math.round(largura / razao) }
+}

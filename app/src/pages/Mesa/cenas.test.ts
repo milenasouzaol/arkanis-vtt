@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ajustarVista, copiaDaCena, distanciaEmUnidades, filtroAmbiente, ladrilhoHex, montarArvore, pastasEmLista, tracoDaGrade, zoomEm, type Cena, type Pasta } from './cenas'
+import { ajustarVista, copiaDaCena, imagemDoArrasto, redimensionarProporcional, tamanhoInicial, telaParaMapa, distanciaEmUnidades, filtroAmbiente, ladrilhoHex, montarArvore, pastasEmLista, tracoDaGrade, zoomEm, type Cena, type Pasta } from './cenas'
 
 function pasta(p: Partial<Pasta>): Pasta {
   return { id: 'p', campaign_id: 'c', parent_id: null, name: 'Pasta', color: null, sort_mode: 'alfabetica', sort: 0, created_at: '2026-10-03T00:00:00Z', ...p }
@@ -113,5 +113,47 @@ describe('grade', () => {
 
   it('distância na unidade da cena', () => {
     expect(distanciaEmUnidades(3, { grid_distance: 1.5, grid_units: 'm' })).toBe('4,5 m')
+  })
+})
+
+describe('imagemDoArrasto', () => {
+  const arquivo = new File(['x'], 'mapa.png', { type: 'image/png' })
+
+  it('arquivo do computador vem primeiro', () => {
+    expect(imagemDoArrasto({ arquivos: [arquivo], html: '', uris: '' })).toBe(arquivo)
+  })
+
+  it('imagem dentro de link: usa o src da imagem, não o link da página', () => {
+    const html = '<a href="https://site.com/pagina"><img src="https://cdn.site.com/foto.jpg?w=800&amp;h=600"></a>'
+    expect(imagemDoArrasto({ arquivos: [], html, uris: 'https://site.com/pagina' })).toBe('https://cdn.site.com/foto.jpg?w=800&h=600')
+  })
+
+  it('link de página sem imagem não serve', () => {
+    expect(imagemDoArrasto({ arquivos: [], html: '', uris: 'https://site.com/pagina' })).toBeNull()
+  })
+
+  it('endereço direto de imagem serve', () => {
+    expect(imagemDoArrasto({ arquivos: [], html: '', uris: 'https://site.com/mapa.webp' })).toBe('https://site.com/mapa.webp')
+  })
+
+  it('arquivo que não é imagem não serve', () => {
+    expect(imagemDoArrasto({ arquivos: [new File(['x'], 'a.pdf', { type: 'application/pdf' })], html: '', uris: '' })).toBeNull()
+  })
+})
+
+describe('objetos por cima do mapa', () => {
+  it('converte o ponto da tela pro mapa', () => {
+    expect(telaParaMapa(150, 100, { x: 50, y: 0, escala: 0.5 })).toEqual({ x: 200, y: 200 })
+  })
+
+  it('imagem grande entra com no máximo 40% do mapa, mantendo a proporção', () => {
+    expect(tamanhoInicial(4000, 2000, 4000, 3000)).toEqual({ width: 1600, height: 800 })
+    expect(tamanhoInicial(300, 200, 4000, 3000)).toEqual({ width: 300, height: 200 })
+  })
+
+  it('redimensiona sem distorcer', () => {
+    expect(redimensionarProporcional({ width: 200, height: 100 }, 100, 0)).toEqual({ width: 300, height: 150 })
+    expect(redimensionarProporcional({ width: 200, height: 100 }, 0, 50)).toEqual({ width: 300, height: 150 })
+    expect(redimensionarProporcional({ width: 200, height: 100 }, -500, 0)).toEqual({ width: 10, height: 5 })
   })
 })

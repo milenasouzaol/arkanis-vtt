@@ -39,3 +39,17 @@ spec: docs/VTT_Mesa.md (12.5)
 ## Fica de fora (não está na spec)
 
 - Busca, ordenação e "recolher todas" do painel; Exportar/Importar; Pré-carregar.
+
+## Ajuste da Millie (03/10): imagem arrastada pra cena com fundo
+
+- Antes, arrastar uma imagem trocava o fundo inteiro. Agora: sem cena → cena nova com a
+  imagem de fundo; cena sem fundo → vira o fundo; cena com fundo → a imagem entra por cima
+  do mapa, no ponto onde foi solta (no máximo 40% do mapa, sem distorcer).
+- Migration `0093_objetos_da_cena.sql`: tabela `scene_tokens` (camadas mapa/token/mestre,
+  posição, tamanho, giro, travar, espelhar, personagem) — a mesma que os tokens do KAN-49
+  vão usar. Jogador não vê a camada do mestre; só o mestre cria/move/apaga (por enquanto).
+- Mestre clica na imagem pra selecionar, arrasta pra mover, puxa o canto pra redimensionar
+  (proporcional) e apaga com Delete.
+- Imagem de outra aba: usa o `<img>` de verdade (não o link da página em volta) e guarda
+  uma cópia no nosso bucket; se o site não deixa copiar, usa o endereço dele.
+- Aviso no palco: "Enviando imagem…" e quando o que foi arrastado não é imagem.

@@ -10,6 +10,8 @@ import PalcoCena from './PalcoCena'
 import PainelCenas from './PainelCenas'
 import EditorCena from './EditorCena'
 import { enviarImagemDaCena, useCenas } from './useCenas'
+import { useObjetos } from './useObjetos'
+import { tamanhoInicial } from './cenas'
 import type { Cena } from './cenas'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
 import { autoria, type ModoEnvio } from './chat'
@@ -110,6 +112,8 @@ export default function Mesa() {
   const [destaqueFechado, setDestaqueFechado] = useState<string | null>(null)
   const cenas = useCenas(pronta?.campanha.id, pronta?.campanha.active_scene_id ?? null)
   const [editandoCena, setEditandoCena] = useState<string | null>(null)
+  const objetos = useObjetos(cenas.atual?.id ?? null)
+  const [avisoPalco, setAvisoPalco] = useState<string | null>(null)
 
   if (estado.tipo === 'carregando') {
     return <main className="mesa mesa-aviso"><p>Carregando a mesa…</p></main>
@@ -179,16 +183,75 @@ export default function Mesa() {
     if (nova) setEditandoCena(nova.id)
   }
 
-  // Imagem arrastada pra mesa vira o fundo da cena ativa (ou de uma cena nova, se não houver).
-  async function soltarImagem(origem: File | string) {
-    if (!userId) return
-    const url = typeof origem === 'string' ? origem : await enviarImagemDaCena(userId, origem)
-    if (!url) return
-    if (cenas.atual) await cenas.salvarCena(cenas.atual.id, { background_url: url })
-    else {
+  function avisar(texto: string | null, some = false) {
+    setAvisoPalco(texto)
+    if (some) setTimeout(() => setAvisoPalco((atual) => (atual === texto ? null : atual)), 3000)
+  }
+
+  // Imagem de outra aba: tenta guardar uma cópia nossa (não some se o site original tirar
+  // do ar ou bloquear); se o site não deixar copiar, usa o endereço dele mesmo.
+  async function guardarImagem(origem: File | string): Promise<string | null> {
+    if (!userId) return null
+    if (typeof origem !== 'string') return enviarImagemDaCena(userId, origem)
+    try {
+      const resposta = await fetch(origem)
+      const blob = await resposta.blob()
+      if (resposta.ok && blob.type.startsWith('image/')) {
+        const nome = origem.split(/[?#]/)[0].split('/').pop() || 'imagem'
+        const copia = await enviarImagemDaCena(userId, new File([blob], nome, { type: blob.type }))
+        if (copia) return copia
+      }
+    } catch {
+      // site não deixa baixar: fica o endereço original
+    }
+    return origem
+  }
+
+  function tamanhoDaImagem(url: string): Promise<{ w: number; h: number }> {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight })
+      img.onerror = () => resolve({ w: 0, h: 0 })
+      img.src = url
+    })
+  }
+
+  // Imagem arrastada pra mesa (12.2): sem cena, vira uma cena nova; cena sem fundo, vira o
+  // fundo; cena com fundo, entra por cima do mapa onde foi solta.
+  async function soltarImagem(origem: File | string, ponto: { x: number; y: number }, mapa: { w: number; h: number }) {
+    if (!origem) {
+      avisar('Isso não é uma imagem. Arraste o arquivo da imagem, ou a própria imagem de outra aba.', true)
+      return
+    }
+    avisar('Enviando imagem…')
+    const url = await guardarImagem(origem)
+    if (!url) {
+      avisar('Não deu pra enviar a imagem.', true)
+      return
+    }
+    const atual = cenas.atual
+    if (!atual) {
       const nova = await cenas.criarCena({ name: `Cena (${cenas.cenas.length + 1})`, background_url: url })
       if (nova) await cenas.ativar(nova.id)
+    } else if (!atual.background_url) {
+      await cenas.salvarCena(atual.id, { background_url: url })
+    } else {
+      const nat = await tamanhoDaImagem(url)
+      const t = tamanhoInicial(nat.w, nat.h, mapa.w, mapa.h)
+      const nome = typeof origem === 'string' ? null : origem.name.replace(/.[^.]+$/, '')
+      await objetos.criar({
+        scene_id: atual.id,
+        campaign_id: campanha.id,
+        name: nome,
+        image_url: url,
+        x: Math.round(ponto.x - t.width / 2),
+        y: Math.round(ponto.y - t.height / 2),
+        width: t.width,
+        height: t.height,
+        layer: 'mapa',
+      })
     }
+    avisar(null)
   }
 
   const cenaEditada = cenas.cenas.find((c) => c.id === editandoCena)
@@ -207,7 +270,15 @@ export default function Mesa() {
 
   return (
     <main className="mesa" style={campanha.accent_color ? ({ '--mesa-destaque': campanha.accent_color } as React.CSSProperties) : undefined}>
-      <PalcoCena cena={cenas.atual} souMestre={souMestre} onSoltarImagem={soltarImagem} />
+      <PalcoCena
+        cena={cenas.atual}
+        souMestre={souMestre}
+        objetos={objetos.objetos}
+        aviso={avisoPalco}
+        onSoltarImagem={soltarImagem}
+        onAlterarObjeto={objetos.alterar}
+        onExcluirObjeto={objetos.excluir}
+      />
 
       {destaque && destaque.id !== destaqueFechado && (
         <div className="mesa-destaque" role="status">
