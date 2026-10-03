@@ -100,3 +100,4 @@ export const SITE_PUBLICO = 'https://arkanis-vtt.vercel.app'
 export function linkDeConvite(origem: string, codigo: string): string {
   const base = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origem) ? SITE_PUBLICO : origem
   return `${base}/campanha/entrar/${codigo}`
+}
