@@ -47,3 +47,12 @@ spec: docs/VTT_Mesa.md (12.4)
   ("1d20+15") virava d20+1. Agora todos os formatos do banco são lidos (testados um a um).
 - Foto cortada/vazando na linha do combate (e nas outras listas com miniatura): a imagem
   fica presa no quadrado dela.
+
+## Pedido da Millie (04/10): iniciativa dos jogadores no chat e no histórico
+
+- Ao iniciar o combate, o Teste de Iniciativa de cada personagem de jogador é registrado como
+  rolagem dele: aparece no chat (no modo de envio do jogador) e no Histórico de Rolagens.
+- Migration `0100_rolagem_pelo_mestre.sql` (aplicada): quem pode editar a ficha registra
+  rolagem dela, sempre em nome do dono. Fecha uma brecha antiga (qualquer um registrava
+  rolagem na ficha alheia no próprio nome). A ficha agora sempre grava a rolagem no nome do
+  dono — inclusive quando o mestre rola na ficha do jogador pela mesa.

@@ -170,20 +170,31 @@ export function useCombate(campanhaId: string | undefined, souMestre: boolean) {
   const iniciar = useCallback(async (combate: Combate) => {
     if (!campanhaId) return
     const { data: pericia } = await supabase.from('skills').select('id').eq('name', 'Iniciativa').maybeSingle()
-    const { data: jogadores } = await supabase.from('characters').select('id, name, avatar_url, attributes').eq('campaign_id', campanhaId).eq('npc', false)
+    const { data: jogadores } = await supabase.from('characters').select('id, user_id, name, avatar_url, attributes').eq('campaign_id', campanhaId).eq('npc', false)
     const ids = (jogadores ?? []).map((j) => j.id)
     const { data: treinos } = pericia && ids.length
       ? await supabase.from('character_skills').select('character_id, training, extra_bonus').eq('skill_id', pericia.id).in('character_id', ids)
       : { data: [] }
     const treino = new Map((treinos ?? []).map((t) => [t.character_id, t]))
+    const rolagens: Record<string, unknown>[] = []
     const linhas = (jogadores ?? []).map((j) => {
       const t = treino.get(j.id)
       const teste = testeDeIniciativa((j.attributes as Record<string, number>)?.agilidade ?? 1, (t?.training ?? 'nenhum') as Training, t?.extra_bonus ?? 0)
+      const r = rolarTeste(teste)
+      // O teste de cada jogador vai pro chat e pro Histórico de Rolagens, como se ele tivesse
+      // rolado na ficha (no nome dele e no modo de envio dele).
+      rolagens.push({
+        character_id: j.id, user_id: j.user_id, campaign_id: campanhaId, character_name: j.name || 'Sem nome',
+        label: 'Teste de Iniciativa', total: r.total, bonus: r.bonus,
+        detail: `d20 mantido: ${r.kept} (rolados: ${r.rolls.join(', ')}) + bônus ${r.bonus}`,
+        dice: r.rolls.map((v) => ({ sides: 20, value: v, discarded: v !== r.kept })),
+      })
       return {
         combat_id: combate.id, campaign_id: campanhaId, tipo: 'jogador', character_id: j.id,
-        name: j.name || 'Sem nome', image_url: j.avatar_url, iniciativa: rolarTeste(teste).total, desempate: teste.bonus,
+        name: j.name || 'Sem nome', image_url: j.avatar_url, iniciativa: r.total, desempate: teste.bonus,
       }
     })
+    if (rolagens.length) await supabase.from('character_rolls').insert(rolagens)
     await supabase.from('combatants').delete().eq('combat_id', combate.id)
     const { data: novos } = linhas.length ? await supabase.from('combatants').insert(linhas).select('*') : { data: [] }
     const ameacas = await entrarAmeacas(combate, combate.ameacas)
