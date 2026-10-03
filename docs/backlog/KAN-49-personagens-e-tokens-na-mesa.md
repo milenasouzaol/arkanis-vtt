@@ -82,3 +82,12 @@ spec: docs/VTT_Mesa.md (12.7, 12.8)
   (Renomear, Mover para a pasta, Usar como Token Principal, Tirar) e na pasta (Renomear,
   Excluir — as variações vão pra "Sem pasta"). Migration `0097_pastas_de_variacoes.sql`.
 - Janelas nunca passam do fim da tela; submenus compridos rolam.
+
+## Bug (04/10): mestre não salvava na ficha do jogador
+
+- Tudo da ficha (a ficha e as 10 tabelas penduradas nela) só valia pro dono: o mestre nem lia
+  perícias/inventário de um jogador, e o que ele mudava (ex.: afinidade) não salvava, sem aviso.
+- Migration `0098_ficha_na_mesa.sql` (testada no Postgres local e aplicada pelo conector):
+  `pode_ver_ficha` / `pode_editar_ficha`. Vê: dono, mestre, e membros se a ficha não estiver
+  oculta (NPC: Observador ou Dono). Edita: dono, mestre, e membros com "Editável para outros
+  jogadores" (NPC: Dono). Quem não é o dono não troca o dono, a campanha nem os toggles.
