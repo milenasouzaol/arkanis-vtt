@@ -285,8 +285,19 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     if (!palco) return
     const roda = (e: WheelEvent) => {
       e.preventDefault()
-      if ((e.shiftKey || e.ctrlKey) && souMestre && selecionados.length) {
+      if ((e.shiftKey || e.ctrlKey) && selecionados.length) {
         const passo = e.deltaY < 0 ? -15 : 15
+        if (!souMestre) {
+          for (const id of selecionados) {
+            const o = objetos.find((x) => x.id === id)
+            if (o && podeMover(o)) {
+              const rotation = (((o.rotation + passo) % 360) + 360) % 360
+              obj.alterarVarios({ [id]: { rotation } }, false)
+              obj.transformarComoJogador({ ...o, rotation })
+            }
+          }
+          return
+        }
         alterar(Object.fromEntries(selecionados.map((id) => {
           const o = objetos.find((x) => x.id === id)
           return [id, { rotation: (((o?.rotation ?? 0) + passo) % 360 + 360) % 360 }]
@@ -422,6 +433,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       }
       return
     }
+    // Jogador (dono do token): grava pela função do banco, que só mexe na caixa e no giro.
+    if (!souMestre && (g.tipo === 'tamanho' || g.tipo === 'girar')) {
+      const atual = objetos.find((x) => x.id === g.o.id)
+      if (atual && !(await obj.transformarComoJogador(atual))) obj.alterarVarios({ [g.o.id]: { x: g.o.x, y: g.o.y, width: g.o.width, height: g.o.height, rotation: g.o.rotation } }, false)
+      return
+    }
     if (g.tipo === 'tamanho' && g.ultimo) {
       historico.current = registrar(historico.current, { tipo: 'alterar', antes: { [g.o.id]: camposAtuais(g.o, g.ultimo) }, depois: { [g.o.id]: g.ultimo } })
       setVersaoHistorico((v) => v + 1)
@@ -553,8 +570,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const grade = cena && cena.grid_type !== 'sem' ? cena : null
   const hex = grade?.grid_type === 'hexagono' ? ladrilhoHex(grade.grid_size) : null
   const traco = grade ? tracoDaGrade(grade.grid_style, grade.grid_thickness) : undefined
-  const unico = souMestre && selecionados.length === 1 ? objetos.find((o) => o.id === selecionados[0]) ?? null : null
-  const alcaPx = 10 / vista.escala
+  // Alças e giro: o mestre e o dono do token (12.8).
+  const selecionadoUnico = selecionados.length === 1 ? objetos.find((o) => o.id === selecionados[0]) ?? null : null
+  const unico = selecionadoUnico && podeMover(selecionadoUnico) ? selecionadoUnico : null
+  const alcaPx = 7 / vista.escala
 
   return (
     <div
@@ -635,7 +654,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
                   onPointerDown={(e) => pegarAlca(e, unico, a)}
                 />
               ))}
-              <span className="mesa-giro" style={{ width: alcaPx * 1.6, height: alcaPx * 1.6, top: -alcaPx * 2.2, right: -alcaPx * 2.2 }} onPointerDown={(e) => pegarGiro(e, unico)} title="Girar" />
+              <span className="mesa-giro" style={{ width: alcaPx * 1.4, height: alcaPx * 1.4, top: -alcaPx * 2.6, right: -alcaPx * 2.6 }} onPointerDown={(e) => pegarGiro(e, unico)} title="Girar" />
             </div>
           )}
 

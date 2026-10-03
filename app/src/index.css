@@ -12865,8 +12865,10 @@ button.character-tile-link {
 
 /* ---- Tokens na mesa (KAN-49), a partir do print da Millie (03/10) ---- */
 
+/* Seleção discreta (pedido da Millie, 04/10): linha fina cinza-clara, sem cor que quebre o clima */
 .mesa-objeto.selecionado {
-  outline: var(--borda, 2px) solid #6b7cff;
+  outline: calc(var(--borda, 2px) / 2) dashed rgba(240, 240, 242, 0.45);
+  outline-offset: calc(var(--borda, 2px) * 1.5);
 }
 
 .mesa-objeto-trava {
@@ -12880,7 +12882,6 @@ button.character-tile-link {
 /* Caixa de seleção com as 8 alças e a bolinha de girar */
 .mesa-selecao {
   position: absolute;
-  outline: var(--borda, 2px) solid #6b7cff;
   pointer-events: none;
 }
 
@@ -12888,13 +12889,21 @@ button.character-tile-link {
 .mesa-giro {
   position: absolute;
   pointer-events: auto;
-  background: #6b7cff;
+  background: rgba(240, 240, 242, 0.55);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
   box-sizing: border-box;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.mesa-alca:hover,
+.mesa-giro:hover {
+  opacity: 1;
 }
 
 .mesa-alca {
   transform: translate(-50%, -50%);
-  border-radius: 2px;
+  border-radius: 50%;
 }
 
 .mesa-giro {
@@ -13045,8 +13054,8 @@ button.character-tile-link {
 
 .mesa-caixa-selecao {
   position: absolute;
-  background: rgba(107, 124, 255, 0.12);
-  outline: var(--borda, 1px) solid #6b7cff;
+  background: rgba(240, 240, 242, 0.05);
+  outline: var(--borda, 1px) dashed rgba(240, 240, 242, 0.45);
   pointer-events: none;
 }
 

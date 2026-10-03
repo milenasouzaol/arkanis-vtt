@@ -64,3 +64,11 @@ spec: docs/VTT_Mesa.md (12.7, 12.8)
   (12.13), Shift soma à seleção. Mover a visão do mapa é com o botão direito, como no Foundry.
 - Arrasto que começa dentro da própria página (texto, a imagem de fundo, imagens do chat)
   não mostra mais "Solte pra colocar…" nem "Isso não é uma imagem".
+
+## Ajuste da Millie (04/10)
+
+- Token entra com o formato da imagem (largura de um quadrado da grade, altura proporcional),
+  não mais quadrado. Trocar a variação mantém a largura e acompanha o formato da nova imagem.
+- Dono do token também redimensiona e gira (12.8), pela função `transformar_objeto`
+  (migration `0096_token_proporcional.sql`).
+- Seleção discreta: linha fina tracejada cinza-clara, alças pequenas e redondas, sem azul.

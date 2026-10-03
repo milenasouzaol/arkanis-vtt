@@ -155,12 +155,13 @@ export async function enviarImagemDeToken(userId: string, arquivo: File): Promis
   return supabase.storage.from('token_images').getPublicUrl(caminho).data.publicUrl
 }
 
-export async function colocarToken(atorId: string, cenaId: string, x: number, y: number, tamanho: number): Promise<string | null> {
-  const { error } = await supabase.rpc('colocar_token', { p_actor_id: atorId, p_scene_id: cenaId, p_x: x, p_y: y, p_tamanho: tamanho })
+export async function colocarToken(atorId: string, cenaId: string, x: number, y: number, largura: number, altura: number): Promise<string | null> {
+  const { error } = await supabase.rpc('colocar_token', { p_actor_id: atorId, p_scene_id: cenaId, p_x: x, p_y: y, p_largura: largura, p_altura: altura })
   return error ? error.message : null
 }
 
-export async function trocarVariacao(tokenId: string, url: string): Promise<boolean> {
-  const { error } = await supabase.rpc('trocar_variacao', { p_token_id: tokenId, p_url: url })
+// Com a altura, o token mantém a largura e acompanha o formato da nova imagem.
+export async function trocarVariacao(tokenId: string, url: string, altura: number | null): Promise<boolean> {
+  const { error } = await supabase.rpc('trocar_variacao', { p_token_id: tokenId, p_url: url, p_altura: altura })
   return !error
 }

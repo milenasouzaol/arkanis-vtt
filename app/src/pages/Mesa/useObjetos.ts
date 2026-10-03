@@ -101,11 +101,17 @@ export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
     return !error
   }, [])
 
+  // Dono do token redimensiona e gira pela função do banco (12.8).
+  const transformarComoJogador = useCallback(async (o: Pick<ObjetoCena, 'id' | 'x' | 'y' | 'width' | 'height' | 'rotation'>) => {
+    const { error } = await supabase.rpc('transformar_objeto', { p_id: o.id, p_x: o.x, p_y: o.y, p_largura: o.width, p_altura: o.height, p_rotacao: o.rotation })
+    return !error
+  }, [])
+
   const excluirVarios = useCallback(async (ids: string[]) => {
     if (!ids.length) return
     setObjetos((l) => l.filter((o) => !ids.includes(o.id)))
     await supabase.from('scene_tokens').delete().in('id', ids)
   }, [])
 
-  return { objetos, criar, criarVarios, alterarVarios, moverComoJogador, excluirVarios, transmitirArrasto, pingar }
+  return { objetos, criar, criarVarios, alterarVarios, moverComoJogador, transformarComoJogador, excluirVarios, transmitirArrasto, pingar }
 }

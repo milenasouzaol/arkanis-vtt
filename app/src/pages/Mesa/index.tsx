@@ -287,9 +287,15 @@ export default function Mesa() {
     setFichasAbertas((l) => (l.includes(atorId) ? l : [...l, atorId]))
   }
 
+  // O token entra com o formato da imagem: largura de um quadrado da grade, altura proporcional.
   async function colocarAtor(atorId: string, ponto: { x: number; y: number }) {
     if (!cenas.atual) return
-    const erro = await colocarToken(atorId, cenas.atual.id, ponto.x, ponto.y, cenas.atual.grid_size)
+    const a = atores.atores.find((x) => x.id === atorId)
+    const url = a && imagemDoToken(a, (a.character_id && atores.fichas[a.character_id]?.avatar_url) || (a.creature_id && atores.criaturas[a.creature_id]?.image_url) || null)
+    const largura = cenas.atual.grid_size
+    const nat = url ? await tamanhoDaImagem(url) : { w: 0, h: 0 }
+    const altura = nat.w > 0 ? Math.round((largura * nat.h) / nat.w) : largura
+    const erro = await colocarToken(atorId, cenas.atual.id, ponto.x, ponto.y, largura, altura)
     if (erro) avisar(erro, true)
   }
 
@@ -335,7 +341,11 @@ export default function Mesa() {
           return a ? variacoesDoToken(a) : []
         }}
         onVariacao={async (tokenId, url) => {
-          if (!(await trocarVariacao(tokenId, url))) avisar('Não deu pra trocar a imagem do token.', true)
+          // Mantém a largura do token e acompanha o formato da nova imagem.
+          const token = objetos.objetos.find((o) => o.id === tokenId)
+          const nat = await tamanhoDaImagem(url)
+          const altura = token && nat.w > 0 ? Math.round((token.width * nat.h) / nat.w) : null
+          if (!(await trocarVariacao(tokenId, url, altura))) avisar('Não deu pra trocar a imagem do token.', true)
         }}
       />
 
