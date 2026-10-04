@@ -14562,3 +14562,9 @@ button.character-tile-link {
   text-align: center;
   color: #fff;
 }
+
+/* Criar/Editar Ameaça: o formulário é comprido, então o corpo da janela rola por dentro */
+.janela-corpo:has(> .editor-ameaca) {
+  flex: 1;
+  overflow-y: auto;
+}
