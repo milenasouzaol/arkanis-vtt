@@ -75,9 +75,9 @@ describe('alvo com ficha', () => {
 describe('ataque da ameaça', () => {
   it('lê teste, crítico e dano', () => {
     expect(ataqueDaCriatura('Garra', '+10 (2d20), crítico 19/x3', '1d6+9 corte')).toEqual({
-      nome: 'Garra', dados: 2, bonus: 10, margem: 19, multiplicador: 3, partes: [{ formula: '1d6+9', tipo: 'corte' }], bonus_dano: 0,
+      nome: 'Garra', dados: 2, bonus: 10, margem: 19, multiplicador: 3, partes: [{ formula: '1d6+9', tipo: 'corte' }], bonus_dano: 0, corpo: true,
     })
-    expect(ataqueDaCriatura('Tiro', '+17 (2d20), crítico x3', '4d6+12 balístico')).toMatchObject({ margem: 20, multiplicador: 3 })
+    expect(ataqueDaCriatura('Tiro', '+17 (2d20), crítico x3', '4d6+12 balístico')).toMatchObject({ margem: 20, multiplicador: 3, corpo: false })
     expect(ataqueDaCriatura('Mordida', '+5', '1d4+2 perfuração')).toMatchObject({ dados: 1, margem: 20, multiplicador: 2 })
   })
   it('dano com mais de uma parte e texto entre parênteses', () => {

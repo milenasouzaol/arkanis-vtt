@@ -19,6 +19,7 @@ export type AtaqueDaAcao = {
   multiplicador: number
   partes: ParteDano[]
   bonus_dano: number // somado uma vez, fora do crítico
+  corpo?: boolean // corpo a corpo (dá pra contra-atacar quando erra)
 }
 
 export type RolagemAtaque = { rolls: number[]; kept: number; bonus: number; total: number; critico: boolean; acertos: Record<string, boolean> }
@@ -31,14 +32,19 @@ export type RolagemDano = {
   efeitos?: Record<string, { pv: number; san: number; motivos: string[] } | null>
 }
 
+export type Reacao = { tipo: 'esquiva' | 'bloqueio' | 'contra'; valor: number }
+
 export type AcaoAtaque = {
   tipo: 'ataque'
   atacante: string
+  // De quem é o ataque, pra achar o token na hora do contra-ataque.
+  origem?: { character_id?: string | null; actor_id?: string | null }
   ataque: AtaqueDaAcao
   alvos: Alvo[]
   estado: {
     ataque?: RolagemAtaque
-    bloqueios?: Record<string, number>
+    bloqueios?: Record<string, number> // (ataques antigos)
+    reacoes?: Record<string, Reacao>
     dano?: RolagemDano
     aplicado?: Record<string, { pv: number; san: number }>
   }
@@ -224,6 +230,7 @@ export function ataqueDaCriatura(nome: string, teste: string, dano: string): Ata
     multiplicador: critico?.[2] ? Number(critico[2]) : 2,
     partes,
     bonus_dano: 0,
+    corpo: !/bal[ií]stic|disparo|dist[âa]ncia|arremess|tiro/i.test(`${nome} ${teste} ${dano}`),
   }
 }
 

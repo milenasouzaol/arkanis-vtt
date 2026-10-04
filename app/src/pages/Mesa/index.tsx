@@ -34,7 +34,7 @@ import { QuemVeContexto } from './AcaoNoChat'
 import { useMira } from './useMira'
 import { useAnunciarAlvos } from '../../lib/miraDaMesa'
 import { postarAtaque } from './acoesDeMira'
-import type { Alvo, AtaqueDaAcao } from './mira'
+import type { AcaoAtaque, Alvo, AtaqueDaAcao } from './mira'
 import {
   ABAS_DIREITA,
   CATEGORIAS_ESQUERDA,
@@ -387,8 +387,23 @@ export default function Mesa() {
   }
 
   // Ameaça atacando os alvos marcados (mestre).
-  function atacarComAmeaca(ataque: AtaqueDaAcao, autor: { nome: string; foto: string | null }) {
-    postarAtaque({ campanhaId: campanha.id, characterId: null, autor, ataque, alvos: alvosComNome }).then((e) => e && avisar(e, true))
+  function atacarComAmeaca(ataque: AtaqueDaAcao, autor: { nome: string; foto: string | null }, atorId?: string) {
+    postarAtaque({ campanhaId: campanha.id, characterId: null, autor, ataque, alvos: alvosComNome, atorId }).then((e) => e && avisar(e, true))
+  }
+
+  // Contra-atacar (12.9): quem errou vira o alvo de quem contra-ataca; ele ataca pela ficha.
+  function contraAtacar(acao: AcaoAtaque): string | null {
+    const o = objetos.objetos.find((x) => {
+      if (acao.origem?.actor_id && x.actor_id === acao.origem.actor_id) return true
+      if (!acao.origem?.character_id) return false
+      if (x.character_id === acao.origem.character_id) return true
+      const a = x.actor_id ? atores.atores.find((y) => y.id === x.actor_id) : undefined
+      return a?.character_id === acao.origem.character_id
+    })
+    if (!o) return `O token de ${acao.atacante} não está nesta cena — marque ele com M e ataque pela ficha.`
+    mira.setMeus([o.id])
+    avisar(`Contra-ataque: ${acao.atacante} é o seu alvo. Ataque pela sua ficha.`, true)
+    return null
   }
 
   // Bloquear (12.9): quem pode mexer na ficha do alvo.
@@ -432,7 +447,7 @@ export default function Mesa() {
   }
 
   return (
-    <QuemVeContexto.Provider value={{ userId: userId ?? '', souMestre, controlaAlvo }}>
+    <QuemVeContexto.Provider value={{ userId: userId ?? '', souMestre, controlaAlvo, contraAtacar }}>
     <main className="mesa" style={campanha.accent_color ? ({ '--mesa-destaque': campanha.accent_color } as React.CSSProperties) : undefined}>
       <PalcoCena
         cena={cenas.atual}
@@ -727,7 +742,7 @@ export default function Mesa() {
             onRolar={rolarNoChat}
             onMostrar={mostrarNoChat}
             alvos={alvosComNome}
-            onAtacar={atacarComAmeaca}
+            onAtacar={(ataque, autor) => atacarComAmeaca(ataque, autor, a.id)}
             meuId={userId}
             onEditarAmeaca={(id) => editarAmeaca({ id, duplicar: false })}
             onFechar={fechar}

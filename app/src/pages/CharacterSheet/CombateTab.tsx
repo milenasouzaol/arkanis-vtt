@@ -288,6 +288,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
           multiplicador: attack.multiplier + activeAttackMods.reduce((sum, m) => sum + m.multiplier_bonus, 0),
           partes: attack.damage.map((d) => ({ formula: d.formula, tipo: d.tipo })),
           bonus_dano: activeDamageMods.reduce((sum, m) => sum + m.value_bonus, 0) + (attack.general_info?.damage_bonus_from_mods ?? 0),
+          corpo,
         },
       }).then((erro) => {
         setAvisoMira(erro ?? `Ataque contra ${textoDosAlvos(alvos)} enviado pro chat.`)

@@ -27,8 +27,12 @@ export async function postarAtaque(p: {
   autor: { nome: string; foto: string | null }
   ataque: AtaqueDaAcao
   alvos: Alvo[]
+  atorId?: string | null
 }): Promise<string | null> {
-  const acao: Omit<AcaoAtaque, 'estado'> = { tipo: 'ataque', atacante: p.autor.nome, ataque: p.ataque, alvos: p.alvos }
+  const acao: Omit<AcaoAtaque, 'estado'> = {
+    tipo: 'ataque', atacante: p.autor.nome, ataque: p.ataque, alvos: p.alvos,
+    origem: { character_id: p.characterId, actor_id: p.atorId ?? null },
+  }
   const { error } = await supabase.rpc('postar_acao', {
     p_campaign_id: p.campanhaId,
     p_character_id: p.characterId,
@@ -48,7 +52,10 @@ export async function rolarAtaqueDaMensagem(m: Mensagem): Promise<string | null>
   const acertos: Record<string, boolean> = {}
   for (const a of acao.alvos) {
     const dados = await dadosDoAlvo(a.token_id)
-    const defesa = dados ? defesaDoAlvo(dados) : null
+    const base = dados ? defesaDoAlvo(dados) : null
+    // Esquivar: o bônus de Reflexos soma na Defesa contra este ataque.
+    const reacao = acao.estado.reacoes?.[a.token_id]
+    const defesa = base === null ? null : base + (reacao?.tipo === 'esquiva' ? reacao.valor : 0)
     acertos[a.token_id] = defesa === null || r.total >= defesa
   }
   const { error } = await supabase.rpc('registrar_na_acao', { p_msg_id: m.id, p_chave: 'ataque', p_valor: { ...r, acertos } })
@@ -75,7 +82,7 @@ export async function rolarDanoDaMensagem(m: Mensagem): Promise<string | null> {
   const efeitos: Record<string, { pv: number; san: number; motivos: string[] } | null> = {}
   for (const a of atingidos) {
     const dados = await dadosDoAlvo(a.token_id)
-    efeitos[a.token_id] = dados && dados.tipo !== 'nenhum' ? danoNoAlvo(d.partes, perfilDoAlvo(dados), acao.estado.bloqueios?.[a.token_id] ?? 0) : null
+    efeitos[a.token_id] = dados && dados.tipo !== 'nenhum' ? danoNoAlvo(d.partes, perfilDoAlvo(dados), bloqueioDe(acao, a.token_id)) : null
   }
   const { error } = await supabase.rpc('registrar_na_acao', { p_msg_id: m.id, p_chave: 'dano', p_valor: { ...d, efeitos } })
   if (error) return motivoDoErro(error)
@@ -94,8 +101,14 @@ export async function rolarDanoDaMensagem(m: Mensagem): Promise<string | null> {
   return null
 }
 
-export async function bloquearAtaque(m: Mensagem, tokenId: string): Promise<string | null> {
-  const { error } = await supabase.rpc('bloquear_na_acao', { p_msg_id: m.id, p_token_id: tokenId })
+function bloqueioDe(acao: AcaoAtaque, tokenId: string): number {
+  const r = acao.estado.reacoes?.[tokenId]
+  return r?.tipo === 'bloqueio' ? r.valor : acao.estado.bloqueios?.[tokenId] ?? 0
+}
+
+// Reação do alvo: Esquivar (antes do Ataque), Bloquear (antes do Dano) ou Contra-atacar (errou).
+export async function reagirAoAtaque(m: Mensagem, tokenId: string, reacao: 'esquiva' | 'bloqueio' | 'contra'): Promise<string | null> {
+  const { error } = await supabase.rpc('reagir_na_acao', { p_msg_id: m.id, p_token_id: tokenId, p_reacao: reacao })
   return motivoDoErro(error)
 }
 

@@ -1,12 +1,18 @@
 import { createContext, useContext, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronRight, faCrosshairs, faDiceD20, faBurst, faHeartPulse, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronRight, faCrosshairs, faDiceD20, faBurst, faHeartPulse, faPersonRunning, faRotateLeft, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
 import type { Mensagem } from './chat'
 import { nomeDoTipo, SIGLA_RECURSO, textoDosAlvos, type AcaoAtaque, type AcaoCura } from './mira'
-import { bloquearAtaque, rolarAtaqueDaMensagem, rolarCuraDaMensagem, rolarDanoDaMensagem, rolarTesteDaCura } from './acoesDeMira'
+import { reagirAoAtaque, rolarAtaqueDaMensagem, rolarCuraDaMensagem, rolarDanoDaMensagem, rolarTesteDaCura } from './acoesDeMira'
 
-// Quem está olhando o chat: pra saber quem pode clicar em Ataque/Dano e quem pode bloquear.
-export type QuemVe = { userId: string; souMestre: boolean; controlaAlvo: (tokenId: string) => boolean }
+// Quem está olhando o chat: pra saber quem pode clicar em Ataque/Dano e quem reage.
+export type QuemVe = {
+  userId: string
+  souMestre: boolean
+  controlaAlvo: (tokenId: string) => boolean
+  // Contra-atacar: mira em quem errou (devolve o erro, se não achar o token dele na cena).
+  contraAtacar: (acao: AcaoAtaque) => string | null
+}
 
 export const QuemVeContexto = createContext<QuemVe | null>(null)
 
@@ -37,15 +43,21 @@ function usePasso(mensagem: Mensagem) {
 function CartaoAtaque({ mensagem, acao }: { mensagem: Mensagem; acao: AcaoAtaque }) {
   const { quem, ocupado, erro, conduz, fazer } = usePasso(mensagem)
   const [verDados, setVerDados] = useState<'ataque' | 'dano' | null>(null)
-  const { ataque, dano, bloqueios, aplicado } = acao.estado
+  const { ataque, dano, aplicado } = acao.estado
   const algumAcerto = !!ataque && acao.alvos.some((a) => ataque.acertos[a.token_id])
+  const reacaoDe = (t: string) => acao.estado.reacoes?.[t] ?? (acao.estado.bloqueios?.[t] !== undefined ? { tipo: 'bloqueio' as const, valor: acao.estado.bloqueios[t] } : undefined)
+
+  const rotuloReacao = (r: NonNullable<ReturnType<typeof reacaoDe>>) =>
+    r.tipo === 'esquiva' ? <><FontAwesomeIcon icon={faPersonRunning} /> Esquivou (+{r.valor})</>
+      : r.tipo === 'bloqueio' ? <><FontAwesomeIcon icon={faShieldHalved} /> Bloqueou ({r.valor})</>
+        : <><FontAwesomeIcon icon={faRotateLeft} /> Contra-atacou</>
 
   return (
     <div className="chat-acao">
       <p className="chat-acao-titulo">
         <FontAwesomeIcon icon={faCrosshairs} /> <strong>{acao.atacante}</strong> está atacando <strong>{textoDosAlvos(acao.alvos)}</strong>
       </p>
-      <p className="chat-rolagem-rotulo">{acao.ataque.nome}</p>
+      <p className="chat-rolagem-rotulo">{acao.ataque.nome}{acao.ataque.corpo ? ' · corpo a corpo' : ''}</p>
 
       {!ataque ? (
         conduz ? (
@@ -91,38 +103,60 @@ function CartaoAtaque({ mensagem, acao }: { mensagem: Mensagem; acao: AcaoAtaque
               )}
             </>
           )}
-          <ul className="chat-acao-alvos">
-            {acao.alvos.map((a) => {
-              const acertou = ataque.acertos[a.token_id]
-              const efeito = dano?.efeitos?.[a.token_id]
-              const feito = aplicado?.[a.token_id]
-              const podeBloquear = acertou && !dano && !bloqueios?.[a.token_id] && quem?.controlaAlvo(a.token_id)
-              return (
-                <li key={a.token_id} className={acertou ? 'acertou' : 'errou'}>
-                  <span className="chat-acao-alvo">{a.nome}</span>
-                  <span>{acertou ? 'Acertou' : 'Errou'}</span>
-                  {bloqueios?.[a.token_id] !== undefined && <span className="chat-acao-extra"><FontAwesomeIcon icon={faShieldHalved} /> Bloqueou ({bloqueios[a.token_id]})</span>}
-                  {podeBloquear && (
-                    <button type="button" className="chat-acao-mini" disabled={ocupado} onClick={() => fazer(() => bloquearAtaque(mensagem, a.token_id))}>
-                      <FontAwesomeIcon icon={faShieldHalved} /> Bloquear
-                    </button>
-                  )}
-                  {dano && acertou && (
-                    <span className="chat-acao-dano">
-                      {efeito === null
-                        ? 'sem ficha'
-                        : feito
-                          ? [feito.pv ? `−${feito.pv} PV` : '', feito.san ? `−${feito.san} SAN` : ''].filter(Boolean).join(' ') || 'sem dano'
-                          : 'aplicando…'}
-                      {efeito?.motivos.length ? <small> ({efeito.motivos.join(', ')})</small> : null}
-                    </span>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
         </>
       )}
+
+      {/* Cada alvo: a reação dele (Esquivar / Bloquear / Contra-atacar) e o resultado. */}
+      <ul className="chat-acao-alvos">
+        {acao.alvos.map((a) => {
+          const acertou = ataque ? ataque.acertos[a.token_id] : undefined
+          const efeito = dano?.efeitos?.[a.token_id]
+          const feito = aplicado?.[a.token_id]
+          const reacao = reacaoDe(a.token_id)
+          const controla = !reacao && !!quem?.controlaAlvo(a.token_id)
+          const podeEsquivar = controla && !ataque
+          const podeBloquear = controla && !dano && (!ataque || acertou)
+          const podeContra = controla && !!ataque && acertou === false && !!acao.ataque.corpo
+          return (
+            <li key={a.token_id} className={acertou === undefined ? '' : acertou ? 'acertou' : 'errou'}>
+              <span className="chat-acao-alvo">{a.nome}</span>
+              {acertou !== undefined && <span>{acertou ? 'Acertou' : 'Errou'}</span>}
+              {reacao && <span className="chat-acao-extra">{rotuloReacao(reacao)}</span>}
+              {podeEsquivar && (
+                <button type="button" className="chat-acao-mini" disabled={ocupado} title="Soma o seu bônus de Reflexos na Defesa contra este ataque" onClick={() => fazer(() => reagirAoAtaque(mensagem, a.token_id, 'esquiva'))}>
+                  <FontAwesomeIcon icon={faPersonRunning} /> Esquivar
+                </button>
+              )}
+              {podeBloquear && (
+                <button type="button" className="chat-acao-mini" disabled={ocupado} title="Tira o seu Bloqueio do dano deste ataque" onClick={() => fazer(() => reagirAoAtaque(mensagem, a.token_id, 'bloqueio'))}>
+                  <FontAwesomeIcon icon={faShieldHalved} /> Bloquear
+                </button>
+              )}
+              {podeContra && (
+                <button
+                  type="button"
+                  className="chat-acao-mini"
+                  disabled={ocupado}
+                  title="Marca quem errou como seu alvo; ataque pela sua ficha"
+                  onClick={() => fazer(async () => (await reagirAoAtaque(mensagem, a.token_id, 'contra')) ?? quem!.contraAtacar(acao))}
+                >
+                  <FontAwesomeIcon icon={faRotateLeft} /> Contra-atacar
+                </button>
+              )}
+              {dano && acertou && (
+                <span className="chat-acao-dano">
+                  {efeito === null
+                    ? 'sem ficha'
+                    : feito
+                      ? [feito.pv ? `−${feito.pv} PV` : '', feito.san ? `−${feito.san} SAN` : ''].filter(Boolean).join(' ') || 'sem dano'
+                      : 'aplicando…'}
+                  {efeito?.motivos.length ? <small> ({efeito.motivos.join(', ')})</small> : null}
+                </span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
       {erro && <p className="chat-acao-erro" role="alert">{erro}</p>}
     </div>
   )
