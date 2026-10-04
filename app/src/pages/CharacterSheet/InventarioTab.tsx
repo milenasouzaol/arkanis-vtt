@@ -150,7 +150,6 @@ export default function InventarioTab({ character, editMode }: { character: Char
     }
     if (inv.quantity > 1) await supabase.from('character_inventory').update({ quantity: inv.quantity - 1 }).eq('id', inv.id)
     else await supabase.from('character_inventory').delete().eq('id', inv.id)
-    setAvisoUso(`${nome} usado em ${textoDosAlvos(alvos)} — enviado pro chat.`)
     await loadInventory()
   }
 

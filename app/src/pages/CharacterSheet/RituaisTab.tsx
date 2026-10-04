@@ -12,7 +12,7 @@ import RitualCard, { diceFromText, type RitualView } from './RitualCard'
 import RitualEditModal from './RitualEditModal'
 import { useAlvosDaMesa } from '../../lib/miraDaMesa'
 import { postarCura } from '../Mesa/acoesDeMira'
-import { curaDoTexto, textoDosAlvos } from '../Mesa/mira'
+import { curaDoTexto } from '../Mesa/mira'
 import { encantoDoRitual, regraDoRitual, textoDoEncanto } from './encantos'
 import EscolherArmaModal, { type ArmaEscolhivel } from './EscolherArmaModal'
 import d20Icon from '../../assets/icons/d20-paranormal.svg'
@@ -268,7 +268,6 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
 
     if (arma && encanto) {
       const notaArma = `${nota} · ${arma.arma.item} de ${arma.arma.personagem}: ${textoDoEncanto(encanto)}`
-      setAvisoGasto(`${label} — ${notaArma}`)
       if (session) {
         recordRoll({
           characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
@@ -296,7 +295,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
         teste: { nome: 'Ocultismo', dados: attrValue(character.attributes, attr) + cond.dados, bonus: trainingBonus(ocultismoBonus.training) + ocultismoBonus.extra_bonus },
         alvos,
       })
-      setAvisoGasto(erro ?? `${label} em ${textoDosAlvos(alvos)} — enviado pro chat. ${nota}`)
+      if (erro) setAvisoGasto(erro)
       if (session) {
         recordRoll({
           characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
@@ -320,7 +319,6 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
         })
       }
     } else {
-      setAvisoGasto(`${label} — ${nota}`)
       if (session) {
         recordRoll({
           characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
