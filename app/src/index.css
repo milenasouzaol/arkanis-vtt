@@ -14532,3 +14532,33 @@ button.character-tile-link {
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* Relaxar: quantos outros personagens relaxaram junto */
+.inter-contador {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.inter-contador button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.inter-contador button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.inter-contador > span:first-of-type {
+  min-width: 1.5em;
+  font-family: var(--raleway);
+  font-size: 15px;
+  text-align: center;
+  color: #fff;
+}

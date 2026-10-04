@@ -44,6 +44,8 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
   const [selectedActions, setSelectedActions] = useState<ActionKey[]>([])
   const [condicao, setCondicao] = useState<'precaria' | 'normal' | 'confortavel' | 'luxuosa'>('normal')
   const [prato, setPrato] = useState<string | null>(null)
+  // Relaxar: cada outro personagem que também relaxa no mesmo interlúdio dá +1 pra todos.
+  const [outrosRelaxando, setOutrosRelaxando] = useState(0)
   const [pages, setPages] = useState<{ id: string; title: string; clues: string }[]>([])
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [skills, setSkills] = useState<{ id: string; name: string; default_attribute: string | null }[]>([])
@@ -134,7 +136,7 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
 
     if (selectedActions.includes('relaxar')) {
       const base = CONDICOES.find((c) => c.key === condicao)!.mult
-      const bonus = prato === 'favorito' ? 2 : 0
+      const bonus = (prato === 'favorito' ? 2 : 0) + outrosRelaxando
       // "Jogando sem Sanidade": relaxar recupera PD em vez de Sanidade.
       if (semSanidade) {
         patches.current_pd = recuperarAteMaximo(character.current_pd ?? 0, Math.round(limitePE * base) + bonus, maxPd)
@@ -168,6 +170,7 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
     setManutencaoNote('')
     setPaixaoChecked(false)
     setParceiroNome('')
+    setOutrosRelaxando(0)
     await loadVinculo()
     onUpdated()
     await loadTempBonuses()
@@ -376,6 +379,19 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
                           <span className="inter-opcao-extra">x{String(c.mult).replace('.', ',')}</span>
                         </button>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {acao.key === 'relaxar' && (
+                  <div className="inter-campo">
+                    <span className="inter-rotulo">Quantos outros personagens também relaxaram</span>
+                    <p className="inter-dica">Cada um dá +1 de {character.optional_rules.sem_sanidade ? 'Determinação' : 'Sanidade'} pra todos que relaxaram.</p>
+                    <div className="inter-contador">
+                      <button type="button" aria-label="Menos um" disabled={outrosRelaxando <= 0} onClick={() => setOutrosRelaxando((n) => Math.max(0, n - 1))}>-</button>
+                      <span>{outrosRelaxando}</span>
+                      <button type="button" aria-label="Mais um" onClick={() => setOutrosRelaxando((n) => n + 1)}>+</button>
+                      {outrosRelaxando > 0 && <span className="inter-opcao-extra">+{outrosRelaxando}</span>}
                     </div>
                   </div>
                 )}
