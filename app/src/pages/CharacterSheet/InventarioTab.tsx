@@ -8,6 +8,9 @@ import { espacoComModificadores, numerosDoAtaque, statsComModificadores } from '
 import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
 import ItemModifiersModal from './ItemModifiersModal'
 import { efeitosLigaveis, type AppliedModifier } from './itemMods'
+import { useAlvosDaMesa } from '../../lib/miraDaMesa'
+import { postarCura } from '../Mesa/acoesDeMira'
+import { curaDoTexto, textoDosAlvos } from '../Mesa/mira'
 
 // O <select> nativo abre a lista branca do sistema e sai roxo; este segue a estetica do
 // resto do app, igual aos seletores dos modais.
@@ -71,6 +74,9 @@ export default function InventarioTab({ character, editMode }: { character: Char
   const [filtro, setFiltro] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<ItemToEdit | null>(null)
   const [modsPara, setModsPara] = useState<InventoryItem | null>(null)
+  // Item de cura (Cicatrizante, Alimento energético…) usado no alvo marcado na mesa (12.9).
+  const alvos = useAlvosDaMesa(character.campaign_id)
+  const [avisoUso, setAvisoUso] = useState<string | null>(null)
 
   async function loadInventory() {
     const { data } = await supabase
@@ -122,6 +128,27 @@ export default function InventarioTab({ character, editMode }: { character: Char
 
   async function salvarMods(inv: InventoryItem, next: AppliedModifier[]) {
     await supabase.from('character_inventory').update({ applied_modifiers: next }).eq('id', inv.id)
+    await loadInventory()
+  }
+
+  // Usar: "[Personagem] está usando o item [X] em [Alvo]" no chat com o botão Curar, e gasta
+  // uma unidade (a última sai do inventário).
+  async function usarItem(inv: InventoryItem, nome: string, cura: NonNullable<ReturnType<typeof curaDoTexto>>) {
+    if (!character.campaign_id || !alvos.length) {
+      setAvisoUso('Marque o alvo na mesa (tecla M em cima do token — pode ser o seu) e clique em Usar de novo.')
+      return
+    }
+    const erro = await postarCura({
+      campanhaId: character.campaign_id, characterId: character.id, autor: { nome: character.name, foto: character.avatar_url },
+      fonte: `o item ${nome}`, formula: cura.formula, recurso: cura.recurso, teste: null, alvos,
+    })
+    if (erro) {
+      setAvisoUso(erro)
+      return
+    }
+    if (inv.quantity > 1) await supabase.from('character_inventory').update({ quantity: inv.quantity - 1 }).eq('id', inv.id)
+    else await supabase.from('character_inventory').delete().eq('id', inv.id)
+    setAvisoUso(`${nome} usado em ${textoDosAlvos(alvos)} — enviado pro chat.`)
     await loadInventory()
   }
 
@@ -237,6 +264,13 @@ export default function InventarioTab({ character, editMode }: { character: Char
     <div>
       <InventarioTopBox character={character} atualPorCategoria={atualPorCategoria} cargaAtual={cargaAtual} editMode={editMode} />
 
+      {avisoUso && (
+        <p className="rituais-aviso-gasto" role="status">
+          {avisoUso}
+          <button type="button" aria-label="Fechar" onClick={() => setAvisoUso(null)}>×</button>
+        </p>
+      )}
+
       <div className="combat-search-row inv-search-row">
         <div className="combat-search-field">
           <input className="combat-search-input" placeholder="Buscar no Inventário" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -297,6 +331,14 @@ export default function InventarioTab({ character, editMode }: { character: Char
                     {item.type === 'arma' && (
                       <button type="button" className="inv-item-btn" onClick={() => sendToCombat(inv)}>Enviar para o combate</button>
                     )}
+                    {(() => {
+                      const cura = curaDoTexto(item.description)
+                      return cura ? (
+                        <button type="button" className="inv-item-btn" title={alvos.length ? `Usar em ${textoDosAlvos(alvos)}` : 'Marque o alvo na mesa'} onClick={() => usarItem(inv, item.name, cura)}>
+                          Usar
+                        </button>
+                      ) : null
+                    })()}
                   </span>
                 </>
               }

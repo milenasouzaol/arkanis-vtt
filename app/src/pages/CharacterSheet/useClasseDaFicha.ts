@@ -27,18 +27,22 @@ export function useClasseDaFicha(character: Pick<CharacterRecord, 'class_id' | '
         .single()
         .then(({ data }) => setClasse(data))
     } else if (character.custom_class) {
-      const cc = character.custom_class
-      setClasse({
-        pv_initial: cc.pvInitial, pv_initial_attr: 'vigor', pv_per_nex: cc.pvPerNex, pv_per_nex_attr: 'vigor',
-        pe_initial: cc.peInitial, pe_initial_attr: 'presenca', pe_per_nex: cc.pePerNex, pe_per_nex_attr: 'presenca',
-        sanity_initial: cc.sanityInitial, sanity_per_nex: cc.sanityPerNex,
-        pd_initial: cc.pdInitial, pd_initial_attr: 'presenca', pd_per_nex: cc.pdPerNex, pd_per_nex_attr: 'presenca',
-        pd_patente_initial: null, pd_patente_per_patente: null,
-      })
+      setClasse(classePropria(character.custom_class))
     } else {
       setClasse(null)
     }
   }, [character.class_id, character.custom_class])
 
   return classe
+}
+
+// Classe própria criada na ficha, no mesmo formato da tabela de classes.
+export function classePropria(cc: NonNullable<CharacterRecord['custom_class']>): ClasseDaFicha {
+  return {
+    pv_initial: cc.pvInitial, pv_initial_attr: 'vigor', pv_per_nex: cc.pvPerNex, pv_per_nex_attr: 'vigor',
+    pe_initial: cc.peInitial, pe_initial_attr: 'presenca', pe_per_nex: cc.pePerNex, pe_per_nex_attr: 'presenca',
+    sanity_initial: cc.sanityInitial, sanity_per_nex: cc.sanityPerNex,
+    pd_initial: cc.pdInitial, pd_initial_attr: 'presenca', pd_per_nex: cc.pdPerNex, pd_per_nex_attr: 'presenca',
+    pd_patente_initial: null, pd_patente_per_patente: null,
+  }
 }

@@ -1,27 +1,28 @@
 import { createContext, useContext, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronRight, faCrosshairs, faDiceD20, faBurst, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronRight, faCrosshairs, faDiceD20, faBurst, faHeartPulse, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
 import type { Mensagem } from './chat'
-import { nomeDoTipo, textoDosAlvos } from './mira'
-import { bloquearAtaque, rolarAtaqueDaMensagem, rolarDanoDaMensagem } from './acoesDeMira'
+import { nomeDoTipo, SIGLA_RECURSO, textoDosAlvos, type AcaoAtaque, type AcaoCura } from './mira'
+import { bloquearAtaque, rolarAtaqueDaMensagem, rolarCuraDaMensagem, rolarDanoDaMensagem, rolarTesteDaCura } from './acoesDeMira'
 
 // Quem está olhando o chat: pra saber quem pode clicar em Ataque/Dano e quem pode bloquear.
 export type QuemVe = { userId: string; souMestre: boolean; controlaAlvo: (tokenId: string) => boolean }
 
 export const QuemVeContexto = createContext<QuemVe | null>(null)
 
-// "[Atacante] está atacando [Alvo]" com os botões Ataque e Dano (12.9).
+// Ação com alvo no chat (12.9): ataque ou cura.
 export default function AcaoNoChat({ mensagem }: { mensagem: Mensagem }) {
+  const acao = mensagem.acao
+  if (!acao) return null
+  return acao.tipo === 'cura' ? <CartaoCura mensagem={mensagem} acao={acao} /> : <CartaoAtaque mensagem={mensagem} acao={acao} />
+}
+
+// Quem mandou (ou o mestre) clica nos botões; o resto só acompanha.
+function usePasso(mensagem: Mensagem) {
   const quem = useContext(QuemVeContexto)
   const [ocupado, setOcupado] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-  const [verDados, setVerDados] = useState<'ataque' | 'dano' | null>(null)
-  const acao = mensagem.acao
-  if (!acao) return null
-  const { ataque, dano, bloqueios, aplicado } = acao.estado
   const conduz = !!quem && (quem.souMestre || mensagem.user_id === quem.userId)
-  const algumAcerto = !!ataque && acao.alvos.some((a) => ataque.acertos[a.token_id])
-
   async function fazer(passo: () => Promise<string | null>) {
     setOcupado(true)
     setErro(null)
@@ -29,6 +30,15 @@ export default function AcaoNoChat({ mensagem }: { mensagem: Mensagem }) {
     setOcupado(false)
     if (e) setErro(e)
   }
+  return { quem, ocupado, erro, conduz, fazer }
+}
+
+// "[Atacante] está atacando [Alvo]" com os botões Ataque e Dano.
+function CartaoAtaque({ mensagem, acao }: { mensagem: Mensagem; acao: AcaoAtaque }) {
+  const { quem, ocupado, erro, conduz, fazer } = usePasso(mensagem)
+  const [verDados, setVerDados] = useState<'ataque' | 'dano' | null>(null)
+  const { ataque, dano, bloqueios, aplicado } = acao.estado
+  const algumAcerto = !!ataque && acao.alvos.some((a) => ataque.acertos[a.token_id])
 
   return (
     <div className="chat-acao">
@@ -112,6 +122,88 @@ export default function AcaoNoChat({ mensagem }: { mensagem: Mensagem }) {
             })}
           </ul>
         </>
+      )}
+      {erro && <p className="chat-acao-erro" role="alert">{erro}</p>}
+    </div>
+  )
+}
+
+// "[Pedro] está usando o ritual [Cicatrização] em [Maria]": teste (no ritual) e depois Curar,
+// que soma no alvo sem passar do máximo.
+function CartaoCura({ mensagem, acao }: { mensagem: Mensagem; acao: AcaoCura }) {
+  const { ocupado, erro, conduz, fazer } = usePasso(mensagem)
+  const [verDados, setVerDados] = useState<'teste' | 'cura' | null>(null)
+  const { teste, cura, aplicado } = acao.estado
+  const sigla = SIGLA_RECURSO[acao.recurso]
+  const podeCurar = !acao.teste || !!teste
+
+  return (
+    <div className="chat-acao">
+      <p className="chat-acao-titulo">
+        <FontAwesomeIcon icon={faHeartPulse} /> <strong>{acao.curador}</strong> está usando {acao.fonte} em <strong>{textoDosAlvos(acao.alvos)}</strong>
+      </p>
+      <p className="chat-rolagem-rotulo">Cura: {acao.formula} {sigla}</p>
+
+      {acao.teste && (
+        !teste ? (
+          conduz ? (
+            <button type="button" className="chat-acao-botao" disabled={ocupado} onClick={() => fazer(() => rolarTesteDaCura(mensagem))}>
+              <FontAwesomeIcon icon={faDiceD20} /> Teste de {acao.teste.nome}
+            </button>
+          ) : (
+            <p className="chat-acao-espera">Aguardando o teste…</p>
+          )
+        ) : (
+          <>
+            <p className="chat-rolagem-rotulo">Teste de {acao.teste.nome}</p>
+            <button type="button" className="chat-rolagem-total" aria-expanded={verDados === 'teste'} onClick={() => setVerDados((v) => (v === 'teste' ? null : 'teste'))}>
+              <span>{teste.total}</span>
+              <FontAwesomeIcon icon={verDados === 'teste' ? faChevronDown : faChevronRight} />
+            </button>
+            {verDados === 'teste' && (
+              <div className="chat-rolagem-dados">
+                {teste.rolls.map((v, i) => <span key={i} className={`chat-dado${v !== teste.kept ? ' descartado' : ''}`} title="d20">{v}</span>)}
+                {teste.bonus ? <span className="chat-rolagem-bonus">{teste.bonus > 0 ? `+${teste.bonus}` : teste.bonus}</span> : null}
+              </div>
+            )}
+          </>
+        )
+      )}
+
+      {podeCurar && (
+        !cura ? (
+          conduz ? (
+            <button type="button" className="chat-acao-botao" disabled={ocupado} onClick={() => fazer(() => rolarCuraDaMensagem(mensagem))}>
+              <FontAwesomeIcon icon={faHeartPulse} /> Curar
+            </button>
+          ) : (
+            <p className="chat-acao-espera">Aguardando a cura…</p>
+          )
+        ) : (
+          <>
+            <p className="chat-rolagem-rotulo">Cura</p>
+            <button type="button" className="chat-rolagem-total" aria-expanded={verDados === 'cura'} onClick={() => setVerDados((v) => (v === 'cura' ? null : 'cura'))}>
+              <span>{cura.total}</span>
+              <FontAwesomeIcon icon={verDados === 'cura' ? faChevronDown : faChevronRight} />
+            </button>
+            {verDados === 'cura' && (
+              <div className="chat-rolagem-dados">
+                {cura.dados.map((d, i) => <span key={i} className="chat-dado" title={`d${d.sides}`}>{d.value}</span>)}
+              </div>
+            )}
+            <ul className="chat-acao-alvos">
+              {acao.alvos.map((a) => {
+                const feito = aplicado?.[a.token_id]
+                return (
+                  <li key={a.token_id} className="acertou">
+                    <span className="chat-acao-alvo">{a.nome}</span>
+                    <span className="chat-acao-dano">{feito ? (feito.valor ? `+${feito.valor} ${sigla}` : 'já estava no máximo') : 'sem ficha'}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )
       )}
       {erro && <p className="chat-acao-erro" role="alert">{erro}</p>}
     </div>

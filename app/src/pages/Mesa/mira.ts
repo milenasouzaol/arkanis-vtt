@@ -44,6 +44,27 @@ export type AcaoAtaque = {
   }
 }
 
+// Cura com alvo (12.9): ritual (Cicatrização…) ou item (Cicatrizante…). O ritual tem o teste
+// antes; o item cura direto.
+export type Recurso = 'pv' | 'san' | 'pe'
+
+export type AcaoCura = {
+  tipo: 'cura'
+  curador: string
+  fonte: string // "o ritual Cicatrização (Discente)", "o item Cicatrizante"
+  formula: string
+  recurso: Recurso
+  teste: { nome: string; dados: number; bonus: number } | null
+  alvos: Alvo[]
+  estado: {
+    teste?: { rolls: number[]; kept: number; bonus: number; total: number }
+    cura?: { total: number; dados: { sides: number; value: number }[] }
+    aplicado?: Record<string, { valor: number }>
+  }
+}
+
+export type Acao = AcaoAtaque | AcaoCura
+
 // O que o banco devolve sobre o alvo (dados_do_alvo).
 export type DadosDoAlvo =
   | {
@@ -54,8 +75,17 @@ export type DadosDoAlvo =
       defesa_outros: number
       bloqueio: number
       itens: { tipo: string | null; stats: Record<string, unknown>; mods: AppliedModifier[] }[]
+      atributos?: Record<string, number>
+      nex?: number
+      class_id?: string | null
+      custom_class?: Record<string, number | string | null> | null
+      max_pv_override?: number | null
+      max_sanity_override?: number | null
+      pv?: number | null
+      san?: number | null
+      pe?: number | null
     }
-  | { tipo: 'criatura'; nome: string; defesa: number; resistencias: string | null; vulnerabilidades: string | null }
+  | { tipo: 'criatura'; nome: string; defesa: number; resistencias: string | null; vulnerabilidades: string | null; pv_maximo?: number | null }
   | { tipo: 'nenhum'; nome: string }
 
 export function normalizar(t: string): string {
@@ -234,3 +264,23 @@ export function textoDosAlvos(alvos: Alvo[]): string {
   if (nomes.length <= 1) return nomes[0] ?? ''
   return `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`
 }
+
+// "O alvo recupera 3d8+3 PV", "curar 2d8+2 PV", "recupera 1d4 PE", "recupera 2d6 de Sanidade".
+// Sem fórmula de dados (ex.: "recupera metade do dano") não dá pra automatizar.
+export function curaDoTexto(texto: string | null | undefined): { formula: string; recurso: Recurso } | null {
+  if (!texto || !/(cur[ao]|curar|recupera)/i.test(texto)) return null
+  const m = /(\d+d\d+(?:\s*[+-]\s*\d+)?)\s*(?:pontos?\s+de\s+|de\s+)?(PV|PE|SAN\b|Sanidade|vida|esfor[çc]o)/i.exec(texto)
+  if (!m) return null
+  const r = normalizar(m[2])
+  const recurso: Recurso = r === 'pe' || r.startsWith('esforc') ? 'pe' : r === 'san' || r.startsWith('sanidade') ? 'san' : 'pv'
+  return { formula: m[1].replace(/\s/g, ''), recurso }
+}
+
+export function rolarCura(formula: string): { total: number; dados: { sides: number; value: number }[] } | null {
+  const r = rollDiceFormula(formula)
+  if (!r) return null
+  const lados = Number(/d(\d+)/i.exec(formula)?.[1] ?? 6)
+  return { total: r.total, dados: r.rolls.map((v) => ({ sides: lados, value: v })) }
+}
+
+export const SIGLA_RECURSO: Record<Recurso, string> = { pv: 'PV', san: 'SAN', pe: 'PE' }

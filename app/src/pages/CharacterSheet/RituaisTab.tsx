@@ -10,6 +10,9 @@ import RollResult, { RollCard, type RollCardDie, type RollResultData } from './R
 import RitualPickerModal, { type RitualPickResult } from './RitualPickerModal'
 import RitualCard, { diceFromText, type RitualView } from './RitualCard'
 import RitualEditModal from './RitualEditModal'
+import { useAlvosDaMesa } from '../../lib/miraDaMesa'
+import { postarCura } from '../Mesa/acoesDeMira'
+import { curaDoTexto, textoDosAlvos } from '../Mesa/mira'
 import d20Icon from '../../assets/icons/d20-paranormal.svg'
 import sangueIcon from '../../assets/rituais/sangue-simbolo.png'
 import morteIcon from '../../assets/rituais/morte-simbolo.png'
@@ -91,6 +94,8 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
   const [roll, setRoll] = useState<RollResultData | null>(null)
   const [ritualRoll, setRitualRoll] = useState<{ title: string; subtitle: string; total: number; dice: RollCardDie[]; bonus: number; nota: string } | null>(null)
   const [avisoGasto, setAvisoGasto] = useState<string | null>(null)
+  // Alvos marcados com a mira na mesa (12.9): ritual de cura com alvo vai pro chat.
+  const alvos = useAlvosDaMesa(character.campaign_id)
 
   useEffect(() => {
     supabase.from('skills').select('id, default_attribute').eq('name', 'Ocultismo').single().then(({ data }) => {
@@ -241,6 +246,34 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
 
     const modeLabel = mode === 'normal' ? '' : mode === 'discente' ? ' (Discente)' : ' (Verdadeiro)'
     const label = `Ritual: ${ritual.name}${modeLabel}`
+
+    // Ritual de cura com alvo marcado na mesa: "[Personagem] está usando o ritual [X] em [Alvo]"
+    // no chat, com o Teste de Ocultismo e depois Curar (que soma na vida do alvo).
+    const textoDoModo = mode === 'discente' ? ritual.discenteEffect : mode === 'verdadeiro' ? ritual.verdadeiroEffect : ritual.effect
+    const cura = curaDoTexto(textoDoModo) ?? curaDoTexto(ritual.effect)
+    if (cura && alvos.length && character.campaign_id) {
+      const ocultismo = ocultismoSkill ? ocultismoSkill.default_attribute : 'intelecto'
+      const attr = ocultismoBonus.attribute_override ?? ocultismo
+      const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: 'Ocultismo' })
+      const erro = await postarCura({
+        campanhaId: character.campaign_id,
+        characterId: character.id,
+        autor: { nome: character.name, foto: character.avatar_url },
+        fonte: `o ritual ${ritual.name}${modeLabel}`,
+        formula: formula ?? cura.formula,
+        recurso: cura.recurso,
+        teste: { nome: 'Ocultismo', dados: attrValue(character.attributes, attr) + cond.dados, bonus: trainingBonus(ocultismoBonus.training) + ocultismoBonus.extra_bonus },
+        alvos,
+      })
+      setAvisoGasto(erro ?? `${label} em ${textoDosAlvos(alvos)} — enviado pro chat. ${nota}`)
+      if (session) {
+        recordRoll({
+          characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
+          label, total: 0, detail: '', nota, semRolagem: true, semChat: true,
+        })
+      }
+      return
+    }
     const rolled = formula ? rollDiceFormula(formula) : null
     if (rolled && formula) {
       // O RollResult e feito pra teste de pericia e assume d20; rolagem de ritual usa a

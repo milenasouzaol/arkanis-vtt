@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ataqueDaCriatura, danoNoAlvo, defesaDoAlvo, lerResistenciasDaCriatura, partesDoDanoEmTexto, perfilDoAlvo, rolarDanoDoAtaque, textoDosAlvos, tipoDeDano } from './mira'
+import { ataqueDaCriatura, curaDoTexto, danoNoAlvo, defesaDoAlvo, lerResistenciasDaCriatura, partesDoDanoEmTexto, perfilDoAlvo, rolarDanoDoAtaque, textoDosAlvos, tipoDeDano } from './mira'
 
 describe('tipos de dano', () => {
   it('siglas e acentos viram a mesma chave', () => {
@@ -96,4 +96,18 @@ it('crítico multiplica só os dados', () => {
 it('nomes dos alvos', () => {
   expect(textoDosAlvos([{ token_id: '1', nome: 'Maria' }])).toBe('Maria')
   expect(textoDosAlvos([{ token_id: '1', nome: 'Maria' }, { token_id: '2', nome: 'Pedro' }, { token_id: '3', nome: 'Zumbi' }])).toBe('Maria, Pedro e Zumbi')
+})
+
+describe('cura no texto', () => {
+  it('ritual e item', () => {
+    expect(curaDoTexto('O alvo recupera 3d8+3 PV, mas envelhece 1 ano automaticamente.')).toEqual({ formula: '3d8+3', recurso: 'pv' })
+    expect(curaDoTexto('aumenta a cura para 5d8+5 PV. Requer 2º círculo.')).toEqual({ formula: '5d8+5', recurso: 'pv' })
+    expect(curaDoTexto('Ação padrão pra curar 2d8+2 PV em si ou ser adjacente.')).toEqual({ formula: '2d8+2', recurso: 'pv' })
+    expect(curaDoTexto('Ação padrão consome, recupera 1d4 PE.')).toEqual({ formula: '1d4', recurso: 'pe' })
+    expect(curaDoTexto('recupera 2d6 pontos de Sanidade')).toEqual({ formula: '2d6', recurso: 'san' })
+  })
+  it('dano e cura sem dados não contam', () => {
+    expect(curaDoTexto('causando 6d6 pontos de dano de Sangue. Você então absorve esse sangue, recuperando pontos de vida iguais à metade do dano causado.')).toBeNull()
+    expect(curaDoTexto('8d6 dano de Energia')).toBeNull()
+  })
 })
