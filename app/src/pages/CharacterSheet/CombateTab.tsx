@@ -14,6 +14,7 @@ import { defesaDeModificadores, numerosDoAtaque, resistenciasDoItemEquipado, som
 import { useAlvosDaMesa } from '../../lib/miraDaMesa'
 import { postarAtaque } from '../Mesa/acoesDeMira'
 import { textoDosAlvos } from '../Mesa/mira'
+import { numerosComEncantos, textoDoEncanto, type Encanto } from './encantos'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
@@ -54,6 +55,8 @@ type InventoryAmmoInfo = {
   name: string
   stats: Record<string, unknown>
   applied_modifiers: AppliedModifier[]
+  // Amaldiçoar Arma, Arma Atroz… conjurados nesta arma/munição (por você ou por um aliado).
+  encantos: Encanto[]
 }
 
 type Skill = { id: string; name: string }
@@ -95,7 +98,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   async function loadInventoryAmmo() {
     const { data } = await supabase
       .from('character_inventory')
-      .select('id, linked_ammo_id, ammo_current, ammo_total, ammo_label, quantity, applied_modifiers, custom_item, equipment_items(name, stats)')
+      .select('id, linked_ammo_id, ammo_current, ammo_total, ammo_label, quantity, applied_modifiers, encantos, custom_item, equipment_items(name, stats)')
       .eq('character_id', character.id)
     setInventoryAmmo(
       (data ?? []).map((row: any) => ({
@@ -106,6 +109,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         ammo_label: row.ammo_label,
         stats: row.equipment_items?.stats ?? row.custom_item?.stats ?? {},
         applied_modifiers: row.applied_modifiers ?? [],
+        encantos: row.encantos ?? [],
         quantity: row.quantity,
         name: row.equipment_items?.name ?? row.custom_item?.name ?? 'Item',
       })),
@@ -146,6 +150,13 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
 
   useEffect(() => { loadAttacks(); loadInventoryAmmo() }, [character.id])
 
+  // Um aliado pode encantar a sua arma a qualquer hora: ao voltar pra ficha, ela relê o inventário.
+  useEffect(() => {
+    const reler = () => loadInventoryAmmo()
+    window.addEventListener('focus', reler)
+    return () => window.removeEventListener('focus', reler)
+  }, [character.id])
+
   useEffect(() => {
     supabase.from('skills').select('id, name').order('sort_order').then(({ data }) => setSkills(data ?? []))
     supabase
@@ -185,15 +196,25 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
     if (!origem) return a // item apagado do inventario: o ataque fica como estava
     const municao = origem.linked_ammo_id ? inventoryAmmo.find((i) => i.id === origem.linked_ammo_id) : null
     const numeros = numerosDoAtaque(origem.stats, [...origem.applied_modifiers, ...(municao?.applied_modifiers ?? [])])
-    return {
+    const encantos = [...origem.encantos, ...(municao?.encantos ?? [])]
+    return numerosComEncantos({
       ...a,
       d20_bonus: numeros.d20Bonus,
       threat_margin: numeros.threatMargin,
       multiplier: numeros.multiplier,
       damage: numeros.damage,
-      general_info: { ...a.general_info, alcance: numeros.alcance || a.general_info?.alcance, damage_bonus_from_mods: numeros.damageBonusFromMods },
+      general_info: {
+        ...a.general_info,
+        alcance: numeros.alcance || a.general_info?.alcance,
+        damage_bonus_from_mods: numeros.damageBonusFromMods,
+        // O encanto aparece no card do ataque junto das modificações e maldições.
+        modificadores: [
+          ...(a.general_info?.modificadores ?? []),
+          ...encantos.map((e) => ({ kind: 'maldicao' as const, name: e.nome, effect: `${textoDoEncanto(e)}${e.por ? ` (por ${e.por})` : ''}`, elemento: e.dano?.tipo ?? null, origem: 'Arma' as const })),
+        ],
+      },
       modifiers: [...origem.applied_modifiers, ...(municao?.applied_modifiers ?? [])],
-    }
+    }, encantos)
   })
 
   function ammoForAttack(attack: Attack): InventoryAmmoInfo | null {

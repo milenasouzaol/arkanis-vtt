@@ -14447,3 +14447,88 @@ button.character-tile-link {
 .editor-ameaca-grade .janela-campo {
   grid-template-columns: 1fr;
 }
+
+/* Escolher a arma de um ritual (Amaldiçoar Arma, Arma Atroz, Chamas do Caos) */
+.escolher-arma {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(80vh, 640px);
+  padding: 18px;
+  background: #141217;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ece9f1;
+  box-sizing: border-box;
+}
+
+.escolher-arma h3 {
+  margin: 0;
+  font: 700 1.15rem 'Signika', var(--sans);
+}
+
+.escolher-arma-dica {
+  margin: 0;
+  opacity: 0.7;
+  font-size: 0.85rem;
+}
+
+.escolher-arma-elemento {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.escolher-arma-elemento select {
+  flex: 1;
+  padding: 4px 8px;
+  background: #24212a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: inherit;
+}
+
+.escolher-arma-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.escolher-arma-lista button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  background: #1d1b21;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.escolher-arma-lista button span,
+.escolher-arma-lista button small {
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+
+.escolher-arma-lista button.ativo,
+.escolher-arma-lista button:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.escolher-arma-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

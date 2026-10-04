@@ -11,6 +11,7 @@ import { efeitosLigaveis, type AppliedModifier } from './itemMods'
 import { useAlvosDaMesa } from '../../lib/miraDaMesa'
 import { postarCura } from '../Mesa/acoesDeMira'
 import { curaDoTexto, textoDosAlvos } from '../Mesa/mira'
+import { textoDoEncanto, type Encanto } from './encantos'
 
 // O <select> nativo abre a lista branca do sistema e sai roxo; este segue a estetica do
 // resto do app, igual aos seletores dos modais.
@@ -64,6 +65,7 @@ type InventoryItem = {
   ammo_total: number | null
   ammo_label: string | null
   active_bonuses: string[]
+  encantos: Encanto[]
 }
 
 export default function InventarioTab({ character, editMode }: { character: CharacterRecord; editMode: boolean }) {
@@ -81,7 +83,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
   async function loadInventory() {
     const { data } = await supabase
       .from('character_inventory')
-      .select('id, equipment_item_id, custom_item, category_override, is_equipped, quantity, applied_modifiers, linked_ammo_id, ammo_current, ammo_total, ammo_label, active_bonuses, equipment_items(id, type, name, category, spaces, description, stats, image_url)')
+      .select('id, equipment_item_id, custom_item, category_override, is_equipped, quantity, applied_modifiers, linked_ammo_id, ammo_current, ammo_total, ammo_label, active_bonuses, encantos, equipment_items(id, type, name, category, spaces, description, stats, image_url)')
       .eq('character_id', character.id)
     setItems((data ?? []) as unknown as InventoryItem[])
   }
@@ -343,6 +345,31 @@ export default function InventarioTab({ character, editMode }: { character: Char
                 </>
               }
             >
+              {/* Rituais conjurados nesta arma (Amaldiçoar Arma, Arma Atroz…), até alguém encerrar. */}
+              {(inv.encantos ?? []).length > 0 && (
+                <div className="inv-mods-block">
+                  <div className="inv-mods-head"><span>Rituais na arma</span></div>
+                  <div className="inv-mods-list">
+                    {inv.encantos.map((e) => (
+                      <div className="inv-mods-row" key={e.id ?? e.nome}>
+                        <span className="inv-mods-name">{e.nome}{e.por ? <span className="inv-mods-kind">por {e.por}</span> : null}</span>
+                        <span className="inv-mods-effect">{textoDoEncanto(e)}</span>
+                        <button
+                          type="button"
+                          className="inv-item-btn"
+                          onClick={async () => {
+                            await supabase.rpc('encerrar_encanto', { p_inventario_id: inv.id, p_encanto_id: e.id })
+                            await loadInventory()
+                          }}
+                        >
+                          Encerrar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* As modificacoes ficam visiveis no proprio card, logo abaixo da
                   descricao, com adicionar e remover ali mesmo. */}
               <div className="inv-mods-block">

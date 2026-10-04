@@ -13,6 +13,8 @@ import RitualEditModal from './RitualEditModal'
 import { useAlvosDaMesa } from '../../lib/miraDaMesa'
 import { postarCura } from '../Mesa/acoesDeMira'
 import { curaDoTexto, textoDosAlvos } from '../Mesa/mira'
+import { encantoDoRitual, regraDoRitual, textoDoEncanto } from './encantos'
+import EscolherArmaModal, { type ArmaEscolhivel } from './EscolherArmaModal'
 import d20Icon from '../../assets/icons/d20-paranormal.svg'
 import sangueIcon from '../../assets/rituais/sangue-simbolo.png'
 import morteIcon from '../../assets/rituais/morte-simbolo.png'
@@ -96,6 +98,8 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
   const [avisoGasto, setAvisoGasto] = useState<string | null>(null)
   // Alvos marcados com a mira na mesa (12.9): ritual de cura com alvo vai pro chat.
   const alvos = useAlvosDaMesa(character.campaign_id)
+  // Amaldiçoar Arma e afins: primeiro escolhe a arma (e o elemento), depois conjura.
+  const [armaPara, setArmaPara] = useState<{ ritual: RitualView; mode: ModoRitual; formula: string | null } | null>(null)
 
   useEffect(() => {
     supabase.from('skills').select('id, default_attribute').eq('name', 'Ocultismo').single().then(({ data }) => {
@@ -234,18 +238,45 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
   // Conjurar (Normal / Discente / Verdadeiro): desconta o custo do PE (ou da Determinação, em
   // "Jogando sem Sanidade"), rola os dados se o ritual tiver e registra tudo no chat e no
   // Histórico com o gasto embaixo.
-  async function conjurar(ritual: RitualView, mode: ModoRitual, formula: string | null) {
+  async function conjurar(ritual: RitualView, mode: ModoRitual, formula: string | null, arma?: { arma: ArmaEscolhivel; elemento: string }) {
+    const regra = regraDoRitual(ritual.name)
+    if (regra && !arma && encantoDoRitual(ritual.name, mode, regra.elementos[0] ?? '')) {
+      setArmaPara({ ritual, mode, formula })
+      return
+    }
     // Alquebrado: +1 PE no custo.
     const custo = custoDoRitual(ritual.circle, mode, ritual.discenteCost, ritual.verdadeiroCost) + custoExtraDeCondicoes(character.conditions)
     const recurso = recursoDoRitual(character.optional_rules)
     const antes = (character as unknown as Record<string, number | null>)[recurso.campo] ?? 0
     if (antes < custo && !window.confirm(`Você tem ${antes} ${recurso.sigla} e o ritual custa ${custo}. Conjurar mesmo assim?`)) return
     const depois = Math.max(0, antes - custo)
+
+    // Encanta a arma escolhida antes de gastar (se não der, não gasta).
+    const encanto = arma ? encantoDoRitual(ritual.name, mode, arma.elemento) : null
+    if (arma && encanto) {
+      const { error } = await supabase.rpc('encantar_arma', { p_inventario_id: arma.arma.inventario_id, p_conjurador: character.id, p_encanto: encanto })
+      if (error) {
+        setAvisoGasto(`Não deu pra encantar a arma: ${error.message}`)
+        return
+      }
+    }
     await onGastar(recurso.campo, depois)
     const nota = notaDoGasto(custo, recurso.sigla, antes, depois)
 
     const modeLabel = mode === 'normal' ? '' : mode === 'discente' ? ' (Discente)' : ' (Verdadeiro)'
     const label = `Ritual: ${ritual.name}${modeLabel}`
+
+    if (arma && encanto) {
+      const notaArma = `${nota} · ${arma.arma.item} de ${arma.arma.personagem}: ${textoDoEncanto(encanto)}`
+      setAvisoGasto(`${label} — ${notaArma}`)
+      if (session) {
+        recordRoll({
+          characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
+          label, total: 0, detail: '', nota: notaArma, semRolagem: true,
+        })
+      }
+      return
+    }
 
     // Ritual de cura com alvo marcado na mesa: "[Personagem] está usando o ritual [X] em [Alvo]"
     // no chat, com o Teste de Ocultismo e depois Curar (que soma na vida do alvo).
@@ -323,6 +354,25 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
           onClose={() => setRitualRoll(null)}
         />
       )}
+
+      {armaPara && (() => {
+        const regra = regraDoRitual(armaPara.ritual.name)!
+        return (
+          <EscolherArmaModal
+            ritual={armaPara.ritual.name}
+            alvo={regra.alvo}
+            elementos={regra.elementos}
+            campanhaId={character.campaign_id}
+            characterId={character.id}
+            onEscolher={(a, elemento) => {
+              const p = armaPara
+              setArmaPara(null)
+              conjurar(p.ritual, p.mode, p.formula, { arma: a, elemento })
+            }}
+            onClose={() => setArmaPara(null)}
+          />
+        )
+      })()}
 
       {avisoGasto && (
         <p className="rituais-aviso-gasto" role="status">
