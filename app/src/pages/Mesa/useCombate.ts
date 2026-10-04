@@ -115,17 +115,6 @@ export function useCombate(campanhaId: string | undefined) {
     }
   }
 
-  const criar = useCallback(async (name: string, ameacas: string[], atores: string[] = []) => {
-    if (!campanhaId) return
-    const { data } = await supabase.from('combats').insert({ campaign_id: campanhaId, name, ameacas, atores }).select('*').single()
-    if (data) setCombates((l) => trocar(l, data as Combate))
-  }, [campanhaId])
-
-  const salvar = useCallback(async (id: string, campos: Partial<Pick<Combate, 'name' | 'ameacas' | 'atores'>>) => {
-    const { data } = await supabase.from('combats').update(campos).eq('id', id).select('*').single()
-    if (data) setCombates((l) => trocar(l, data as Combate))
-  }, [])
-
   const excluir = useCallback(async (id: string) => {
     setCombates((l) => l.filter((c) => c.id !== id))
     await supabase.from('combats').delete().eq('id', id)
@@ -230,6 +219,31 @@ export function useCombate(campanhaId: string | undefined) {
     await supabase.from('combats').update(campos).eq('id', combate.id)
   }, [])
 
+  // Criar Combate (pedido da Millie): as ameaças escolhidas do bestiário já viram personagens
+  // na hora de salvar, numa pasta com o nome do combate — pro mestre arrumar os tokens na cena
+  // antes de começar a luta.
+  const criar = useCallback(async (name: string, ameacas: string[], atores: string[] = []) => {
+    if (!campanhaId) return
+    const { data } = await supabase.from('combats').insert({ campaign_id: campanhaId, name, ameacas: [], atores }).select('*').single()
+    if (!data) return
+    const combate = data as Combate
+    setCombates((l) => trocar(l, combate))
+    const criados = await criarAtoresDoBestiario(combate, ameacas)
+    if (criados.length) await gravarAtores(combate, [...atores, ...criados], [])
+  }, [campanhaId, criarAtoresDoBestiario, gravarAtores])
+
+  // Editar: as novas do bestiário também viram personagens; trocar o nome renomeia a pasta.
+  const salvar = useCallback(async (combate: Combate, campos: { name: string; ameacas: string[]; atores: string[] }) => {
+    if (!campanhaId) return
+    if (campos.name && campos.name !== combate.name) {
+      await supabase.from('actor_folders').update({ name: campos.name }).eq('campaign_id', campanhaId).eq('name', combate.name).is('parent_id', null)
+    }
+    const atualizado = { ...combate, name: campos.name || combate.name }
+    const criados = await criarAtoresDoBestiario(atualizado, campos.ameacas)
+    const { data } = await supabase.from('combats').update({ name: atualizado.name, ameacas: [], atores: [...new Set([...campos.atores, ...criados])] }).eq('id', combate.id).select('*').single()
+    if (data) setCombates((l) => trocar(l, data as Combate))
+  }, [campanhaId, criarAtoresDoBestiario])
+
   // "Adicionar" com o combate rodando: as do bestiário viram personagens, e todo mundo que
   // entrou já rola a iniciativa.
   const entrarAmeacas = useCallback(async (combate: Combate, criaturaIds: string[], atorIds: string[] = []) => {
@@ -247,7 +261,7 @@ export function useCombate(campanhaId: string | undefined) {
   }, [gravarAtores, entrarAtores])
 
   // Iniciar (12.4): rola a iniciativa de todos os personagens jogáveis e de quem luta no combate.
-  // As ameaças escolhidas do bestiário viram personagens numa pasta com o nome do combate.
+  // (Combate salvo antes desta mudança ainda pode ter ameaças só do bestiário: viram personagens aqui.)
   const iniciar = useCallback(async (combate: Combate) => {
     if (!campanhaId) return
     const { data: jogadores } = await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions').eq('campaign_id', campanhaId).eq('npc', false)

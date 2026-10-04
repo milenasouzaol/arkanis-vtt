@@ -619,7 +619,7 @@ export default function Mesa() {
           onEditarAmeaca={editarAmeaca}
           onSalvar={(nome, ameacas, escolhidos) => {
             if (montandoCombate.adicionarEm) combate.entrarAmeacas(montandoCombate.adicionarEm, ameacas, escolhidos)
-            else if (montandoCombate.editando) combate.salvar(montandoCombate.editando.id, { name: nome, ameacas, atores: escolhidos })
+            else if (montandoCombate.editando) combate.salvar(montandoCombate.editando, { name: nome, ameacas, atores: escolhidos })
             else combate.criar(nome, ameacas, escolhidos)
             setMontandoCombate(null)
           }}
