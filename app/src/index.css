@@ -15132,3 +15132,19 @@ button.character-tile-link {
   font: 0.9rem 'Signika', var(--sans);
   outline: none;
 }
+
+/* Cursor de digitação piscando em texto que não é campo (pedido da Millie): na mesa ele só
+   aparece onde dá pra digitar. */
+.mesa,
+.janela {
+  caret-color: transparent;
+}
+
+.mesa input,
+.mesa textarea,
+.mesa [contenteditable='true'],
+.janela input,
+.janela textarea,
+.janela [contenteditable='true'] {
+  caret-color: auto;
+}
