@@ -41,7 +41,16 @@ export const FERRAMENTAS: Record<CategoriaEsquerda, { id: string; rotulo: string
     { id: 'alvos', rotulo: 'Selecionar Alvos' },
     { id: 'medir', rotulo: 'Medir Distância' },
   ],
-  desenho: [],
+  desenho: [
+    { id: 'desenho-selecionar', rotulo: 'Selecionar Desenhos' },
+    { id: 'retangulo', rotulo: 'Desenhar Retângulo' },
+    { id: 'elipse', rotulo: 'Desenhar Elipse' },
+    { id: 'poligono', rotulo: 'Desenhar Polígono' },
+    { id: 'livre', rotulo: 'Desenhar à Mão Livre' },
+    { id: 'texto', rotulo: 'Desenhar Texto' },
+    { id: 'paleta', rotulo: 'Paleta Desenho' },
+    { id: 'limpar-desenhos', rotulo: 'Limpar Desenhos' },
+  ],
   som: [],
 }
 
@@ -100,4 +109,39 @@ export const SITE_PUBLICO = 'https://arkanis-vtt.vercel.app'
 export function linkDeConvite(origem: string, codigo: string): string {
   const base = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origem) ? SITE_PUBLICO : origem
   return `${base}/campanha/entrar/${codigo}`
+}
+
+// Botões da barra esquerda que fazem uma ação em vez de virar a ferramenta ativa.
+export const ACOES_ESQUERDA = ['paleta', 'limpar-desenhos']
+
+// Ajuda que aparece ao passar o mouse na ferramenta (como os "Clipes de Ferramentas" do Foundry).
+// Cada linha: rótulo + pedaços de texto; { k } é uma tecla/gesto, que aparece numa caixinha.
+export type PecaAjuda = string | { k: string }
+export const AJUDA_FERRAMENTA: Record<string, { titulo: string; linhas: [string, PecaAjuda[]][] }> = {
+  'desenho-selecionar': {
+    titulo: 'Selecionar Desenhos',
+    linhas: [
+      ['Selecionar', [{ k: 'Clique' }, ' ou ', { k: 'Clique + Arraste' }]],
+      ['Selecionar Vários', [{ k: 'SHIFT + Clique' }]],
+      ['Mover', [{ k: 'Arrastar' }]],
+      ['Editar', [{ k: 'Clique Duplo' }]],
+      ['Excluir', [{ k: 'DELETE' }]],
+      ['Rotacionar', [{ k: 'SHIFT + Rolagem do Mouse' }, ' ou ', { k: 'CTRL + Rolagem do Mouse' }]],
+    ],
+  },
+  retangulo: { titulo: 'Desenhar Retângulo', linhas: [['Desenhar', [{ k: 'Clique + Arraste' }]], ['Desenhar Proporcionalmente', [{ k: 'ALT + Clique + Arraste' }]]] },
+  elipse: { titulo: 'Desenhar Elipse', linhas: [['Desenhar', [{ k: 'Clique + Arraste' }]], ['Desenhar Proporcionalmente', [{ k: 'ALT + Clique + Arraste' }]]] },
+  poligono: {
+    titulo: 'Desenhar Polígono',
+    linhas: [['Desenhar', [{ k: 'Clique + Arraste' }, ' para começar e então ', { k: 'Clique' }, ' para adicionar pontos. ', { k: 'Clique Duplo' }, ' para finalizar.']]],
+  },
+  livre: { titulo: 'Desenhar à Mão Livre', linhas: [['Desenhar', [{ k: 'Clique + Arraste' }]]] },
+  texto: {
+    titulo: 'Desenhar Texto',
+    linhas: [
+      ['Desenhar', [{ k: 'Clique + Arraste' }]],
+      ['Desenhar Proporcionalmente', [{ k: 'ALT + Clique + Arraste' }]],
+      ['Editar', [{ k: 'Clique Duplo' }]],
+    ],
+  },
 }

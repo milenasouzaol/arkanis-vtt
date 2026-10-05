@@ -11,6 +11,7 @@ import PainelCenas, { CriarPasta } from './PainelCenas'
 import EditorCena from './EditorCena'
 import { enviarImagemDaCena, useCenas } from './useCenas'
 import { useObjetos, type Ping } from './useObjetos'
+import { useDesenhos } from './useDesenhos'
 import { tamanhoInicial, type Pasta } from './cenas'
 import PainelPersonagens from './PainelPersonagens'
 import { ConfigurarPropriedadeAtor, ConfigurarToken, ConfirmarExclusao, CriarPersonagem, FichaPortatil, PainelVariacoes } from './JanelasAtor'
@@ -39,6 +40,8 @@ import {
   ABAS_DIREITA,
   CATEGORIAS_ESQUERDA,
   FERRAMENTAS,
+  ACOES_ESQUERDA,
+  AJUDA_FERRAMENTA,
   conectados as filtrarConectados,
   linkDeConvite,
   type AbaDireita,
@@ -136,6 +139,10 @@ export default function Mesa() {
     setTimeout(() => setPings((l) => l.filter((x) => x.id !== p.id)), 2600)
   }, [])
   const objetos = useObjetos(cenas.atual?.id ?? null, receberPing)
+  const desenhos = useDesenhos(cenas.atual?.id ?? null)
+  // Paleta e Limpar Desenhos são botões de ação: o número muda e o palco abre a janela.
+  const [pedidoPaleta, setPedidoPaleta] = useState(0)
+  const [pedidoLimpar, setPedidoLimpar] = useState(0)
   const atores = useAtores(pronta?.campanha.id)
   const [criandoAtor, setCriandoAtor] = useState<{ pasta: string | null } | null>(null)
   const [pastaAtor, setPastaAtor] = useState<{ pai: string | null; editando?: Pasta } | null>(null)
@@ -518,6 +525,9 @@ export default function Mesa() {
         outrosAlvos={mira.outros}
         onAlternarAlvo={mira.alternar}
         onLimparAlvos={mira.limpar}
+        des={desenhos}
+        pedidoPaleta={pedidoPaleta}
+        pedidoLimpar={pedidoLimpar}
         combates={combate.combates}
         entraEmCombate={(id) => atoresParaCombate.some((a) => a.id === id)}
         onAdicionarAoCombate={(combateId, atorId) => {
@@ -543,11 +553,24 @@ export default function Mesa() {
 
       <nav className="mesa-controles" aria-label="Ferramentas de cena">
         <div className="mesa-coluna">
-          <BarraIcones lado="esquerda" itens={CATEGORIAS_ESQUERDA} ativo={categoria} onEscolher={setCategoria} />
+          <BarraIcones lado="esquerda" itens={CATEGORIAS_ESQUERDA} ativo={categoria} onEscolher={(c) => { setCategoria(c); const primeira = FERRAMENTAS[c][0]; if (primeira) setFerramenta(primeira.id) }} />
         </div>
         <div className="mesa-coluna">
           {FERRAMENTAS[categoria].map((f) => (
-            <BotaoIcone key={f.id} id={f.id} rotulo={f.rotulo} lado="esquerda" ativo={ferramenta === f.id} onClick={() => setFerramenta(f.id)} />
+            <BotaoIcone
+              key={f.id}
+              id={f.id}
+              rotulo={f.rotulo}
+              lado="esquerda"
+              ajuda={AJUDA_FERRAMENTA[f.id]}
+              perigo={f.id === 'limpar-desenhos'}
+              ativo={ferramenta === f.id}
+              onClick={() => {
+                if (f.id === 'paleta') setPedidoPaleta((n) => n + 1)
+                else if (f.id === 'limpar-desenhos') setPedidoLimpar((n) => n + 1)
+                else if (!ACOES_ESQUERDA.includes(f.id)) setFerramenta(f.id)
+              }}
+            />
           ))}
         </div>
       </nav>

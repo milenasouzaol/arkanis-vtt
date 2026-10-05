@@ -20,6 +20,8 @@ import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
 import type { Variacao } from './atores'
 import type { MiraDeAlguem } from './useMira'
 import { medir, noCentro, textoDaDistancia, type Ponto } from './regua'
+import { useDesenhoNoPalco } from './DesenhosNoPalco'
+import type { useDesenhos } from './useDesenhos'
 
 const MAPA_PADRAO = { w: 4000, h: 3000 }
 const ORDEM_CAMADA: Record<Camada, number> = { mapa: 0, token: 1, mestre: 2 }
@@ -41,7 +43,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0 }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -67,6 +69,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   combates?: { id: string; name: string; ativo: boolean; atores: string[] }[]
   onAdicionarAoCombate?: (combateId: string, atorId: string) => void
   entraEmCombate?: (atorId: string) => boolean
+  // Ferramentas de Desenho (KAN-52).
+  des: ReturnType<typeof useDesenhos>
+  pedidoPaleta?: number
+  pedidoLimpar?: number
 }) {
   const palcoRef = useRef<HTMLDivElement>(null)
   const [mapa, setMapa] = useState(MAPA_PADRAO)
@@ -159,6 +165,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     },
     [vista],
   )
+
+  const desenho = useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, pontoNoMapa, escala: vista.escala, pedidoPaleta, pedidoLimpar })
 
   // ---- Aplicar mudanças (com desfazer) ----
 
@@ -271,6 +279,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
       if (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (desenho.aoTeclar(e)) {
+        e.preventDefault()
+        return
+      }
       const ctrl = e.ctrlKey || e.metaKey
       if (souMestre && ctrl && e.key.toLowerCase() === 'z') {
         e.preventDefault()
@@ -318,7 +330,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     }
     window.addEventListener('keydown', tecla)
     return () => window.removeEventListener('keydown', tecla)
-  }, [focado, regua, obj, userId, nomeUsuario, selecionados, souMestre, objetos, visiveis, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer, onAlternarAlvo, onLimparAlvos])
+  }, [desenho, focado, regua, obj, userId, nomeUsuario, selecionados, souMestre, objetos, visiveis, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer, onAlternarAlvo, onLimparAlvos])
 
   // Rodinha: zoom no ponto do mouse; com Shift ou Ctrl em cima de algo selecionado, gira (12.13).
   useEffect(() => {
@@ -326,6 +338,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     if (!palco) return
     const roda = (e: WheelEvent) => {
       e.preventDefault()
+      if (desenho.aoRodar(e)) return
       if ((e.shiftKey || e.ctrlKey) && selecionados.length) {
         const passo = e.deltaY < 0 ? -15 : 15
         if (!souMestre) {
@@ -350,13 +363,14 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     }
     palco.addEventListener('wheel', roda, { passive: false })
     return () => palco.removeEventListener('wheel', roda)
-  }, [souMestre, selecionados, objetos, alterar])
+  }, [souMestre, selecionados, objetos, alterar, desenho])
 
   // ---- Mouse ----
 
   function comecarNoMapa(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0 && e.button !== 2) return
     panouComDireito.current = false
+    if (desenho.aoApertar(e)) return
     if (e.button === 0 && ferramenta === 'medir') {
       if (!cena) return
       const p = noCentro(pontoNoMapa(e.clientX, e.clientY), gradeDaRegua())
@@ -386,7 +400,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       return
     }
     // Medindo: o token não pega o clique, a régua começa ali.
-    if (e.button === 0 && ferramenta === 'medir') return
+    if (e.button === 0 && (ferramenta === 'medir' || desenho.ativo)) return
     // Ferramenta Selecionar Alvos: clicar no token mira nele (12.13).
     if (e.button === 0 && ferramenta === 'alvos') {
       e.stopPropagation()
@@ -438,6 +452,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   }
 
   function mover(e: React.PointerEvent<HTMLDivElement>) {
+    desenho.aoMover(e)
     if (regua?.aberta && cena) {
       const atual = noCentro(pontoNoMapa(e.clientX, e.clientY), gradeDaRegua())
       if (atual.x !== regua.atual.x || atual.y !== regua.atual.y) {
@@ -480,6 +495,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   }
 
   async function terminar(e?: React.PointerEvent) {
+    if (desenho.aoSoltar(e)) return
     const g = gesto.current
     gesto.current = null
     if (!g) return
@@ -702,6 +718,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       onPointerDown={comecarNoMapa}
       onPointerMove={mover}
       onPointerUp={(e) => terminar(e)}
+      onDoubleClick={() => desenho.aoDuploClique()}
       onPointerCancel={() => (gesto.current = null)}
       onContextMenu={(e) => {
         e.preventDefault()
@@ -810,6 +827,9 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
             />
           )}
 
+          {/* Desenhos (12.13): por cima do mapa e da grade, embaixo dos tokens só quando não se está desenhando. */}
+          {desenho.camada}
+
           {/* Réguas: a minha e a de quem mais estiver medindo (12.13). */}
           {cena && (() => {
             const todas = [
@@ -863,6 +883,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
           <MenuContexto x={menu.x} y={menu.y} itens={itensDoMenu()} onFechar={() => setMenu(null)} />
         </div>
       )}
+
+      <div onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onContextMenu={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+        {desenho.janelas}
+      </div>
 
       {propriedade && (
         <ConfigurarPropriedade

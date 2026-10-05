@@ -2,6 +2,13 @@ import type { ReactNode } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faBookOpen,
+  faCircle,
+  faDrawPolygon,
+  faFont,
+  faPalette,
+  faSignature,
+  faSquare,
+  faTrash,
   faBullseye,
   faCaretRight,
   faComments,
@@ -47,4 +54,12 @@ export const ICONES: Record<string, ReactNode> = {
   selecionar: fa(faExpand),
   alvos: fa(faBullseye),
   medir: fa(faRuler),
+  'desenho-selecionar': fa(faExpand),
+  retangulo: fa(faSquare),
+  elipse: fa(faCircle),
+  poligono: fa(faDrawPolygon),
+  livre: fa(faSignature),
+  texto: fa(faFont),
+  paleta: fa(faPalette),
+  'limpar-desenhos': fa(faTrash),
 }
