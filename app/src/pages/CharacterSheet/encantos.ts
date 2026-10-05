@@ -79,7 +79,7 @@ export function armaServe(alvo: AlvoDoEncanto, item: { tipo: string | null; natu
 }
 
 // Os números do ataque com os encantos da arma (e da munição) somados.
-export function numerosComEncantos<T extends { d20_bonus: number; threat_margin: number; multiplier: number; damage: { formula: string; tipo: string }[] }>(
+export function numerosComEncantos<T extends { d20_bonus: number; threat_margin: number; multiplier: number; damage: { formula: string; tipo: string; origem?: string; elemento?: string }[] }>(
   ataque: T,
   encantos: Encanto[],
 ): T {
@@ -90,6 +90,6 @@ export function numerosComEncantos<T extends { d20_bonus: number; threat_margin:
     // Margem de ameaça maior = o crítico começa num número menor do d20 (nunca abaixo de 1).
     threat_margin: Math.max(1, ataque.threat_margin - encantos.reduce((s, e) => s + (e.margem ?? 0), 0)),
     multiplier: ataque.multiplier + encantos.reduce((s, e) => s + (e.multiplicador ?? 0), 0),
-    damage: [...ataque.damage, ...encantos.flatMap((e) => (e.dano ? [{ formula: e.dano.formula, tipo: e.dano.tipo }] : []))],
+    damage: [...ataque.damage, ...encantos.flatMap((e) => (e.dano ? [{ formula: e.dano.formula, tipo: e.dano.tipo, origem: e.ritual, elemento: e.dano.tipo }] : []))],
   }
 }

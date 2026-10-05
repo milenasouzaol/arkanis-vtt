@@ -29,6 +29,8 @@ export async function recordRoll(params: {
   semRolagem?: boolean
   // Rolagem que já aparece no chat de outro jeito (botões do ataque com mira): só no Histórico.
   semChat?: boolean
+  // Dano com cada parte separada ("1d6 Impacto: 3", "4d6 Energia (Amaldiçoar Arma): 8").
+  partes?: { formula: string; tipo: string; origem?: string; elemento?: string; lados: number; total: number }[]
 }) {
   await supabase.from('character_rolls').insert({
     character_id: params.characterId,
@@ -43,6 +45,7 @@ export async function recordRoll(params: {
     nota: params.nota ?? null,
     sem_rolagem: params.semRolagem ?? false,
     sem_chat: params.semChat ?? false,
+    partes: params.partes?.length ? params.partes : null,
   })
   window.dispatchEvent(new CustomEvent('vtt-roll-recorded'))
 }

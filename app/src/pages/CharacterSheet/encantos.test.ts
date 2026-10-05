@@ -28,7 +28,7 @@ describe('rituais de arma', () => {
 it('ataque com os encantos somados', () => {
   const base = { d20_bonus: 3, threat_margin: 19, multiplier: 2, damage: [{ formula: '1d4', tipo: 'C' }] }
   const r = numerosComEncantos(base, [encantoDoRitual('Arma Atroz', 'verdadeiro')!, encantoDoRitual('Amaldiçoar Arma', 'normal', 'Morte')!])
-  expect(r).toEqual({ d20_bonus: 8, threat_margin: 17, multiplier: 4, damage: [{ formula: '1d4', tipo: 'C' }, { formula: '1d6', tipo: 'Morte' }] })
+  expect(r).toEqual({ d20_bonus: 8, threat_margin: 17, multiplier: 4, damage: [{ formula: '1d4', tipo: 'C' }, { formula: '1d6', tipo: 'Morte', origem: 'Amaldiçoar Arma', elemento: 'Morte' }] })
   expect(numerosComEncantos(base, [])).toBe(base)
   expect(textoDoEncanto(encantoDoRitual('Arma Atroz', 'normal')!)).toBe('+2 no ataque, +1 na margem de ameaça')
 })

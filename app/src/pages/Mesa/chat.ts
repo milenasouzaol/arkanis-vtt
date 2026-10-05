@@ -1,5 +1,6 @@
 // Regras puras do chat da mesa (KAN-47, spec 12.3).
 import type { Acao } from './mira'
+import type { ParteRolada } from '../CharacterSheet/danoDaArma'
 
 export type ModoEnvio = 'publico_usuario' | 'privado_mestres' | 'cego_mestres' | 'somente_si' | 'publico_personagem'
 
@@ -21,6 +22,8 @@ export type Rolagem = {
   nota?: string | null
   // Registro sem dados (ritual sem dano): só o nome e a nota.
   sem_rolagem?: boolean
+  // Dano com cada parte separada, cada uma com o seu tipo e de onde veio.
+  partes?: ParteRolada[] | null
 }
 
 export type Mensagem = {

@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faChevronRight, faCrosshairs, faDiceD20, faBurst, faHeartPulse, faPersonRunning, faRotateLeft, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
 import type { Mensagem } from './chat'
 import { nomeDoTipo, SIGLA_RECURSO, textoDosAlvos, type AcaoAtaque, type AcaoCura } from './mira'
+import PartesDoDano from './PartesDoDano'
 import { reagirAoAtaque, rolarAtaqueDaMensagem, rolarCuraDaMensagem, rolarDanoDaMensagem, rolarTesteDaCura } from './acoesDeMira'
 
 // Quem está olhando o chat: pra saber quem pode clicar em Ataque/Dano e quem reage.
@@ -101,6 +102,7 @@ function CartaoAtaque({ mensagem, acao }: { mensagem: Mensagem; acao: AcaoAtaque
                   {dano.dados.map((d, i) => <span key={i} className="chat-dado" title={`d${d.sides}`}>{d.value}</span>)}
                 </div>
               )}
+              <PartesDoDano partes={dano.partes} />
             </>
           )}
         </>

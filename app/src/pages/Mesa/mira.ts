@@ -8,7 +8,7 @@ import { lerTeste } from './combate'
 export type Alvo = { token_id: string; nome: string }
 
 // Uma parte do dano ("1d8+2" de corte, "1d6" de Sangue…).
-export type ParteDano = { formula: string; tipo: string }
+export type ParteDano = { formula: string; tipo: string; origem?: string; elemento?: string }
 
 // O ataque já calculado na hora em que saiu da ficha: os botões do chat só rolam.
 export type AtaqueDaAcao = {
@@ -25,7 +25,7 @@ export type AtaqueDaAcao = {
 export type RolagemAtaque = { rolls: number[]; kept: number; bonus: number; total: number; critico: boolean; acertos: Record<string, boolean> }
 export type RolagemDano = {
   total: number
-  partes: { valor: number; tipo: string }[]
+  partes: { valor: number; tipo: string; formula?: string; origem?: string; elemento?: string; lados?: number }[]
   dados: { sides: number; value: number }[]
   critico: boolean
   // Quanto passou em cada alvo e por quê (null: alvo sem ficha).
@@ -253,14 +253,14 @@ export function rolarAtaque(a: AtaqueDaAcao): Omit<RolagemAtaque, 'acertos'> {
 // Crítico multiplica os dados de dano (não os números fixos).
 export function rolarDanoDoAtaque(a: AtaqueDaAcao, critico: boolean): RolagemDano {
   const mult = critico ? Math.max(1, a.multiplicador) : 1
-  const partes: { valor: number; tipo: string }[] = []
+  const partes: RolagemDano['partes'] = []
   const dados: { sides: number; value: number }[] = []
   for (const p of a.partes) {
     const r = rollDiceFormula(p.formula, mult)
     if (!r) continue
     const lados = Number(/d(\d+)/i.exec(p.formula)?.[1] ?? 6)
     r.rolls.forEach((v) => dados.push({ sides: lados, value: v }))
-    partes.push({ valor: r.total, tipo: p.tipo })
+    partes.push({ valor: r.total, tipo: p.tipo, formula: p.formula, origem: p.origem, elemento: p.elemento, lados })
   }
   if (a.bonus_dano && partes.length) partes[0] = { ...partes[0], valor: partes[0].valor + a.bonus_dano }
   return { total: partes.reduce((s, p) => s + p.valor, 0), partes, dados, critico }

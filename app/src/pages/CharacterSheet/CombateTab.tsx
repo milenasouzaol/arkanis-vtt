@@ -15,6 +15,8 @@ import { useAlvosDaMesa } from '../../lib/miraDaMesa'
 import { postarAtaque } from '../Mesa/acoesDeMira'
 import { textoDosAlvos } from '../Mesa/mira'
 import { numerosComEncantos, textoDoEncanto, type Encanto } from './encantos'
+import { corDoElemento, formulaDaEmpunhadura, type ParteRolada } from './danoDaArma'
+import { nomeDoTipo } from '../Mesa/mira'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
@@ -27,7 +29,7 @@ type Attack = {
   d20_bonus: number
   threat_margin: number
   multiplier: number
-  damage: { formula: string; tipo: string }[]
+  damage: { formula: string; tipo: string; origem?: string; elemento?: string }[]
   general_info: {
     tipo?: string
     empunhadura?: string
@@ -286,7 +288,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
           bonus,
           margem: effectiveThreatMargin,
           multiplicador: attack.multiplier + activeAttackMods.reduce((sum, m) => sum + m.multiplier_bonus, 0),
-          partes: attack.damage.map((d) => ({ formula: d.formula, tipo: d.tipo })),
+          partes: attack.damage.map((d) => ({ formula: formulaDaEmpunhadura(d.formula, attack.general_info?.empunhadura), tipo: d.tipo, origem: d.origem, elemento: d.elemento })),
           bonus_dano: activeDamageMods.reduce((sum, m) => sum + m.value_bonus, 0) + (attack.general_info?.damage_bonus_from_mods ?? 0),
           corpo,
         },
@@ -336,17 +338,23 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
     const extraLines: string[] = []
     let total = damageValueBonus
 
+    // Cada parte rola com o seu tipo: o dano da arma (1d6/1d8 = uma mão/duas mãos) e os extras.
+    const partes: ParteRolada[] = []
     attack.damage.forEach((d) => {
-      const sidesMatch = d.formula.match(/d(\d+)/i)
+      const formula = formulaDaEmpunhadura(d.formula, attack.general_info?.empunhadura)
+      const sidesMatch = formula.match(/d(\d+)/i)
       const sides = sidesMatch ? Number(sidesMatch[1]) : 6
-      const rolled = rollDiceFormula(d.formula, 1)
+      const rolled = rollDiceFormula(formula, 1)
+      const tipo = nomeDoTipo(d.tipo)
       if (!rolled) {
-        extraLines.push(`Dano${d.tipo ? ` (${d.tipo})` : ''}: role manualmente (${d.formula})`)
+        extraLines.push(`Dano${tipo ? ` (${tipo})` : ''}: role manualmente (${d.formula})`)
         return
       }
       rolled.rolls.forEach((v) => dice.push({ sides, value: v }))
-      total += rolled.total * critMultiplier
-      if (d.tipo) extraLines.push(`Tipo: ${d.tipo}`)
+      const valor = rolled.total * critMultiplier
+      total += valor
+      partes.push({ formula, tipo, origem: d.origem, elemento: d.elemento, lados: sides, total: valor })
+      extraLines.push(`${formula}${tipo ? ` ${tipo}` : ''}${d.origem ? ` (${d.origem})` : ''}: ${valor}`)
     })
 
     const label = isCrit ? `Dano Crítico: ${attack.name} (x${critMultiplier})` : `Dano: ${attack.name}`
@@ -357,7 +365,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
       recordRoll({
         characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
         label, total, detail: dice.map((d) => `d${d.sides}: ${d.value}`).join(' · '),
-        dice, bonus: damageValueBonus,
+        dice, bonus: damageValueBonus, partes,
       })
     }
   }
@@ -575,9 +583,10 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
               const comTipo = `${base}${principal.tipo ? ` ${principal.tipo}` : ''}`
               return extras.length ? `${comTipo} +${extras.map((d) => d.formula).join(' +')}` : comTipo
             })()}
-            danoDetalhado={a.damage.map((d, i) => {
+            danoDetalhado={(a.damage as Attack['damage']).map((d, i) => {
               const bonus = i === 0 ? (a.general_info?.damage_bonus_from_mods ?? 0) : 0
-              return `${somaBonusNoDano(d.formula, bonus)}${d.tipo ? ` ${d.tipo}` : ''}`
+              const tipo = nomeDoTipo(d.tipo)
+              return { texto: `${somaBonusNoDano(d.formula, bonus)}${tipo ? ` ${tipo}` : ''}`, origem: d.origem, cor: corDoElemento(d.elemento) }
             })}
             critico={`${a.threat_margin}/x${a.multiplier}`}
             info={a.general_info}

@@ -8,7 +8,7 @@ import d12Icon from '../../assets/dice-roll/d12-icon.png'
 import d20Icon from '../../assets/dice-roll/d20-icon.png'
 
 const DIE_ICON: Record<number, string> = { 6: d6Icon, 8: d8Icon, 10: d10Icon, 12: d12Icon, 20: d20Icon }
-const DIE_COLOR: Record<number, string> = { 4: '#3b6fd6', 6: '#12786a', 8: '#8a721f', 10: '#d1571f', 12: '#249c3d', 20: '#7c4fe0' }
+export const DIE_COLOR: Record<number, string> = { 4: '#3b6fd6', 6: '#12786a', 8: '#8a721f', 10: '#d1571f', 12: '#249c3d', 20: '#7c4fe0' }
 
 export type DamageRollDetail =
   | { label: string; rolls: number[]; modifier: number; total: number; manualFormula?: undefined }

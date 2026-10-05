@@ -14672,3 +14672,46 @@ button.character-tile-link {
     box-shadow: 0 0 10px rgba(240, 240, 242, 0.45);
   }
 }
+
+/* Dano por partes no chat: fórmula na cor do dado, tipo, origem na cor do elemento e o valor */
+.chat-partes {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+}
+
+.chat-partes li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.chat-partes-formula {
+  padding: 0 6px;
+  border-radius: 3px;
+  color: #fff;
+  font-weight: 700;
+}
+
+.chat-partes-origem {
+  padding: 0 5px;
+  background: #2b2830;
+  color: #fff;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.chat-partes-valor {
+  margin-left: auto;
+  font-size: 0.9rem;
+}
+
+/* Dano extra no card do ataque: de onde veio, na cor do elemento */
+.dano-origem {
+  font-weight: 700;
+}

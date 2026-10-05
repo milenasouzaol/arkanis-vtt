@@ -61,8 +61,8 @@ export default function AttackCard({
   name: string
   ataque: string
   dano: string
-  /** Cada linha de dano por extenso, para o card expandido. */
-  danoDetalhado?: string[]
+  /** Cada linha de dano por extenso, para o card expandido (o extra diz de onde veio, na cor do elemento). */
+  danoDetalhado?: { texto: string; origem?: string; cor?: string | null }[]
   critico: string
   info: AttackGeneralInfo
   descricao?: string | null
@@ -132,9 +132,12 @@ export default function AttackCard({
               <div className="inv-item-divider" />
               <dl className="inv-item-details">
                 {danoDetalhado.map((linha, i) => (
-                  <div key={linha + i}>
+                  <div key={linha.texto + i}>
                     <dt>{i === 0 ? 'Dano' : 'Dano extra'}</dt>
-                    <dd>{linha}</dd>
+                    <dd>
+                      {linha.texto}
+                      {linha.origem && <span className="dano-origem" style={linha.cor ? { color: linha.cor } : undefined}> ({linha.origem})</span>}
+                    </dd>
                   </div>
                 ))}
               </dl>
