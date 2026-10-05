@@ -722,6 +722,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       onPointerCancel={() => (gesto.current = null)}
       onContextMenu={(e) => {
         e.preventDefault()
+        if (desenho.aoMenu(e)) return
         if (!panouComDireito.current) abrirMenu(e.clientX, e.clientY, null)
       }}
       onDragStart={(e) => e.preventDefault()}

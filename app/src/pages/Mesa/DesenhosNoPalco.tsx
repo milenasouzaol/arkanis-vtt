@@ -64,6 +64,13 @@ export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, po
     setPoligono(null)
     setPrevia(null)
   }, [cena?.id, ferramenta])
+  // Desenhando polígono: Esc cancela de qualquer lugar (até com o cursor no chat).
+  useEffect(() => {
+    if (!poligono) return
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setPoligono(null)
+    window.addEventListener('keydown', esc, true)
+    return () => window.removeEventListener('keydown', esc, true)
+  }, [poligono])
   useEffect(() => {
     try {
       localStorage.setItem(CHAVE_ESTILO, JSON.stringify(estilo))
@@ -105,8 +112,10 @@ export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, po
       if (!e.shiftKey) setSelecionados([])
       gesto.current = { tipo: 'caixa', inicio: p, somar: e.shiftKey }
     } else if (ferramenta === 'poligono') {
-      // Clique + arraste começa; cada clique depois adiciona um ponto.
-      if (poligono) setPoligono({ pontos: [...poligono.pontos, p], atual: p })
+      // Clique + arraste começa; cada clique depois adiciona um ponto; clicar no primeiro ponto fecha.
+      const primeiro = poligono?.pontos[0]
+      if (poligono && primeiro && poligono.pontos.length >= 3 && Math.hypot(p.x - primeiro.x, p.y - primeiro.y) < 14 / Math.max(escala, 0.1)) terminarPoligono()
+      else if (poligono) setPoligono({ pontos: [...poligono.pontos, p], atual: p })
       else {
         setPoligono({ pontos: [p], atual: p })
         gesto.current = { tipo: 'forma', forma: 'poligono', inicio: p }
@@ -189,6 +198,14 @@ export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, po
     if (!movidos.length) return
     gesto.current = { tipo: 'mover', inicio: pontoNoMapa(e.clientX, e.clientY), origem: Object.fromEntries(movidos.map((x) => [x.id, { x: x.x, y: x.y }])), dx: 0, dy: 0 }
     ;(e.currentTarget as Element).closest('.mesa-palco')?.setPointerCapture(e.pointerId)
+  }
+
+  // Botão direito enquanto desenha o polígono: termina (e não abre o menu).
+  function aoMenu(e: React.MouseEvent): boolean {
+    if (!poligono) return false
+    e.preventDefault()
+    terminarPoligono()
+    return true
   }
 
   function aoDuploClique(): boolean {
@@ -298,6 +315,11 @@ export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, po
 
   const janelas = (
     <>
+      {poligono && (
+        <p className="mesa-desenho-aviso" role="status">
+          <kbd>Clique</kbd> adiciona ponto · <kbd>Clique Duplo</kbd>, <kbd>Enter</kbd> ou <kbd>Botão Direito</kbd> termina · <kbd>Esc</kbd> cancela
+        </p>
+      )}
       {paleta && <PaletaDesenho estilo={estilo} onMudar={mudarEstilo} onFechar={() => setPaleta(false)} />}
 
       {texto && (
@@ -335,7 +357,7 @@ export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, po
     </>
   )
 
-  return { ativo, camada, janelas, aoApertar, aoMover, aoSoltar, aoDuploClique, aoTeclar, aoRodar }
+  return { ativo, camada, janelas, aoApertar, aoMover, aoSoltar, aoDuploClique, aoTeclar, aoRodar, aoMenu }
 }
 
 const FONTES = ['Signika', 'Roboto', 'Roboto Slab', 'Amiri', 'Bruno Ace', 'Freehand', 'Barlow']
@@ -357,7 +379,7 @@ function PaletaDesenho({ estilo, onMudar, onFechar }: { estilo: EstiloDesenho; o
   const fundo = (c: Partial<EstiloDesenho['preenchimento']>) => onMudar({ ...estilo, preenchimento: { ...estilo.preenchimento, ...c } })
   const letra = (c: Partial<EstiloDesenho['texto']>) => onMudar({ ...estilo, texto: { ...estilo.texto, ...c } })
   return (
-    <Janela titulo="Paleta Desenho" icone={faPalette} largura={320} inicial={{ x: 110, y: 120 }} onFechar={onFechar}>
+    <Janela titulo="Paleta Desenho" icone={faPalette} largura={340} inicial={{ x: 110, y: 120 }} onFechar={onFechar}>
       <div className="janela-form paleta-desenho">
         {secao('linha', 'Linhas', (
           <>
@@ -382,9 +404,13 @@ function PaletaDesenho({ estilo, onMudar, onFechar }: { estilo: EstiloDesenho; o
           <>
             <Campo rotulo="Fonte">
               <select value={estilo.texto.fonte} aria-label="Fonte" onChange={(e) => letra({ fonte: e.target.value })}>
-                {FONTES.map((f) => <option key={f} value={f}>{f}</option>)}
+                {FONTES.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
               </select>
             </Campo>
+            {/* Prévia: como a letra fica, na cor e opacidade escolhidas */}
+            <p className="paleta-previa-fonte" style={{ fontFamily: estilo.texto.fonte, color: estilo.texto.cor, opacity: estilo.texto.opacidade }}>
+              Aa Bb Cc 123
+            </p>
             <Campo rotulo="Tamanho da Fonte"><CampoNumero className="janela-curto" rotulo="Tamanho da Fonte" min={6} max={400} valor={estilo.texto.tamanho} onMudar={(v) => letra({ tamanho: v })} /></Campo>
             <Campo rotulo="Cor do Texto"><CampoCor rotulo="Cor do Texto" valor={estilo.texto.cor} onMudar={(v) => letra({ cor: v })} /></Campo>
             <Campo rotulo="Opacidade do Texto"><Deslizante rotulo="Opacidade do Texto" min={0} max={1} valor={estilo.texto.opacidade} onMudar={(v) => letra({ opacidade: v })} /></Campo>

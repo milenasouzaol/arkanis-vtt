@@ -14797,8 +14797,21 @@ button.character-tile-link {
 }
 
 /* Paleta Desenho: seções Linhas / Preencher / Texto que abrem e fecham */
+/* o fieldset não encolhe menos que o conteúdo por padrão: era isso que fazia tudo vazar */
+.paleta-desenho fieldset,
+.paleta-desenho .janela-controle,
+.paleta-desenho select,
+.paleta-desenho input {
+  min-width: 0;
+}
+
 .paleta-desenho .janela-campo {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 118px minmax(0, 1fr);
+}
+
+.paleta-desenho select,
+.paleta-desenho .janela-cor input:not([type='color']) {
+  width: 100%;
 }
 
 .paleta-secao-titulo {
@@ -14844,4 +14857,42 @@ button.character-tile-link {
   font: 0.95rem 'Signika', var(--sans);
   box-sizing: border-box;
   resize: vertical;
+}
+
+/* Desenhando polígono: como terminar e cancelar, sempre à vista */
+.mesa-desenho-aviso {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 14px;
+  background: var(--mesa-painel);
+  border: 1px solid var(--mesa-borda);
+  border-radius: 6px;
+  color: var(--mesa-creme);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.mesa-desenho-aviso kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--mesa-creme-dim);
+  border-radius: 3px;
+  font: 600 0.78rem 'Signika', var(--sans);
+}
+
+/* Prévia da fonte na Paleta Desenho */
+.paleta-previa-fonte {
+  margin: 0;
+  padding: 8px 10px;
+  background: #1d1b21;
+  border-radius: 4px;
+  font-size: 1.35rem;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
