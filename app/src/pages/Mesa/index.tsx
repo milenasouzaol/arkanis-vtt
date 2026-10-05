@@ -395,7 +395,7 @@ export default function Mesa() {
     }
     if (p.categoria === 'desenho' && p.dados.desenho) {
       const d = p.dados.desenho
-      await desenhos.criar({ ...base, ...d, ...caixaNoPonto(ponto, d.width, d.height), author_id: userId })
+      await desenhos.criar({ ...base, ...d, ...caixaNoPonto(ponto, d.width, d.height), author_id: userId, posicionavel_id: p.id })
       return
     }
     if (!p.url) return
@@ -407,26 +407,16 @@ export default function Mesa() {
       const lado = atual.grid_size * 3
       const erro = await sons.criar({
         ...base, name: p.name, url: p.url, ...caixaNoPonto(ponto, p.dados.largura ?? lado, p.dados.altura ?? lado),
-        volume: p.dados.volume ?? 1, suavizar: p.dados.suavizar ?? true, escondido: false, ligado: true,
+        volume: p.dados.volume ?? 1, suavizar: p.dados.suavizar ?? true, escondido: false, ligado: true, posicionavel_id: p.id,
       })
       if (erro) avisar(erro, true)
       return
     }
-    // Token, Objeto, Luz e desenho em imagem: imagem por cima do mapa.
-    let largura = p.dados.largura
-    let altura = p.dados.altura
-    if (!largura || !altura) {
-      const nat = await tamanhoDaImagem(p.url)
-      if (p.categoria === 'token') {
-        largura = atual.grid_size
-        altura = nat.w > 0 ? Math.round((largura * nat.h) / nat.w) : largura
-      } else {
-        const fundo = atual.background_url ? await tamanhoDaImagem(atual.background_url) : { w: 0, h: 0 }
-        const t = tamanhoInicial(nat.w, nat.h, fundo.w || 2000, fundo.h || 2000)
-        largura = t.width
-        altura = t.height
-      }
-    }
+    // Token, Objeto, Luz e desenho em imagem: entra no tamanho original da imagem, sem mexer
+    // (pedido da Millie).
+    const nat = await tamanhoDaImagem(p.url)
+    const largura = nat.w || atual.grid_size
+    const altura = nat.h || atual.grid_size
     await objetos.criar({
       ...base, name: p.name, image_url: p.url, ...caixaNoPonto(ponto, largura, altura),
       layer: p.categoria === 'token' ? 'token' : 'mapa', luz: p.categoria === 'luz',

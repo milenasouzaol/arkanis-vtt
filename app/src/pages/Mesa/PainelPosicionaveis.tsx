@@ -285,7 +285,11 @@ export default function PainelPosicionaveis({ souMestre, userId, api, categoria,
         <p className="mesa-painel-vazio">
           {categoria === 'nota'
             ? 'Nenhuma nota ainda. Clique no + pra criar.'
-            : 'Nada guardado ainda. Importe pelo +, arraste o arquivo pra cá, ou arraste da mesa pra cá.'}
+            : categoria === 'desenho'
+              ? 'Nada ainda. Tudo que for feito com as Ferramentas de Desenho aparece aqui sozinho; imagem, PDF ou documento entra pelo + ou arrastando o arquivo.'
+              : categoria === 'som'
+                ? 'Nada ainda. Todo Som Ambiente criado na mesa aparece aqui sozinho; áudio entra pelo + ou arrastando o arquivo.'
+                : 'Nada guardado ainda. Importe pelo +, arraste o arquivo pra cá, ou arraste da mesa pra cá.'}
         </p>
       )}
 

@@ -7,7 +7,6 @@ import { caixaDoArrasto } from './desenhos'
 import { PADRAO_SOM, porcentagemNoPonto, volumeParaOuvintes, type SomAmbiente } from './sons'
 import { enviarSom, useTocarSons, type useSons } from './useSons'
 import { useVolumesDoUsuario } from './volumesDoUsuario'
-import { soltouNosPosicionaveis } from './PainelPosicionaveis'
 import { volumeFinal } from './playlists'
 
 type Ponto = { x: number; y: number }
@@ -23,7 +22,7 @@ type Gesto =
 
 type Formulario = { editando?: SomAmbiente; caixa: { x: number; y: number; width: number; height: number }; name: string; url: string; volume: number; suavizar: boolean; escondido: boolean }
 
-export function useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, pontoNoMapa, escala, ouvintes, pedidoPaleta, pedidoLimpar, onGuardar }: {
+export function useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, pontoNoMapa, escala, ouvintes, pedidoPaleta, pedidoLimpar }: {
   cena: Cena | null
   ferramenta: string
   userId: string
@@ -34,7 +33,6 @@ export function useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, ponto
   ouvintes: Ponto[] // centro dos tokens de quem está olhando (os seus, ou os selecionados, no mestre)
   pedidoPaleta: number
   pedidoLimpar: number
-  onGuardar?: (sons: SomAmbiente[]) => void // soltou em cima dos Posicionáveis (12.6)
 }) {
   const [padrao, setPadrao] = useState(PADRAO_SOM)
   const [selecionados, setSelecionados] = useState<string[]>([])
@@ -106,11 +104,7 @@ export function useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, ponto
       const c = caixaDoArrasto(g.inicio, p)
       if (c.width > 10 && c.height > 10) abrirFormulario(null, c)
     } else if (g.tipo === 'mover') {
-      // Arrastou pra aba Posicionáveis: guarda uma cópia lá e o som volta pro lugar.
-      if (onGuardar && soltouNosPosicionaveis(e)) {
-        for (const [id, o] of Object.entries(g.origem)) sons.alterar(id, { x: o.x, y: o.y }, false)
-        onGuardar(sons.sons.filter((x) => x.id in g.origem))
-      } else if (g.dx || g.dy) for (const [id, o] of Object.entries(g.origem)) sons.alterar(id, { x: o.x + g.dx, y: o.y + g.dy })
+      if (g.dx || g.dy) for (const [id, o] of Object.entries(g.origem)) sons.alterar(id, { x: o.x + g.dx, y: o.y + g.dy })
     } else if (g.tipo === 'caixa') {
       const c = caixa
       setCaixa(null)

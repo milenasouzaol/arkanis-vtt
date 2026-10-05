@@ -144,10 +144,11 @@ Miniatura na lista reflete ao vivo a imagem de fundo. Menu de contexto da cena: 
 
 ### 12.6 Barra Direita — Posicionáveis (4º ícone, peça de quebra-cabeça)
 Armazém de assets reutilizáveis do mestre: arrastar pra aba pra guardar, arrastar pra mesa pra usar. Pastas e subpastas. 6 categorias (abas de ícone, como no Foundry): **Tokens, Objetos, Desenhos, Luzes Ambientes, Sons Ambientes, Notas**. Paredes e Regiões ficam de fora.
+Imagem (token, objeto, luz, desenho em imagem) entra na mesa sempre no tamanho original dela, sem redimensionar.
 - Tokens: importar PNG (botão ou arrastar) registra; nome = nome do arquivo; botão direito → Renomear; arrastar pra mesa insere. Uso: NPC sem ficha, árvore, carro.
-- Desenhos: PNG, PDF ou documento.
+- Desenhos: PNG, PDF ou documento; e tudo que for feito com as Ferramentas de Desenho (de qualquer pessoa) fica registrado aqui sozinho.
 - Luzes Ambientes: efeitos de luz, aceita GIF.
-- Sons Ambientes: áudios rápidos (porta batendo, vento).
+- Sons Ambientes: áudios rápidos (porta batendo, vento); todo Som Ambiente criado na mesa fica registrado aqui sozinho.
 - Objetos (os "Tiles" do Foundry): imagem solta por cima do mapa e por baixo dos tokens (árvore, carro, mesa); sem ficha.
 - Notas: notas soltas.
 

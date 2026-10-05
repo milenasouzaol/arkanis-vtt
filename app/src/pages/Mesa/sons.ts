@@ -15,6 +15,7 @@ export type SomAmbiente = {
   suavizar: boolean // vai baixando do centro pra borda
   escondido: boolean // não toca pros jogadores
   ligado: boolean // clique direito liga/desliga
+  posicionavel_id?: string | null // colocado a partir dos Posicionáveis
   created_at: string
 }
 

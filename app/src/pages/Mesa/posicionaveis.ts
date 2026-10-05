@@ -2,7 +2,6 @@
 // Regras puras, testadas.
 import type { ObjetoCena } from './cenas'
 import type { Desenho } from './desenhos'
-import type { SomAmbiente } from './sons'
 
 export type CategoriaPosicionavel = 'token' | 'objeto' | 'desenho' | 'luz' | 'som' | 'nota'
 
@@ -18,9 +17,9 @@ export const CATEGORIAS_POSICIONAVEIS: { id: CategoriaPosicionavel; rotulo: stri
 
 // O que vai guardado em `dados`, conforme a aba.
 export type DadosPosicionavel = {
-  largura?: number // tamanho com que entra na mesa (tokens, objetos, luzes)
+  largura?: number // tamanho da área (sons); imagem entra sempre no tamanho dela
   altura?: number
-  desenho?: Omit<Desenho, 'id' | 'scene_id' | 'campaign_id' | 'author_id' | 'x' | 'y' | 'sort' | 'created_at'> // desenho guardado da mesa
+  desenho?: Pick<Desenho, 'tipo' | 'width' | 'height' | 'rotation' | 'pontos' | 'texto' | 'estilo'> // feito com as Ferramentas de Desenho
   volume?: number // sons
   suavizar?: boolean
   texto?: string // notas
@@ -61,7 +60,6 @@ export function nomeDoArquivo(nome: string): string {
   return nome.replace(/\.[^.]+$/, '').trim() || 'Sem nome'
 }
 
-// Arrastar o desenho guardado pra mesa: entra centrado onde soltou.
 // Arquivo de desenho que não é imagem (PDF, documento) não vai pro mapa: abre numa aba.
 export function vaiProMapa(p: Pick<Posicionavel, 'categoria' | 'url' | 'dados'>): boolean {
   if (p.categoria === 'nota') return false
@@ -75,27 +73,13 @@ export function categoriaDoObjeto(o: Pick<ObjetoCena, 'layer'> & { luz?: boolean
   return o.layer === 'mapa' ? 'objeto' : 'token'
 }
 
+// Guarda só a imagem: ao voltar pra mesa, entra no tamanho original dela (pedido da Millie).
 export function guardarObjeto(o: ObjetoCena & { luz?: boolean }): Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'> {
   const categoria = categoriaDoObjeto(o)
   const padrao = categoria === 'luz' ? 'Luz Ambiente' : categoria === 'objeto' ? 'Objeto' : 'Token'
-  return { categoria, name: o.name?.trim() || padrao, url: o.image_url, dados: { largura: Math.round(o.width), altura: Math.round(o.height) } }
+  return { categoria, name: o.name?.trim() || padrao, url: o.image_url, dados: {} }
 }
 
-const NOME_DO_DESENHO: Record<Desenho['tipo'], string> = { retangulo: 'Retângulo', elipse: 'Elipse', poligono: 'Polígono', livre: 'Mão Livre', texto: 'Texto' }
-
-export function guardarDesenho(d: Desenho): Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'> {
-  const nome = d.tipo === 'texto' && d.texto?.trim() ? d.texto.trim().slice(0, 40) : NOME_DO_DESENHO[d.tipo]
-  return {
-    categoria: 'desenho',
-    name: nome,
-    url: null,
-    dados: { desenho: { tipo: d.tipo, width: d.width, height: d.height, rotation: d.rotation, pontos: d.pontos, texto: d.texto, estilo: d.estilo } },
-  }
-}
-
-export function guardarSom(s: SomAmbiente): Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'> {
-  return { categoria: 'som', name: s.name?.trim() || 'Som Ambiente', url: s.url, dados: { largura: s.width, altura: s.height, volume: s.volume, suavizar: s.suavizar } }
-}
 
 // Caixa centrada no ponto onde soltou.
 export function caixaNoPonto(ponto: { x: number; y: number }, largura: number, altura: number) {

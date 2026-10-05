@@ -18,7 +18,7 @@ import {
 import type { Ping, useObjetos } from './useObjetos'
 import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
 import { soltouNosPosicionaveis, TIPO_ARRASTO_POSICIONAVEL } from './PainelPosicionaveis'
-import { guardarDesenho, guardarObjeto, guardarSom, type Posicionavel } from './posicionaveis'
+import { guardarObjeto, type Posicionavel } from './posicionaveis'
 import type { Variacao } from './atores'
 import type { MiraDeAlguem } from './useMira'
 import { medir, noCentro, textoDaDistancia, type Ponto } from './regua'
@@ -177,12 +177,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     [vista],
   )
 
-  const desenho = useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, pontoNoMapa, escala: vista.escala, pedidoPaleta, pedidoLimpar, onGuardar: souMestre && onGuardarPosicionaveis ? (ds) => onGuardarPosicionaveis(ds.map(guardarDesenho)) : undefined })
+  const desenho = useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, pontoNoMapa, escala: vista.escala, pedidoPaleta, pedidoLimpar })
   // Quem ouve o Som Ambiente: os tokens do jogador; no mestre, os tokens selecionados.
   const ouvintes = objetos
     .filter((o) => (souMestre ? selecionados.includes(o.id) : o.character_id !== null && meusPersonagens.includes(o.character_id)))
     .map((o) => ({ x: o.x + o.width / 2, y: o.y + o.height / 2 }))
-  const som = useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, pontoNoMapa, escala: vista.escala, ouvintes, pedidoPaleta: pedidoPaletaSom, pedidoLimpar: pedidoLimparSom, onGuardar: souMestre && onGuardarPosicionaveis ? (ss) => onGuardarPosicionaveis(ss.map(guardarSom)) : undefined })
+  const som = useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, pontoNoMapa, escala: vista.escala, ouvintes, pedidoPaleta: pedidoPaletaSom, pedidoLimpar: pedidoLimparSom })
 
   // ---- Aplicar mudanças (com desfazer) ----
 

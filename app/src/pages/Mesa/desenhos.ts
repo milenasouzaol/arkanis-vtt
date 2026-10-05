@@ -23,6 +23,7 @@ export type Desenho = {
   texto: string | null
   estilo: EstiloDesenho
   sort: number
+  posicionavel_id?: string | null // colocado a partir dos Posicionáveis
   created_at: string
 }
 
