@@ -30,7 +30,7 @@ describe('playlist', () => {
   })
   it('volume final e ordem', () => {
     expect(volumeFinal(0.8, 1)).toBe(0.8)
-    expect(volumeFinal(0.8, 0.5)).toBe(0.2)
+    expect(volumeFinal(0.8, 0.5)).toBe(0.4)
     expect(volumeFinal(0.8, 0)).toBe(0)
     expect(ordemDosSons([{ sort: 2, created_at: 'a', name: 'x' }, { sort: 1, created_at: 'b', name: 'y' }]).map((s) => s.name)).toEqual(['y', 'x'])
   })

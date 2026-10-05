@@ -113,12 +113,8 @@ export function usePlaylists(campanhaId: string | undefined, souMestre: boolean)
 
   const sonsDa = useCallback((playlistId: string) => ordemDosSons(sons.filter((s) => s.playlist_id === playlistId)), [sons])
 
-  const tocarSom = useCallback(async (som: SomPlaylist) => {
-    // Numa playlist só toca um por vez: os outros dela param.
-    const outros = sons.filter((s) => s.playlist_id === som.playlist_id && s.tocando && s.id !== som.id).map((s) => s.id)
-    await marcar(outros, false)
-    await marcar([som.id], true)
-  }, [sons, marcar])
+  // Dá pra tocar vários sons ao mesmo tempo, inclusive da mesma playlist (árvores + cachoeira).
+  const tocarSom = useCallback((som: SomPlaylist) => marcar([som.id], true), [marcar])
 
   const pararSom = useCallback((som: SomPlaylist) => marcar([som.id], false), [marcar])
 
@@ -140,12 +136,11 @@ export function usePlaylists(campanhaId: string | undefined, souMestre: boolean)
     if (!som || !p) return
     avancando.current.add(somId)
     const proximo = proximoSom(p.modo, sonsDa(p.id), somId)
-    const seguinte = sons.find((s) => s.id === proximo)
-    if (seguinte && seguinte.id !== somId) await tocarSom(seguinte)
-    else if (seguinte) await marcar([somId], true) // repetir com um som só: recomeça
-    else await marcar([somId], false)
+    // O que acabou para; o próximo da playlist começa (com um som só no Repetir, ele recomeça).
+    await marcar([somId], false)
+    if (proximo) await marcar([proximo], true)
     avancando.current.delete(somId)
-  }, [souMestre, sons, playlists, sonsDa, tocarSom, marcar])
+  }, [souMestre, sons, playlists, sonsDa, marcar])
 
   // Toca o que está marcado, com o volume do som × o controle da pessoa pro canal.
   const meusVolumes = useVolumesDoUsuario()

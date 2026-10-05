@@ -78,10 +78,10 @@ export function primeiroSom(modo: ModoPlayback, sons: Pick<SomPlaylist, 'id'>[],
   return proximoSom(modo, sons, null, sorteio)
 }
 
-// Volume que toca: o do som × o controle da pessoa pro canal dele. O controle passa por uma
-// curva de audição (metade do slider soa como metade do volume).
+// Volume que toca: o do som × o controle da pessoa pro canal dele (de 0 a 100, direto: em 0 não
+// toca e qualquer valor acima já se ouve — pedido da Millie).
 export function volumeFinal(volumeDoSom: number, controleDoCanal: number): number {
-  return Math.round(volumeDoSom * controleDoCanal ** 2 * 1000) / 1000
+  return Math.round(volumeDoSom * controleDoCanal * 1000) / 1000
 }
 
 // Em que segundo o som está (quem entra na mesa no meio da música ouve do mesmo ponto).

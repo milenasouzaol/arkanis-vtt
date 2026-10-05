@@ -15009,7 +15009,7 @@ button.character-tile-link {
 
 .playlist-volume {
   display: grid;
-  grid-template-columns: 90px 16px 1fr;
+  grid-template-columns: 90px 16px 1fr 30px;
   align-items: center;
   gap: 6px;
   padding: 3px 10px;
@@ -15147,4 +15147,14 @@ button.character-tile-link {
 .janela textarea,
 .janela [contenteditable='true'] {
   caret-color: auto;
+}
+
+.playlist-volume input {
+  margin: 0;
+}
+
+.playlist-volume output {
+  font-size: 0.8rem;
+  text-align: right;
+  color: var(--mesa-creme-dim);
 }

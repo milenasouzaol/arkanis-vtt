@@ -49,7 +49,8 @@ export default function PainelPlaylist({ souMestre, userId, pl }: { souMestre: b
         <label key={c.id} className="playlist-volume">
           <span>{c.rotulo}</span>
           <FontAwesomeIcon icon={faVolumeHigh} />
-          <input type="range" min={0} max={1} step={0.01} value={volumes[c.id]} aria-label={`Volume: ${c.rotulo}`} onChange={(e) => salvarVolume(c.id, Number(e.target.value))} />
+          <input type="range" min={0} max={100} step={1} value={Math.round(volumes[c.id] * 100)} aria-label={`Volume: ${c.rotulo}`} onChange={(e) => salvarVolume(c.id, Number(e.target.value) / 100)} />
+          <output>{Math.round(volumes[c.id] * 100)}</output>
         </label>
       ))}
     </section>
