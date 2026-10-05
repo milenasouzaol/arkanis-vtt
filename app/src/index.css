@@ -1791,6 +1791,8 @@ code, .counter {
   max-height: 100%;
   overflow-y: auto;
   scrollbar-gutter: stable;
+  /* folga em cima: a moldura do avatar passa da foto e não pode encostar na borda da coluna */
+  padding-top: 10px;
   /* encolhe a coluna inteira de uma vez - avatar, atributos e as barras
      juntos, na mesma proporcao. Mesmo recurso que .vtt-columns ja usa. */
   zoom: 0.88;
