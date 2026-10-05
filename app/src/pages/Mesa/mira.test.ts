@@ -111,3 +111,9 @@ describe('cura no texto', () => {
     expect(curaDoTexto('8d6 dano de Energia')).toBeNull()
   })
 })
+
+it('crítico não multiplica o dano extra de encanto', () => {
+  const r = rolarDanoDoAtaque({ nome: 'x', dados: 1, bonus: 0, margem: 20, multiplicador: 3, bonus_dano: 0,
+    partes: [{ formula: '1d6', tipo: 'I' }, { formula: '4d6', tipo: 'Energia', origem: 'Amaldiçoar Arma', elemento: 'Energia' }] }, true)
+  expect(r.dados).toHaveLength(3 + 4)
+})

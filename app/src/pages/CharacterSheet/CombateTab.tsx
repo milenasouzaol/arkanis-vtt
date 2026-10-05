@@ -344,14 +344,16 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
       const formula = formulaDaEmpunhadura(d.formula, attack.general_info?.empunhadura)
       const sidesMatch = formula.match(/d(\d+)/i)
       const sides = sidesMatch ? Number(sidesMatch[1]) : 6
-      const rolled = rollDiceFormula(formula, 1)
+      // Crítico: só o dano base da arma multiplica, e são os dados que multiplicam (x2: 1d6 vira
+      // 2d6). Dano extra de encanto (Amaldiçoar Arma…) entra uma vez só.
+      const rolled = rollDiceFormula(formula, d.origem ? 1 : critMultiplier)
       const tipo = nomeDoTipo(d.tipo)
       if (!rolled) {
         extraLines.push(`Dano${tipo ? ` (${tipo})` : ''}: role manualmente (${d.formula})`)
         return
       }
       rolled.rolls.forEach((v) => dice.push({ sides, value: v }))
-      const valor = rolled.total * critMultiplier
+      const valor = rolled.total
       total += valor
       partes.push({ formula, tipo, origem: d.origem, elemento: d.elemento, lados: sides, total: valor })
       extraLines.push(`${formula}${tipo ? ` ${tipo}` : ''}${d.origem ? ` (${d.origem})` : ''}: ${valor}`)

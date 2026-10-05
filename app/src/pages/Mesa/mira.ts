@@ -250,13 +250,14 @@ export function rolarAtaque(a: AtaqueDaAcao): Omit<RolagemAtaque, 'acertos'> {
   return { rolls, kept, bonus: a.bonus, total: kept + a.bonus, critico: kept >= a.margem }
 }
 
-// Crítico multiplica os dados de dano (não os números fixos).
+// Crítico: só o dano base da arma multiplica, e são os dados (não os números fixos); dano extra
+// de encanto (Amaldiçoar Arma…) entra uma vez só.
 export function rolarDanoDoAtaque(a: AtaqueDaAcao, critico: boolean): RolagemDano {
   const mult = critico ? Math.max(1, a.multiplicador) : 1
   const partes: RolagemDano['partes'] = []
   const dados: { sides: number; value: number }[] = []
   for (const p of a.partes) {
-    const r = rollDiceFormula(p.formula, mult)
+    const r = rollDiceFormula(p.formula, p.origem ? 1 : mult)
     if (!r) continue
     const lados = Number(/d(\d+)/i.exec(p.formula)?.[1] ?? 6)
     r.rolls.forEach((v) => dados.push({ sides: lados, value: v }))
