@@ -241,7 +241,7 @@ Categorias no topo, ferramentas embaixo.
 
 **Áreas de Escuridão** (só o mestre; pedido da Millie, 05/10): Selecionar, Desenhar Área (retângulo, fica preto pros jogadores), Limpar. A lanterna dos tokens ilumina dentro delas e dentro do Nível de Escuridão da cena.
 
-**Lanterna do token** (botão direito → Lanterna: Desligada / Comum / UV; o dono do token e o mestre ligam): cone saindo do token pra onde ele está virado (giro 0 = pra baixo). Comum: 5 quadrados, 60°. UV: 4 quadrados, 50°, roxa, clareia menos e revela objetos marcados "Só Aparece na Luz UV" (o mestre marca no botão direito do objeto).
+**Lanterna do token** (botão direito → Lanterna: Desligada / Comum / UV; o dono do token e o mestre ligam): cone saindo da altura do peito do token pra frente dele (direita da imagem; virar o token na horizontal vira a lanterna; girar gira junto). Comum: 5 quadrados, 60°. UV: 4 quadrados, 50°, roxa, clareia menos e revela objetos marcados "Só Aparece na Luz UV" (o mestre marca no botão direito do objeto).
 
 Fora: Paredes.
 

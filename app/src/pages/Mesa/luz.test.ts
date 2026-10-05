@@ -5,17 +5,22 @@ const token = { id: 't', x: 0, y: 0, width: 100, height: 100, rotation: 0, layer
 const celula = { w: 100, h: 100 }
 
 describe('lanterna', () => {
-  it('sai do centro do token, virado pra baixo no giro 0', () => {
+  it('sai do peito do token pra frente (direita da imagem)', () => {
     const c = coneDaLanterna(token, 'comum', celula, 2)
-    expect(c.pontos[0]).toEqual({ x: 50, y: 50 })
+    expect(c.pontos[0]).toEqual({ x: 50, y: 35 })
     expect(c.raio).toBe(500)
-    // ponto do meio do arco: reto pra baixo
-    expect(c.pontos[2]).toEqual({ x: 50, y: 550 })
+    // ponto do meio do arco: reto pra direita
+    expect(c.pontos[2]).toEqual({ x: 550, y: 35 })
+  })
+  it('virar na horizontal vira a lanterna', () => {
+    const c = coneDaLanterna({ ...token, flip_h: true }, 'comum', celula, 2)
+    expect(c.pontos[2]).toEqual({ x: -450, y: 35 })
   })
   it('gira junto com o token', () => {
     const c = coneDaLanterna({ ...token, rotation: 90 }, 'comum', celula, 2)
-    // 90° no sentido horário a partir de "baixo" = esquerda
-    expect(c.pontos[2]).toEqual({ x: -450, y: 50 })
+    // girado 90° no sentido horário: a frente aponta pra baixo e o peito fica à direita do centro
+    expect(c.pontos[0]).toEqual({ x: 65, y: 50 })
+    expect(c.pontos[2]).toEqual({ x: 65, y: 550 })
   })
   it('a UV alcança menos', () => {
     expect(coneDaLanterna(token, 'uv', celula).raio).toBeLessThan(coneDaLanterna(token, 'comum', celula).raio)
@@ -34,6 +39,6 @@ describe('lanterna', () => {
     const comum = conesDosTokens([{ ...token, lanterna: 'comum' as const }], celula, false)
     expect(caminhoDaLuzUv(comum)).toBeNull()
     const uv = conesDosTokens([{ ...token, lanterna: 'uv' as const }], celula, false)
-    expect(caminhoDaLuzUv(uv)).toMatch(/^M50 50L/)
+    expect(caminhoDaLuzUv(uv)).toMatch(/^M50 35L/)
   })
 })
