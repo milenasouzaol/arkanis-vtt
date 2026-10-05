@@ -175,6 +175,11 @@ export default function Mesa() {
     }
     const novas = lista.filter((m) => !vistas.current!.has(m.id))
     novas.forEach((m) => vistas.current!.add(m.id))
+    // Ataque/cura que eu mandei da ficha: o chat abre sozinho, com o próximo botão à mostra.
+    if (novas.some((m) => m.user_id === userId && m.acao)) {
+      setAba('chat')
+      setRecolhida(false)
+    }
     const deOutros = novas.filter((m) => m.user_id !== userId)
     if (!deOutros.length) return
     if (document.hidden) setForaDaAba((n) => n + deOutros.length)
