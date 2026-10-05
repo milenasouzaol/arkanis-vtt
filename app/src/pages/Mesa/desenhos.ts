@@ -35,9 +35,9 @@ export const ESTILO_PADRAO: EstiloDesenho = {
 // Junta o estilo salvo com o padrão (desenho antigo sem algum campo não quebra).
 export function estiloCompleto(e: Partial<EstiloDesenho> | null | undefined): EstiloDesenho {
   return {
-    linha: { ...ESTILO_PADRAO.linha, ...(e?.linha ?? {}) },
-    preenchimento: { ...ESTILO_PADRAO.preenchimento, ...(e?.preenchimento ?? {}) },
-    texto: { ...ESTILO_PADRAO.texto, ...(e?.texto ?? {}) },
+    linha: { ...ESTILO_PADRAO.linha, ...e?.linha },
+    preenchimento: { ...ESTILO_PADRAO.preenchimento, ...e?.preenchimento },
+    texto: { ...ESTILO_PADRAO.texto, ...e?.texto },
   }
 }
 
