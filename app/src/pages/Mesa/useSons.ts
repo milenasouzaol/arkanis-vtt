@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { SomAmbiente } from './sons'
+import { criarTocadorYoutube, idDoYoutube } from './youtube'
 
 const CAMPOS = 'id, scene_id, campaign_id, name, url, x, y, width, height, volume, suavizar, escondido, ligado, created_at'
 
@@ -67,42 +68,69 @@ export async function enviarSom(userId: string, arquivo: File): Promise<string |
   return supabase.storage.from('sons_ambiente').getPublicUrl(caminho).data.publicUrl
 }
 
-// Toca os sons: um <audio> em loop por som, com o volume de cada um (0 = pausado).
-// O navegador só deixa tocar depois que a pessoa clicou em algo na página (a mesa já tem cliques).
-export function useTocarSons(volumes: { id: string; url: string; volume: number }[]) {
-  const audios = useRef(new Map<string, HTMLAudioElement>())
+// Toca os sons: um <audio> em loop por som (ou um player escondido do YouTube), com o volume de
+// cada um (0 = pausado). O navegador só deixa tocar depois que a pessoa clicou em algo na página.
+// Devolve os sons que não puderam tocar e o porquê (vídeo do YouTube bloqueado, por exemplo).
+type Tocador = { url: string; definirVolume(v: number): void; parar(): void }
+
+function tocadorDeAudio(url: string): Tocador {
+  const a = new Audio(url)
+  a.loop = true
+  return {
+    url,
+    definirVolume(v) {
+      a.volume = Math.min(1, Math.max(0, v))
+      if (v > 0) {
+        if (a.paused) a.play().catch(() => {})
+      } else if (!a.paused) a.pause()
+    },
+    parar() {
+      a.pause()
+    },
+  }
+}
+
+export function useTocarSons(volumes: { id: string; url: string; volume: number }[]): Record<string, string> {
+  const tocadores = useRef(new Map<string, Tocador>())
+  const [erros, setErros] = useState<Record<string, string>>({})
   const chave = JSON.stringify(volumes)
 
   useEffect(() => {
     const lista = JSON.parse(chave) as typeof volumes
     const vivos = new Set(lista.map((v) => v.id))
-    for (const [id, a] of audios.current) {
+    for (const [id, t] of tocadores.current) {
       if (!vivos.has(id)) {
-        a.pause()
-        audios.current.delete(id)
+        t.parar()
+        tocadores.current.delete(id)
       }
     }
     for (const v of lista) {
-      let a = audios.current.get(v.id)
-      if (!a || a.src !== v.url) {
-        a?.pause()
-        a = new Audio(v.url)
-        a.loop = true
-        audios.current.set(v.id, a)
+      let t = tocadores.current.get(v.id)
+      if (!t || t.url !== v.url) {
+        t?.parar()
+        const yt = idDoYoutube(v.url)
+        t = yt
+          ? { url: v.url, ...criarTocadorYoutube(yt, (motivo) => setErros((e) => ({ ...e, [v.id]: motivo }))) }
+          : tocadorDeAudio(v.url)
+        setErros((e) => {
+          if (!(v.id in e)) return e
+          const { [v.id]: _, ...resto } = e
+          return resto
+        })
+        tocadores.current.set(v.id, t)
       }
-      a.volume = Math.min(1, Math.max(0, v.volume))
-      if (v.volume > 0) {
-        if (a.paused) a.play().catch(() => {})
-      } else if (!a.paused) a.pause()
+      t.definirVolume(v.volume)
     }
   }, [chave])
 
   // Saiu da mesa / trocou de cena: para tudo.
   useEffect(() => {
-    const mapa = audios.current
+    const mapa = tocadores.current
     return () => {
-      for (const a of mapa.values()) a.pause()
+      for (const t of mapa.values()) t.parar()
       mapa.clear()
     }
   }, [])
+
+  return erros
 }

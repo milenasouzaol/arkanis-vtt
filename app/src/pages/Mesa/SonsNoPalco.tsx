@@ -53,7 +53,8 @@ export function useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, ponto
 
   // Pré-visualizar: o mestre ouve como se o token estivesse onde está o mouse.
   const pontos = ferramenta === 'som-previsualizar' && ouvindoEm ? [ouvindoEm] : ouvintes
-  useTocarSons(sons.sons.map((s) => ({ id: s.id, url: s.url, volume: volumeParaOuvintes(s, pontos, souMestre) })))
+  // Som que não pôde tocar (vídeo do YouTube bloqueado…): o mestre vê o motivo na área.
+  const erros = useTocarSons(sons.sons.map((s) => ({ id: s.id, url: s.url, volume: volumeParaOuvintes(s, pontos, souMestre) })))
 
   function abrirFormulario(s: SomAmbiente | null, c?: Formulario['caixa']) {
     setForm(s
@@ -173,7 +174,7 @@ export function useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, ponto
             <rect x={s.x} y={s.y} width={s.width} height={s.height} strokeWidth={(sel ? 2.5 : 1.5) * px} strokeDasharray={s.ligado ? undefined : `${8 * px} ${6 * px}`} />
             <circle cx={s.x + s.width / 2} cy={s.y + s.height / 2} r={5 * px} />
             <text x={s.x + s.width / 2} y={s.y + s.height / 2 - 12 * px} fontSize={14 * px}>
-              {s.name || 'Som Ambiente'}{s.ligado ? '' : ' (desligado)'}
+              {s.name || 'Som Ambiente'}{s.ligado ? '' : ' (desligado)'}{erros[s.id] ? ` — não toca: ${erros[s.id]}` : ''}
             </text>
           </g>
         )
@@ -289,9 +290,9 @@ function FormularioSom({ form, userId, onMudar, onSalvar, onFechar }: {
         </Campo>
         <fieldset className="janela-grupo">
           <legend>Fonte</legend>
-          <Campo rotulo="Caminho do Arquivo de Origem" dica="Um arquivo de áudio (mp3, ogg, wav…) ou o link direto dele. Toca pra quem tiver token dentro da área.">
+          <Campo rotulo="Caminho do Arquivo de Origem" dica="Um arquivo de áudio (mp3, ogg, wav…), o link direto dele ou um link do YouTube. Toca pra quem tiver token dentro da área.">
             <div className="janela-cor">
-              <input value={form.url} placeholder="caminho/para/audio.mp3" aria-label="Caminho do Arquivo de Origem" onChange={(e) => onMudar({ ...form, url: e.target.value })} />
+              <input value={form.url} placeholder="Link do YouTube ou do áudio, ou escolha o arquivo" aria-label="Caminho do Arquivo de Origem" onChange={(e) => onMudar({ ...form, url: e.target.value })} />
               <button type="button" className="combate-icone" aria-label="Escolher arquivo de áudio" title="Escolher arquivo" onClick={() => arquivo.current?.click()}>
                 <FontAwesomeIcon icon={faFileAudio} />
               </button>
