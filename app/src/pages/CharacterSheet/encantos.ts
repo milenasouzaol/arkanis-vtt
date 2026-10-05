@@ -16,8 +16,7 @@ export type Encanto = {
 export type Modo = 'normal' | 'discente' | 'verdadeiro'
 
 // Que arma cada ritual aceita.
-// Amaldiçoar Arma: qualquer arma (inclusive de fogo) ou a munição — combinado com a Millie em 05/10.
-export type AlvoDoEncanto = 'corpo_a_corpo' | 'qualquer_arma_ou_municao'
+export type AlvoDoEncanto = 'corpo_a_corpo' | 'corpo_a_corpo_ou_municao'
 
 type Regra = { alvo: AlvoDoEncanto; escolheElemento: boolean; efeito: (modo: Modo, elemento: string) => Omit<Encanto, 'ritual' | 'nome'> | null }
 
@@ -26,7 +25,7 @@ const ELEMENTOS_AMALDICOAR = ['Conhecimento', 'Energia', 'Morte', 'Sangue']
 const REGRAS: Record<string, Regra> = {
   // +1d6 do elemento escolhido; Discente +2d6; Verdadeiro +4d6.
   'amaldicoar arma': {
-    alvo: 'qualquer_arma_ou_municao',
+    alvo: 'corpo_a_corpo_ou_municao',
     escolheElemento: true,
     efeito: (modo, elemento) => ({ dano: { formula: modo === 'verdadeiro' ? '4d6' : modo === 'discente' ? '2d6' : '1d6', tipo: elemento } }),
   },
@@ -75,8 +74,7 @@ export function textoDoEncanto(e: Encanto): string {
 }
 
 export function armaServe(alvo: AlvoDoEncanto, item: { tipo: string | null; natureza: string | null }): boolean {
-  if (item.tipo === 'municao') return alvo === 'qualquer_arma_ou_municao'
-  if (alvo === 'qualquer_arma_ou_municao') return item.tipo === 'arma'
+  if (item.tipo === 'municao') return alvo === 'corpo_a_corpo_ou_municao'
   return item.tipo === 'arma' && item.natureza === 'corpo_a_corpo'
 }
 
