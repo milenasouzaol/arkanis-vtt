@@ -14948,3 +14948,13 @@ button.character-tile-link {
   fill: rgba(224, 144, 58, 0.08);
   stroke: #e0903a;
 }
+
+/* Pré-visualizar Som Ambiente: "Volume aqui: 63%" ao lado do mouse */
+.mesa-som-porcentagem {
+  fill: #f4f4f6;
+  paint-order: stroke;
+  stroke: #000;
+  stroke-width: 0.25em;
+  font-family: 'Signika', var(--sans);
+  font-weight: 700;
+}

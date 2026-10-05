@@ -20,18 +20,23 @@ export type SomAmbiente = {
 
 type Ponto = { x: number; y: number }
 
-// Volume que alguém nesse ponto ouve: 0 fora da área; dentro, o máximo (ou, com suavização,
-// o máximo no centro e baixando em curva até sumir na borda).
-export function volumeNoPonto(s: Pick<SomAmbiente, 'x' | 'y' | 'width' | 'height' | 'volume' | 'suavizar'>, p: Ponto): number {
+// Quanto do som chega nesse ponto, de 0 a 100 (pedido da Millie): 100 no centro e diminuindo um
+// pouquinho a cada passo até 1 na borda; fora da área, 0. Sem suavização, 100 na área toda.
+export function porcentagemNoPonto(s: Pick<SomAmbiente, 'x' | 'y' | 'width' | 'height' | 'suavizar'>, p: Ponto): number {
   if (p.x < s.x || p.x > s.x + s.width || p.y < s.y || p.y > s.y + s.height) return 0
-  if (!s.suavizar) return s.volume
+  if (!s.suavizar) return 100
   const dx = (p.x - (s.x + s.width / 2)) / (s.width / 2)
   const dy = (p.y - (s.y + s.height / 2)) / (s.height / 2)
   const longe = Math.min(1, Math.max(Math.abs(dx), Math.abs(dy)))
-  // Curva, não reta (pedido da Millie): o ouvido acha 20% de volume ainda alto, então em linha
-  // reta a beirada soava forte e o som cortava de repente ao sair. Elevando ao quadrado, vai
-  // baixando cada vez mais perto da borda e some suave quando o token sai da área.
-  return Math.round(s.volume * (1 - longe) ** 2 * 1000) / 1000
+  return Math.max(1, Math.round(100 * (1 - longe)))
+}
+
+// O volume que vai pro áudio. A porcentagem passa por uma curva de audição: o ouvido acha que
+// 20% do volume ainda é alto, então em linha reta a borda soava forte. Ao cubo, 10% vira um
+// sussurro (0,1%) e o som vai crescendo devagar até o centro — soa como 100, 99, 98… 1.
+export function volumeNoPonto(s: Pick<SomAmbiente, 'x' | 'y' | 'width' | 'height' | 'volume' | 'suavizar'>, p: Ponto): number {
+  const pct = porcentagemNoPonto(s, p)
+  return Math.round(s.volume * (pct / 100) ** 3 * 100000) / 100000
 }
 
 // Com vários tokens, vale o que está mais perto do centro (o volume mais alto).

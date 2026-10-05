@@ -4,7 +4,7 @@ import { faCaretDown, faCaretRight, faCheck, faFileAudio, faFloppyDisk, faPalett
 import Janela, { Campo, Deslizante } from './Janela'
 import type { Cena } from './cenas'
 import { caixaDoArrasto } from './desenhos'
-import { PADRAO_SOM, volumeParaOuvintes, type SomAmbiente } from './sons'
+import { PADRAO_SOM, porcentagemNoPonto, volumeParaOuvintes, type SomAmbiente } from './sons'
 import { enviarSom, useTocarSons, type useSons } from './useSons'
 
 type Ponto = { x: number; y: number }
@@ -180,6 +180,15 @@ export function useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, ponto
           </g>
         )
       })}
+      {/* Pré-visualizar: quanto do som chega onde está o mouse (100 no centro … 1 na borda). */}
+      {ferramenta === 'som-previsualizar' && ouvindoEm && (() => {
+        const pct = sons.sons.filter((x) => x.ligado).reduce((m, x) => Math.max(m, porcentagemNoPonto(x, ouvindoEm)), 0)
+        return (
+          <text className="mesa-som-porcentagem" x={ouvindoEm.x + 14 * px} y={ouvindoEm.y - 14 * px} fontSize={15 * px}>
+            {pct ? `Volume aqui: ${pct}%` : 'Fora das áreas de som'}
+          </text>
+        )
+      })()}
       {previa && <rect className="mesa-som-previa" x={previa.x} y={previa.y} width={previa.width} height={previa.height} strokeWidth={1.5 * px} />}
       {caixa && (
         <rect
