@@ -12372,7 +12372,8 @@ button.character-tile-link {
   top: 0;
   left: 0;
   transform-origin: 0 0;
-  will-change: transform;
+  /* sem will-change: com ele o navegador desenha o mapa uma vez no tamanho de abertura e só
+     estica no zoom (fica borrado, até a grade). Sem ele, redesenha nítido em cada zoom. */
 }
 
 .mesa-mundo-fundo {
