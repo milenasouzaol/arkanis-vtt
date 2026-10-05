@@ -94,7 +94,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
   const [ocultismoSkill, setOcultismoSkill] = useState<{ id: string; default_attribute: string } | null>(null)
   const [ocultismoBonus, setOcultismoBonus] = useState({ training: 'nenhum' as Training, extra_bonus: 0, attribute_override: null as string | null })
   const [roll, setRoll] = useState<RollResultData | null>(null)
-  const [ritualRoll, setRitualRoll] = useState<{ title: string; subtitle: string; total: number; dice: RollCardDie[]; bonus: number; nota: string } | null>(null)
+  const [ritualRoll, setRitualRoll] = useState<{ title: string; subtitle: string; total: number; dice: RollCardDie[]; bonus: number; nota: string; semRolagem?: boolean } | null>(null)
   const [avisoGasto, setAvisoGasto] = useState<string | null>(null)
   // Alvos marcados com a mira na mesa (12.9): ritual de cura com alvo vai pro chat.
   const alvos = useAlvosDaMesa(character.campaign_id)
@@ -268,6 +268,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
 
     if (arma && encanto) {
       const notaArma = `${nota} · ${arma.arma.item} de ${arma.arma.personagem}: ${textoDoEncanto(encanto)}`
+      setRitualRoll({ title: character.name, subtitle: label, total: 0, dice: [], bonus: 0, nota: notaArma, semRolagem: true })
       if (session) {
         recordRoll({
           characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
@@ -296,6 +297,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
         alvos,
       })
       if (erro) setAvisoGasto(erro)
+      else setRitualRoll({ title: character.name, subtitle: label, total: 0, dice: [], bonus: 0, nota: `${nota} · enviado pro chat (Teste de Ocultismo e Curar)`, semRolagem: true })
       if (session) {
         recordRoll({
           characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
@@ -319,6 +321,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
         })
       }
     } else {
+      setRitualRoll({ title: character.name, subtitle: label, total: 0, dice: [], bonus: 0, nota, semRolagem: true })
       if (session) {
         recordRoll({
           characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
@@ -348,6 +351,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
           dice={ritualRoll.dice}
           bonus={ritualRoll.bonus}
           extraLines={[ritualRoll.nota]}
+          semRolagem={ritualRoll.semRolagem}
           background={character.dice_tray && character.dice_tray !== 'padrao' ? character.dice_tray : undefined}
           onClose={() => setRitualRoll(null)}
         />

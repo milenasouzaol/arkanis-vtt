@@ -12,6 +12,7 @@ import { useAlvosDaMesa } from '../../lib/miraDaMesa'
 import { postarCura } from '../Mesa/acoesDeMira'
 import { curaDoTexto, textoDosAlvos } from '../Mesa/mira'
 import { textoDoEncanto, type Encanto } from './encantos'
+import { RollCard } from './RollResult'
 
 // O <select> nativo abre a lista branca do sistema e sai roxo; este segue a estetica do
 // resto do app, igual aos seletores dos modais.
@@ -79,6 +80,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
   // Item de cura (Cicatrizante, Alimento energético…) usado no alvo marcado na mesa (12.9).
   const alvos = useAlvosDaMesa(character.campaign_id)
   const [avisoUso, setAvisoUso] = useState<string | null>(null)
+  const [cartaoUso, setCartaoUso] = useState<{ item: string; nota: string } | null>(null)
 
   async function loadInventory() {
     const { data } = await supabase
@@ -148,6 +150,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
       setAvisoUso(erro)
       return
     }
+    setCartaoUso({ item: nome, nota: `Usado em ${textoDosAlvos(alvos)} · enviado pro chat (Curar)` })
     if (inv.quantity > 1) await supabase.from('character_inventory').update({ quantity: inv.quantity - 1 }).eq('id', inv.id)
     else await supabase.from('character_inventory').delete().eq('id', inv.id)
     await loadInventory()
@@ -264,6 +267,19 @@ export default function InventarioTab({ character, editMode }: { character: Char
   return (
     <div>
       <InventarioTopBox character={character} atualPorCategoria={atualPorCategoria} cargaAtual={cargaAtual} editMode={editMode} />
+
+      {cartaoUso && (
+        <RollCard
+          title={character.name}
+          subtitle={`Item: ${cartaoUso.item}`}
+          total={0}
+          dice={[]}
+          extraLines={[cartaoUso.nota]}
+          background={character.dice_tray && character.dice_tray !== 'padrao' ? character.dice_tray : undefined}
+          semRolagem
+          onClose={() => setCartaoUso(null)}
+        />
+      )}
 
       {avisoUso && (
         <p className="rituais-aviso-gasto" role="status">

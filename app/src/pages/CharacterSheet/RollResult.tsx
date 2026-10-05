@@ -87,6 +87,7 @@ export function RollCard({
   bonus,
   onClose,
   inline,
+  semRolagem = false,
 }: {
   title: string
   subtitle: string
@@ -97,12 +98,14 @@ export function RollCard({
   bonus?: number
   onClose?: () => void
   inline?: boolean
+  // Sem dados (ritual sem rolagem, encanto de arma…): o cartão abre direto com o nome e a nota.
+  semRolagem?: boolean
 }) {
-  const [revealed, setRevealed] = useState(false)
+  const [revealed, setRevealed] = useState(semRolagem)
   const [flipping, setFlipping] = useState(false)
 
   function toggle() {
-    if (flipping) return
+    if (flipping || semRolagem) return
     setFlipping(true)
     setTimeout(() => {
       setRevealed((v) => !v)
@@ -132,6 +135,8 @@ export function RollCard({
                 </span>
               </div>
 
+              {!semRolagem && (
+              <>
               <div className="roll-card-total"><span className="roll-card-total-backdrop" style={{ color: totalColor }}>{total}</span></div>
 
               <div className="roll-card-divider" />
@@ -155,6 +160,8 @@ export function RollCard({
                   ))}
                 </div>
               </div>
+              </>
+              )}
 
               {extraLines && extraLines.length > 0 && (
                 <div className="roll-card-extra">
