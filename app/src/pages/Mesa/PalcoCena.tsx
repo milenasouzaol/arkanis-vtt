@@ -19,6 +19,7 @@ import type { Ping, useObjetos } from './useObjetos'
 import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
 import type { Variacao } from './atores'
 import type { MiraDeAlguem } from './useMira'
+import { medir, noCentro, textoDaDistancia, type Ponto } from './regua'
 
 const MAPA_PADRAO = { w: 4000, h: 3000 }
 const ORDEM_CAMADA: Record<Camada, number> = { mapa: 0, token: 1, mestre: 2 }
@@ -36,6 +37,7 @@ type Gesto =
   | { tipo: 'tamanho'; x: number; y: number; alca: Alca; o: ObjetoCena; ultimo?: CamposObjeto }
   | { tipo: 'girar'; o: ObjetoCena; ultimo?: number }
   | { tipo: 'caixa'; inicio: { x: number; y: number }; somar: boolean }
+  | { tipo: 'regua' }
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
@@ -76,6 +78,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const gesto = useRef<Gesto | null>(null)
   // Token embaixo do mouse: o M mira nele (qualquer um mira tokens alheios).
   const sobre = useRef<string | null>(null)
+  // Medir Distância (12.13): pontos fixos + onde o mouse está. "aberta" = ainda medindo
+  // (Ctrl ao soltar deixa um ponto no caminho e continua).
+  const [regua, setRegua] = useState<{ pontos: Ponto[]; atual: Ponto; aberta: boolean } | null>(null)
+  const apagarRegua = useRef<number | undefined>(undefined)
   const ultimoEnvio = useRef(0)
   // Arrastar com o botão direito move o mapa; aí o menu não abre.
   const panouComDireito = useRef(false)
@@ -280,6 +286,11 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
         if (ids.length) onAlternarAlvo(ids)
         return
       }
+      if (e.key === 'Escape' && regua) {
+        setRegua(null)
+        obj.transmitirRegua({ userId, nome: nomeUsuario, pontos: null })
+        return
+      }
       if (e.key === 'Escape' && !selecionados.length) {
         onLimparAlvos()
         return
@@ -300,7 +311,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     }
     window.addEventListener('keydown', tecla)
     return () => window.removeEventListener('keydown', tecla)
-  }, [selecionados, souMestre, objetos, visiveis, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer, onAlternarAlvo, onLimparAlvos])
+  }, [regua, obj, userId, nomeUsuario, selecionados, souMestre, objetos, visiveis, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer, onAlternarAlvo, onLimparAlvos])
 
   // Rodinha: zoom no ponto do mouse; com Shift ou Ctrl em cima de algo selecionado, gira (12.13).
   useEffect(() => {
@@ -339,6 +350,16 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   function comecarNoMapa(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0 && e.button !== 2) return
     panouComDireito.current = false
+    if (e.button === 0 && ferramenta === 'medir') {
+      if (!cena) return
+      const p = noCentro(pontoNoMapa(e.clientX, e.clientY), cena)
+      window.clearTimeout(apagarRegua.current)
+      // Medindo com ponto no meio: o clique continua a mesma régua.
+      setRegua((r) => (r?.aberta ? r : { pontos: [p], atual: p, aberta: true }))
+      gesto.current = { tipo: 'regua' }
+      e.currentTarget.setPointerCapture(e.pointerId)
+      return
+    }
     if (e.button === 0) {
       // Esquerdo no vazio: caixa de seleção (o fundo não se mexe).
       if (!e.shiftKey) setSelecionados([])
@@ -356,6 +377,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       e.stopPropagation()
       return
     }
+    // Medindo: o token não pega o clique, a régua começa ali.
+    if (e.button === 0 && ferramenta === 'medir') return
     // Ferramenta Selecionar Alvos: clicar no token mira nele (12.13).
     if (e.button === 0 && ferramenta === 'alvos') {
       e.stopPropagation()
@@ -398,8 +421,15 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   }
 
   function mover(e: React.PointerEvent<HTMLDivElement>) {
+    if (regua?.aberta && cena) {
+      const atual = noCentro(pontoNoMapa(e.clientX, e.clientY), cena)
+      if (atual.x !== regua.atual.x || atual.y !== regua.atual.y) {
+        setRegua({ ...regua, atual })
+        obj.transmitirRegua({ userId, nome: nomeUsuario, pontos: [...regua.pontos, atual] })
+      }
+    }
     const g = gesto.current
-    if (!g) return
+    if (!g || g.tipo === 'regua') return
     if (g.tipo === 'caixa') {
       setCaixa({ a: g.inicio, b: pontoNoMapa(e.clientX, e.clientY) })
       return
@@ -432,10 +462,24 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     }
   }
 
-  async function terminar() {
+  async function terminar(e?: React.PointerEvent) {
     const g = gesto.current
     gesto.current = null
     if (!g) return
+    if (g.tipo === 'regua') {
+      if (!regua) return
+      // Ctrl ao soltar: fica um ponto no caminho e a régua continua seguindo o mouse.
+      if (e?.ctrlKey || e?.metaKey) {
+        setRegua({ ...regua, pontos: [...regua.pontos, regua.atual] })
+        return
+      }
+      setRegua({ ...regua, aberta: false })
+      apagarRegua.current = window.setTimeout(() => {
+        setRegua(null)
+        obj.transmitirRegua({ userId, nome: nomeUsuario, pontos: null })
+      }, 3000)
+      return
+    }
     if (g.tipo === 'mapa') return
     if (g.tipo === 'caixa') {
       const c = caixa
@@ -639,7 +683,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       style={{ background: cena?.background_color ?? undefined }}
       onPointerDown={comecarNoMapa}
       onPointerMove={mover}
-      onPointerUp={terminar}
+      onPointerUp={(e) => terminar(e)}
       onPointerCancel={() => (gesto.current = null)}
       onContextMenu={(e) => {
         e.preventDefault()
@@ -739,6 +783,39 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
               }}
             />
           )}
+
+          {/* Réguas: a minha e a de quem mais estiver medindo (12.13). */}
+          {cena && (() => {
+            const todas = [
+              ...(regua ? [{ chave: 'eu', nome: '', pontos: [...regua.pontos, regua.atual] }] : []),
+              ...Object.values(obj.reguas).filter((r) => r.userId !== userId && r.pontos).map((r) => ({ chave: r.userId, nome: r.nome, pontos: r.pontos! })),
+            ].filter((r) => r.pontos.length > 1)
+            if (!todas.length) return null
+            const px = 1 / vista.escala
+            return (
+              <svg className="mesa-regua" width={mapa.w} height={mapa.h} aria-hidden>
+                {todas.map((r) => {
+                  const m = medir(r.pontos, cena)
+                  const fim = r.pontos[r.pontos.length - 1]
+                  return (
+                    <g key={r.chave}>
+                      <polyline points={r.pontos.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#000" strokeWidth={7 * px} strokeLinejoin="round" opacity={0.55} />
+                      <polyline points={r.pontos.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#e8e8ec" strokeWidth={3 * px} strokeLinejoin="round" />
+                      {r.pontos.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={5 * px} fill="#e8e8ec" stroke="#000" strokeWidth={1.5 * px} />)}
+                      {r.pontos.length > 2 && m.trechos.map((t, i) => (
+                        <text key={i} x={(r.pontos[i].x + r.pontos[i + 1].x) / 2} y={(r.pontos[i].y + r.pontos[i + 1].y) / 2 - 8 * px} fontSize={13 * px} className="mesa-regua-trecho">
+                          {textoDaDistancia(t, cena)}
+                        </text>
+                      ))}
+                      <text x={fim.x + 12 * px} y={fim.y - 12 * px} fontSize={17 * px} className="mesa-regua-total">
+                        {textoDaDistancia(m.total, cena)}{r.nome ? ` · ${r.nome}` : ''}
+                      </text>
+                    </g>
+                  )
+                })}
+              </svg>
+            )
+          })()}
 
           {pings.map((p) => (
             <span key={p.id} className="mesa-ping" style={{ left: p.x, top: p.y, ['--escala' as string]: String(1 / vista.escala) }}>

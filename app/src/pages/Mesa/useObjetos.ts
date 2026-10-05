@@ -9,6 +9,9 @@ const CAMPOS =
 
 export type Ping = { id: string; x: number; y: number; foco: boolean; nome: string }
 
+// Régua de alguém medindo distância (12.13), vista ao vivo por todos. pontos null = apagou.
+export type Regua = { userId: string; nome: string; pontos: { x: number; y: number }[] | null }
+
 function trocar(lista: ObjetoCena[], o: ObjetoCena): ObjetoCena[] {
   return lista.some((x) => x.id === o.id) ? lista.map((x) => (x.id === o.id ? o : x)) : [...lista, o]
 }
@@ -22,12 +25,14 @@ function numeros(o: ObjetoCena): ObjetoCena {
 // Arrastar e pings passam por broadcast (ao vivo, sem gravar); soltar grava no banco.
 export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
   const [objetos, setObjetos] = useState<ObjetoCena[]>([])
+  const [reguas, setReguas] = useState<Record<string, Regua>>({})
   const canalRef = useRef<RealtimeChannel | null>(null)
   const pingRef = useRef(onPing)
   pingRef.current = onPing
 
   useEffect(() => {
     setObjetos([])
+    setReguas({})
     if (!cenaId) return
     let cancelado = false
     supabase
@@ -53,6 +58,13 @@ export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
         setObjetos((l) => l.map((o) => (posicoes[o.id] ? { ...o, ...posicoes[o.id] } : o)))
       })
       .on('broadcast', { event: 'ping' }, ({ payload }) => pingRef.current(payload as Ping))
+      .on('broadcast', { event: 'regua' }, ({ payload }) => {
+        const r = payload as Regua
+        setReguas((m) => {
+          const { [r.userId]: _, ...resto } = m
+          return r.pontos ? { ...resto, [r.userId]: r } : resto
+        })
+      })
       .subscribe()
     canalRef.current = canal
 
@@ -65,6 +77,10 @@ export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
 
   const transmitirArrasto = useCallback((posicoes: Record<string, { x: number; y: number }>) => {
     canalRef.current?.send({ type: 'broadcast', event: 'arrastando', payload: posicoes })
+  }, [])
+
+  const transmitirRegua = useCallback((r: Regua) => {
+    canalRef.current?.send({ type: 'broadcast', event: 'regua', payload: r })
   }, [])
 
   const pingar = useCallback((p: Ping) => {
@@ -119,5 +135,5 @@ export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
     await supabase.from('scene_tokens').delete().in('id', ids)
   }, [])
 
-  return { objetos, criar, criarVarios, alterarVarios, moverComoJogador, transformarComoJogador, virarComoJogador, excluirVarios, transmitirArrasto, pingar }
+  return { objetos, criar, criarVarios, alterarVarios, moverComoJogador, transformarComoJogador, virarComoJogador, excluirVarios, transmitirArrasto, pingar, reguas, transmitirRegua }
 }

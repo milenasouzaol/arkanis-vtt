@@ -14579,3 +14579,25 @@ button.character-tile-link {
   background: #141217;
   border-top: 1px solid #2c2a30;
 }
+
+/* Medir Distância: régua por cima do mapa */
+.mesa-regua {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.mesa-regua text {
+  fill: #f4f4f6;
+  paint-order: stroke;
+  stroke: #000;
+  stroke-width: 0.25em;
+  font-family: 'Signika', var(--sans);
+  font-weight: 700;
+}
+
+.mesa-regua-trecho {
+  text-anchor: middle;
+  font-weight: 600;
+}
