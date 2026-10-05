@@ -235,6 +235,8 @@ export type ObjetoCena = {
   move_permission: 'dono' | 'todos' | 'jogadores'
   movable_by: string[]
   luz?: boolean // Luz Ambiente (12.6): clareia o que está embaixo
+  lanterna?: 'comum' | 'uv' | null // lanterna do token, ligada (pedido da Millie, 05/10)
+  so_uv?: boolean // pros jogadores, só aparece na luz UV
   created_at: string
 }
 

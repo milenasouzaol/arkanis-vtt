@@ -12,7 +12,7 @@ export type AbaDireita =
   | 'playlist'
   | 'config'
 
-export type CategoriaEsquerda = 'tokens' | 'desenho' | 'som'
+export type CategoriaEsquerda = 'tokens' | 'desenho' | 'som' | 'escuridao'
 
 // Ordem da barra direita conforme a spec (12.3 a 12.12), com o card que constrói cada uma.
 export const ABAS_DIREITA: { id: AbaDireita; rotulo: string; card: string }[] = [
@@ -32,6 +32,7 @@ export const CATEGORIAS_ESQUERDA: { id: CategoriaEsquerda; rotulo: string }[] = 
   { id: 'tokens', rotulo: 'Controles de Token' },
   { id: 'desenho', rotulo: 'Ferramentas de Desenho' },
   { id: 'som', rotulo: 'Controles de Som Ambiente' },
+  { id: 'escuridao', rotulo: 'Áreas de Escuridão' },
 ]
 
 // Ferramentas de cada categoria (12.13). As de desenho e som entram no KAN-52.
@@ -57,6 +58,11 @@ export const FERRAMENTAS: Record<CategoriaEsquerda, { id: string; rotulo: string
     { id: 'som-previsualizar', rotulo: 'Pré-visualizar Sons Ambiente' },
     { id: 'som-paleta', rotulo: 'Paleta Som Ambiente' },
     { id: 'som-limpar', rotulo: 'Limpar Sons' },
+  ],
+  escuridao: [
+    { id: 'escuridao-selecionar', rotulo: 'Selecionar Áreas de Escuridão' },
+    { id: 'escuridao-desenhar', rotulo: 'Desenhar Área de Escuridão' },
+    { id: 'escuridao-limpar', rotulo: 'Limpar Áreas de Escuridão' },
   ],
 }
 
@@ -118,7 +124,7 @@ export function linkDeConvite(origem: string, codigo: string): string {
 }
 
 // Botões da barra esquerda que fazem uma ação em vez de virar a ferramenta ativa.
-export const ACOES_ESQUERDA = ['paleta', 'limpar-desenhos', 'som-paleta', 'som-limpar']
+export const ACOES_ESQUERDA = ['paleta', 'limpar-desenhos', 'som-paleta', 'som-limpar', 'escuridao-limpar']
 
 // Ajuda que aparece ao passar o mouse na ferramenta (como os "Clipes de Ferramentas" do Foundry).
 // Cada linha: rótulo + pedaços de texto; { k } é uma tecla/gesto, que aparece numa caixinha.
@@ -152,6 +158,19 @@ export const AJUDA_FERRAMENTA: Record<string, { titulo: string; linhas: [string,
       ['Ligar/Desligar', [{ k: 'Clique Direito' }]],
       ['Excluir', [{ k: 'DELETE' }]],
     ],
+  },
+  'escuridao-selecionar': {
+    titulo: 'Selecionar Áreas de Escuridão',
+    linhas: [
+      ['Selecionar', [{ k: 'Clique' }, ' ou ', { k: 'Clique + Arraste' }]],
+      ['Selecionar Vários', [{ k: 'SHIFT + Clique' }]],
+      ['Mover', [{ k: 'Arrastar' }]],
+      ['Excluir', [{ k: 'DELETE' }]],
+    ],
+  },
+  'escuridao-desenhar': {
+    titulo: 'Desenhar Área de Escuridão',
+    linhas: [['Desenhar a área', [{ k: 'Clique + Arraste' }]], ['Iluminar', ['A lanterna dos tokens (botão direito no token → Lanterna) ilumina dentro dela.']]],
   },
   'som-desenhar': {
     titulo: 'Desenhar Som Ambiente',

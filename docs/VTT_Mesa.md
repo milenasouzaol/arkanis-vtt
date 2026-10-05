@@ -239,7 +239,11 @@ Categorias no topo, ferramentas embaixo.
 
 **Controles de Som Ambiente:** Selecionar, Desenhar (área **retangular**; duplo clique edita; clique direito liga/desliga), Pré-visualizar, Paleta (Volume Máximo, Escondido), Limpar Sons. Formulário: Nome, Fonte (arquivo ou link), Volume. Falloff pelo centro; toca pra quem tiver token dentro.
 
-Fora: Paredes e Iluminação.
+**Áreas de Escuridão** (só o mestre; pedido da Millie, 05/10): Selecionar, Desenhar Área (retângulo, fica preto pros jogadores), Limpar. A lanterna dos tokens ilumina dentro delas e dentro do Nível de Escuridão da cena.
+
+**Lanterna do token** (botão direito → Lanterna: Desligada / Comum / UV; o dono do token e o mestre ligam): cone saindo do token pra onde ele está virado (giro 0 = pra baixo). Comum: 5 quadrados, 60°. UV: 4 quadrados, 50°, roxa, clareia menos e revela objetos marcados "Só Aparece na Luz UV" (o mestre marca no botão direito do objeto).
+
+Fora: Paredes.
 
 ### 12.14 Rodapé Esquerdo — Painel de Sessão
 Nome da conta do mestre + latência + FPS. Abaixo, um item por jogador conectado: "Nome do Personagem (PrimeiroNome)".

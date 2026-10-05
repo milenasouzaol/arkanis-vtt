@@ -155,6 +155,7 @@ export default function Mesa() {
   const [notaAberta, setNotaAberta] = useState<Posicionavel | { nova: true; pasta: string | null } | null>(null)
   const [pedidoPaletaSom, setPedidoPaletaSom] = useState(0)
   const [pedidoLimparSom, setPedidoLimparSom] = useState(0)
+  const [pedidoLimparEscuridao, setPedidoLimparEscuridao] = useState(0)
   // Paleta e Limpar Desenhos são botões de ação: o número muda e o palco abre a janela.
   const [pedidoPaleta, setPedidoPaleta] = useState(0)
   const [pedidoLimpar, setPedidoLimpar] = useState(0)
@@ -597,6 +598,7 @@ export default function Mesa() {
         sons={sons}
         pedidoPaletaSom={pedidoPaletaSom}
         pedidoLimparSom={pedidoLimparSom}
+        pedidoLimparEscuridao={pedidoLimparEscuridao}
         pedidoPaleta={pedidoPaleta}
         pedidoLimpar={pedidoLimpar}
         combates={combate.combates}
@@ -624,7 +626,7 @@ export default function Mesa() {
 
       <nav className="mesa-controles" aria-label="Ferramentas de cena">
         <div className="mesa-coluna">
-          <BarraIcones lado="esquerda" itens={souMestre ? CATEGORIAS_ESQUERDA : CATEGORIAS_ESQUERDA.filter((c) => c.id !== 'som')} ativo={categoria} onEscolher={(c) => { setCategoria(c); const primeira = FERRAMENTAS[c][0]; if (primeira) setFerramenta(primeira.id) }} />
+          <BarraIcones lado="esquerda" itens={souMestre ? CATEGORIAS_ESQUERDA : CATEGORIAS_ESQUERDA.filter((c) => c.id !== 'som' && c.id !== 'escuridao')} ativo={categoria} onEscolher={(c) => { setCategoria(c); const primeira = FERRAMENTAS[c][0]; if (primeira) setFerramenta(primeira.id) }} />
         </div>
         <div className="mesa-coluna">
           {FERRAMENTAS[categoria].map((f) => (
@@ -634,12 +636,13 @@ export default function Mesa() {
               rotulo={f.rotulo}
               lado="esquerda"
               ajuda={AJUDA_FERRAMENTA[f.id]}
-              perigo={f.id === 'limpar-desenhos' || f.id === 'som-limpar'}
+              perigo={f.id === 'limpar-desenhos' || f.id === 'som-limpar' || f.id === 'escuridao-limpar'}
               ativo={ferramenta === f.id}
               onClick={() => {
                 if (f.id === 'paleta') setPedidoPaleta((n) => n + 1)
                 else if (f.id === 'som-paleta') setPedidoPaletaSom((n) => n + 1)
                 else if (f.id === 'som-limpar') setPedidoLimparSom((n) => n + 1)
+                else if (f.id === 'escuridao-limpar') setPedidoLimparEscuridao((n) => n + 1)
                 else if (f.id === 'limpar-desenhos') setPedidoLimpar((n) => n + 1)
                 else if (!ACOES_ESQUERDA.includes(f.id)) setFerramenta(f.id)
               }}

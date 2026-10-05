@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   faArrowDownWideShort, faArrowUpWideShort, faBullseye, faCopy, faCrosshairs, faLayerGroup, faLock, faLockOpen, faObjectGroup,
-  faObjectUngroup, faPaste, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear,
+  faObjectUngroup, faPaste, faLightbulb, faEye, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import EfeitoClimatico from './EfeitoClimatico'
@@ -24,6 +24,9 @@ import type { MiraDeAlguem } from './useMira'
 import { medir, noCentro, textoDaDistancia, type Ponto } from './regua'
 import { useDesenhoNoPalco } from './DesenhosNoPalco'
 import { useSomNoPalco } from './SonsNoPalco'
+import { LuzesNoPalco, useEscuridaoNoPalco } from './EscuridaoNoPalco'
+import { useEscuridao } from './useEscuridao'
+import { caminhoDaLuzUv, conesDosTokens, LANTERNAS, type Lanterna } from './luz'
 import type { useSons } from './useSons'
 import type { useDesenhos } from './useDesenhos'
 
@@ -47,7 +50,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, onColocarPosicionavel, onGuardarPosicionaveis }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, onColocarPosicionavel, onGuardarPosicionaveis }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -81,6 +84,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   sons: ReturnType<typeof useSons>
   pedidoPaletaSom?: number
   pedidoLimparSom?: number
+  // Áreas de Escuridão (pedido da Millie, 05/10).
+  pedidoLimparEscuridao?: number
   // Posicionáveis (12.6): arrastar da aba pra mesa usa; da mesa pra aba guarda.
   onColocarPosicionavel?: (id: string, ponto: { x: number; y: number }) => void
   onGuardarPosicionaveis?: (itens: Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'>[]) => void
@@ -129,7 +134,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const [, setVersaoHistorico] = useState(0)
   const copiados = useRef<ObjetoCena[]>([])
   const objetos = obj.objetos
-  const visiveis = objetos.filter((o) => souMestre || o.layer !== 'mestre')
+  // Objeto "só na luz UV": o jogador só vê dentro da luz UV (vai numa camada à parte).
+  const visiveis = objetos.filter((o) => souMestre || (o.layer !== 'mestre' && !o.so_uv))
 
   // Quem pode mexer em cada objeto: o mestre sempre; o jogador no próprio personagem ou
   // quando o mestre liberou (Configurar Propriedade). O banco confere de novo.
@@ -182,6 +188,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const ouvintes = objetos
     .filter((o) => (souMestre ? selecionados.includes(o.id) : o.character_id !== null && meusPersonagens.includes(o.character_id)))
     .map((o) => ({ x: o.x + o.width / 2, y: o.y + o.height / 2 }))
+  const esc = useEscuridao(cena?.id ?? null)
+  const escuro = useEscuridaoNoPalco({ cena, ferramenta, souMestre, esc, pontoNoMapa, escala: vista.escala, pedidoLimpar: pedidoLimparEscuridao })
   const som = useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, pontoNoMapa, escala: vista.escala, ouvintes, pedidoPaleta: pedidoPaletaSom, pedidoLimpar: pedidoLimparSom })
 
   // ---- Aplicar mudanças (com desfazer) ----
@@ -295,7 +303,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
       if (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"]')) return
-      if (desenho.aoTeclar(e) || som.aoTeclar(e)) {
+      if (desenho.aoTeclar(e) || som.aoTeclar(e) || escuro.aoTeclar(e)) {
         e.preventDefault()
         return
       }
@@ -386,7 +394,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   function comecarNoMapa(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0 && e.button !== 2) return
     panouComDireito.current = false
-    if (desenho.aoApertar(e) || som.aoApertar(e)) return
+    if (desenho.aoApertar(e) || som.aoApertar(e) || escuro.aoApertar(e)) return
     if (e.button === 0 && ferramenta === 'medir') {
       if (!cena) return
       const p = noCentro(pontoNoMapa(e.clientX, e.clientY), gradeDaRegua())
@@ -470,6 +478,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   function mover(e: React.PointerEvent<HTMLDivElement>) {
     desenho.aoMover(e)
     som.aoMover(e)
+    escuro.aoMover(e)
     if (regua?.aberta && cena) {
       const atual = noCentro(pontoNoMapa(e.clientX, e.clientY), gradeDaRegua())
       if (atual.x !== regua.atual.x || atual.y !== regua.atual.y) {
@@ -512,7 +521,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   }
 
   async function terminar(e?: React.PointerEvent) {
-    if (desenho.aoSoltar(e) || som.aoSoltar(e)) return
+    if (desenho.aoSoltar(e) || som.aoSoltar(e) || escuro.aoSoltar(e)) return
     const g = gesto.current
     gesto.current = null
     if (!g) return
@@ -578,6 +587,22 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       setVersaoHistorico((v) => v + 1)
       await obj.alterarVarios({ [g.o.id]: { rotation: g.ultimo } })
     }
+  }
+
+  // Lanterna (pedido da Millie, 05/10): desligada, comum ou UV.
+  function menuLanterna(o: ObjetoCena, aplicar: (l: Lanterna | null) => void): ItemMenu {
+    return {
+      tipo: 'sub', rotulo: 'Lanterna', icone: faLightbulb,
+      itens: [
+        { rotulo: `${!o.lanterna ? '✓ ' : ''}Desligada`, onClick: () => aplicar(null) },
+        ...LANTERNAS.map((l) => ({ rotulo: `${o.lanterna === l.id ? '✓ ' : ''}${l.rotulo}`, onClick: () => aplicar(l.id) })),
+      ],
+    }
+  }
+
+  async function lanternaComoDono(o: ObjetoCena, l: Lanterna | null) {
+    obj.alterarVarios({ [o.id]: { lanterna: l } }, false)
+    if (!(await obj.lanternaComoJogador(o.id, l))) obj.alterarVarios({ [o.id]: { lanterna: o.lanterna ?? null } }, false)
   }
 
   async function virarComoDono(o: ObjetoCena, flipH: boolean, flipV: boolean) {
@@ -675,6 +700,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
                   { rotulo: 'Virar Verticalmente', icone: faUpDown, onClick: () => virarComoDono(o, o.flip_h, !o.flip_v) },
                 ],
               } as ItemMenu,
+              ...(o.layer !== 'mapa' ? [menuLanterna(o, (l) => lanternaComoDono(o, l))] : []),
             ]
           : []),
         ...(souMestre
@@ -703,6 +729,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       ...doPersonagem,
       { tipo: 'linha' },
       { rotulo: 'Configurar Propriedade', icone: faUserGear, onClick: () => setPropriedade(o) },
+      ...(o.layer !== 'mapa' ? [menuLanterna(o, (l) => alterar(cada(() => ({ lanterna: l }))))] : []),
+      { rotulo: `${o.so_uv ? '✓ ' : ''}Só Aparece na Luz UV`, icone: faEye, onClick: () => alterar(cada(() => ({ so_uv: !o.so_uv }))) },
       {
         tipo: 'sub', rotulo: 'Alterar Camada', icone: faLayerGroup,
         itens: CAMADAS.map((c) => ({ rotulo: `${o.layer === c.id ? '✓ ' : ''}${c.rotulo}`, onClick: () => alterar(cada(() => ({ layer: c.id }))) })),
@@ -733,6 +761,9 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const grade = cena && cena.grid_type !== 'sem' ? cena : null
   const celula = cena ? celulaDaGrade(cena, mapa) : { w: 100, h: 100 }
   const hex = grade?.grid_type === 'hexagono' ? ladrilhoHex(celula.w) : null
+  // Lanternas ligadas dos tokens que essa pessoa vê.
+  const cones = conesDosTokens(objetos, celula, souMestre)
+  const caminhoUv = caminhoDaLuzUv(cones)
   const traco = grade ? tracoDaGrade(grade.grid_style, grade.grid_thickness) : undefined
   // Alças e giro: o mestre e o dono do token (12.8).
   const selecionadoUnico = selecionados.length === 1 ? objetos.find((o) => o.id === selecionados[0]) ?? null : null
@@ -802,12 +833,26 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
             </svg>
           )}
 
+          {/* Escuridão (a da cena + as áreas pintadas) recortada pelas lanternas. */}
+          <LuzesNoPalco mapa={mapa} souMestre={souMestre} nivel={cena.darkness} areas={esc.areas} cones={cones} celula={celula} />
+
+          {/* Só na luz UV: pros jogadores, aparece só onde a luz UV bate. */}
+          {!souMestre && caminhoUv && (
+            <div className="mesa-uv" style={{ width: mapa.w, height: mapa.h, clipPath: `path('${caminhoUv}')` }} aria-hidden>
+              {objetos.filter((o) => o.so_uv && o.layer !== 'mestre').map((o) => (
+                <div key={o.id} className="mesa-objeto" style={{ left: o.x, top: o.y, width: o.width, height: o.height, transform: `rotate(${o.rotation}deg)` }}>
+                  <img src={o.image_url} alt="" draggable={false} style={{ transform: `scale(${o.flip_h ? -1 : 1}, ${o.flip_v ? -1 : 1})` }} />
+                </div>
+              ))}
+            </div>
+          )}
+
           {[...visiveis]
             .sort((a, b) => ORDEM_CAMADA[a.layer] - ORDEM_CAMADA[b.layer] || a.sort - b.sort)
             .map((o) => (
               <div
                 key={o.id}
-                className={`mesa-objeto${selecionados.includes(o.id) ? ' selecionado' : ''}${focado === o.id ? ' focado' : ''}${o.layer !== 'mapa' ? ' token' : ''}${o.layer === 'mestre' ? ' camada-mestre' : ''}${podeMover(o) && !o.locked ? ' mexivel' : ''}${o.luz ? ' luz' : ''}`}
+                className={`mesa-objeto${selecionados.includes(o.id) ? ' selecionado' : ''}${focado === o.id ? ' focado' : ''}${o.layer !== 'mapa' ? ' token' : ''}${o.layer === 'mestre' ? ' camada-mestre' : ''}${podeMover(o) && !o.locked ? ' mexivel' : ''}${o.luz ? ' luz' : ''}${o.so_uv ? ' so-uv' : ''}`}
                 style={{ left: o.x, top: o.y, width: o.width, height: o.height, transform: `rotate(${o.rotation}deg)`, ['--borda' as string]: `${2 / vista.escala}px`, ['--px' as string]: `${1 / vista.escala}px` }}
                 onPointerDown={(e) => pegarObjeto(e, o)}
                 onPointerEnter={() => (sobre.current = o.id)}
@@ -865,6 +910,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
           {/* Desenhos (12.13): por cima do mapa e da grade, embaixo dos tokens só quando não se está desenhando. */}
           {desenho.camada}
           {som.camada}
+          {escuro.camada}
 
           {/* Réguas: a minha e a de quem mais estiver medindo (12.13). */}
           {cena && (() => {
@@ -908,7 +954,6 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       ) : (
         <p className="mesa-palco-vazio">{souMestre ? 'Nenhuma cena ativa. Crie uma na aba Cenas ou arraste uma imagem pra cá.' : 'Nenhuma cena ativa'}</p>
       )}
-      {cena && cena.darkness > 0 && <div className="mesa-escuridao" style={{ opacity: cena.darkness * 0.92 }} />}
       {cena?.weather && <EfeitoClimatico key={cena.weather} clima={cena.weather} />}
       {soltando && <div className="mesa-soltar">{cena?.background_url ? 'Solte pra colocar a imagem na cena' : 'Solte pra usar como fundo da cena'}</div>}
       {aviso && !soltando && <div className="mesa-soltar" role="status">{aviso}</div>}
@@ -923,6 +968,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       <div onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onContextMenu={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
         {desenho.janelas}
         {som.janelas}
+        {escuro.janelas}
       </div>
 
       {propriedade && (

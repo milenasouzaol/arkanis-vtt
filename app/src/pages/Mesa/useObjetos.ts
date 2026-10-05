@@ -5,7 +5,7 @@ import type { ObjetoCena } from './cenas'
 import type { CamposObjeto } from './tokens'
 
 const CAMPOS =
-  'id, scene_id, campaign_id, name, image_url, x, y, width, height, rotation, layer, sort, locked, flip_h, flip_v, character_id, group_id, actor_id, move_permission, movable_by, luz, created_at'
+  'id, scene_id, campaign_id, name, image_url, x, y, width, height, rotation, layer, sort, locked, flip_h, flip_v, character_id, group_id, actor_id, move_permission, movable_by, luz, lanterna, so_uv, created_at'
 
 export type Ping = { id: string; x: number; y: number; foco: boolean; nome: string }
 
@@ -129,11 +129,17 @@ export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
     return !error
   }, [])
 
+  // Dono do token liga/desliga a lanterna pela função do banco.
+  const lanternaComoJogador = useCallback(async (id: string, lanterna: 'comum' | 'uv' | null) => {
+    const { error } = await supabase.rpc('lanterna_do_objeto', { p_id: id, p_lanterna: lanterna })
+    return !error
+  }, [])
+
   const excluirVarios = useCallback(async (ids: string[]) => {
     if (!ids.length) return
     setObjetos((l) => l.filter((o) => !ids.includes(o.id)))
     await supabase.from('scene_tokens').delete().in('id', ids)
   }, [])
 
-  return { objetos, criar, criarVarios, alterarVarios, moverComoJogador, transformarComoJogador, virarComoJogador, excluirVarios, transmitirArrasto, pingar, reguas, transmitirRegua }
+  return { objetos, criar, criarVarios, alterarVarios, moverComoJogador, transformarComoJogador, virarComoJogador, lanternaComoJogador, excluirVarios, transmitirArrasto, pingar, reguas, transmitirRegua }
 }

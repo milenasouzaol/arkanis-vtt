@@ -15288,3 +15288,68 @@ button.character-tile-link {
   right: 0;
   transform: none;
 }
+
+/* Lanterna e escuridão (pedido da Millie, 05/10): a escuridão fica por cima do mapa e dos
+   objetos do mapa; tokens, desenhos e o que é de trabalhar ficam por cima dela. */
+.mesa-luzes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mesa-luzes-brilho {
+  mix-blend-mode: screen;
+}
+
+.mesa-uv {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.mesa-objeto.token,
+.mesa-desenhos {
+  z-index: 3;
+}
+
+.mesa-selecao,
+.mesa-caixa-selecao,
+.mesa-sons,
+.mesa-escuras,
+.mesa-regua,
+.mesa-ping {
+  z-index: 4;
+}
+
+/* Mestre: o objeto "só na luz UV" aparece pra ele, mais apagado e com contorno roxo. */
+.mesa-objeto.so-uv {
+  opacity: 0.6;
+  outline: var(--px, 1px) dashed #9b4dff;
+}
+
+.mesa-escuras {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mesa-escura {
+  fill: rgba(0, 0, 0, 0.15);
+  stroke: #8a8a90;
+}
+
+.mesa-escura.previa {
+  stroke-dasharray: 6 4;
+}
+
+.mesa-escuras.selecionando .mesa-escura {
+  pointer-events: auto;
+  cursor: move;
+}

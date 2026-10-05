@@ -17,6 +17,7 @@ import {
   faExpand,
   faGears,
   faMap,
+  faMoon,
   faMusic,
   faPencil,
   faPuzzlePiece,
@@ -69,4 +70,8 @@ export const ICONES: Record<string, ReactNode> = {
   'som-previsualizar': fa(faHeadphones),
   'som-paleta': fa(faPalette),
   'som-limpar': fa(faTrash),
+  escuridao: fa(faMoon),
+  'escuridao-selecionar': fa(faExpand),
+  'escuridao-desenhar': fa(faSquare),
+  'escuridao-limpar': fa(faTrash),
 }
