@@ -17,6 +17,8 @@ import {
 } from './tokens'
 import type { Ping, useObjetos } from './useObjetos'
 import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
+import { soltouNosPosicionaveis, TIPO_ARRASTO_POSICIONAVEL } from './PainelPosicionaveis'
+import { guardarDesenho, guardarObjeto, guardarSom, type Posicionavel } from './posicionaveis'
 import type { Variacao } from './atores'
 import type { MiraDeAlguem } from './useMira'
 import { medir, noCentro, textoDaDistancia, type Ponto } from './regua'
@@ -45,7 +47,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0 }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, onColocarPosicionavel, onGuardarPosicionaveis }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -79,6 +81,9 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   sons: ReturnType<typeof useSons>
   pedidoPaletaSom?: number
   pedidoLimparSom?: number
+  // Posicionáveis (12.6): arrastar da aba pra mesa usa; da mesa pra aba guarda.
+  onColocarPosicionavel?: (id: string, ponto: { x: number; y: number }) => void
+  onGuardarPosicionaveis?: (itens: Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'>[]) => void
 }) {
   const palcoRef = useRef<HTMLDivElement>(null)
   const [mapa, setMapa] = useState(MAPA_PADRAO)
@@ -172,12 +177,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     [vista],
   )
 
-  const desenho = useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, pontoNoMapa, escala: vista.escala, pedidoPaleta, pedidoLimpar })
+  const desenho = useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, pontoNoMapa, escala: vista.escala, pedidoPaleta, pedidoLimpar, onGuardar: souMestre && onGuardarPosicionaveis ? (ds) => onGuardarPosicionaveis(ds.map(guardarDesenho)) : undefined })
   // Quem ouve o Som Ambiente: os tokens do jogador; no mestre, os tokens selecionados.
   const ouvintes = objetos
     .filter((o) => (souMestre ? selecionados.includes(o.id) : o.character_id !== null && meusPersonagens.includes(o.character_id)))
     .map((o) => ({ x: o.x + o.width / 2, y: o.y + o.height / 2 }))
-  const som = useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, pontoNoMapa, escala: vista.escala, ouvintes, pedidoPaleta: pedidoPaletaSom, pedidoLimpar: pedidoLimparSom })
+  const som = useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, pontoNoMapa, escala: vista.escala, ouvintes, pedidoPaleta: pedidoPaletaSom, pedidoLimpar: pedidoLimparSom, onGuardar: souMestre && onGuardarPosicionaveis ? (ss) => onGuardarPosicionaveis(ss.map(guardarSom)) : undefined })
 
   // ---- Aplicar mudanças (com desfazer) ----
 
@@ -535,6 +540,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       return
     }
     if (g.tipo === 'mover') {
+      // Arrastou pra aba Posicionáveis (12.6): guarda uma cópia lá e o objeto volta pro lugar.
+      if (souMestre && onGuardarPosicionaveis && soltouNosPosicionaveis(e)) {
+        obj.alterarVarios(Object.fromEntries(g.ids.map((id) => [id, g.inicio[id]])), false)
+        onGuardarPosicionaveis(objetos.filter((o) => g.ids.includes(o.id)).map(guardarObjeto))
+        return
+      }
       if (!g.dx && !g.dy) return
       if (souMestre) {
         // volta pro início e grava pelo histórico (desfazer devolve pra cá)
@@ -588,6 +599,13 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   function soltar(e: React.DragEvent<HTMLDivElement>) {
     setSoltando(false)
     // Personagem arrastado da aba Personagens (12.8).
+    // Coisa arrastada dos Posicionáveis (12.6): entra uma cópia onde soltou.
+    const posicionavel = e.dataTransfer.getData(TIPO_ARRASTO_POSICIONAVEL)
+    if (posicionavel) {
+      e.preventDefault()
+      if (cena && souMestre) onColocarPosicionavel?.(posicionavel, pontoNoMapa(e.clientX, e.clientY))
+      return
+    }
     const ator = e.dataTransfer.getData(TIPO_ARRASTO_ATOR)
     if (ator) {
       e.preventDefault()
@@ -743,7 +761,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       }}
       onDragStart={(e) => e.preventDefault()}
       onDragOver={(e) => {
-        if (e.dataTransfer.types.includes(TIPO_ARRASTO_ATOR)) {
+        if (e.dataTransfer.types.includes(TIPO_ARRASTO_ATOR) || e.dataTransfer.types.includes(TIPO_ARRASTO_POSICIONAVEL)) {
           e.preventDefault()
           return
         }
@@ -789,7 +807,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
             .map((o) => (
               <div
                 key={o.id}
-                className={`mesa-objeto${selecionados.includes(o.id) ? ' selecionado' : ''}${focado === o.id ? ' focado' : ''}${o.layer !== 'mapa' ? ' token' : ''}${o.layer === 'mestre' ? ' camada-mestre' : ''}${podeMover(o) && !o.locked ? ' mexivel' : ''}`}
+                className={`mesa-objeto${selecionados.includes(o.id) ? ' selecionado' : ''}${focado === o.id ? ' focado' : ''}${o.layer !== 'mapa' ? ' token' : ''}${o.layer === 'mestre' ? ' camada-mestre' : ''}${podeMover(o) && !o.locked ? ' mexivel' : ''}${o.luz ? ' luz' : ''}`}
                 style={{ left: o.x, top: o.y, width: o.width, height: o.height, transform: `rotate(${o.rotation}deg)`, ['--borda' as string]: `${2 / vista.escala}px`, ['--px' as string]: `${1 / vista.escala}px` }}
                 onPointerDown={(e) => pegarObjeto(e, o)}
                 onPointerEnter={() => (sobre.current = o.id)}

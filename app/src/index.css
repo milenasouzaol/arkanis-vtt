@@ -15158,3 +15158,133 @@ button.character-tile-link {
   text-align: right;
   color: var(--mesa-creme-dim);
 }
+
+/* Posicionáveis (KAN-53, spec 12.6 + prints do Foundry da Millie): abas de ícone em cima,
+   filtro com os botões ao lado, lista com miniatura e nome. */
+.posicionaveis-abas {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 8px 8px 6px;
+}
+
+.posicionaveis-aba,
+.posicionaveis-botao {
+  position: relative;
+  width: 32px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--mesa-creme);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.posicionaveis-botao {
+  width: 28px;
+  border-color: var(--mesa-creme-dim);
+}
+
+.posicionaveis-aba.ativo {
+  border-color: var(--mesa-destaque);
+}
+
+.posicionaveis-aba:hover,
+.posicionaveis-aba:focus-visible,
+.posicionaveis-botao:hover,
+.posicionaveis-botao:focus-visible {
+  background: var(--mesa-destaque);
+  border-color: var(--mesa-destaque);
+  color: var(--mesa-painel);
+}
+
+.posicionaveis-dica {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  white-space: nowrap;
+  padding: 6px 12px;
+  background: var(--mesa-fundo);
+  border-radius: 4px;
+  color: var(--mesa-creme);
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.posicionaveis-filtro .posicionaveis-botao:last-child .posicionaveis-dica {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.posicionaveis-aba:hover .posicionaveis-dica,
+.posicionaveis-aba:focus-visible .posicionaveis-dica,
+.posicionaveis-botao:hover .posicionaveis-dica,
+.posicionaveis-botao:focus-visible .posicionaveis-dica {
+  opacity: 1;
+}
+
+.posicionaveis-filtro {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 8px;
+}
+
+.posicionaveis-filtro input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  background: #1c1b20;
+  border: 1px solid var(--mesa-borda);
+  border-radius: 4px;
+  color: var(--mesa-creme);
+  font: 0.9rem 'Signika', var(--sans);
+}
+
+.posicionaveis-filtro input:focus {
+  outline: none;
+  border-color: var(--mesa-creme-dim);
+}
+
+.posicionaveis-painel {
+  flex: 1;
+  min-height: 0;
+}
+
+.posicionaveis-painel.soltando,
+.posicionaveis-painel .cena-pasta-topo.soltando {
+  outline: 1px dashed var(--mesa-destaque);
+  outline-offset: -3px;
+}
+
+.posicionavel-linha {
+  cursor: grab;
+}
+
+/* Luz Ambiente na mesa: o preto do GIF some e o resto clareia o mapa. */
+.mesa-objeto.luz {
+  mix-blend-mode: screen;
+}
+
+.posicionaveis-aba:first-child .posicionaveis-dica {
+  left: 0;
+  transform: none;
+}
+
+.posicionaveis-aba:last-child .posicionaveis-dica {
+  left: auto;
+  right: 0;
+  transform: none;
+}

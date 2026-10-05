@@ -234,6 +234,7 @@ export type ObjetoCena = {
   actor_id: string | null
   move_permission: 'dono' | 'todos' | 'jogadores'
   movable_by: string[]
+  luz?: boolean // Luz Ambiente (12.6): clareia o que está embaixo
   created_at: string
 }
 

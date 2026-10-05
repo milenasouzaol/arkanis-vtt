@@ -8,6 +8,7 @@ import {
   type Desenho, type EstiloDesenho, type TipoDesenho,
 } from './desenhos'
 import type { useDesenhos } from './useDesenhos'
+import { soltouNosPosicionaveis } from './PainelPosicionaveis'
 
 type Ponto = { x: number; y: number }
 type Desenhos = ReturnType<typeof useDesenhos>
@@ -33,7 +34,7 @@ type Gesto =
   | { tipo: 'caixa'; inicio: Ponto; somar: boolean }
 
 // Toda a parte de desenhar fica aqui; o palco só repassa os eventos do mouse e do teclado.
-export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, pontoNoMapa, escala, pedidoPaleta, pedidoLimpar }: {
+export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, pontoNoMapa, escala, pedidoPaleta, pedidoLimpar, onGuardar }: {
   cena: Cena | null
   ferramenta: string
   userId: string
@@ -43,6 +44,7 @@ export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, po
   escala: number
   pedidoPaleta: number // muda quando clicam em Paleta na barra
   pedidoLimpar: number // muda quando clicam em Limpar Desenhos
+  onGuardar?: (desenhos: Desenho[]) => void // soltou em cima dos Posicionáveis (12.6)
 }) {
   const [estilo, setEstilo] = useState<EstiloDesenho>(estiloSalvo)
   const [selecionados, setSelecionados] = useState<string[]>([])
@@ -174,7 +176,11 @@ export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, po
       const c = caixaDosPontos(simplificar(g.pontos, 3 / Math.max(escala, 0.1)))
       if (grandeOSuficiente(c)) novo({ tipo: 'livre', x: c.x, y: c.y, width: c.width, height: c.height, pontos: c.pontos })
     } else if (g.tipo === 'mover') {
-      if (g.dx || g.dy) for (const [id, o] of Object.entries(g.origem)) des.alterar(id, { x: o.x + g.dx, y: o.y + g.dy })
+      // Arrastou pra aba Posicionáveis: guarda uma cópia lá e o desenho volta pro lugar.
+      if (onGuardar && soltouNosPosicionaveis(e)) {
+        for (const [id, o] of Object.entries(g.origem)) des.alterar(id, { x: o.x, y: o.y }, false)
+        onGuardar(des.desenhos.filter((d) => d.id in g.origem))
+      } else if (g.dx || g.dy) for (const [id, o] of Object.entries(g.origem)) des.alterar(id, { x: o.x + g.dx, y: o.y + g.dy })
     } else if (g.tipo === 'caixa') {
       const c = caixa
       setCaixa(null)

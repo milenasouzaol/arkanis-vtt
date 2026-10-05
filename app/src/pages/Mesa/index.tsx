@@ -15,6 +15,9 @@ import { useDesenhos } from './useDesenhos'
 import { useSons } from './useSons'
 import { usePlaylists } from './usePlaylists'
 import PainelPlaylist from './PainelPlaylist'
+import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
+import { usePosicionaveis } from './usePosicionaveis'
+import { caixaNoPonto, CATEGORIAS_POSICIONAVEIS, ehImagem, type CategoriaPosicionavel, type Posicionavel } from './posicionaveis'
 import { tamanhoInicial, type Pasta } from './cenas'
 import PainelPersonagens from './PainelPersonagens'
 import { ConfigurarPropriedadeAtor, ConfigurarToken, ConfirmarExclusao, CriarPersonagem, FichaPortatil, PainelVariacoes } from './JanelasAtor'
@@ -146,6 +149,10 @@ export default function Mesa() {
   const sons = useSons(cenas.atual?.id ?? null)
   // Lista de Reprodução: toca pra todo mundo mesmo com a aba fechada.
   const playlists = usePlaylists(pronta?.campanha.id, !!pronta && pronta.campanha.owner_id === userId)
+  // Posicionáveis (12.6): armazém do mestre.
+  const posicionaveis = usePosicionaveis(pronta?.campanha.id, !!pronta && pronta.campanha.owner_id === userId)
+  const [categoriaPosicionavel, setCategoriaPosicionavel] = useState<CategoriaPosicionavel>('token')
+  const [notaAberta, setNotaAberta] = useState<Posicionavel | { nova: true; pasta: string | null } | null>(null)
   const [pedidoPaletaSom, setPedidoPaletaSom] = useState(0)
   const [pedidoLimparSom, setPedidoLimparSom] = useState(0)
   // Paleta e Limpar Desenhos são botões de ação: o número muda e o palco abre a janela.
@@ -374,6 +381,67 @@ export default function Mesa() {
     avisar(null)
   }
 
+  // ---- Posicionáveis (12.6) ----
+
+  // Arrastou da aba pra mesa: entra uma cópia onde soltou.
+  async function colocarPosicionavel(id: string, ponto: { x: number; y: number }) {
+    const p = posicionaveis.itens.find((x) => x.id === id)
+    const atual = cenas.atual
+    if (!p || !atual || !userId) return
+    const base = { scene_id: atual.id, campaign_id: campanha.id }
+    if (p.categoria === 'nota') {
+      setNotaAberta(p)
+      return
+    }
+    if (p.categoria === 'desenho' && p.dados.desenho) {
+      const d = p.dados.desenho
+      await desenhos.criar({ ...base, ...d, ...caixaNoPonto(ponto, d.width, d.height), author_id: userId })
+      return
+    }
+    if (!p.url) return
+    if (p.categoria === 'desenho' && !ehImagem(p.url)) {
+      window.open(p.url, '_blank', 'noopener')
+      return
+    }
+    if (p.categoria === 'som') {
+      const lado = atual.grid_size * 3
+      const erro = await sons.criar({
+        ...base, name: p.name, url: p.url, ...caixaNoPonto(ponto, p.dados.largura ?? lado, p.dados.altura ?? lado),
+        volume: p.dados.volume ?? 1, suavizar: p.dados.suavizar ?? true, escondido: false, ligado: true,
+      })
+      if (erro) avisar(erro, true)
+      return
+    }
+    // Token, Objeto, Luz e desenho em imagem: imagem por cima do mapa.
+    let largura = p.dados.largura
+    let altura = p.dados.altura
+    if (!largura || !altura) {
+      const nat = await tamanhoDaImagem(p.url)
+      if (p.categoria === 'token') {
+        largura = atual.grid_size
+        altura = nat.w > 0 ? Math.round((largura * nat.h) / nat.w) : largura
+      } else {
+        const fundo = atual.background_url ? await tamanhoDaImagem(atual.background_url) : { w: 0, h: 0 }
+        const t = tamanhoInicial(nat.w, nat.h, fundo.w || 2000, fundo.h || 2000)
+        largura = t.width
+        altura = t.height
+      }
+    }
+    await objetos.criar({
+      ...base, name: p.name, image_url: p.url, ...caixaNoPonto(ponto, largura, altura),
+      layer: p.categoria === 'token' ? 'token' : 'mapa', luz: p.categoria === 'luz',
+    })
+  }
+
+  // Arrastou da mesa pra aba: guarda uma cópia (e mostra a aba onde ficou).
+  async function guardarPosicionaveis(itens: Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'>[]) {
+    if (!itens.length) return
+    for (const i of itens) await posicionaveis.criar(i)
+    const cat = itens[itens.length - 1].categoria
+    setCategoriaPosicionavel(cat)
+    avisar(`Guardado em ${CATEGORIAS_POSICIONAVEIS.find((c) => c.id === cat)?.rotulo}.`, true)
+  }
+
   // ---- Personagens (12.7) ----
 
   function nivelNoAtor(a: Ator): NivelAcesso {
@@ -522,6 +590,8 @@ export default function Mesa() {
         focoPing={focoPing}
         onSoltarImagem={soltarImagem}
         onColocarAtor={colocarAtor}
+        onColocarPosicionavel={colocarPosicionavel}
+        onGuardarPosicionaveis={guardarPosicionaveis}
         onAbrirFicha={abrirFicha}
         variacoesDe={(id) => {
           const a = atores.atores.find((x) => x.id === id)
@@ -696,6 +766,16 @@ export default function Mesa() {
                   onExcluirPasta: (p) => window.confirm(`Remover a pasta "${p.name}"? Os personagens dela ficam soltos.`) && atores.excluirPasta(p.id),
                 }}
               />
+            ) : aba === 'posicionaveis' ? (
+              <PainelPosicionaveis
+                souMestre={souMestre}
+                userId={userId ?? ''}
+                api={posicionaveis}
+                categoria={categoriaPosicionavel}
+                onCategoria={setCategoriaPosicionavel}
+                onAbrirNota={setNotaAberta}
+                avisar={(t, erro) => avisar(t, erro)}
+              />
             ) : aba === 'playlist' ? (
               <PainelPlaylist souMestre={souMestre} userId={userId ?? ''} pl={playlists} />
             ) : aba === 'config' ? (
@@ -706,6 +786,19 @@ export default function Mesa() {
           </aside>
         )}
       </div>
+
+      {souMestre && notaAberta && (
+        <JanelaNota
+          key={'id' in notaAberta ? notaAberta.id : 'nova'}
+          nota={'id' in notaAberta ? notaAberta : null}
+          onSalvar={({ name, texto }) => {
+            if ('id' in notaAberta) posicionaveis.salvar(notaAberta.id, { name, dados: { ...notaAberta.dados, texto } })
+            else posicionaveis.criar({ categoria: 'nota', name, url: null, dados: { texto }, folder_id: notaAberta.pasta })
+            setNotaAberta(null)
+          }}
+          onFechar={() => setNotaAberta(null)}
+        />
+      )}
 
       {souMestre && cenaEditada && (
         <EditorCena

@@ -143,11 +143,12 @@ Miniatura na lista reflete ao vivo a imagem de fundo. Menu de contexto da cena: 
 **Diversos:** Áudio — Playlist da Cena (toca ao ativar) e Áudio da Playlist. Aceitar links (YouTube, Discord etc.) ou MP3 arrastado — mecanismo a definir. Ligado à Lista de Reprodução (12.12).
 
 ### 12.6 Barra Direita — Posicionáveis (4º ícone, peça de quebra-cabeça)
-Armazém de assets reutilizáveis do mestre: arrastar pra aba pra guardar, arrastar pra mesa pra usar. Pastas e subpastas. 5 categorias: **Tokens, Desenhos, Luzes Ambientes, Sons Ambientes, Notas**.
+Armazém de assets reutilizáveis do mestre: arrastar pra aba pra guardar, arrastar pra mesa pra usar. Pastas e subpastas. 6 categorias (abas de ícone, como no Foundry): **Tokens, Objetos, Desenhos, Luzes Ambientes, Sons Ambientes, Notas**. Paredes e Regiões ficam de fora.
 - Tokens: importar PNG (botão ou arrastar) registra; nome = nome do arquivo; botão direito → Renomear; arrastar pra mesa insere. Uso: NPC sem ficha, árvore, carro.
 - Desenhos: PNG, PDF ou documento.
 - Luzes Ambientes: efeitos de luz, aceita GIF.
 - Sons Ambientes: áudios rápidos (porta batendo, vento).
+- Objetos (os "Tiles" do Foundry): imagem solta por cima do mapa e por baixo dos tokens (árvore, carro, mesa); sem ficha.
 - Notas: notas soltas.
 
 Sem regra de negócio complexa — repositório de conveniência.

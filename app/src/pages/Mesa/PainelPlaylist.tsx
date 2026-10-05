@@ -232,7 +232,7 @@ export default function PainelPlaylist({ souMestre, userId, pl }: { souMestre: b
 }
 
 // Descrição em texto rico (negrito, itálico, sublinhado, listas), igual ao jeito do chat.
-function EditorTexto({ valor, rotulo, onMudar }: { valor: string; rotulo: string; onMudar: (html: string) => void }) {
+export function EditorTexto({ valor, rotulo, onMudar }: { valor: string; rotulo: string; onMudar: (html: string) => void }) {
   const caixa = useRef<HTMLDivElement>(null)
   const inicial = useRef(sanitizarHtml(valor))
   const formatar = (comando: string) => {
