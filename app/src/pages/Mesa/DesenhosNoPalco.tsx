@@ -153,7 +153,8 @@ export function useDesenhoNoPalco({ cena, ferramenta, userId, souMestre, des, po
   function aoSoltar(e?: React.PointerEvent): boolean {
     const g = gesto.current
     gesto.current = null
-    if (!g) return ativo
+    // Sem gesto meu (ex.: arrastar o mapa com o botão direito): deixa o palco terminar o dele.
+    if (!g) return false
     const p = e ? pontoNoMapa(e.clientX, e.clientY) : null
     setPrevia(null)
     if (g.tipo === 'forma') {

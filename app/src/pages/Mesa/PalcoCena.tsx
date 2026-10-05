@@ -732,6 +732,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       onPointerUp={(e) => terminar(e)}
       onDoubleClick={() => desenho.aoDuploClique() || som.aoDuploClique()}
       onPointerCancel={() => (gesto.current = null)}
+      // Perdeu o mouse no meio de arrastar o mapa (janela, menu…): o arraste acaba, não fica preso.
+      onLostPointerCapture={() => {
+        if (gesto.current?.tipo === 'mapa') gesto.current = null
+      }}
       onContextMenu={(e) => {
         e.preventDefault()
         if (desenho.aoMenu(e) || som.aoMenu(e)) return
