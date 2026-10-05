@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { caminhoDaLuzUv, coneDaLanterna, conesDosTokens } from './luz'
+import { ajusteDaSeta, caminhoDaLuzUv, coneDaLanterna, conesDosTokens, lanternaNoMapa } from './luz'
 
 const token = { id: 't', x: 0, y: 0, width: 100, height: 100, rotation: 0, layer: 'token' as const }
 const celula = { w: 100, h: 100 }
@@ -40,5 +40,21 @@ describe('lanterna', () => {
     expect(caminhoDaLuzUv(comum)).toBeNull()
     const uv = conesDosTokens([{ ...token, lanterna: 'uv' as const }], celula, false)
     expect(caminhoDaLuzUv(uv)).toMatch(/^M50 35L/)
+  })
+  it('Configurar Lanterna: a seta vira o ajuste e volta pro mesmo lugar', () => {
+    const o = { ...token, x: 200, y: 100, rotation: 30, flip_h: true }
+    const a = ajusteDaSeta(o, { x: 230, y: 120 }, { x: 330, y: 220 })
+    const l = lanternaNoMapa({ ...o, lanterna_ajuste: a })
+    expect(l.x).toBeCloseTo(230, 0)
+    expect(l.y).toBeCloseTo(120, 0)
+    expect(((l.angulo * 180) / Math.PI + 360) % 360).toBeCloseTo(45, 0)
+  })
+  it('o ajuste acompanha quando o token vira na horizontal', () => {
+    // lanterna na mão da direita, apontando pra direita
+    const a = ajusteDaSeta(token, { x: 80, y: 50 }, { x: 180, y: 50 })
+    expect(a).toEqual({ ox: 0.8, oy: 0.5, angulo: 0 })
+    const virado = lanternaNoMapa({ ...token, flip_h: true, lanterna_ajuste: a })
+    expect(virado.x).toBeCloseTo(20)
+    expect(Math.cos(virado.angulo)).toBeCloseTo(-1)
   })
 })

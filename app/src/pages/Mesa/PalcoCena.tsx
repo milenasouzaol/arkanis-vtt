@@ -26,7 +26,7 @@ import { useDesenhoNoPalco } from './DesenhosNoPalco'
 import { useSomNoPalco } from './SonsNoPalco'
 import { LuzesNoPalco, useEscuridaoNoPalco } from './EscuridaoNoPalco'
 import { useEscuridao } from './useEscuridao'
-import { caminhoDaLuzUv, conesDosTokens, LANTERNAS, type Lanterna } from './luz'
+import { ajusteDaSeta, caminhoDaLuzUv, conesDosTokens, LANTERNAS, type AjusteLanterna, type Lanterna } from './luz'
 import type { useSons } from './useSons'
 import type { useDesenhos } from './useDesenhos'
 
@@ -189,6 +189,19 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     .filter((o) => (souMestre ? selecionados.includes(o.id) : o.character_id !== null && meusPersonagens.includes(o.character_id)))
     .map((o) => ({ x: o.x + o.width / 2, y: o.y + o.height / 2 }))
   const esc = useEscuridao(cena?.id ?? null)
+  // Configurar Lanterna: token sendo configurado e a seta que a pessoa está desenhando.
+  const [configLanterna, setConfigLanterna] = useState<string | null>(null)
+  const [seta, setSeta] = useState<{ a: Ponto; b: Ponto } | null>(null)
+  useEffect(() => {
+    if (!configLanterna) return
+    const cancelar = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setConfigLanterna(null)
+      setSeta(null)
+    }
+    window.addEventListener('keydown', cancelar)
+    return () => window.removeEventListener('keydown', cancelar)
+  }, [configLanterna])
   const escuro = useEscuridaoNoPalco({ cena, ferramenta, souMestre, esc, pontoNoMapa, escala: vista.escala, pedidoLimpar: pedidoLimparEscuridao })
   const som = useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, pontoNoMapa, escala: vista.escala, ouvintes, pedidoPaleta: pedidoPaletaSom, pedidoLimpar: pedidoLimparSom })
 
@@ -394,6 +407,13 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   function comecarNoMapa(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0 && e.button !== 2) return
     panouComDireito.current = false
+    // Configurar Lanterna: o arraste desenha a seta (da lanterna na direção da luz).
+    if (configLanterna && e.button === 0) {
+      const p = pontoNoMapa(e.clientX, e.clientY)
+      setSeta({ a: p, b: p })
+      palcoRef.current?.setPointerCapture(e.pointerId)
+      return
+    }
     if (desenho.aoApertar(e) || som.aoApertar(e) || escuro.aoApertar(e)) return
     if (e.button === 0 && ferramenta === 'medir') {
       if (!cena) return
@@ -423,6 +443,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       e.stopPropagation()
       return
     }
+    // Configurando a lanterna: o clique vai pro palco (começa a seta em cima do token).
+    if (configLanterna) return
     // Medindo: o token não pega o clique, a régua começa ali.
     if (e.button === 0 && (ferramenta === 'medir' || desenho.ativo || som.ativo)) return
     // Ferramenta Selecionar Alvos: clicar no token mira nele (12.13).
@@ -476,6 +498,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   }
 
   function mover(e: React.PointerEvent<HTMLDivElement>) {
+    if (seta) setSeta({ ...seta, b: pontoNoMapa(e.clientX, e.clientY) })
     desenho.aoMover(e)
     som.aoMover(e)
     escuro.aoMover(e)
@@ -521,6 +544,16 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   }
 
   async function terminar(e?: React.PointerEvent) {
+    if (seta && configLanterna) {
+      const o = objetos.find((x) => x.id === configLanterna)
+      setSeta(null)
+      const fim = e ? pontoNoMapa(e.clientX, e.clientY) : seta.b
+      if (o && Math.hypot(fim.x - seta.a.x, fim.y - seta.a.y) > 5) {
+        salvarAjusteDaLanterna(o, ajusteDaSeta(o, seta.a, fim))
+        setConfigLanterna(null)
+      }
+      return
+    }
     if (desenho.aoSoltar(e) || som.aoSoltar(e) || escuro.aoSoltar(e)) return
     const g = gesto.current
     gesto.current = null
@@ -590,13 +623,31 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   }
 
   // Lanterna (pedido da Millie, 05/10): desligada, comum ou UV.
+  // Antes de configurar, só "Configurar Lanterna"; depois, editar e escolher a luz.
   function menuLanterna(o: ObjetoCena, aplicar: (l: Lanterna | null) => void): ItemMenu {
+    const configurar = () => {
+      setSelecionados([])
+      setConfigLanterna(o.id)
+    }
+    const escolher: ItemMenu[] = [
+      { rotulo: `${!o.lanterna ? '✓ ' : ''}Desligada`, onClick: () => aplicar(null) },
+      ...LANTERNAS.map((l) => ({ rotulo: `${o.lanterna === l.id ? '✓ ' : ''}${l.rotulo}`, onClick: () => aplicar(l.id) })),
+    ]
     return {
       tipo: 'sub', rotulo: 'Lanterna', icone: faLightbulb,
-      itens: [
-        { rotulo: `${!o.lanterna ? '✓ ' : ''}Desligada`, onClick: () => aplicar(null) },
-        ...LANTERNAS.map((l) => ({ rotulo: `${o.lanterna === l.id ? '✓ ' : ''}${l.rotulo}`, onClick: () => aplicar(l.id) })),
-      ],
+      itens: o.lanterna_ajuste
+        ? [{ rotulo: 'Editar Lanterna', onClick: configurar }, { tipo: 'linha' }, ...escolher]
+        : [{ rotulo: 'Configurar Lanterna', onClick: configurar }, ...(o.lanterna ? [{ tipo: 'linha' } as ItemMenu, escolher[0]] : [])],
+    }
+  }
+
+  // Guarda a seta; se a lanterna estava desligada, já liga a comum.
+  async function salvarAjusteDaLanterna(o: ObjetoCena, ajuste: AjusteLanterna) {
+    const lanterna = o.lanterna ?? 'comum'
+    obj.alterarVarios({ [o.id]: { lanterna_ajuste: ajuste, lanterna } }, souMestre)
+    if (souMestre) return
+    if (!(await obj.ajustarLanternaComoJogador(o.id, ajuste, lanterna))) {
+      obj.alterarVarios({ [o.id]: { lanterna_ajuste: o.lanterna_ajuste ?? null, lanterna: o.lanterna ?? null } }, false)
     }
   }
 
@@ -773,7 +824,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   return (
     <div
       ref={palcoRef}
-      className={`mesa-palco${soltando ? ' soltando' : ''}`}
+      className={`mesa-palco${soltando ? ' soltando' : ''}${configLanterna ? ' configurando-lanterna' : ''}`}
       aria-label="Cena"
       style={{ background: cena?.background_color ?? undefined }}
       onPointerDown={comecarNoMapa}
@@ -945,6 +996,19 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
             )
           })()}
 
+          {/* Configurar Lanterna: a seta que está sendo desenhada. */}
+          {seta && (
+            <svg className="mesa-seta-lanterna" width={mapa.w} height={mapa.h} aria-hidden>
+              <defs>
+                <marker id="seta-lanterna-ponta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M0 0L10 5L0 10z" fill="#ffe9b8" />
+                </marker>
+              </defs>
+              <line x1={seta.a.x} y1={seta.a.y} x2={seta.b.x} y2={seta.b.y} stroke="#ffe9b8" strokeWidth={3 / vista.escala} markerEnd="url(#seta-lanterna-ponta)" />
+              <circle cx={seta.a.x} cy={seta.a.y} r={5 / vista.escala} fill="#ffe9b8" />
+            </svg>
+          )}
+
           {pings.map((p) => (
             <span key={p.id} className="mesa-ping" style={{ left: p.x, top: p.y, ['--escala' as string]: String(1 / vista.escala) }}>
               <span className="mesa-ping-nome">{p.nome}</span>
@@ -957,6 +1021,11 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       {cena?.weather && <EfeitoClimatico key={cena.weather} clima={cena.weather} />}
       {soltando && <div className="mesa-soltar">{cena?.background_url ? 'Solte pra colocar a imagem na cena' : 'Solte pra usar como fundo da cena'}</div>}
       {aviso && !soltando && <div className="mesa-soltar" role="status">{aviso}</div>}
+      {configLanterna && (
+        <p className="mesa-desenho-aviso" role="status">
+          Configurar Lanterna: <kbd>Clique + Arraste</kbd> partindo da lanterna do token, na direção da luz · <kbd>Esc</kbd> cancela
+        </p>
+      )}
 
       {/* O menu não pode deixar o clique cair no mapa (o palco captura o ponteiro). */}
       {menu && (

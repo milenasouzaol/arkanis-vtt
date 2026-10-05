@@ -237,6 +237,7 @@ export type ObjetoCena = {
   luz?: boolean // Luz Ambiente (12.6): clareia o que está embaixo
   lanterna?: 'comum' | 'uv' | null // lanterna do token, ligada (pedido da Millie, 05/10)
   so_uv?: boolean // pros jogadores, só aparece na luz UV
+  lanterna_ajuste?: { ox: number; oy: number; angulo: number } | null // Configurar Lanterna (seta)
   created_at: string
 }
 

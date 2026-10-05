@@ -17,30 +17,65 @@ export const FORMA_DA_LANTERNA: Record<Lanterna, { alcance: number; abertura: nu
 
 export type Cone = { id: string; tipo: Lanterna; cx: number; cy: number; raio: number; pontos: { x: number; y: number }[] }
 
-// O cone sai do token pra frente dele (pedido da Millie, 05/10): os tokens são de corpo inteiro,
-// de lado, olhando pra direita da imagem; a luz sai da altura do peito/mão. Virar o token na
-// horizontal vira a lanterna; girar o token gira junto.
-export const ALTURA_DA_LANTERNA = 0.15 // acima do centro, em fração da altura do token
+// Onde a lanterna está no desenho do token e pra onde aponta (Configurar Lanterna: a pessoa
+// desenha uma seta). Guardado no desenho, antes de virar e girar, então acompanha o token.
+//   ox/oy: fração da largura/altura a partir do canto de cima à esquerda
+//   angulo: graus, 0 = pra direita da imagem, sentido horário
+export type AjusteLanterna = { ox: number; oy: number; angulo: number }
 
-export function coneDaLanterna(
-  o: Pick<ObjetoCena, 'id' | 'x' | 'y' | 'width' | 'height' | 'rotation'> & { flip_h?: boolean; flip_v?: boolean },
-  tipo: Lanterna,
-  celula: { w: number; h: number },
-  passos = 16,
-): Cone {
+// Sem configurar: os tokens são de corpo inteiro, de lado, olhando pra direita; a luz sai da
+// altura do peito/mão, pra frente.
+export const AJUSTE_PADRAO: AjusteLanterna = { ox: 0.5, oy: 0.35, angulo: 0 }
+
+type TokenDaLanterna = Pick<ObjetoCena, 'id' | 'x' | 'y' | 'width' | 'height' | 'rotation'> & {
+  flip_h?: boolean
+  flip_v?: boolean
+  lanterna_ajuste?: AjusteLanterna | null
+}
+
+const RAD = Math.PI / 180
+
+// Ajuste (no desenho do token) → ponto e ângulo no mapa.
+export function lanternaNoMapa(o: TokenDaLanterna): { x: number; y: number; angulo: number } {
+  const a = o.lanterna_ajuste ?? AJUSTE_PADRAO
+  const giro = o.rotation * RAD
+  let lx = (a.ox - 0.5) * o.width
+  let ly = (a.oy - 0.5) * o.height
+  let ang = a.angulo * RAD
+  if (o.flip_h) { lx = -lx; ang = Math.PI - ang }
+  if (o.flip_v) { ly = -ly; ang = -ang }
+  return {
+    x: o.x + o.width / 2 + lx * Math.cos(giro) - ly * Math.sin(giro),
+    y: o.y + o.height / 2 + lx * Math.sin(giro) + ly * Math.cos(giro),
+    angulo: ang + giro,
+  }
+}
+
+// Seta desenhada no mapa (de → para) → ajuste no desenho do token.
+export function ajusteDaSeta(o: TokenDaLanterna, de: { x: number; y: number }, para: { x: number; y: number }): AjusteLanterna {
+  const giro = o.rotation * RAD
+  const vx = de.x - (o.x + o.width / 2)
+  const vy = de.y - (o.y + o.height / 2)
+  let lx = vx * Math.cos(giro) + vy * Math.sin(giro)
+  let ly = -vx * Math.sin(giro) + vy * Math.cos(giro)
+  let ang = Math.atan2(para.y - de.y, para.x - de.x) - giro
+  if (o.flip_h) { lx = -lx; ang = Math.PI - ang }
+  if (o.flip_v) { ly = -ly; ang = -ang }
+  const graus = ((((ang / RAD) % 360) + 360) % 360)
+  const r3 = (n: number) => Math.round(n * 1000) / 1000
+  return { ox: r3(lx / o.width + 0.5), oy: r3(ly / o.height + 0.5), angulo: Math.round(graus * 10) / 10 }
+}
+
+export function coneDaLanterna(o: TokenDaLanterna, tipo: Lanterna, celula: { w: number; h: number }, passos = 16): Cone {
   const { alcance, abertura } = FORMA_DA_LANTERNA[tipo]
-  const giro = (o.rotation * Math.PI) / 180
-  // Ponto de saída (antes do giro): no meio da largura, um pouco acima do centro.
-  const oy = (o.flip_v ? 1 : -1) * ALTURA_DA_LANTERNA * o.height
-  const cx = arred(o.x + o.width / 2 - Math.sin(giro) * oy)
-  const cy = arred(o.y + o.height / 2 + Math.cos(giro) * oy)
+  const l = lanternaNoMapa(o)
+  const cx = arred(l.x)
+  const cy = arred(l.y)
   const raio = alcance * Math.max(celula.w, celula.h)
-  // Frente = direita da imagem; virado na horizontal, esquerda. Depois, o giro do token.
-  const frente = giro + (o.flip_h ? Math.PI : 0)
-  const meia = ((abertura / 2) * Math.PI) / 180
+  const meia = (abertura / 2) * RAD
   const pontos = [{ x: cx, y: cy }]
   for (let i = 0; i <= passos; i++) {
-    const a = frente - meia + (2 * meia * i) / passos
+    const a = l.angulo - meia + (2 * meia * i) / passos
     pontos.push({ x: arred(cx + Math.cos(a) * raio), y: arred(cy + Math.sin(a) * raio) })
   }
   return { id: o.id, tipo, cx, cy, raio, pontos }
@@ -54,7 +89,7 @@ export function caminhoDoCone(c: Pick<Cone, 'pontos'>): string {
 
 // Os cones que valem: dos tokens com lanterna ligada que essa pessoa vê.
 export function conesDosTokens(
-  objetos: (Pick<ObjetoCena, 'id' | 'x' | 'y' | 'width' | 'height' | 'rotation' | 'layer'> & { lanterna?: Lanterna | null; flip_h?: boolean; flip_v?: boolean })[],
+  objetos: (TokenDaLanterna & Pick<ObjetoCena, 'layer'> & { lanterna?: Lanterna | null })[],
   celula: { w: number; h: number },
   souMestre: boolean,
 ): Cone[] {
