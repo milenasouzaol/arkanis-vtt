@@ -14169,27 +14169,34 @@ button.character-tile-link {
   font-weight: 600;
 }
 
-/* Mira (KAN-51): ícone em cima do token marcado como alvo */
+/* Mira (KAN-51): ícone pequeno em cima da cabeça do token marcado como alvo */
 .mesa-mira {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  bottom: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  transform: translate(-50%, calc(var(--px, 1px) * -4));
   pointer-events: none;
   color: #d8d8dc;
-  opacity: 0.55;
-  filter: drop-shadow(0 0 3px #000);
-}
-
-.mesa-mira svg {
-  width: 46%;
-  height: 46%;
+  opacity: 0.6;
+  filter: drop-shadow(0 0 2px #000);
+  font-size: calc(var(--px, 1px) * 20);
 }
 
 .mesa-mira.minha {
   color: #f4f4f6;
-  opacity: 0.95;
+  opacity: 1;
+}
+
+/* Passar o mouse em qualquer token (mesmo de outra pessoa) e o token focado: contorno leve */
+.mesa-objeto.token:hover:not(.selecionado),
+.mesa-objeto.focado {
+  outline: calc(var(--borda, 2px) / 2) solid rgba(240, 240, 242, 0.28);
+  outline-offset: calc(var(--borda, 2px) * 1.5);
+}
+
+.mesa-objeto.focado {
+  outline-color: rgba(240, 240, 242, 0.45);
 }
 
 /* Ataque com mira no chat: "[Atacante] está atacando [Alvo]" com Ataque e Dano */

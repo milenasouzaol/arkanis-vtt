@@ -78,6 +78,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const gesto = useRef<Gesto | null>(null)
   // Token embaixo do mouse: o M mira nele (qualquer um mira tokens alheios).
   const sobre = useRef<string | null>(null)
+  // Token de outra pessoa clicado: fica "focado" (contorno leve), pra saber em quem o M vai mirar.
+  const [focado, setFocado] = useState<string | null>(null)
   // Medir Distância (12.13): pontos fixos + onde o mouse está. "aberta" = ainda medindo
   // (Ctrl ao soltar deixa um ponto no caminho e continua).
   const [regua, setRegua] = useState<{ pontos: Ponto[]; atual: Ponto; aberta: boolean } | null>(null)
@@ -282,7 +284,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       }
       // M marca/desmarca o alvo: o token embaixo do mouse, ou os selecionados.
       if (!ctrl && !e.altKey && e.key.toLowerCase() === 'm') {
-        const ids = sobre.current && visiveis.some((o) => o.id === sobre.current) ? [sobre.current] : selecionados
+        const ids = sobre.current && visiveis.some((o) => o.id === sobre.current) ? [sobre.current] : selecionados.length ? selecionados : focado ? [focado] : []
         if (ids.length) onAlternarAlvo(ids)
         return
       }
@@ -311,7 +313,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     }
     window.addEventListener('keydown', tecla)
     return () => window.removeEventListener('keydown', tecla)
-  }, [regua, obj, userId, nomeUsuario, selecionados, souMestre, objetos, visiveis, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer, onAlternarAlvo, onLimparAlvos])
+  }, [focado, regua, obj, userId, nomeUsuario, selecionados, souMestre, objetos, visiveis, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer, onAlternarAlvo, onLimparAlvos])
 
   // Rodinha: zoom no ponto do mouse; com Shift ou Ctrl em cima de algo selecionado, gira (12.13).
   useEffect(() => {
@@ -363,6 +365,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     if (e.button === 0) {
       // Esquerdo no vazio: caixa de seleção (o fundo não se mexe).
       if (!e.shiftKey) setSelecionados([])
+      setFocado(null)
       if (!cena) return
       gesto.current = { tipo: 'caixa', inicio: pontoNoMapa(e.clientX, e.clientY), somar: e.shiftKey }
     } else {
@@ -385,8 +388,17 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       if (o.layer !== 'mapa') onAlternarAlvo([o.id])
       return
     }
-    if (e.button !== 0 || !podeMover(o)) return
+    if (e.button === 0 && !podeMover(o)) {
+      // Não dá pra mexer, mas dá pra focar (e mirar com M).
+      if (o.layer === 'mapa') return
+      e.stopPropagation()
+      setFocado(o.id)
+      setSelecionados([])
+      return
+    }
+    if (e.button !== 0) return
     e.stopPropagation()
+    setFocado(null)
     let sel = selecionados
     if (e.shiftKey) sel = sel.includes(o.id) ? sel.filter((id) => id !== o.id) : [...sel, o.id]
     else if (!sel.includes(o.id)) sel = [o.id]
@@ -729,8 +741,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
             .map((o) => (
               <div
                 key={o.id}
-                className={`mesa-objeto${selecionados.includes(o.id) ? ' selecionado' : ''}${o.layer === 'mestre' ? ' camada-mestre' : ''}${podeMover(o) && !o.locked ? ' mexivel' : ''}`}
-                style={{ left: o.x, top: o.y, width: o.width, height: o.height, transform: `rotate(${o.rotation}deg)`, ['--borda' as string]: `${2 / vista.escala}px` }}
+                className={`mesa-objeto${selecionados.includes(o.id) ? ' selecionado' : ''}${focado === o.id ? ' focado' : ''}${o.layer !== 'mapa' ? ' token' : ''}${o.layer === 'mestre' ? ' camada-mestre' : ''}${podeMover(o) && !o.locked ? ' mexivel' : ''}`}
+                style={{ left: o.x, top: o.y, width: o.width, height: o.height, transform: `rotate(${o.rotation}deg)`, ['--borda' as string]: `${2 / vista.escala}px`, ['--px' as string]: `${1 / vista.escala}px` }}
                 onPointerDown={(e) => pegarObjeto(e, o)}
                 onPointerEnter={() => (sobre.current = o.id)}
                 onPointerLeave={() => sobre.current === o.id && (sobre.current = null)}
