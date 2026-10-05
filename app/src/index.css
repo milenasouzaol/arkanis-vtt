@@ -2544,7 +2544,8 @@ code, .counter {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1.3em;
+  /* a moldura (150px) passa 23px pra fora da foto: o espaço em cima é pra ela não ser cortada */
+  margin: 28px auto 1.3em;
 }
 
 .vtt-avatar {
