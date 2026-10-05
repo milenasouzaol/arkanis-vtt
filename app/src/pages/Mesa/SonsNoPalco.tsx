@@ -6,6 +6,8 @@ import type { Cena } from './cenas'
 import { caixaDoArrasto } from './desenhos'
 import { PADRAO_SOM, porcentagemNoPonto, volumeParaOuvintes, type SomAmbiente } from './sons'
 import { enviarSom, useTocarSons, type useSons } from './useSons'
+import { useVolumesDoUsuario } from './volumesDoUsuario'
+import { volumeFinal } from './playlists'
 
 type Ponto = { x: number; y: number }
 type Sons = ReturnType<typeof useSons>
@@ -54,7 +56,9 @@ export function useSomNoPalco({ cena, ferramenta, userId, souMestre, sons, ponto
   // Pré-visualizar: o mestre ouve como se o token estivesse onde está o mouse.
   const pontos = ferramenta === 'som-previsualizar' && ouvindoEm ? [ouvindoEm] : ouvintes
   // Som que não pôde tocar (vídeo do YouTube bloqueado…): o mestre vê o motivo na área.
-  const erros = useTocarSons(sons.sons.map((s) => ({ id: s.id, url: s.url, volume: volumeParaOuvintes(s, pontos, souMestre) })))
+  // O controle "Ambiente" de cada pessoa (Lista de Reprodução) também vale pro Som Ambiente.
+  const meusVolumes = useVolumesDoUsuario()
+  const erros = useTocarSons(sons.sons.map((s) => ({ id: s.id, url: s.url, volume: volumeFinal(volumeParaOuvintes(s, pontos, souMestre), meusVolumes.ambiente) })))
 
   function abrirFormulario(s: SomAmbiente | null, c?: Formulario['caixa']) {
     setForm(s

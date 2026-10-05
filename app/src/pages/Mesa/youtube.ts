@@ -19,6 +19,7 @@ type YTPlayer = {
   setVolume(v: number): void
   destroy(): void
   getPlayerState(): number
+  seekTo(segundos: number, permitirBuscar: boolean): void
 }
 
 type YTNamespace = {
@@ -79,8 +80,11 @@ export function rampaDeVolume(de: number, ate: number, aplicar: (v: number) => v
 
 export type TocadorYoutube = { definirVolume(v: number): void; parar(): void }
 
-// Um player escondido, em loop, que avisa se o vídeo não pode tocar.
-export function criarTocadorYoutube(id: string, onErro: (motivo: string) => void): TocadorYoutube {
+export type OpcoesDoTocador = { loop?: boolean; inicio?: number; onFim?: () => void }
+
+// Um player escondido (em loop, por padrão) que avisa se o vídeo não pode tocar e quando acaba.
+export function criarTocadorYoutube(id: string, onErro: (motivo: string) => void, opcoes: OpcoesDoTocador = {}): TocadorYoutube {
+  const loop = opcoes.loop ?? true
   const caixa = document.createElement('div')
   caixa.style.cssText = 'position:fixed;left:-10000px;top:0;width:200px;height:200px;opacity:0;pointer-events:none'
   const alvo = document.createElement('div')
@@ -109,13 +113,17 @@ export function criarTocadorYoutube(id: string, onErro: (motivo: string) => void
       videoId: id,
       width: 200,
       height: 200,
-      playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: id, playsinline: 1, disablekb: 1 },
+      playerVars: { autoplay: 0, controls: 0, playsinline: 1, disablekb: 1, start: Math.floor(opcoes.inicio ?? 0), ...(loop ? { loop: 1, playlist: id } : {}) },
       events: {
         onReady: () => {
           pronto = true
           aplicar()
         },
         onError: (e: { data: number }) => onErro(motivoDoErroYoutube(e.data)),
+        // 0 = o vídeo acabou (só acontece sem loop).
+        onStateChange: (e: { data: number }) => {
+          if (e.data === 0) opcoes.onFim?.()
+        },
       },
     })
   })

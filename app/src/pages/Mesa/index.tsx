@@ -13,6 +13,8 @@ import { enviarImagemDaCena, useCenas } from './useCenas'
 import { useObjetos, type Ping } from './useObjetos'
 import { useDesenhos } from './useDesenhos'
 import { useSons } from './useSons'
+import { usePlaylists } from './usePlaylists'
+import PainelPlaylist from './PainelPlaylist'
 import { tamanhoInicial, type Pasta } from './cenas'
 import PainelPersonagens from './PainelPersonagens'
 import { ConfigurarPropriedadeAtor, ConfigurarToken, ConfirmarExclusao, CriarPersonagem, FichaPortatil, PainelVariacoes } from './JanelasAtor'
@@ -142,6 +144,8 @@ export default function Mesa() {
   const objetos = useObjetos(cenas.atual?.id ?? null, receberPing)
   const desenhos = useDesenhos(cenas.atual?.id ?? null)
   const sons = useSons(cenas.atual?.id ?? null)
+  // Lista de Reprodução: toca pra todo mundo mesmo com a aba fechada.
+  const playlists = usePlaylists(pronta?.campanha.id, !!pronta && pronta.campanha.owner_id === userId)
   const [pedidoPaletaSom, setPedidoPaletaSom] = useState(0)
   const [pedidoLimparSom, setPedidoLimparSom] = useState(0)
   // Paleta e Limpar Desenhos são botões de ação: o número muda e o palco abre a janela.
@@ -692,6 +696,8 @@ export default function Mesa() {
                   onExcluirPasta: (p) => window.confirm(`Remover a pasta "${p.name}"? Os personagens dela ficam soltos.`) && atores.excluirPasta(p.id),
                 }}
               />
+            ) : aba === 'playlist' ? (
+              <PainelPlaylist souMestre={souMestre} userId={userId ?? ''} pl={playlists} />
             ) : aba === 'config' ? (
               <PainelConfig souMestre={souMestre} copiado={copiado} onCopiarConvite={copiarConvite} onSair={() => navigate('/jogar')} />
             ) : (

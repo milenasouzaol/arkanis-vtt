@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { SomAmbiente } from './sons'
-import { criarTocadorYoutube, idDoYoutube, rampaDeVolume } from './youtube'
+import { criarTocadorYoutube, idDoYoutube, rampaDeVolume, type OpcoesDoTocador } from './youtube'
 
 const CAMPOS = 'id, scene_id, campaign_id, name, url, x, y, width, height, volume, suavizar, escondido, ligado, created_at'
 
@@ -73,10 +73,18 @@ export async function enviarSom(userId: string, arquivo: File): Promise<string |
 // Devolve os sons que não puderam tocar e o porquê (vídeo do YouTube bloqueado, por exemplo).
 type Tocador = { url: string; definirVolume(v: number): void; parar(): void }
 
-function tocadorDeAudio(url: string): Tocador {
+function tocadorDeAudio(url: string, opcoes: OpcoesDoTocador = {}): Tocador {
   const a = new Audio(url)
-  a.loop = true
+  a.loop = opcoes.loop ?? true
   a.volume = 0
+  // Entrou no meio: começa do mesmo ponto que os outros (no loop, dá a volta).
+  if (opcoes.inicio) {
+    a.addEventListener('loadedmetadata', () => {
+      const d = a.duration
+      a.currentTime = a.loop && Number.isFinite(d) && d > 0 ? opcoes.inicio! % d : opcoes.inicio!
+    }, { once: true })
+  }
+  if (opcoes.onFim) a.addEventListener('ended', opcoes.onFim)
   let cancelar = () => {}
   return {
     url,
@@ -97,8 +105,11 @@ function tocadorDeAudio(url: string): Tocador {
   }
 }
 
-export function useTocarSons(volumes: { id: string; url: string; volume: number }[]): Record<string, string> {
-  const tocadores = useRef(new Map<string, Tocador>())
+// loop: repete (padrão); inicio: segundo de onde começa; onFim: avisa quando um som sem loop acaba.
+export function useTocarSons(volumes: { id: string; url: string; volume: number; loop?: boolean; inicio?: number }[], onFim?: (id: string) => void): Record<string, string> {
+  const tocadores = useRef(new Map<string, Tocador & { loop: boolean }>())
+  const fim = useRef(onFim)
+  fim.current = onFim
   const [erros, setErros] = useState<Record<string, string>>({})
   const chave = JSON.stringify(volumes)
 
@@ -113,12 +124,17 @@ export function useTocarSons(volumes: { id: string; url: string; volume: number 
     }
     for (const v of lista) {
       let t = tocadores.current.get(v.id)
-      if (!t || t.url !== v.url) {
+      const loop = v.loop ?? true
+      if (!t || t.url !== v.url || t.loop !== loop) {
         t?.parar()
         const yt = idDoYoutube(v.url)
-        t = yt
-          ? { url: v.url, ...criarTocadorYoutube(yt, (motivo) => setErros((e) => ({ ...e, [v.id]: motivo }))) }
-          : tocadorDeAudio(v.url)
+        const opcoes: OpcoesDoTocador = { loop, inicio: v.inicio, onFim: () => fim.current?.(v.id) }
+        t = {
+          loop,
+          ...(yt
+            ? { url: v.url, ...criarTocadorYoutube(yt, (motivo) => setErros((e) => ({ ...e, [v.id]: motivo })), opcoes) }
+            : tocadorDeAudio(v.url, opcoes)),
+        }
         setErros((e) => {
           if (!(v.id in e)) return e
           const { [v.id]: _, ...resto } = e
