@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { SomAmbiente } from './sons'
-import { criarTocadorYoutube, idDoYoutube } from './youtube'
+import { criarTocadorYoutube, idDoYoutube, rampaDeVolume } from './youtube'
 
 const CAMPOS = 'id, scene_id, campaign_id, name, url, x, y, width, height, volume, suavizar, escondido, ligado, created_at'
 
@@ -76,15 +76,22 @@ type Tocador = { url: string; definirVolume(v: number): void; parar(): void }
 function tocadorDeAudio(url: string): Tocador {
   const a = new Audio(url)
   a.loop = true
+  a.volume = 0
+  let cancelar = () => {}
   return {
     url,
     definirVolume(v) {
-      a.volume = Math.min(1, Math.max(0, v))
-      if (v > 0) {
-        if (a.paused) a.play().catch(() => {})
-      } else if (!a.paused) a.pause()
+      const alvo = Math.min(1, Math.max(0, v))
+      if (alvo > 0 && a.paused) a.play().catch(() => {})
+      cancelar()
+      // Desliza até o volume novo e só pausa depois de chegar a zero (some suave).
+      cancelar = rampaDeVolume(a.volume, alvo, (x) => {
+        a.volume = Math.min(1, Math.max(0, x))
+        if (x === 0 && alvo === 0 && !a.paused) a.pause()
+      })
     },
     parar() {
+      cancelar()
       a.pause()
     },
   }

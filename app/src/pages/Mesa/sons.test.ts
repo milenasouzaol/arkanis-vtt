@@ -10,9 +10,10 @@ describe('som ambiente', () => {
   it('fora da área não toca', () => {
     expect(volumeNoPonto(som(), { x: 250, y: 50 })).toBe(0)
   })
-  it('com suavização: máximo no centro, baixando até a borda', () => {
+  it('com suavização: máximo no centro, baixando em curva até sumir na borda', () => {
     expect(volumeNoPonto(som(), { x: 100, y: 50 })).toBe(0.8)
-    expect(volumeNoPonto(som(), { x: 150, y: 50 })).toBe(0.4)
+    expect(volumeNoPonto(som(), { x: 150, y: 50 })).toBe(0.2) // no meio do caminho já é 1/4
+    expect(volumeNoPonto(som(), { x: 180, y: 50 })).toBe(0.032) // quase na borda, quase nada
     expect(volumeNoPonto(som(), { x: 200, y: 50 })).toBe(0)
   })
   it('sem suavização: igual em toda a área', () => {
@@ -20,9 +21,9 @@ describe('som ambiente', () => {
   })
   it('vale o token mais perto; desligado não toca; escondido só o mestre ouve', () => {
     const ouvintes = [{ x: 190, y: 50 }, { x: 110, y: 50 }]
-    expect(volumeParaOuvintes(som(), ouvintes, false)).toBe(0.72)
+    expect(volumeParaOuvintes(som(), ouvintes, false)).toBe(0.648)
     expect(volumeParaOuvintes(som({ ligado: false }), ouvintes, true)).toBe(0)
     expect(volumeParaOuvintes(som({ escondido: true }), ouvintes, false)).toBe(0)
-    expect(volumeParaOuvintes(som({ escondido: true }), ouvintes, true)).toBe(0.72)
+    expect(volumeParaOuvintes(som({ escondido: true }), ouvintes, true)).toBe(0.648)
   })
 })

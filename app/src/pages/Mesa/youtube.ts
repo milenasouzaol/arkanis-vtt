@@ -59,6 +59,24 @@ export function motivoDoErroYoutube(codigo: number): string {
   return 'o YouTube não deixou tocar esse vídeo'
 }
 
+// O volume desliza do valor atual até o novo em ~meio segundo (o token anda de quadrado em
+// quadrado; sem isso o som mudaria aos pulos). Devolve uma função que cancela a rampa.
+export function rampaDeVolume(de: number, ate: number, aplicar: (v: number) => void, ms = 500): () => void {
+  if (Math.abs(ate - de) < 0.005) {
+    aplicar(ate)
+    return () => {}
+  }
+  const inicio = performance.now()
+  let quadro = 0
+  const passo = (agora: number) => {
+    const t = Math.min(1, (agora - inicio) / ms)
+    aplicar(de + (ate - de) * t)
+    if (t < 1) quadro = requestAnimationFrame(passo)
+  }
+  quadro = requestAnimationFrame(passo)
+  return () => cancelAnimationFrame(quadro)
+}
+
 export type TocadorYoutube = { definirVolume(v: number): void; parar(): void }
 
 // Um player escondido, em loop, que avisa se o vídeo não pode tocar.
@@ -70,13 +88,20 @@ export function criarTocadorYoutube(id: string, onErro: (motivo: string) => void
   document.body.appendChild(caixa)
   let player: YTPlayer | null = null
   let pronto = false
-  let volume = 0
+  let volume = 0 // o volume que se quer
+  let atual = 0 // o volume que está tocando agora (desliza até o de cima)
   let parado = false
+  let cancelar = () => {}
   const aplicar = () => {
     if (!player || !pronto) return
-    player.setVolume(Math.round(volume * 100))
-    if (volume > 0) player.playVideo()
-    else player.pauseVideo()
+    const p = player
+    if (volume > 0 && p.getPlayerState() !== window.YT?.PlayerState.PLAYING) p.playVideo()
+    cancelar()
+    cancelar = rampaDeVolume(atual, volume, (v) => {
+      atual = v
+      p.setVolume(Math.round(v * 100))
+      if (v === 0 && volume === 0) p.pauseVideo()
+    })
   }
   apiDoYoutube().then((YT) => {
     if (parado) return
@@ -101,6 +126,7 @@ export function criarTocadorYoutube(id: string, onErro: (motivo: string) => void
     },
     parar() {
       parado = true
+      cancelar()
       player?.destroy()
       caixa.remove()
     },
