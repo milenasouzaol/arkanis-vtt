@@ -279,3 +279,25 @@ export function estiloDoCampo(f: FormatoAtivo): Record<string, string> {
   if (f.cor) e.color = f.cor
   return e
 }
+
+// Texto curto da mensagem pra notificação (12.3): sem formatação, e as rolagens/ações resumidas.
+export function resumoDaMensagem(m: Pick<Mensagem, 'conteudo' | 'rolagem' | 'acao'>, limite = 140): string {
+  let texto = ''
+  if (m.acao?.tipo === 'ataque') texto = `está atacando ${m.acao.alvos.map((a) => a.nome).join(', ')}`
+  else if (m.acao?.tipo === 'cura') texto = `está usando ${m.acao.fonte} em ${m.acao.alvos.map((a) => a.nome).join(', ')}`
+  else if (m.rolagem) texto = m.rolagem.sem_rolagem ? m.rolagem.label : `${m.rolagem.label}: ${m.rolagem.total}`
+  else if (m.conteudo) {
+    texto = m.conteudo
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<img[^>]*>/gi, '[imagem]')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+  return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto
+}

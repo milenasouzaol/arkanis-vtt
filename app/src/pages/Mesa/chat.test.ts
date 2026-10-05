@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   aplicarFormato,
+  resumoDaMensagem,
   alternarEmLinha,
   autoria,
   estiloDoCampo,
@@ -180,5 +181,17 @@ describe('formato que fica marcado', () => {
       fontWeight: '700', textDecoration: 'underline line-through', fontSize: '28px', color: '#00ff00',
     })
     expect(formatoVazio(FORMATO_PADRAO)).toBe(true)
+  })
+})
+
+describe('resumo pra notificação', () => {
+  it('tira a formatação e corta', () => {
+    expect(resumoDaMensagem({ conteudo: '<p><b>Oi</b>&nbsp;gente<br>tudo bem?</p>', rolagem: null })).toBe('Oi gente tudo bem?')
+    expect(resumoDaMensagem({ conteudo: '<img src="x">', rolagem: null })).toBe('[imagem]')
+    expect(resumoDaMensagem({ conteudo: 'a'.repeat(200), rolagem: null }, 10)).toBe('aaaaaaaaa…')
+  })
+  it('rolagem e ação', () => {
+    expect(resumoDaMensagem({ conteudo: null, rolagem: { label: 'Teste de Luta', total: 17, detail: '', dice: null, bonus: 0 } })).toBe('Teste de Luta: 17')
+    expect(resumoDaMensagem({ conteudo: null, rolagem: null, acao: { tipo: 'ataque', atacante: 'A', ataque: {} as never, alvos: [{ token_id: '1', nome: 'Maria' }], estado: {} } })).toBe('está atacando Maria')
   })
 })

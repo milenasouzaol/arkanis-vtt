@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
@@ -24,7 +24,7 @@ import { useCombate, type Combate } from './useCombate'
 import type { Combatente } from './combate'
 import type { Cena } from './cenas'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
-import { autoria, type ModoEnvio } from './chat'
+import { autoria, resumoDaMensagem, type Mensagem, type ModoEnvio } from './chat'
 import { enviarImagemDoChat, useChat } from './useChat'
 import PainelChat from './PainelChat'
 import ChatEntrada from './ChatEntrada'
@@ -157,6 +157,46 @@ export default function Mesa() {
     })
   }, [idsAmeacas, vdDe])
   const [avisoPalco, setAvisoPalco] = useState<string | null>(null)
+
+  // ---- Mensagem nova no chat (pedido da Millie): notificação perto do chat, o ícone pisca e,
+  // com a aba do navegador escondida, o título ganha o número de mensagens novas.
+  const [notificacoes, setNotificacoes] = useState<Mensagem[]>([])
+  const [chatPiscando, setChatPiscando] = useState(false)
+  const [foraDaAba, setForaDaAba] = useState(0)
+  const vistas = useRef<Set<string> | null>(null)
+  const chatVisivel = aba === 'chat' && !recolhida
+  useEffect(() => {
+    const lista = chat.mensagens
+    if (!lista) return
+    // Primeira carga: o que já estava lá não é novidade.
+    if (!vistas.current) {
+      vistas.current = new Set(lista.map((m) => m.id))
+      return
+    }
+    const novas = lista.filter((m) => !vistas.current!.has(m.id))
+    novas.forEach((m) => vistas.current!.add(m.id))
+    const deOutros = novas.filter((m) => m.user_id !== userId)
+    if (!deOutros.length) return
+    if (document.hidden) setForaDaAba((n) => n + deOutros.length)
+    if (chatVisivel) return
+    setChatPiscando(true)
+    setNotificacoes((l) => [...l, ...deOutros].slice(-3))
+    for (const m of deOutros) setTimeout(() => setNotificacoes((l) => l.filter((x) => x.id !== m.id)), 7000)
+  }, [chat.mensagens, userId, chatVisivel])
+  useEffect(() => {
+    if (!chatVisivel) return
+    setChatPiscando(false)
+    setNotificacoes([])
+  }, [chatVisivel])
+  useEffect(() => {
+    const voltou = () => !document.hidden && setForaDaAba(0)
+    document.addEventListener('visibilitychange', voltou)
+    return () => document.removeEventListener('visibilitychange', voltou)
+  }, [])
+  useEffect(() => {
+    const base = document.title.replace(/^\(\d+\) /, '')
+    document.title = foraDaAba ? `(${foraDaAba}) ${base}` : base
+  }, [foraDaAba])
   const [editorAmeaca, setEditorAmeaca] = useState<{ inicial: CriaturaEditavel; depois?: (id: string) => void } | null>(null)
 
   // ---- Mira (12.9) ----
@@ -509,10 +549,30 @@ export default function Mesa() {
 
       <div className={`mesa-lateral${recolhida ? ' recolhida' : ''}`}>
         <nav className="mesa-barra" aria-label="Abas da mesa">
-          <BarraIcones lado="direita" itens={ABAS_DIREITA} ativo={recolhida ? null : aba} onEscolher={escolherAba} />
+          <BarraIcones lado="direita" itens={ABAS_DIREITA} ativo={recolhida ? null : aba} piscando={chatPiscando ? ['chat'] : []} onEscolher={escolherAba} />
           <BotaoIcone id="recolher" rotulo={recolhida ? 'Expandir' : 'Recolher'} lado="direita" onClick={() => setRecolhida((v) => !v)} />
           {!chatAberto && <ModosEnvio vertical modo={modo} onMudar={mudarModo} />}
         </nav>
+
+        {notificacoes.length > 0 && (
+          <div className="mesa-notificacoes" aria-live="polite">
+            {notificacoes.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className="chat-msg mesa-notificacao"
+                title="Abrir o chat"
+                onClick={() => { setAba('chat'); setRecolhida(false) }}
+              >
+                <span className="chat-msg-foto">{m.autor_foto ? <img src={m.autor_foto} alt="" /> : null}</span>
+                <span className="mesa-notificacao-texto">
+                  <strong>{m.autor_nome}</strong>
+                  <span>{resumoDaMensagem(m)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {!chatAberto && (
           <div className="mesa-chat-flutuante">
