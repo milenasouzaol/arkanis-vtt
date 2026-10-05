@@ -8,7 +8,7 @@ import EfeitoClimatico from './EfeitoClimatico'
 import MenuContexto, { type ItemMenu } from './MenuContexto'
 import Janela, { Campo } from './Janela'
 import {
-  ajustarVista, filtroAmbiente, imagemDoArrasto, ladrilhoHex, telaParaMapa, tracoDaGrade, zoomEm,
+  ajustarVista, celulaDaGrade, filtroAmbiente, imagemDoArrasto, ladrilhoHex, telaParaMapa, tracoDaGrade, zoomEm,
   type Camada, type Cena, type ObjetoCena, type Vista,
 } from './cenas'
 import {
@@ -84,6 +84,11 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   // (Ctrl ao soltar deixa um ponto no caminho e continua).
   const [regua, setRegua] = useState<{ pontos: Ponto[]; atual: Ponto; aberta: boolean } | null>(null)
   const apagarRegua = useRef<number | undefined>(undefined)
+  // A régua mede pela célula da grade (que cobre a imagem inteira).
+  const gradeDaRegua = () => {
+    const cel = cena ? celulaDaGrade(cena, mapa) : { w: 100, h: 100 }
+    return { ...cena!, grid_size: cel.w, grid_altura: cel.h }
+  }
   const ultimoEnvio = useRef(0)
   // Arrastar com o botão direito move o mapa; aí o menu não abre.
   const panouComDireito = useRef(false)
@@ -354,7 +359,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     panouComDireito.current = false
     if (e.button === 0 && ferramenta === 'medir') {
       if (!cena) return
-      const p = noCentro(pontoNoMapa(e.clientX, e.clientY), cena)
+      const p = noCentro(pontoNoMapa(e.clientX, e.clientY), gradeDaRegua())
       window.clearTimeout(apagarRegua.current)
       // Medindo com ponto no meio: o clique continua a mesma régua.
       setRegua((r) => (r?.aberta ? r : { pontos: [p], atual: p, aberta: true }))
@@ -434,7 +439,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
 
   function mover(e: React.PointerEvent<HTMLDivElement>) {
     if (regua?.aberta && cena) {
-      const atual = noCentro(pontoNoMapa(e.clientX, e.clientY), cena)
+      const atual = noCentro(pontoNoMapa(e.clientX, e.clientY), gradeDaRegua())
       if (atual.x !== regua.atual.x || atual.y !== regua.atual.y) {
         setRegua({ ...regua, atual })
         obj.transmitirRegua({ userId, nome: nomeUsuario, pontos: [...regua.pontos, atual] })
@@ -680,7 +685,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   }
 
   const grade = cena && cena.grid_type !== 'sem' ? cena : null
-  const hex = grade?.grid_type === 'hexagono' ? ladrilhoHex(grade.grid_size) : null
+  const celula = cena ? celulaDaGrade(cena, mapa) : { w: 100, h: 100 }
+  const hex = grade?.grid_type === 'hexagono' ? ladrilhoHex(celula.w) : null
   const traco = grade ? tracoDaGrade(grade.grid_style, grade.grid_thickness) : undefined
   // Alças e giro: o mestre e o dono do token (12.8).
   const selecionadoUnico = selecionados.length === 1 ? objetos.find((o) => o.id === selecionados[0]) ?? null : null
@@ -728,11 +734,19 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
           {grade && (
             <svg className="mesa-grade" width={mapa.w} height={mapa.h} aria-hidden>
               <defs>
-                <pattern id={`grade-${grade.id}`} width={hex ? hex.largura : grade.grid_size} height={hex ? hex.altura : grade.grid_size} patternUnits="userSpaceOnUse">
-                  <path d={hex ? hex.caminho : `M${grade.grid_size} 0H0V${grade.grid_size}`} fill="none" stroke={grade.grid_color} strokeWidth={grade.grid_thickness} strokeDasharray={traco} />
+                <pattern id={`grade-${grade.id}`} width={hex ? hex.largura : celula.w} height={hex ? hex.altura : celula.h} patternUnits="userSpaceOnUse">
+                  <path d={hex ? hex.caminho : `M${celula.w} 0H0V${celula.h}`} fill="none" stroke={grade.grid_color} strokeWidth={grade.grid_thickness} strokeDasharray={traco} />
                 </pattern>
               </defs>
               <rect width="100%" height="100%" fill={`url(#grade-${grade.id})`} opacity={grade.grid_opacity} />
+              {/* A borda de fora fecha a última coluna e a última linha (o padrão só desenha em cima e à esquerda). */}
+              {!hex && (
+                <rect
+                  x={grade.grid_thickness / 2} y={grade.grid_thickness / 2}
+                  width={Math.max(0, mapa.w - grade.grid_thickness)} height={Math.max(0, mapa.h - grade.grid_thickness)}
+                  fill="none" stroke={grade.grid_color} strokeWidth={grade.grid_thickness} strokeDasharray={traco} opacity={grade.grid_opacity}
+                />
+              )}
             </svg>
           )}
 
@@ -807,7 +821,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
             return (
               <svg className="mesa-regua" width={mapa.w} height={mapa.h} aria-hidden>
                 {todas.map((r) => {
-                  const m = medir(r.pontos, cena)
+                  const m = medir(r.pontos, gradeDaRegua())
                   const fim = r.pontos[r.pontos.length - 1]
                   return (
                     <g key={r.chave}>

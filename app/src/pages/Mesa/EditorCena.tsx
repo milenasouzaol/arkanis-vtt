@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBorderAll, faCubes, faFileImage, faFloppyDisk, faImage, faMap, faSun } from '@fortawesome/free-solid-svg-icons'
-import Janela, { Campo, CampoCor, Deslizante } from './Janela'
-import { camposDaCena, CLIMAS, type Cena, type CamposCena, type Clima, type EstiloGrade, type TipoGrade } from './cenas'
+import Janela, { Campo, CampoCor, CampoNumero, Deslizante } from './Janela'
+import { camposDaCena, celulaDaGrade, colunasDoTamanho, linhasSugeridas, CLIMAS, type Cena, type CamposCena, type Clima, type EstiloGrade, type TipoGrade } from './cenas'
 
 type Aba = 'basicos' | 'grade' | 'ambiente' | 'diversos'
 
@@ -15,10 +15,13 @@ const ABAS: { id: Aba; rotulo: string; icone: typeof faImage }[] = [
 ]
 
 const TIPOS_GRADE: { id: TipoGrade; rotulo: string }[] = [
-  { id: 'quadrado', rotulo: 'Quadrado' },
+  { id: 'quadrado', rotulo: 'Quadrada' },
+  { id: 'hexagono', rotulo: 'Hexagonal' },
   { id: 'sem', rotulo: 'Sem grade' },
-  { id: 'hexagono', rotulo: 'Hexágono' },
 ]
+
+// Mapa sem imagem de fundo: o mesmo tamanho que a mesa usa.
+const MAPA_PADRAO = { w: 4000, h: 3000 }
 
 const ESTILOS_GRADE: { id: EstiloGrade; rotulo: string }[] = [
   { id: 'solida', rotulo: 'Linhas Sólidas' },
@@ -38,6 +41,17 @@ export default function EditorCena({ cena, jogadores, onSalvar, onImagem, onFech
   const [salvando, setSalvando] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
   const arquivoRef = useRef<HTMLInputElement>(null)
+  // Tamanho real da imagem, pra grade cobrir ela inteira.
+  const [mapa, setMapa] = useState(MAPA_PADRAO)
+  useEffect(() => {
+    if (!rascunho.background_url) {
+      setMapa(MAPA_PADRAO)
+      return
+    }
+    const img = new Image()
+    img.onload = () => setMapa({ w: img.naturalWidth || MAPA_PADRAO.w, h: img.naturalHeight || MAPA_PADRAO.h })
+    img.src = rascunho.background_url
+  }, [rascunho.background_url])
 
   const mudar = <K extends keyof CamposCena>(k: K, v: CamposCena[K]) => setRascunho((r) => ({ ...r, [k]: v }))
 
@@ -56,23 +70,48 @@ export default function EditorCena({ cena, jogadores, onSalvar, onImagem, onFech
     if (url) mudar('background_url', url)
   }
 
+  // Cena antiga (grade em pixels): mostra quantos quadrados isso dá.
+  const colunas = rascunho.grid_colunas ?? colunasDoTamanho(rascunho.grid_size, mapa)
+  const linhas = rascunho.grid_linhas ?? linhasSugeridas(colunas, mapa)
+  const celula = celulaDaGrade({ ...rascunho, grid_colunas: colunas, grid_linhas: linhas }, mapa)
+
+  function mudarColunas(c: number) {
+    // As linhas acompanham pra os quadrados continuarem quadrados (dá pra mudar depois).
+    setRascunho((r) => ({ ...r, grid_colunas: c, grid_linhas: linhasSugeridas(c, mapa) }))
+  }
+
   async function salvar() {
     setSalvando(true)
-    const ok = await onSalvar({ ...rascunho, name: rascunho.name.trim() || cena.name })
+    // O tamanho em pixels acompanha (tokens novos, setas do teclado e a régua usam ele).
+    const comGrade = rascunho.grid_colunas || rascunho.grid_linhas
+      ? { ...rascunho, grid_colunas: colunas, grid_linhas: linhas, grid_size: Math.max(1, Math.round(celula.w)) }
+      : rascunho
+    const ok = await onSalvar({ ...comGrade, name: rascunho.name.trim() || cena.name })
     setSalvando(false)
     setAviso(ok ? 'Alterações salvas.' : 'Não deu pra salvar.')
   }
 
   const campoGrade = (
-    <Campo rotulo="Grade" dica="O tamanho em pixels de um único espaço da grade.">
-      <div className="janela-linha">
-        <input type="number" min={20} max={500} value={rascunho.grid_size} aria-label="Tamanho da grade" onChange={(e) => mudar('grid_size', Math.min(500, Math.max(20, Number(e.target.value) || 100)))} />
-        <span className="janela-unidade">Pixels</span>
+    <>
+      <Campo rotulo="Formato da Grade">
         <select value={rascunho.grid_type} aria-label="Formato da grade" onChange={(e) => mudar('grid_type', e.target.value as TipoGrade)}>
           {TIPOS_GRADE.map((t) => <option key={t.id} value={t.id}>{t.rotulo}</option>)}
         </select>
-      </div>
-    </Campo>
+      </Campo>
+      {rascunho.grid_type !== 'sem' && (
+        <Campo
+          rotulo="Quadrados"
+          dica={`Quantos quadrados a grade tem de um lado ao outro da imagem. Ela cobre a imagem inteira, sem cortar. Cada quadrado fica com ${Math.round(celula.w)} × ${Math.round(celula.h)} pixels.`}
+        >
+          <div className="janela-linha">
+            <CampoNumero className="janela-curto" rotulo="Quadrados na largura" min={1} max={400} valor={colunas} onMudar={mudarColunas} />
+            <span className="janela-unidade">na largura</span>
+            <CampoNumero className="janela-curto" rotulo="Quadrados na altura" min={1} max={400} valor={linhas} onMudar={(l) => setRascunho((r) => ({ ...r, grid_colunas: colunas, grid_linhas: l }))} />
+            <span className="janela-unidade">na altura</span>
+          </div>
+        </Campo>
+      )}
+    </>
   )
 
   return (
@@ -150,7 +189,7 @@ export default function EditorCena({ cena, jogadores, onSalvar, onImagem, onFech
               <Campo rotulo="Medidas" dica="A distância que cada espaço da grade representa. É o que a ferramenta Medir Distância usa.">
                 <div className="janela-linha janela-linha-direita">
                   <span className="janela-unidade">Distância</span>
-                  <input type="number" min={0.1} step={0.1} className="janela-curto" value={rascunho.grid_distance} aria-label="Distância" onChange={(e) => mudar('grid_distance', Math.max(0.1, Number(e.target.value) || 1.5))} />
+                  <CampoNumero className="janela-curto" rotulo="Distância" min={0.1} max={1000} passo={0.1} valor={rascunho.grid_distance} onMudar={(v) => mudar('grid_distance', v)} />
                   <span className="janela-unidade">Unidades</span>
                   <input className="janela-curto" value={rascunho.grid_units} aria-label="Unidades" onChange={(e) => mudar('grid_units', e.target.value.slice(0, 8))} />
                 </div>
@@ -165,7 +204,7 @@ export default function EditorCena({ cena, jogadores, onSalvar, onImagem, onFech
                   <select value={rascunho.grid_style} aria-label="Estilo da Grade" onChange={(e) => mudar('grid_style', e.target.value as EstiloGrade)}>
                     {ESTILOS_GRADE.map((s) => <option key={s.id} value={s.id}>{s.rotulo}</option>)}
                   </select>
-                  <input type="number" min={1} max={10} className="janela-curto" value={rascunho.grid_thickness} aria-label="Espessura da linha" onChange={(e) => mudar('grid_thickness', Math.min(10, Math.max(1, Number(e.target.value) || 1)))} />
+                  <CampoNumero className="janela-curto" rotulo="Espessura da linha" min={1} max={10} valor={rascunho.grid_thickness} onMudar={(v) => mudar('grid_thickness', v)} />
                   <span className="janela-unidade">px</span>
                 </div>
               </Campo>

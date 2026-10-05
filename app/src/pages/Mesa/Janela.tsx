@@ -59,6 +59,47 @@ export function Campo({ rotulo, dica, children }: { rotulo: string; dica?: strin
   )
 }
 
+// Número que deixa digitar à vontade (apagar, escrever outro) e só corrige pro mínimo/máximo
+// quando sai do campo ou aperta Enter.
+export function CampoNumero({ valor, min, max, passo = 1, rotulo, className, onMudar }: {
+  valor: number
+  min: number
+  max: number
+  passo?: number
+  rotulo: string
+  className?: string
+  onMudar: (v: number) => void
+}) {
+  const [texto, setTexto] = useState(String(valor))
+  const [ultimo, setUltimo] = useState(valor)
+  if (valor !== ultimo) {
+    setUltimo(valor)
+    setTexto(String(valor))
+  }
+  function confirmar() {
+    const n = Number(texto.replace(',', '.'))
+    const v = Number.isFinite(n) && texto.trim() !== '' ? Math.min(max, Math.max(min, passo >= 1 ? Math.round(n) : n)) : valor
+    setTexto(String(v))
+    if (v !== valor) onMudar(v)
+  }
+  return (
+    <input
+      type="text"
+      inputMode={passo >= 1 ? 'numeric' : 'decimal'}
+      className={className}
+      aria-label={rotulo}
+      value={texto}
+      onChange={(e) => {
+        setTexto(e.target.value)
+        const n = Number(e.target.value.replace(',', '.'))
+        if (e.target.value.trim() !== '' && Number.isFinite(n) && n >= min && n <= max) onMudar(passo >= 1 ? Math.round(n) : n)
+      }}
+      onBlur={confirmar}
+      onKeyDown={(e) => e.key === 'Enter' && confirmar()}
+    />
+  )
+}
+
 // Slider com o número ao lado, como os do Foundry.
 export function Deslizante({ valor, min, max, passo = 0.05, onMudar, rotulo }: {
   valor: number

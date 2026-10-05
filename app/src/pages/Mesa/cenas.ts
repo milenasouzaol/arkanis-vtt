@@ -18,6 +18,9 @@ export type Cena = {
   background_color: string
   grid_type: TipoGrade
   grid_size: number
+  // Quantos quadrados na largura e na altura (a grade cobre a imagem inteira). Sem eles, vale grid_size.
+  grid_colunas: number | null
+  grid_linhas: number | null
   grid_distance: number
   grid_units: string
   grid_style: EstiloGrade
@@ -55,7 +58,7 @@ export const CLIMAS: { id: Clima; rotulo: string }[] = [
 // Campos que o editor da cena altera (o resto é identidade da linha).
 export const CAMPOS_EDITAVEIS = [
   'name', 'folder_id', 'show_in_nav', 'visibility', 'visible_to', 'background_url', 'background_color',
-  'grid_type', 'grid_size', 'grid_distance', 'grid_units', 'grid_style', 'grid_thickness', 'grid_color', 'grid_opacity',
+  'grid_type', 'grid_size', 'grid_colunas', 'grid_linhas', 'grid_distance', 'grid_units', 'grid_style', 'grid_thickness', 'grid_color', 'grid_opacity',
   'darkness', 'weather', 'luminosity', 'saturation', 'shadows',
 ] as const
 
@@ -251,4 +254,23 @@ export function redimensionarProporcional(o: Pick<ObjetoCena, 'width' | 'height'
   const razao = o.width / o.height
   const largura = Math.max(minimo, Math.abs(dx) > Math.abs(dy * razao) ? o.width + dx : o.width + dy * razao)
   return { width: Math.round(largura), height: Math.round(largura / razao) }
+}
+
+// Tamanho de um quadrado da grade no mapa. Com colunas e linhas, a grade cobre a imagem inteira
+// (o quadrado pode ficar um tiquinho retangular se a imagem não bater certinho); sem, é o
+// tamanho em pixels de antes.
+export function celulaDaGrade(c: Pick<Cena, 'grid_size' | 'grid_colunas' | 'grid_linhas'>, mapa: { w: number; h: number }): { w: number; h: number } {
+  if (c.grid_colunas && c.grid_linhas) return { w: mapa.w / c.grid_colunas, h: mapa.h / c.grid_linhas }
+  return { w: c.grid_size, h: c.grid_size }
+}
+
+// Quantas linhas pra os quadrados ficarem o mais quadrados possível com essas colunas.
+export function linhasSugeridas(colunas: number, mapa: { w: number; h: number }): number {
+  if (colunas <= 0 || mapa.w <= 0) return 1
+  return Math.max(1, Math.round(mapa.h / (mapa.w / colunas)))
+}
+
+// Colunas que dão o tamanho de quadrado antigo (pra abrir uma cena antiga já com números certos).
+export function colunasDoTamanho(tamanho: number, mapa: { w: number }): number {
+  return Math.max(1, Math.round(mapa.w / Math.max(1, tamanho)))
 }

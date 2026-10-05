@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { copiaDaCena, type Cena, type CamposCena, type Pasta } from './cenas'
 
 const CAMPOS_CENA =
-  'id, campaign_id, folder_id, name, sort, show_in_nav, visibility, visible_to, background_url, background_color, grid_type, grid_size, grid_distance, grid_units, grid_style, grid_thickness, grid_color, grid_opacity, darkness, weather, luminosity, saturation, shadows, created_at'
+  'id, campaign_id, folder_id, name, sort, show_in_nav, visibility, visible_to, background_url, background_color, grid_type, grid_size, grid_colunas, grid_linhas, grid_distance, grid_units, grid_style, grid_thickness, grid_color, grid_opacity, darkness, weather, luminosity, saturation, shadows, created_at'
 const CAMPOS_PASTA = 'id, campaign_id, parent_id, name, color, sort_mode, sort, created_at'
 
 function trocar<T extends { id: string }>(lista: T[], item: T): T[] {

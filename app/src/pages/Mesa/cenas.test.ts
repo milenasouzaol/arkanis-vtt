@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ajustarVista, copiaDaCena, imagemDoArrasto, redimensionarProporcional, tamanhoInicial, telaParaMapa, distanciaEmUnidades, filtroAmbiente, ladrilhoHex, montarArvore, pastasEmLista, tracoDaGrade, zoomEm, type Cena, type Pasta } from './cenas'
+import { ajustarVista, celulaDaGrade, colunasDoTamanho, copiaDaCena, linhasSugeridas, imagemDoArrasto, redimensionarProporcional, tamanhoInicial, telaParaMapa, distanciaEmUnidades, filtroAmbiente, ladrilhoHex, montarArvore, pastasEmLista, tracoDaGrade, zoomEm, type Cena, type Pasta } from './cenas'
 
 function pasta(p: Partial<Pasta>): Pasta {
   return { id: 'p', campaign_id: 'c', parent_id: null, name: 'Pasta', color: null, sort_mode: 'alfabetica', sort: 0, created_at: '2026-10-03T00:00:00Z', ...p }
@@ -8,7 +8,7 @@ function pasta(p: Partial<Pasta>): Pasta {
 function cena(p: Partial<Cena>): Cena {
   return {
     id: 's', campaign_id: 'c', folder_id: null, name: 'Cena', sort: 0, show_in_nav: false, visibility: 'todos', visible_to: [],
-    background_url: null, background_color: '#000000', grid_type: 'quadrado', grid_size: 100, grid_distance: 1.5, grid_units: 'm',
+    background_url: null, background_color: '#000000', grid_type: 'quadrado', grid_size: 100, grid_colunas: null, grid_linhas: null, grid_distance: 1.5, grid_units: 'm',
     grid_style: 'solida', grid_thickness: 1, grid_color: '#000000', grid_opacity: 0.25, darkness: 0, weather: null,
     luminosity: 0, saturation: 0, shadows: 0, created_at: '2026-10-03T00:00:00Z', ...p,
   }
@@ -155,5 +155,17 @@ describe('objetos por cima do mapa', () => {
     expect(redimensionarProporcional({ width: 200, height: 100 }, 100, 0)).toEqual({ width: 300, height: 150 })
     expect(redimensionarProporcional({ width: 200, height: 100 }, 0, 50)).toEqual({ width: 300, height: 150 })
     expect(redimensionarProporcional({ width: 200, height: 100 }, -500, 0)).toEqual({ width: 10, height: 5 })
+  })
+})
+
+describe('grade pela quantidade de quadrados', () => {
+  it('cobre a imagem inteira', () => {
+    expect(celulaDaGrade({ grid_size: 100, grid_colunas: 16, grid_linhas: 11 }, { w: 1600, h: 1150 })).toEqual({ w: 100, h: 1150 / 11 })
+    expect(celulaDaGrade({ grid_size: 100, grid_colunas: null, grid_linhas: null }, { w: 1600, h: 1150 })).toEqual({ w: 100, h: 100 })
+  })
+  it('linhas que deixam o quadrado mais quadrado', () => {
+    expect(linhasSugeridas(16, { w: 1600, h: 1150 })).toBe(12)
+    expect(linhasSugeridas(10, { w: 1000, h: 1000 })).toBe(10)
+    expect(colunasDoTamanho(100, { w: 1600 })).toBe(16)
   })
 })
