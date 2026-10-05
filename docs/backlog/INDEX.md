@@ -74,7 +74,7 @@ _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o 
 | [KAN-49](KAN-49-personagens-e-tokens-na-mesa.md) | Mesa: Personagens e Tokens na mesa | back + front | em análise | [KAN-49](https://arkaniss.atlassian.net/browse/KAN-49) |
 | [KAN-50](KAN-50-encontros-de-combate-iniciativa-e-homebr.md) | Mesa: Encontros de Combate, iniciativa e Homebrew | back + front | em análise | [KAN-50](https://arkaniss.atlassian.net/browse/KAN-50) |
 | [KAN-51](KAN-51-sistema-de-mira.md) | Mesa: Sistema de Mira | back + front | em análise | [KAN-51](https://arkaniss.atlassian.net/browse/KAN-51) |
-| [KAN-52](KAN-52-ferramentas-da-barra-esquerda.md) | Mesa: ferramentas da barra esquerda | mesa | a fazer | [KAN-52](https://arkaniss.atlassian.net/browse/KAN-52) |
+| [KAN-52](KAN-52-ferramentas-da-barra-esquerda.md) | Mesa: ferramentas da barra esquerda | back + front | em análise | [KAN-52](https://arkaniss.atlassian.net/browse/KAN-52) |
 | [KAN-53](KAN-53-posicionaveis-itens-diario-playlist.md) | Mesa: Posicionáveis, Itens, Diário e Lista de Reprodução | mesa | a fazer | [KAN-53](https://arkaniss.atlassian.net/browse/KAN-53) |
 | [KAN-54](KAN-54-configuracoes-da-campanha.md) | Mesa: Configurações da campanha e painel do mestre | mesa | a fazer | [KAN-54](https://arkaniss.atlassian.net/browse/KAN-54) |
 | [KAN-55](KAN-55-gasto-de-pe-nos-rituais.md) | Ficha: gasto automático de PE/PD ao conjurar ritual | back + front | em análise | [KAN-55](https://arkaniss.atlassian.net/browse/KAN-55) |
