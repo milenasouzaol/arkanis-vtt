@@ -12,6 +12,7 @@ import EditorCena from './EditorCena'
 import { enviarImagemDaCena, useCenas } from './useCenas'
 import { useObjetos, type Ping } from './useObjetos'
 import { useDesenhos } from './useDesenhos'
+import { useSons } from './useSons'
 import { tamanhoInicial, type Pasta } from './cenas'
 import PainelPersonagens from './PainelPersonagens'
 import { ConfigurarPropriedadeAtor, ConfigurarToken, ConfirmarExclusao, CriarPersonagem, FichaPortatil, PainelVariacoes } from './JanelasAtor'
@@ -140,6 +141,9 @@ export default function Mesa() {
   }, [])
   const objetos = useObjetos(cenas.atual?.id ?? null, receberPing)
   const desenhos = useDesenhos(cenas.atual?.id ?? null)
+  const sons = useSons(cenas.atual?.id ?? null)
+  const [pedidoPaletaSom, setPedidoPaletaSom] = useState(0)
+  const [pedidoLimparSom, setPedidoLimparSom] = useState(0)
   // Paleta e Limpar Desenhos são botões de ação: o número muda e o palco abre a janela.
   const [pedidoPaleta, setPedidoPaleta] = useState(0)
   const [pedidoLimpar, setPedidoLimpar] = useState(0)
@@ -526,6 +530,9 @@ export default function Mesa() {
         onAlternarAlvo={mira.alternar}
         onLimparAlvos={mira.limpar}
         des={desenhos}
+        sons={sons}
+        pedidoPaletaSom={pedidoPaletaSom}
+        pedidoLimparSom={pedidoLimparSom}
         pedidoPaleta={pedidoPaleta}
         pedidoLimpar={pedidoLimpar}
         combates={combate.combates}
@@ -553,7 +560,7 @@ export default function Mesa() {
 
       <nav className="mesa-controles" aria-label="Ferramentas de cena">
         <div className="mesa-coluna">
-          <BarraIcones lado="esquerda" itens={CATEGORIAS_ESQUERDA} ativo={categoria} onEscolher={(c) => { setCategoria(c); const primeira = FERRAMENTAS[c][0]; if (primeira) setFerramenta(primeira.id) }} />
+          <BarraIcones lado="esquerda" itens={souMestre ? CATEGORIAS_ESQUERDA : CATEGORIAS_ESQUERDA.filter((c) => c.id !== 'som')} ativo={categoria} onEscolher={(c) => { setCategoria(c); const primeira = FERRAMENTAS[c][0]; if (primeira) setFerramenta(primeira.id) }} />
         </div>
         <div className="mesa-coluna">
           {FERRAMENTAS[categoria].map((f) => (
@@ -563,10 +570,12 @@ export default function Mesa() {
               rotulo={f.rotulo}
               lado="esquerda"
               ajuda={AJUDA_FERRAMENTA[f.id]}
-              perigo={f.id === 'limpar-desenhos'}
+              perigo={f.id === 'limpar-desenhos' || f.id === 'som-limpar'}
               ativo={ferramenta === f.id}
               onClick={() => {
                 if (f.id === 'paleta') setPedidoPaleta((n) => n + 1)
+                else if (f.id === 'som-paleta') setPedidoPaletaSom((n) => n + 1)
+                else if (f.id === 'som-limpar') setPedidoLimparSom((n) => n + 1)
                 else if (f.id === 'limpar-desenhos') setPedidoLimpar((n) => n + 1)
                 else if (!ACOES_ESQUERDA.includes(f.id)) setFerramenta(f.id)
               }}

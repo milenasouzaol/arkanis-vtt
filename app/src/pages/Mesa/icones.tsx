@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faBookOpen,
   faCircle,
+  faHeadphones,
+  faVolumeHigh,
   faDrawPolygon,
   faFont,
   faPalette,
@@ -62,4 +64,9 @@ export const ICONES: Record<string, ReactNode> = {
   texto: fa(faFont),
   paleta: fa(faPalette),
   'limpar-desenhos': fa(faTrash),
+  'som-selecionar': fa(faExpand),
+  'som-desenhar': fa(faVolumeHigh),
+  'som-previsualizar': fa(faHeadphones),
+  'som-paleta': fa(faPalette),
+  'som-limpar': fa(faTrash),
 }

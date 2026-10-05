@@ -14896,3 +14896,55 @@ button.character-tile-link {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---- Som Ambiente (KAN-52): áreas no mapa, como no print do Foundry (contorno laranja) ---- */
+.mesa-sons {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mesa-som rect {
+  fill: rgba(224, 144, 58, 0.06);
+  stroke: #e0903a;
+}
+
+.mesa-som circle {
+  fill: #e0903a;
+}
+
+.mesa-som text {
+  fill: #f4f4f6;
+  paint-order: stroke;
+  stroke: #000;
+  stroke-width: 0.25em;
+  text-anchor: middle;
+  font-family: 'Signika', var(--sans);
+  font-weight: 600;
+}
+
+.mesa-som.desligado rect {
+  fill: none;
+  stroke: #8a8a90;
+}
+
+.mesa-som.desligado circle {
+  fill: #8a8a90;
+}
+
+.mesa-som.escondido {
+  opacity: 0.55;
+}
+
+.mesa-sons.selecionando .mesa-som {
+  pointer-events: auto;
+  cursor: move;
+}
+
+.mesa-som-previa {
+  fill: rgba(224, 144, 58, 0.08);
+  stroke: #e0903a;
+}

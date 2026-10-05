@@ -51,7 +51,13 @@ export const FERRAMENTAS: Record<CategoriaEsquerda, { id: string; rotulo: string
     { id: 'paleta', rotulo: 'Paleta Desenho' },
     { id: 'limpar-desenhos', rotulo: 'Limpar Desenhos' },
   ],
-  som: [],
+  som: [
+    { id: 'som-selecionar', rotulo: 'Selecionar Sons Ambientes' },
+    { id: 'som-desenhar', rotulo: 'Desenhar Som Ambiente' },
+    { id: 'som-previsualizar', rotulo: 'Pré-visualizar Sons Ambiente' },
+    { id: 'som-paleta', rotulo: 'Paleta Som Ambiente' },
+    { id: 'som-limpar', rotulo: 'Limpar Sons' },
+  ],
 }
 
 export type Papel = 'mestre' | 'jogador'
@@ -112,7 +118,7 @@ export function linkDeConvite(origem: string, codigo: string): string {
 }
 
 // Botões da barra esquerda que fazem uma ação em vez de virar a ferramenta ativa.
-export const ACOES_ESQUERDA = ['paleta', 'limpar-desenhos']
+export const ACOES_ESQUERDA = ['paleta', 'limpar-desenhos', 'som-paleta', 'som-limpar']
 
 // Ajuda que aparece ao passar o mouse na ferramenta (como os "Clipes de Ferramentas" do Foundry).
 // Cada linha: rótulo + pedaços de texto; { k } é uma tecla/gesto, que aparece numa caixinha.
@@ -136,6 +142,25 @@ export const AJUDA_FERRAMENTA: Record<string, { titulo: string; linhas: [string,
     linhas: [['Desenhar', [{ k: 'Clique + Arraste' }, ' para começar e então ', { k: 'Clique' }, ' para adicionar pontos. ', { k: 'Clique Duplo' }, ' para finalizar.']]],
   },
   livre: { titulo: 'Desenhar à Mão Livre', linhas: [['Desenhar', [{ k: 'Clique + Arraste' }]]] },
+  'som-selecionar': {
+    titulo: 'Selecionar Sons Ambientes',
+    linhas: [
+      ['Selecionar', [{ k: 'Clique' }, ' ou ', { k: 'Clique + Arraste' }]],
+      ['Selecionar Vários', [{ k: 'SHIFT + Clique' }]],
+      ['Mover', [{ k: 'Arrastar' }]],
+      ['Editar', [{ k: 'Clique Duplo' }]],
+      ['Ligar/Desligar', [{ k: 'Clique Direito' }]],
+      ['Excluir', [{ k: 'DELETE' }]],
+    ],
+  },
+  'som-desenhar': {
+    titulo: 'Desenhar Som Ambiente',
+    linhas: [['Desenhar a área', [{ k: 'Clique + Arraste' }]], ['Ligar/Desligar', [{ k: 'Clique Direito' }]]],
+  },
+  'som-previsualizar': {
+    titulo: 'Pré-visualizar Sons Ambiente',
+    linhas: [['Ouvir', ['Passe o cursor sobre um som ambiente para ouvi-lo como se o seu token estivesse naquela posição.']]],
+  },
   texto: {
     titulo: 'Desenhar Texto',
     linhas: [
