@@ -20,7 +20,8 @@ describe('rituais de arma', () => {
   it('que arma serve', () => {
     expect(armaServe('corpo_a_corpo', { tipo: 'arma', natureza: 'corpo_a_corpo' })).toBe(true)
     expect(armaServe('corpo_a_corpo', { tipo: 'arma', natureza: 'fogo' })).toBe(false)
-    expect(armaServe('corpo_a_corpo_ou_municao', { tipo: 'municao', natureza: null })).toBe(true)
+    expect(armaServe('qualquer_arma_ou_municao', { tipo: 'municao', natureza: null })).toBe(true)
+    expect(armaServe('qualquer_arma_ou_municao', { tipo: 'arma', natureza: 'fogo' })).toBe(true)
     expect(armaServe('corpo_a_corpo', { tipo: 'municao', natureza: null })).toBe(false)
   })
 })

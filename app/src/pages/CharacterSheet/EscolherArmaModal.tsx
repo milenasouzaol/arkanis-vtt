@@ -51,7 +51,7 @@ export default function EscolherArmaModal({ ritual, alvo, elementos, campanhaId,
       <div className="escolher-arma" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`${ritual}: escolher arma`}>
         <h3>{ritual}</h3>
         <p className="escolher-arma-dica">
-          Escolha a arma{alvo === 'corpo_a_corpo_ou_municao' ? ' corpo a corpo ou a munição' : ' corpo a corpo'} — a sua ou a de um aliado.
+          Escolha a arma{alvo === 'qualquer_arma_ou_municao' ? ' (qualquer uma, inclusive de fogo) ou a munição' : ' corpo a corpo'} — a sua ou a de um aliado.
         </p>
         {elementos.length > 0 && (
           <label className="escolher-arma-elemento">
