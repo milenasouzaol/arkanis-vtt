@@ -25,19 +25,84 @@ export type Som = keyof typeof SONS
 // O mesmo som disparado várias vezes no mesmo instante (ex.: excluir 5 tokens) toca uma vez só.
 const ultimo: Partial<Record<Som, number>> = {}
 
+// Os arquivos vêm com volumes muito diferentes (os cliques chegam a ser 40x mais baixos que o
+// dado) e o <audio> do navegador para em 100%. Então cada som é normalizado: ao carregar, mede o
+// pico e ganha o reforço que falta pra chegar em PICO_ALVO; depois passa por um limitador, pra
+// não estourar (pedido da Millie: os sons estavam muito baixinhos).
+export const PICO_ALVO = 0.9
+const REFORCO_MAXIMO = 60
+
+let contexto: AudioContext | null = null
+let saida: AudioNode | null = null
+const buffers = new Map<string, Promise<{ buffer: AudioBuffer; reforco: number } | null>>()
+
+// Quanto multiplicar pra o pico chegar no alvo (sem passar do reforço máximo).
+export function reforcoDoPico(pico: number): number {
+  if (pico <= 0) return 1
+  return Math.min(REFORCO_MAXIMO, Math.max(1, PICO_ALVO / pico))
+}
+
+function audio(): { ctx: AudioContext; saida: AudioNode } | null {
+  try {
+    if (!contexto) {
+      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      if (!Ctx) return null
+      contexto = new Ctx()
+      const limitador = contexto.createDynamicsCompressor()
+      limitador.threshold.value = -3
+      limitador.knee.value = 0
+      limitador.ratio.value = 20
+      limitador.attack.value = 0.002
+      limitador.release.value = 0.12
+      limitador.connect(contexto.destination)
+      saida = limitador
+      // Já deixa todos os sons carregados (o primeiro clique não fica atrasado).
+      for (const arquivo of new Set(Object.values(SONS))) carregar(contexto, arquivo)
+    }
+    if (contexto.state === 'suspended') contexto.resume().catch(() => null)
+    return { ctx: contexto, saida: saida! }
+  } catch {
+    return null
+  }
+}
+
+function carregar(ctx: AudioContext, arquivo: string): Promise<{ buffer: AudioBuffer; reforco: number } | null> {
+  let b = buffers.get(arquivo)
+  if (!b) {
+    b = fetch(`/sons/${arquivo}`)
+      .then((r) => r.arrayBuffer())
+      .then((d) => ctx.decodeAudioData(d))
+      .then((buffer) => {
+        let pico = 0
+        for (let c = 0; c < buffer.numberOfChannels; c++) {
+          const dados = buffer.getChannelData(c)
+          for (let i = 0; i < dados.length; i++) pico = Math.max(pico, Math.abs(dados[i]))
+        }
+        return { buffer, reforco: reforcoDoPico(pico) }
+      })
+      .catch(() => null)
+    buffers.set(arquivo, b)
+  }
+  return b
+}
+
 export function tocarSom(som: Som) {
   const volume = lerVolumes().efeitos
   if (volume <= 0) return
   const agora = performance.now()
   if ((ultimo[som] ?? -1e9) > agora - 90) return
   ultimo[som] = agora
-  try {
-    const a = new Audio(`/sons/${SONS[som]}`)
-    a.volume = Math.min(1, volume)
-    a.play().catch(() => null) // navegador bloqueia som antes do primeiro clique: tudo bem
-  } catch {
-    // sem áudio no navegador
-  }
+  const a = audio()
+  if (!a) return
+  carregar(a.ctx, SONS[som]).then((s) => {
+    if (!s) return
+    const fonte = a.ctx.createBufferSource()
+    fonte.buffer = s.buffer
+    const ganho = a.ctx.createGain()
+    ganho.gain.value = volume * s.reforco
+    fonte.connect(ganho).connect(a.saida)
+    fonte.start()
+  })
 }
 
 // "Sangue" → ritual-sangue (Medo, Morte, Conhecimento, Energia). Sem elemento conhecido, nada.
