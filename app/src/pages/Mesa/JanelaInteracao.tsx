@@ -75,6 +75,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
   const metrosDoAlcance = (a: Atividade) => sistema.alcances.find((x) => x.id === a.ativacao.alcance)?.metros ?? null
   const alcanceOk = (a: Atividade) => souMestre || dentroDoAlcance(distancia, metrosDoAlcance(a))
 
+  // A DT nunca vai pro chat (pedido da Millie): só o nome do teste, o resultado e passou/falhou.
   async function postar(r: Registro) {
     if (!item) return
     const acao = { item: item.name, imagem: item.image_url, ...r }
@@ -145,8 +146,8 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
     // "Ao Passar no Teste": rola o teste primeiro; falhou, a atividade não acontece.
     if (a.ativacao.quando === 'teste' && teste) {
       const t = await testar(nome, teste)
-      await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: t })
-      setLog((l) => [...l, `${nome}: ${t.total}${t.dt !== null ? ` contra DT ${t.dt}` : ''} → ${t.passou ? 'passou' : 'falhou'}`])
+      await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: { ...t, dt: null } })
+      setLog((l) => [...l, `${nome}: ${t.total} → ${t.passou ? 'passou' : 'falhou'}`])
       if (!t.passou) {
         for (const p of proximas(a, false, lista, jaRodaram)) {
           if (!vivo.current) return
@@ -162,15 +163,15 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
         if (passou) break // o teste já foi o de "Ao Passar no Teste"
         const t = await testar(nome, a.checar!)
         passou = t.passou
-        await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: t })
-        setLog((l) => [...l, `${nome}: ${t.total}${t.dt !== null ? ` contra DT ${t.dt}` : ''} → ${t.passou ? 'passou' : 'falhou'}`])
+        await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: { ...t, dt: null } })
+        setLog((l) => [...l, `${nome}: ${t.total} → ${t.passou ? 'passou' : 'falhou'}`])
         break
       }
       case 'ritual': {
         const r = a.ritual!
         const t = await testar(nome, r.evitar)
         passou = t.passou
-        await postar({ atividade: nome, texto: `ativou ${sistema.magia.nome.toLowerCase()} ${r.ritual || ''}; teste pra evitar.${extra}`, teste: t })
+        await postar({ atividade: nome, texto: `ativou ${sistema.magia.nome.toLowerCase()} ${r.ritual || ''}; teste pra evitar.${extra}`, teste: { ...t, dt: null } })
         setLog((l) => [...l, `${r.ritual || nome}: ${t.passou ? 'evitou' : 'não evitou'}`])
         break
       }

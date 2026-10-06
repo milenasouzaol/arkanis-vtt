@@ -259,7 +259,7 @@ function CartaoInteracao({ acao }: { acao: AcaoInteracao }) {
       </p>
       {t && (
         <>
-          <p className="chat-rolagem-rotulo">Teste de {t.nome}{t.dt !== null ? ` (DT ${t.dt})` : ''}</p>
+          <p className="chat-rolagem-rotulo">Teste de {t.nome}</p>
           <button type="button" className="chat-rolagem-total" aria-expanded={verDados} onClick={() => setVerDados((v) => !v)}>
             <span>{t.total}</span>
             <FontAwesomeIcon icon={verDados ? faChevronDown : faChevronRight} />
