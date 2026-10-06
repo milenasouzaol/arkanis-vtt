@@ -16060,7 +16060,7 @@ button.character-tile-link {
   opacity: 0.6;
 }
 
-.interacao-acao svg,
+.interacao-acao > svg,
 .interacao-acao > img {
   width: 24px;
   height: 24px;
@@ -16075,8 +16075,8 @@ button.character-tile-link {
 }
 
 .interacao-acao small svg {
-  width: auto;
-  height: auto;
+  width: 0.85em;
+  height: 0.85em;
   color: inherit;
 }
 
