@@ -152,7 +152,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
     // "Ao Passar no Teste": rola o teste primeiro; falhou, a atividade não acontece.
     if (a.ativacao.quando === 'teste' && teste) {
       const t = await testar(nome, teste, a.id)
-      await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: t })
+      await postar({ atividade: nome, texto: `tentou ${nome} (${item?.name ?? 'item'}).${extra}`, teste: t })
       setLog((l) => [...l, `${nome}: ${t.total} → ${t.passou ? 'passou' : 'falhou'}`])
       if (!t.passou) {
         for (const p of proximas(a, false, lista, jaRodaram)) {
@@ -169,7 +169,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
         if (passou) break // o teste já foi o de "Ao Passar no Teste"
         const t = await testar(nome, a.checar!, a.id)
         passou = t.passou
-        await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: t })
+        await postar({ atividade: nome, texto: `tentou ${nome} (${item?.name ?? 'item'}).${extra}`, teste: t })
         setLog((l) => [...l, `${nome}: ${t.total} → ${t.passou ? 'passou' : 'falhou'}`])
         break
       }
@@ -177,7 +177,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
         const r = a.ritual!
         const t = await testar(nome, r.evitar, a.id)
         passou = t.passou
-        await postar({ atividade: nome, texto: `ativou ${sistema.magia.nome.toLowerCase()} ${r.ritual || ''}; teste pra evitar.${extra}`, teste: t })
+        await postar({ atividade: nome, texto: `ativou ${sistema.magia.nome.toLowerCase()} ${r.ritual || nome} (${item?.name ?? 'item'}); teste pra evitar.${extra}`, teste: t })
         setLog((l) => [...l, `${r.ritual || nome}: ${t.passou ? 'evitou' : 'não evitou'}`])
         break
       }
@@ -197,7 +197,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
           linhas.push({ nome: alvo.name ?? 'Alvo', texto: acerto ? (dano ? await aplicar(a, alvo, dano.total, x.tipoDano, false) : 'acertou') : 'errou' })
         }
         passou = acertou
-        await postar({ atividade: nome, texto: `atacou${alvos.length ? '' : ' (sem alvo)'}.${extra}`, rolagem: { rotulo: `Ataque${rol.critico ? ' (crítico!)' : ''}`, total: rol.total, dados: rol.rolls.map((v) => ({ sides: 20, value: v })) }, alvos: linhas })
+        await postar({ atividade: nome, texto: `${nome} (${item?.name ?? 'item'}) atacou${alvos.length ? '' : ' (sem alvo)'}.${extra}`, rolagem: { rotulo: `Ataque${rol.critico ? ' (crítico!)' : ''}`, total: rol.total, dados: rol.rolls.map((v) => ({ sides: 20, value: v })) }, alvos: linhas })
         setLog((l) => [...l, `${nome}: ${rol.total} → ${acertou ? 'acertou' : 'errou'}`])
         break
       }
@@ -212,7 +212,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
         }
         const linhas: { nome: string; texto: string }[] = []
         for (const alvo of alvosDe(a)) linhas.push({ nome: alvo.name ?? 'Alvo', texto: await aplicar(a, alvo, r.total, cura ? a.cura!.recurso : a.dano!.tipoDano, cura) })
-        await postar({ atividade: nome, texto: `${cura ? 'curou' : 'causou dano'}.${extra}`, rolagem: { rotulo: `${cura ? 'Cura' : 'Dano'}: ${formula}`, total: r.total, dados: r.dados }, alvos: linhas })
+        await postar({ atividade: nome, texto: `${nome} (${item?.name ?? 'item'}) ${cura ? 'curou' : 'causou dano'}.${extra}`, rolagem: { rotulo: `${cura ? 'Cura' : 'Dano'}: ${formula}`, total: r.total, dados: r.dados }, alvos: linhas })
         setLog((l) => [...l, `${nome}: ${r.total}`])
         break
       }
@@ -228,7 +228,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
         break
       case 'sumonar': {
         const s = a.sumonar!
-        await postar({ atividade: nome, texto: `fez surgir ${s.quantidade}× ${s.ameaca || 'ameaça'}! (o mestre coloca na mesa)${extra}` })
+        await postar({ atividade: nome, texto: `${item?.name ?? 'O item'} fez surgir ${s.quantidade}× ${s.ameaca || 'ameaça'}! (o mestre coloca na mesa)${extra}` })
         setLog((l) => [...l, `${nome}: ${s.quantidade}× ${s.ameaca}`])
         break
       }
@@ -238,7 +238,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
           const { error: e2 } = await supabase.rpc('trocar_variacao', { p_token_id: meuToken.id, p_url: t.imagem, p_altura: null })
           if (e2) setErro(motivo(e2))
         }
-        await postar({ atividade: nome, texto: `foi transformado${t.duracao ? ` (${t.duracao})` : ''}.${extra}` })
+        await postar({ atividade: nome, texto: `foi transformado por ${item?.name ?? 'um item'}${t.duracao ? ` (${t.duracao})` : ''}.${extra}` })
         break
       }
     }

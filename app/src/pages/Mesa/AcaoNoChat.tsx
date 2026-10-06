@@ -247,7 +247,15 @@ function CartaoCura({ mensagem, acao }: { mensagem: Mensagem; acao: AcaoCura }) 
   )
 }
 
-// Interação com um item da mesa (KAN-53): o que a pessoa fez, o teste (com a DT) e o resultado.
+// "pegou Aplicador de Adrenalina." com o nome do item em negrito. Frase que não cita o item
+// (mensagem antiga): o item vem na frente.
+function fraseComItem(texto: string, item: string) {
+  const i = item ? texto.indexOf(item) : -1
+  if (i < 0) return <><strong>{item}</strong>: {texto}</>
+  return <>{texto.slice(0, i)}<strong>{item}</strong>{texto.slice(i + item.length)}</>
+}
+
+// Interação com um item da mesa (KAN-53): o que a pessoa fez, o teste e o resultado.
 function CartaoInteracao({ acao }: { acao: AcaoInteracao }) {
   const [verDados, setVerDados] = useState(false)
   const t = acao.teste
@@ -255,7 +263,7 @@ function CartaoInteracao({ acao }: { acao: AcaoInteracao }) {
     <div className="chat-acao chat-interacao">
       <p className="chat-acao-titulo">
         {acao.imagem ? <img className="chat-interacao-imagem" src={acao.imagem} alt="" /> : <FontAwesomeIcon icon={faBriefcase} />}
-        <span><strong>{acao.item}</strong> · {acao.atividade}<br />{acao.texto}</span>
+        <span>{fraseComItem(acao.texto, acao.item)}</span>
       </p>
       {t && (
         <>
