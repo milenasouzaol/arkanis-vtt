@@ -9,7 +9,7 @@ import MenuContexto, { type ItemMenu } from './MenuContexto'
 import { EditorTexto } from './PainelPlaylist'
 import { sanitizarHtml } from './chat'
 import {
-  ALVOS_ATIVIDADE, CATEGORIAS_ITEM, TEM_TESTE, CONSUMOS, DURACOES, FORMAS_AREA, QUANDO_DISPARA, QUEM_USA, RARIDADES, TIPOS_ATIVIDADE, TIPOS_ITEM,
+  ALVOS_ATIVIDADE, CATEGORIAS_ITEM, temTeste, CONSUMOS, DURACOES, FORMAS_AREA, QUANDO_DISPARA, QUEM_USA, RARIDADES, TIPOS_ATIVIDADE, TIPOS_ITEM,
   duplicarAtividade, etiquetasDoItem, novaAtividade, rotuloDaAtivacao, semAtividade, textoDeUsos,
   type Atividade, type DetalhesItem, type ItemMesa, type Teste, type TipoAtividade,
 } from './itens'
@@ -95,9 +95,9 @@ function Grupo({ titulo, children, acao }: { titulo: string; children: React.Rea
   )
 }
 
-function Linha({ rotulo, dica, children }: { rotulo: string; dica?: string; children: React.ReactNode }) {
+function Linha({ rotulo, dica, children, larga }: { rotulo: string; dica?: string; children: React.ReactNode; larga?: boolean }) {
   return (
-    <div className="item-linha-campo">
+    <div className={`item-linha-campo${larga ? ' larga' : ''}`}>
       <div className="item-linha-rotulo">
         <strong>{rotulo}</strong>
         {dica && <small>{dica}</small>}
@@ -275,7 +275,7 @@ export default function FichaItem({ item, podeEditar, userId, jogadores, sistema
                     </select>
                   </Linha>
                 )}
-                <Linha rotulo="Teste de Interação" dica="Teste pra interagir com o item.">
+                <Linha larga rotulo="Teste de Interação" dica="Teste pra interagir com o item.">
                   <SelectTeste teste={det.teste ?? { pericia: '', atributo: '', dt: null }} onMudar={(t) => mudarDetalhes({ teste: t })} />
                 </Linha>
               </Grupo>
@@ -574,7 +574,12 @@ function EditorAtividade({ atividade, podeEditar, userId, irmas, onSalvar, onFec
               <Linha rotulo="Quando Dispara">
                 <select value={at.quando} onChange={(e) => mudarAt({ quando: e.target.value })}><OpcoesAgrupadas grupos={QUANDO_DISPARA} /></select>
               </Linha>
-              <input className="item-largo" value={at.condicao} placeholder="Condição de Ativação" onChange={(e) => mudarAt({ condicao: e.target.value })} />
+              {at.quando === 'teste' && (
+                <Linha larga rotulo="Teste" dica="A pessoa faz este teste antes. Passou: a atividade acontece. Falhou: roda o que estiver em Efeito → Depois → Se Falhar.">
+                  <SelectTeste teste={at.teste ?? { pericia: '', atributo: '', dt: null }} onMudar={(t) => mudarAt({ teste: t })} />
+                </Linha>
+              )}
+              <input className="item-largo" value={at.condicao} placeholder="Observação (opcional, ex.: só à noite)" onChange={(e) => mudarAt({ condicao: e.target.value })} />
             </Grupo>
             <Grupo titulo="Duração">
               <Linha rotulo="Duração">
@@ -640,9 +645,9 @@ function EditorAtividade({ atividade, podeEditar, userId, irmas, onSalvar, onFec
         {aba === 'efeito' && <EfeitoDaAtividade a={a} mudar={mudar} rituais={rituais} ameacas={ameacas} userId={userId} />}
         {aba === 'efeito' && (
           <Grupo titulo="Depois">
-            <p className="item-dica">{TEM_TESTE.includes(a.tipo) ? 'O que acontece se passar ou falhar no teste.' : 'O que acontece em seguida.'} Marque outras atividades deste item; pra elas não aparecerem como botão, deixe "Quando Dispara" em Nenhuma.</p>
-            {(TEM_TESTE.includes(a.tipo) ? (['seSim', 'seNao'] as const) : (['seSim'] as const)).map((lado) => (
-              <Linha key={lado} rotulo={!TEM_TESTE.includes(a.tipo) ? 'Em Seguida' : lado === 'seSim' ? 'Se Passar' : 'Se Falhar'}>
+            <p className="item-dica">{temTeste(a) ? 'O que acontece se passar ou falhar no teste.' : 'O que acontece em seguida.'} Marque outras atividades deste item; pra elas não aparecerem como botão, deixe "Quando Dispara" em Nenhuma.</p>
+            {(temTeste(a) ? (['seSim', 'seNao'] as const) : (['seSim'] as const)).map((lado) => (
+              <Linha key={lado} rotulo={!temTeste(a) ? 'Em Seguida' : lado === 'seSim' ? 'Se Passar' : 'Se Falhar'}>
                 <div className="item-encadear">
                   {irmas.filter((x) => x.id !== a.id).map((x) => (
                     <label key={x.id} className="janela-check">
@@ -727,14 +732,14 @@ function EfeitoDaAtividade({ a, mudar, rituais, ameacas, userId }: { a: Atividad
               <option value="local">Local</option>
             </select>
           </Linha>
-          <Linha rotulo="Teste pra Evitar"><SelectTeste teste={x.evitar} onMudar={(t) => m({ evitar: t })} /></Linha>
+          <Linha larga rotulo="Teste pra Evitar"><SelectTeste teste={x.evitar} onMudar={(t) => m({ evitar: t })} /></Linha>
         </Grupo>
       )
     }
     case 'checar':
       return (
         <Grupo titulo="Detalhes do Teste">
-          <Linha rotulo="Teste" dica="Testa contra o Valor Testado (DT)."><SelectTeste teste={a.checar!} onMudar={(t) => mudar({ checar: t })} /></Linha>
+          <Linha larga rotulo="Teste" dica="Testa contra o Valor Testado (DT)."><SelectTeste teste={a.checar!} onMudar={(t) => mudar({ checar: t })} /></Linha>
         </Grupo>
       )
     case 'dano':

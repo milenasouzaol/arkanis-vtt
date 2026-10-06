@@ -1,7 +1,7 @@
 // Interagir com itens na mesa (KAN-53, parte 2): regras puras, testadas. Quem roda é a
 // JanelaInteracao; o banco confere cada passo (0122_interagir_com_itens.sql).
 import type { Caixa } from './tokens'
-import { TEM_TESTE, type Atividade, type Teste } from './itens'
+import { temTeste, type Atividade, type Teste } from './itens'
 
 // Distância em metros entre o token de quem interage e o item: conta os quadrados entre as
 // bordas (encostado = 1 quadrado, como no tabuleiro), vezes a distância de cada quadrado.
@@ -29,10 +29,10 @@ export function semUsos(a: Pick<Atividade, 'ativacao'>): boolean {
   return u.max !== null && u.max !== undefined && u.gastos >= u.max
 }
 
-// O teste que a atividade pede (Checar, ou o teste pra evitar do Ritual). Sem perícia nem
-// atributo, não tem teste.
+// O teste que a atividade pede: o de "Ao Passar no Teste", o do Checar, ou o teste pra evitar
+// do Ritual. Sem perícia nem atributo, não tem teste.
 export function testeDe(a: Atividade): Teste | null {
-  const t = a.tipo === 'checar' ? a.checar : a.tipo === 'ritual' ? a.ritual?.evitar : null
+  const t = a.ativacao.quando === 'teste' ? a.ativacao.teste : a.tipo === 'checar' ? a.checar : a.tipo === 'ritual' ? a.ritual?.evitar : null
   return t && (t.pericia || t.atributo) ? t : null
 }
 
@@ -49,6 +49,6 @@ export function passouNoTeste(total: number, dt: number | null | undefined): boo
 // O que roda depois desta atividade (Se passar / Se falhar / Em seguida), sem repetir a mesma
 // atividade no mesmo encadeamento (evita laço infinito: A → B → A).
 export function proximas(a: Atividade, passou: boolean | null, lista: Atividade[], jaRodaram: Set<string>): Atividade[] {
-  const ids = TEM_TESTE.includes(a.tipo) ? (passou === false ? a.seNao : a.seSim) : a.seSim
+  const ids = temTeste(a) ? (passou === false ? a.seNao : a.seSim) : a.seSim
   return ids.filter((id) => !jaRodaram.has(id)).map((id) => lista.find((x) => x.id === id)).filter((x): x is Atividade => !!x)
 }

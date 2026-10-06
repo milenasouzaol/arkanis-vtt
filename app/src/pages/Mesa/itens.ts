@@ -70,6 +70,12 @@ export const TIPOS_ATIVIDADE: { id: TipoAtividade; rotulo: string }[] = [
 // Atividades que têm teste: dá pra dizer o que acontece se passar e se falhar.
 export const TEM_TESTE: TipoAtividade[] = ['checar', 'ataque', 'ritual']
 
+// Esta atividade tem resultado de teste (Se passar / Se falhar)? Pelo tipo, ou porque ela só
+// acontece "Ao Passar no Teste".
+export function temTeste(a: Pick<Atividade, 'tipo' | 'ativacao'>): boolean {
+  return TEM_TESTE.includes(a.tipo) || a.ativacao.quando === 'teste'
+}
+
 // Quando dispara (Ativação → Tempo).
 export const QUANDO_DISPARA: { grupo: string | null; itens: { id: string; rotulo: string }[] }[] = [
   { grupo: null, itens: [{ id: 'clicar', rotulo: 'Ao Clicar' }, { id: 'teste', rotulo: 'Ao Passar no Teste' }] },
@@ -108,6 +114,9 @@ export const CONSUMOS = [
 
 export type Ativacao = {
   quando: string
+  // "Ao Passar no Teste": o teste que a pessoa faz antes (passou = a atividade acontece; falhou =
+  // roda o Se Falhar).
+  teste?: Teste
   condicao: string
   duracao: string
   duracaoValor: number | null

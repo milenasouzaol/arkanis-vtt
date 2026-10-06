@@ -7,7 +7,7 @@ import { sistemaDe } from '../../sistemas'
 import { sanitizarHtml } from './chat'
 import type { ObjetoCena } from './cenas'
 import { ICONE_ATIVIDADE } from './FichaItem'
-import { atividadeCompleta, TEM_TESTE, type Atividade, type ItemMesa } from './itens'
+import { atividadeCompleta, temTeste, type Atividade, type ItemMesa } from './itens'
 import { botoesDaInteracao, dentroDoAlcance, distanciaEmMetros, passouNoTeste, proximas, rotuloDoTeste, semUsos, testeDe } from './interacao'
 import { dadosDoAlvo, maximoDoAlvo } from './acoesDeMira'
 import { danoNoAlvo, defesaDoAlvo, perfilDoAlvo, rolarAtaque, rolarCura, rolarDanoDoAtaque, type AcaoInteracao, type Recurso } from './mira'
@@ -135,8 +135,24 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
     const nome = a.nome
     const extra = a.textoChat ? ` ${a.textoChat}` : ''
 
+    // "Ao Passar no Teste": rola o teste primeiro; falhou, a atividade não acontece.
+    if (a.ativacao.quando === 'teste' && teste) {
+      const t = await testar(nome, teste)
+      await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: t })
+      setLog((l) => [...l, `${nome}: ${t.total}${t.dt !== null ? ` contra DT ${t.dt}` : ''} → ${t.passou ? 'passou' : 'falhou'}`])
+      if (!t.passou) {
+        for (const p of proximas(a, false, lista, jaRodaram)) {
+          if (!vivo.current) return
+          await rodar(p, lista, jaRodaram)
+        }
+        return
+      }
+      passou = true
+    }
+
     switch (a.tipo) {
       case 'checar': {
+        if (passou) break // o teste já foi o de "Ao Passar no Teste"
         const t = await testar(nome, a.checar!)
         passou = t.passou
         await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: t })
@@ -213,7 +229,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
       }
     }
 
-    for (const p of proximas(a, TEM_TESTE.includes(a.tipo) ? passou : null, lista, jaRodaram)) {
+    for (const p of proximas(a, temTeste(a) ? passou : null, lista, jaRodaram)) {
       if (!vivo.current) return
       await rodar(p, lista, jaRodaram)
     }

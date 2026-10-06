@@ -16287,3 +16287,8 @@ button.character-tile-link {
 .janela-interacao .janela-corpo {
   overflow-y: auto;
 }
+
+.item-linha-campo.larga {
+  grid-template-columns: 1fr;
+  gap: 6px;
+}

@@ -31,6 +31,13 @@ describe('interação', () => {
     expect(rotuloDoTeste({ pericia: 'Crime', atributo: '', dt: 20 }, [])).toBe('Teste de Crime')
     expect(rotuloDoTeste({ pericia: '', atributo: 'agilidade', dt: null }, [{ id: 'agilidade', rotulo: 'Agilidade' }])).toBe('Teste de Agilidade')
   })
+  it('Ao Passar no Teste: o teste fica na própria atividade', () => {
+    const a = novaAtividade('conteiner', 'a')
+    const abrir = { ...a, ativacao: { ...a.ativacao, quando: 'teste', teste: { pericia: 'Crime', atributo: '', dt: 20 } }, seNao: ['b'] }
+    expect(testeDe(abrir)).toEqual({ pericia: 'Crime', atributo: '', dt: 20 })
+    const b = novaAtividade('dano', 'b')
+    expect(proximas(abrir, false, [abrir, b], new Set(['a'])).map((x) => x.id)).toEqual(['b'])
+  })
   it('usos e teste', () => {
     const a = novaAtividade('checar')
     expect(semUsos(a)).toBe(false)
