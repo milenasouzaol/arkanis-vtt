@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBriefcase, faHandHolding, faLock } from '@fortawesome/free-solid-svg-icons'
+import { faBriefcase, faDiceD20, faHandHolding, faLock, faXmark } from '@fortawesome/free-solid-svg-icons'
 import Janela from './Janela'
 import { supabase } from '../../lib/supabase'
 import { sistemaDe } from '../../sistemas'
@@ -8,7 +8,7 @@ import { sanitizarHtml } from './chat'
 import type { ObjetoCena } from './cenas'
 import { ICONE_ATIVIDADE } from './FichaItem'
 import { atividadeCompleta, TEM_TESTE, type Atividade, type ItemMesa } from './itens'
-import { botoesDaInteracao, dentroDoAlcance, distanciaEmMetros, passouNoTeste, proximas, semUsos } from './interacao'
+import { botoesDaInteracao, dentroDoAlcance, distanciaEmMetros, passouNoTeste, proximas, rotuloDoTeste, semUsos, testeDe } from './interacao'
 import { dadosDoAlvo, maximoDoAlvo } from './acoesDeMira'
 import { danoNoAlvo, defesaDoAlvo, perfilDoAlvo, rolarAtaque, rolarCura, rolarDanoDoAtaque, type AcaoInteracao, type Recurso } from './mira'
 
@@ -39,8 +39,15 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
   const [ocupado, setOcupado] = useState(false)
   const [conteudoAberto, setConteudoAberto] = useState(false)
   const [documento, setDocumento] = useState(false)
+  // Atividade com teste: antes de rolar, a janela avisa qual teste é e a pessoa decide.
+  const [pedido, setPedido] = useState<{ atividade: Atividade; rotulo: string; dt: number | null; resolver: (ok: boolean) => void } | null>(null)
+  const pedidoRef = useRef(pedido)
+  pedidoRef.current = pedido
   const vivo = useRef(true)
-  useEffect(() => () => { vivo.current = false }, [])
+  useEffect(() => () => {
+    vivo.current = false
+    pedidoRef.current?.resolver(false)
+  }, [])
 
   const carregar = useCallback(async () => {
     const { data, error } = await supabase.rpc('item_do_token', { p_token_id: token.id })
@@ -109,6 +116,16 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
   // Roda uma atividade e o que vem depois dela.
   async function rodar(a: Atividade, lista: Atividade[], jaRodaram: Set<string>) {
     jaRodaram.add(a.id)
+    // Tem teste: pergunta antes (a pessoa pode não querer). Desistir não gasta nada.
+    const teste = testeDe(a)
+    if (teste) {
+      const ok = await new Promise<boolean>((resolver) => setPedido({ atividade: a, rotulo: rotuloDoTeste(teste, sistema.atributos), dt: teste.dt, resolver }))
+      if (vivo.current) setPedido(null)
+      if (!ok) {
+        if (jaRodaram.size === 1) setLog((l) => [...l, `${a.nome}: desistiu`])
+        return
+      }
+    }
     const { error } = await supabase.rpc('usar_atividade', { p_token_id: token.id, p_atividade_id: a.id })
     if (error) {
       setErro(motivo(error))
@@ -242,7 +259,20 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
             {item.descricao && <div className="interacao-descricao" dangerouslySetInnerHTML={{ __html: sanitizarHtml(item.descricao) }} />}
           </div>
 
-          {botoes.length > 0 && (
+          {pedido && (
+            <section className="interacao-pedido" role="alertdialog" aria-label={pedido.rotulo}>
+              <p>Pra <strong>{pedido.atividade.nome}</strong>, você precisa fazer um <strong>{pedido.rotulo}</strong>{souMestre && pedido.dt !== null ? ` (DT ${pedido.dt})` : ''}.</p>
+              <div className="interacao-pedido-botoes">
+                <button type="button" className="janela-botao janela-botao-destaque" onClick={() => pedido.resolver(true)}>
+                  <FontAwesomeIcon icon={faDiceD20} /> Rolar {pedido.rotulo}
+                </button>
+                <button type="button" className="janela-botao" onClick={() => pedido.resolver(false)}>
+                  <FontAwesomeIcon icon={faXmark} /> Cancelar
+                </button>
+              </div>
+            </section>
+          )}
+          {!pedido && botoes.length > 0 && (
             <div className="interacao-acoes">
               {botoes.map((a) => {
                 const longe = !alcanceOk(a)
@@ -258,7 +288,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
                     onClick={() => clicar(a)}
                   >
                     {a.icone ? <img src={a.icone} alt="" /> : <FontAwesomeIcon icon={ICONE_ATIVIDADE[a.tipo]} />}
-                    <span>{a.nome}</span>
+                    <span>{a.nome}{testeDe(a) ? <em className="interacao-acao-teste"> · {rotuloDoTeste(testeDe(a)!, sistema.atributos)}</em> : null}</span>
                     {(longe || acabou) && <small><FontAwesomeIcon icon={faLock} /> {acabou ? 'Sem usos' : `Chegue mais perto (${rotuloAlcance})`}</small>}
                   </button>
                 )

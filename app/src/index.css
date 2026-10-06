@@ -16253,3 +16253,37 @@ button.character-tile-link {
 .item-conteudo-compendio svg {
   color: #b9a46f;
 }
+
+/* Antes de rolar: qual teste é, e a pessoa decide (Rolar / Cancelar). */
+.interacao-pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: #23252d;
+  border: 1px solid #b9a46f;
+  border-radius: 6px;
+}
+
+.interacao-pedido p {
+  margin: 0;
+  text-align: center;
+}
+
+.interacao-pedido-botoes {
+  display: flex;
+  gap: 8px;
+}
+
+.interacao-pedido-botoes button {
+  flex: 1;
+}
+
+.interacao-acao-teste {
+  color: var(--mesa-creme-dim);
+  font: italic 400 0.85rem 'Signika', var(--sans);
+}
+
+.janela-interacao .janela-corpo {
+  overflow-y: auto;
+}

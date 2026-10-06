@@ -1,7 +1,7 @@
 // Interagir com itens na mesa (KAN-53, parte 2): regras puras, testadas. Quem roda é a
 // JanelaInteracao; o banco confere cada passo (0122_interagir_com_itens.sql).
 import type { Caixa } from './tokens'
-import { TEM_TESTE, type Atividade } from './itens'
+import { TEM_TESTE, type Atividade, type Teste } from './itens'
 
 // Distância em metros entre o token de quem interage e o item: conta os quadrados entre as
 // bordas (encostado = 1 quadrado, como no tabuleiro), vezes a distância de cada quadrado.
@@ -27,6 +27,18 @@ export function botoesDaInteracao(atividades: Atividade[]): Atividade[] {
 export function semUsos(a: Pick<Atividade, 'ativacao'>): boolean {
   const u = a.ativacao.usos
   return u.max !== null && u.max !== undefined && u.gastos >= u.max
+}
+
+// O teste que a atividade pede (Checar, ou o teste pra evitar do Ritual). Sem perícia nem
+// atributo, não tem teste.
+export function testeDe(a: Atividade): Teste | null {
+  const t = a.tipo === 'checar' ? a.checar : a.tipo === 'ritual' ? a.ritual?.evitar : null
+  return t && (t.pericia || t.atributo) ? t : null
+}
+
+// "Teste de Crime", "Teste de Agilidade".
+export function rotuloDoTeste(t: Teste, atributos: { id: string; rotulo: string }[]): string {
+  return `Teste de ${t.pericia || atributos.find((x) => x.id === t.atributo)?.rotulo || t.atributo}`
 }
 
 // Passou no teste? Sem DT, passa.

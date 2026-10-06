@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { botoesDaInteracao, dentroDoAlcance, distanciaEmMetros, passouNoTeste, proximas, semUsos } from './interacao'
+import { botoesDaInteracao, dentroDoAlcance, distanciaEmMetros, passouNoTeste, proximas, rotuloDoTeste, semUsos, testeDe } from './interacao'
 import { novaAtividade } from './itens'
 
 const celula = { w: 100, h: 100 }
@@ -22,6 +22,14 @@ describe('interação', () => {
     const a = novaAtividade('checar', 'a')
     const b = { ...novaAtividade('conteiner', 'b'), ativacao: { ...a.ativacao, quando: 'nenhuma' } }
     expect(botoesDaInteracao([a, b]).map((x) => x.id)).toEqual(['a'])
+  })
+  it('o teste que a atividade pede, e o nome dele', () => {
+    const c = { ...novaAtividade('checar'), checar: { pericia: 'Crime', atributo: '', dt: 20 } }
+    expect(testeDe(c)).toEqual({ pericia: 'Crime', atributo: '', dt: 20 })
+    expect(testeDe(novaAtividade('checar'))).toBeNull()
+    expect(testeDe(novaAtividade('conteiner'))).toBeNull()
+    expect(rotuloDoTeste({ pericia: 'Crime', atributo: '', dt: 20 }, [])).toBe('Teste de Crime')
+    expect(rotuloDoTeste({ pericia: '', atributo: 'agilidade', dt: null }, [{ id: 'agilidade', rotulo: 'Agilidade' }])).toBe('Teste de Agilidade')
   })
   it('usos e teste', () => {
     const a = novaAtividade('checar')
