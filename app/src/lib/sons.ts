@@ -1,6 +1,7 @@
 // Sonoplastia (pedido da Millie, 06/10; arquivos que ela trouxe, em public/sons). Cada som toca no
 // volume de Efeitos Sonoros da pessoa (Lista de Reprodução → Controles de Volume de Usuário).
 import { lerVolumes } from '../pages/Mesa/volumesDoUsuario'
+import { SONS_DE_ARMA, somDaArma } from './somDasArmas'
 
 export const SONS = {
   dado: 'dado.mp3', // dados caindo
@@ -101,15 +102,40 @@ export function tocarSom(som: Som) {
   ultimoQualquer = agora
   const a = audio()
   if (!a) return
-  carregar(a.ctx, SONS[som]).then((s) => {
+  tocarArquivo(a, SONS[som], volume)
+}
+
+// Toca um arquivo (normalizado). Com maxSegundos, corta ali, sumindo devagar no fim.
+function tocarArquivo(a: { ctx: AudioContext; saida: AudioNode }, arquivo: string, volume: number, maxSegundos?: number) {
+  carregar(a.ctx, arquivo).then((s) => {
     if (!s) return
     const fonte = a.ctx.createBufferSource()
     fonte.buffer = s.buffer
     const ganho = a.ctx.createGain()
-    ganho.gain.value = volume * s.reforco
+    const v = volume * s.reforco
+    ganho.gain.value = v
     fonte.connect(ganho).connect(a.saida)
-    fonte.start()
+    const agora = a.ctx.currentTime
+    fonte.start(agora)
+    if (maxSegundos && s.buffer.duration > maxSegundos) {
+      ganho.gain.setValueAtTime(v, agora + maxSegundos - 0.5)
+      ganho.gain.linearRampToValueAtTime(0.0001, agora + maxSegundos)
+      fonte.stop(agora + maxSegundos + 0.05)
+    }
   })
+}
+
+// Som da arma no ataque (pelo nome do ataque; nome próprio cai pelo tipo de dano). Os arquivos
+// longos (rajada, lança-chamas) param em ~3 s.
+export function tocarSomDeArma(nome: string | null | undefined, tipoDano?: string | null) {
+  const arma = somDaArma(nome, tipoDano)
+  if (!arma) return
+  const volume = lerVolumes().efeitos
+  if (volume <= 0) return
+  const a = audio()
+  if (!a) return
+  ultimoQualquer = performance.now()
+  tocarArquivo(a, SONS_DE_ARMA[arma], volume, 3)
 }
 
 // "Sangue" → ritual-sangue (Medo, Morte, Conhecimento, Energia). Sem elemento conhecido, nada.

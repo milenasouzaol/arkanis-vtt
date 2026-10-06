@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { DIE_COLOR } from '../CharacterSheet/RollResult'
 import type { Mensagem } from './chat'
 import { chavesDe, dadosNovos, notacaoUnica, type Dado } from './dados3d'
-import { tocarSom } from '../../lib/sons'
+import { tocarSom, tocarSomDeArma } from '../../lib/sons'
+import { armaDoRotulo } from '../../lib/somDasArmas'
 
 // Biblioteca de dados 3D (MIT): https://github.com/3d-dice/dice-box-threejs
 type Caixa = {
@@ -24,7 +25,8 @@ export default function DadosNaTela({ mensagens }: { mensagens: Mensagem[] | nul
   const caixa = useRef<Caixa | null>(null)
   const carregando = useRef<Promise<Caixa | null> | null>(null)
   const vistos = useRef<Set<string> | null>(null)
-  const fila = useRef<Dado[][]>([])
+  // Cada rolagem na fila, com a arma (se for o dado de ataque).
+  const fila = useRef<{ dados: Dado[]; arma: { nome: string; dano: string | null } | null }[]>([])
   const rolando = useRef(false)
   const timer = useRef<number | undefined>(undefined)
   const palco = useRef<HTMLDivElement>(null)
@@ -68,8 +70,9 @@ export default function DadosNaTela({ mensagens }: { mensagens: Mensagem[] | nul
 
   async function proxima() {
     if (rolando.current) return
-    const dados = fila.current.shift()
-    if (!dados) return
+    const item = fila.current.shift()
+    if (!item) return
+    const { dados, arma } = item
     rolando.current = true
     window.clearTimeout(timer.current)
     const c = await iniciar()
@@ -82,6 +85,7 @@ export default function DadosNaTela({ mensagens }: { mensagens: Mensagem[] | nul
     const notacao = notacaoUnica(dados)
     if (notacao) {
       tocarSom('dado')
+      if (arma) tocarSomDeArma(arma.nome, arma.dano)
       // Se algo travar, não prende a fila pra sempre.
       await Promise.race([c.roll(notacao).catch(() => null), new Promise((r) => setTimeout(r, 9000))])
     }
@@ -104,7 +108,12 @@ export default function DadosNaTela({ mensagens }: { mensagens: Mensagem[] | nul
     for (const m of mensagens) {
       const { dados, chaves } = dadosNovos(m, vistos.current)
       for (const k of chaves) vistos.current.add(k)
-      if (dados.length) fila.current.push(dados)
+      if (!dados.length) continue
+      // Dado de ataque: o da mira (botão Ataque) ou a rolagem "Ataque: [arma]" da ficha.
+      const acao = m.acao?.tipo === 'ataque' ? m.acao : null
+      const doAtaque = acao && chaves.includes(`${m.id}:ataque`) ? { nome: acao.ataque.nome, dano: acao.ataque.partes[0]?.tipo ?? null } : null
+      const daFicha = chaves.includes(`${m.id}:rolagem`) && m.rolagem ? armaDoRotulo(m.rolagem.label) : null
+      fila.current.push({ dados, arma: doAtaque ?? (daFicha ? { nome: daFicha, dano: null } : null) })
     }
     proxima()
     // eslint-disable-next-line react-hooks/exhaustive-deps

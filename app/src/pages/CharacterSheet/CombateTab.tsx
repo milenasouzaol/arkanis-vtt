@@ -20,6 +20,7 @@ import { nomeDoTipo } from '../Mesa/mira'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
+import { dentroDaMesa, tocarSomDeArma } from '../../lib/sons'
 
 type Attack = {
   id: string
@@ -301,6 +302,8 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
     }
 
     const label = rotuloComCondicoes(`Ataque: ${attack.name}${isCrit ? ' (crítico!)' : ''}`, cond.motivos)
+    // Fora da mesa, o som da arma toca aqui (dentro, a mesa toca junto com os dados 3D, pra todos).
+    if (!dentroDaMesa()) tocarSomDeArma(attack.name)
     setRoll({
       label,
       rolls,
