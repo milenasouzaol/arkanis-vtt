@@ -110,7 +110,7 @@ export default function DadosNaTela({ mensagens }: { mensagens: Mensagem[] | nul
       for (const k of chaves) vistos.current.add(k)
       if (!dados.length) continue
       // Iniciativa do começo do combate: só no chat, sem dado caindo na tela (pedido da Millie).
-      if (!m.acao && m.rolagem && /^Teste de Iniciativa/.test(m.rolagem.label)) continue
+      if (!m.acao && m.rolagem && /iniciativa/i.test(m.rolagem.label)) continue
       // Dado de ataque: o da mira (botão Ataque) ou a rolagem "Ataque: [arma]" da ficha.
       const acao = m.acao?.tipo === 'ataque' ? m.acao : null
       const doAtaque = acao && chaves.includes(`${m.id}:ataque`) ? { nome: acao.ataque.nome, dano: acao.ataque.partes[0]?.tipo ?? null } : null

@@ -13847,8 +13847,8 @@ button.character-tile-link {
   width: 100%;
   height: 104px;
   overflow: hidden;
-  /* Imagem sem fundo: um cinza transparente atrás. */
-  background: rgba(150, 150, 160, 0.28);
+  /* Imagem sem fundo: um preto transparente atrás. */
+  background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-top: 0;
   font-size: 1.4rem;
