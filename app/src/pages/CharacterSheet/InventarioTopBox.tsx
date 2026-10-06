@@ -75,6 +75,7 @@ export default function InventarioTopBox({
 }) {
   const [patente, setPatente] = useState<PatenteKey>((character.patente as PatenteKey) ?? 'sem_patente')
   const [prestigio, setPrestigio] = useState(String(character.prestigio ?? 0))
+  const [dinheiro, setDinheiro] = useState(String((character as { dinheiro?: number }).dinheiro ?? 0))
   const [pickerOpen, setPickerOpen] = useState(false)
   const [painel, setPainel] = useState<'limite' | 'proficiencias'>('limite')
   const [proficiencias, setProficiencias] = useState('')
@@ -88,7 +89,8 @@ export default function InventarioTopBox({
   useEffect(() => {
     setPatente((character.patente as PatenteKey) ?? 'sem_patente')
     setPrestigio(String(character.prestigio ?? 0))
-  }, [character.id, character.patente, character.prestigio])
+    setDinheiro(String((character as { dinheiro?: number }).dinheiro ?? 0))
+  }, [character.id, character.patente, character.prestigio, (character as { dinheiro?: number }).dinheiro])
 
   useEffect(() => {
     if (!pickerOpen) return
@@ -140,6 +142,12 @@ export default function InventarioTopBox({
     setPatente(key)
     setPickerOpen(false)
     await supabase.from('characters').update({ patente: key }).eq('id', character.id)
+  }
+
+  async function salvarDinheiro(raw: string) {
+    const valor = Math.max(0, Number(raw) || 0)
+    setDinheiro(String(valor))
+    await supabase.from('characters').update({ dinheiro: valor }).eq('id', character.id)
   }
 
   async function salvarPrestigio(raw: string) {
@@ -199,6 +207,19 @@ export default function InventarioTopBox({
               value={prestigio}
               onChange={(e) => setPrestigio(e.target.value)}
               onBlur={(e) => salvarPrestigio(e.target.value)}
+            />
+          </div>
+
+          {/* Dinheiro (Loja da mesa: comprar desconta daqui). */}
+          <div className="inv-prestigio-row">
+            <span className="inv-prestigio-label">Dinheiro</span>
+            <input
+              className="inv-prestigio-input"
+              type="number"
+              min={0}
+              value={dinheiro}
+              onChange={(e) => setDinheiro(e.target.value)}
+              onBlur={(e) => salvarDinheiro(e.target.value)}
             />
           </div>
         </div>

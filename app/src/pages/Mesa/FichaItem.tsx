@@ -9,7 +9,7 @@ import MenuContexto, { type ItemMenu } from './MenuContexto'
 import { EditorTexto } from './PainelPlaylist'
 import { sanitizarHtml } from './chat'
 import {
-  ALVOS_ATIVIDADE, CATEGORIAS_ITEM, temTeste, CONSUMOS, DURACOES, FORMAS_AREA, QUANDO_DISPARA, QUEM_USA, RARIDADES, TIPOS_ATIVIDADE, TIPOS_ITEM,
+  ALVOS_ATIVIDADE, CATEGORIAS_ITEM, MODOS_LOJA, temTeste, CONSUMOS, DURACOES, FORMAS_AREA, QUANDO_DISPARA, QUEM_USA, RARIDADES, TIPOS_ATIVIDADE, TIPOS_ITEM,
   duplicarAtividade, etiquetasDoItem, novaAtividade, rotuloDaAtivacao, semAtividade, textoDeUsos,
   type Atividade, type DetalhesItem, type ItemMesa, type Teste, type TipoAtividade,
 } from './itens'
@@ -294,10 +294,23 @@ export default function FichaItem({ item, podeEditar, userId, jogadores, sistema
                   </Linha>
                 </Grupo>
               )}
-              {i.categoria === 'conteiner' && (
-                <Grupo titulo="Conteúdo">
-                  <p className="item-dica">O que tem dentro. Quem abrir pode pegar e vai pro inventário.</p>
-                  <ul className="item-conteudo">
+              {i.categoria === 'loja' && (
+                <Grupo titulo="Loja">
+                  <Linha rotulo="Cobra Por" dica="Requisição: a patente do agente limita os itens de categoria I a IV (a 0 é livre). Dinheiro: paga com o dinheiro da ficha. Os Dois: quem compra escolhe.">
+                    <div className="item-modo-loja" role="radiogroup" aria-label="Cobra por">
+                      {MODOS_LOJA.map((m) => (
+                        <button key={m.id} type="button" role="radio" aria-checked={(det.loja?.modo ?? 'ambos') === m.id} className={(det.loja?.modo ?? 'ambos') === m.id ? 'ativo' : undefined} onClick={() => mudarDetalhes({ loja: { modo: m.id } })}>
+                          {m.rotulo}
+                        </button>
+                      ))}
+                    </div>
+                  </Linha>
+                </Grupo>
+              )}
+              {(i.categoria === 'conteiner' || i.categoria === 'loja') && (
+                <Grupo titulo={i.categoria === 'loja' ? 'Estoque' : 'Conteúdo'}>
+                  <p className="item-dica">{i.categoria === 'loja' ? `O que a loja vende. ∞ = nunca acaba. Preço em ${sistema.moeda.nome.toLowerCase()} (vazio: usa o do item).` : 'O que tem dentro. Quem abrir pode pegar e vai pro inventário.'}</p>
+                  <ul className={`item-conteudo${i.categoria === 'loja' ? ' loja' : ''}`}>
                     {i.conteudo.map((c, n) => (
                       <li key={n}>
                         {c.compendio_id ? (
@@ -309,7 +322,15 @@ export default function FichaItem({ item, podeEditar, userId, jogadores, sistema
                             {outrosItens.filter((o) => o.id !== i.id).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                           </select>
                         )}
-                        <input type="number" min={1} value={c.quantidade} aria-label="Quantidade" onChange={(e) => mudar({ conteudo: i.conteudo.map((x, k) => (k === n ? { ...x, quantidade: Math.max(1, Number(e.target.value) || 1) } : x)) })} />
+                        {i.categoria === 'loja' && c.ilimitado
+                          ? <span className="item-ilimitado" title="Estoque ilimitado">∞</span>
+                          : <input type="number" min={1} value={c.quantidade} aria-label="Quantidade" onChange={(e) => mudar({ conteudo: i.conteudo.map((x, k) => (k === n ? { ...x, quantidade: Math.max(1, Number(e.target.value) || 1) } : x)) })} />}
+                        {i.categoria === 'loja' && (
+                          <>
+                            <label className="item-check-ilimitado" title="Estoque ilimitado"><input type="checkbox" checked={!!c.ilimitado} onChange={(e) => mudar({ conteudo: i.conteudo.map((x, k) => (k === n ? { ...x, ilimitado: e.target.checked } : x)) })} /> ∞</label>
+                            <input type="number" min={0} placeholder={sistema.moeda.simbolo} value={c.preco ?? ''} aria-label="Preço" onChange={(e) => mudar({ conteudo: i.conteudo.map((x, k) => (k === n ? { ...x, preco: numeroOuNulo(e.target.value) } : x)) })} />
+                          </>
+                        )}
                         <button type="button" aria-label="Tirar do contêiner" onClick={() => mudar({ conteudo: i.conteudo.filter((_, k) => k !== n) })}><FontAwesomeIcon icon={faTrash} /></button>
                       </li>
                     ))}

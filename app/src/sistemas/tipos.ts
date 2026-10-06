@@ -31,6 +31,8 @@ export type Sistema = {
   // Monta o teste de uma perícia (ou só atributo) a partir da ficha do personagem.
   testeDoPersonagem(characterId: string, pericia: string, atributo?: string): Promise<TesteDoPersonagem | null>
   rolarTeste(t: Pick<TesteDoPersonagem, 'dados' | 'bonus'>): RolagemDeTeste
+  // Dinheiro do personagem (Loja): nome e símbolo. Ex.: R$ 30.
+  moeda: { nome: string; simbolo: string }
   // Compêndio de equipamentos dos livros (null = o sistema não tem). Itens criados a partir dele,
   // ao serem pegos, entram no inventário como o equipamento de verdade.
   compendio: { nome: string; tipos: Opcao[]; buscar(termo: string, tipo?: string): Promise<EntradaCompendio[]> } | null

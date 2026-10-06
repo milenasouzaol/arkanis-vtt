@@ -61,6 +61,8 @@ export const ordemParanormal: Sistema = {
     return { nome, dados: attrValue(ficha.attributes as Attributes, attr) + cond.dados, bonus }
   },
 
+  moeda: { nome: 'Dinheiro', simbolo: 'R$' },
+
   compendio: {
     nome: 'Equipamentos',
     tipos: [

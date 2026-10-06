@@ -16343,3 +16343,80 @@ button.character-tile-link {
   display: flex;
   gap: 6px;
 }
+
+/* Loja: como cobra (3 botões) e o estoque com ∞ e preço */
+.item-modo-loja {
+  display: flex;
+  gap: 4px;
+}
+
+.item-modo-loja button {
+  flex: 1;
+  padding: 6px 8px;
+  background: var(--item-campo);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--mesa-creme-dim);
+  font: 600 0.82rem 'Signika', var(--sans);
+  cursor: pointer;
+}
+
+.item-modo-loja button.ativo {
+  border-color: var(--item-ouro);
+  color: var(--mesa-creme);
+}
+
+.item-campos:disabled .item-modo-loja button {
+  cursor: default;
+}
+
+.item-conteudo.loja li {
+  grid-template-columns: 1fr 56px auto 70px auto;
+}
+
+.item-check-ilimitado {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--mesa-creme-dim);
+  font-size: 0.85rem;
+}
+
+.item-ilimitado {
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--item-ouro);
+}
+
+/* Vitrine da Loja */
+.vitrine-situacao {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  background: #121216;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.vitrine-situacao svg {
+  color: #b9a46f;
+}
+
+.vitrine-limites {
+  display: flex;
+  gap: 8px;
+}
+
+.vitrine-limites b.cheio {
+  color: #e06a5a;
+}
+
+.interacao-conteudo-nome small {
+  display: block;
+  color: var(--mesa-creme-dim);
+  font-weight: 400;
+  font-size: 0.75rem;
+}

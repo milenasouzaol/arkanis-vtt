@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBriefcase, faDiceD20, faHandHolding, faLock, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faBriefcase, faCoins, faDiceD20, faHandHolding, faLock, faStore, faXmark } from '@fortawesome/free-solid-svg-icons'
 import Janela from './Janela'
 import { supabase } from '../../lib/supabase'
 import { sistemaDe } from '../../sistemas'
 import { sanitizarHtml } from './chat'
 import type { ObjetoCena } from './cenas'
 import { ICONE_ATIVIDADE } from './FichaItem'
-import { atividadeCompleta, temTeste, type Atividade, type ItemMesa } from './itens'
+import { atividadeCompleta, formatarDinheiro, temTeste, type Atividade, type ItemMesa } from './itens'
 import { botoesDaInteracao, dentroDoAlcance, distanciaEmMetros, passouNoTeste, proximas, rotuloDoTeste, semUsos, testeDe } from './interacao'
 import { dadosDoAlvo, maximoDoAlvo } from './acoesDeMira'
 import { danoNoAlvo, defesaDoAlvo, perfilDoAlvo, rolarAtaque, rolarCura, rolarDanoDoAtaque, type AcaoInteracao, type Recurso } from './mira'
 
-type ItemDoToken = ItemMesa & { conteudo_detalhado: { item_id: string | null; compendio_id: string | null; quantidade: number; name: string; image_url: string | null; carga: number }[] }
+type EntradaDetalhada = { item_id: string | null; compendio_id: string | null; quantidade: number; ilimitado?: boolean; name: string; image_url: string | null; carga: number; preco?: number | null; categoria?: string }
+type ItemDoToken = ItemMesa & { conteudo_detalhado: EntradaDetalhada[] }
+type Situacao = { dinheiro: number; patente: string | null; categorias: Record<string, { atual: number; limite: number }> }
 type Registro = Omit<AcaoInteracao, 'tipo' | 'estado' | 'item' | 'imagem'>
 
 const motivo = (e: { message?: string } | null) => (e ? e.message || 'Não deu certo.' : null)
@@ -39,6 +41,9 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
   const [ocupado, setOcupado] = useState(false)
   const [conteudoAberto, setConteudoAberto] = useState(false)
   const [documento, setDocumento] = useState(false)
+  // Loja: a vitrine aberta e a situação de quem compra (dinheiro, limites da patente).
+  const [lojaAberta, setLojaAberta] = useState(false)
+  const [situacao, setSituacao] = useState<Situacao | null>(null)
   // Atividade com teste: antes de rolar, a janela avisa qual teste é e a pessoa decide.
   const [pedido, setPedido] = useState<{ atividade: Atividade; rotulo: string; dt: number | null; resolver: (ok: boolean) => void } | null>(null)
   const pedidoRef = useRef(pedido)
@@ -64,12 +69,12 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
 
   useEffect(() => { carregar() }, [carregar])
 
-  // Com o contêiner aberto, o conteúdo se atualiza sozinho: se outra pessoa pegar algo, some aqui.
+  // Com o contêiner (ou a loja) aberto, o conteúdo se atualiza sozinho: se outra pessoa pegar algo, some aqui.
   useEffect(() => {
-    if (!conteudoAberto) return
+    if (!conteudoAberto && !lojaAberta) return
     const t = window.setInterval(() => { carregar() }, 3000)
     return () => window.clearInterval(t)
-  }, [conteudoAberto, carregar])
+  }, [conteudoAberto, lojaAberta, carregar])
 
   const distancia = meuToken ? distanciaEmMetros(meuToken, token, celula, metrosPorQuadrado) : null
   const metrosDoAlcance = (a: Atividade) => sistema.alcances.find((x) => x.id === a.ativacao.alcance)?.metros ?? null
@@ -282,6 +287,40 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
   // Item lootável (ou artefato, ou marcado "vai pro inventário") no mapa: dá pra pegar direto,
   // encostado no item (alcance Toque), sem precisar criar atividade.
   const pegavel = !!item && (item.categoria === 'lootavel' || item.categoria === 'amaldicoado' || !!item.efeitos?.inventario)
+  const loja = item?.categoria === 'loja'
+  const modoLoja = item?.detalhes?.loja?.modo ?? 'ambos'
+  const curto = sistema.alcances.find((x) => x.id === 'curto')?.metros ?? 9
+  const pertoDaLoja = souMestre || dentroDoAlcance(distancia, curto)
+
+  async function carregarSituacao() {
+    if (!characterId) return
+    const { data } = await supabase.rpc('situacao_de_compra', { p_character_id: characterId })
+    if (vivo.current && data) setSituacao(data as Situacao)
+  }
+
+  async function abrirLoja() {
+    setLojaAberta(true)
+    await carregarSituacao()
+  }
+
+  // Comprar (dinheiro) ou requisitar (patente); o banco confere tudo e desconta.
+  async function comprar(c: EntradaDetalhada, forma: 'requisicao' | 'dinheiro') {
+    if (!characterId) {
+      setErro(souMestre ? 'O mestre não tem ficha: teste com o personagem de um jogador.' : 'Pra comprar, você precisa de um personagem com ficha.')
+      return
+    }
+    setOcupado(true)
+    setErro(null)
+    const { error } = await supabase.rpc('comprar_da_loja', { p_token_id: token.id, p_ref: c.item_id ?? c.compendio_id, p_character_id: characterId, p_quantidade: 1, p_forma: forma })
+    if (error) setErro(motivo(error))
+    else {
+      const texto = forma === 'dinheiro' && c.preco != null ? `comprou ${c.name} por ${formatarDinheiro(c.preco, sistema.moeda.simbolo)} (${item?.name ?? 'loja'}).` : `requisitou ${c.name} (${item?.name ?? 'loja'}).`
+      await postar({ atividade: forma === 'dinheiro' ? 'Comprar' : 'Requisitar', texto })
+      setLog((l) => [...l, forma === 'dinheiro' ? `Comprou ${c.name}` : `Requisitou ${c.name}`])
+      await Promise.all([carregar(), carregarSituacao()])
+    }
+    if (vivo.current) setOcupado(false)
+  }
   const toque = sistema.alcances.find((x) => x.id === 'toque')?.metros ?? 1.5
   const pertoPraPegar = souMestre || dentroDoAlcance(distancia, toque)
 
@@ -328,6 +367,15 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
               </div>
             </section>
           )}
+          {!pedido && loja && !lojaAberta && (
+            <div className="interacao-acoes">
+              <button type="button" className="interacao-acao" disabled={ocupado || !pertoDaLoja} title={pertoDaLoja ? 'Abrir Loja' : 'Chegue mais perto (Curto)'} onClick={abrirLoja}>
+                <FontAwesomeIcon icon={faStore} />
+                <span>Abrir Loja</span>
+                {!pertoDaLoja && <small><FontAwesomeIcon icon={faLock} /> Chegue mais perto (Curto)</small>}
+              </button>
+            </div>
+          )}
           {!pedido && pegavel && (
             <div className="interacao-acoes">
               <button
@@ -366,13 +414,58 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
               })}
             </div>
           )}
-          {!botoes.length && !pegavel && !conteudoAberto && <p className="item-vazio">Nada pra fazer aqui.</p>}
+          {!botoes.length && !pegavel && !loja && !conteudoAberto && <p className="item-vazio">Nada pra fazer aqui.</p>}
           {!meuToken && !souMestre && <p className="item-dica">Você precisa de um token seu nesta cena pra interagir.</p>}
 
           {log.length > 0 && (
             <ul className="interacao-log">
               {log.map((l, i) => <li key={i}>{l}</li>)}
             </ul>
+          )}
+
+          {lojaAberta && (
+            <section className="interacao-conteudo vitrine">
+              <h3>{item.name}</h3>
+              {situacao && (
+                <div className="vitrine-situacao">
+                  {modoLoja !== 'requisicao' && <span><FontAwesomeIcon icon={faCoins} /> {formatarDinheiro(Number(situacao.dinheiro), sistema.moeda.simbolo)}</span>}
+                  {modoLoja !== 'dinheiro' && (
+                    <span className="vitrine-limites" title="Itens que você carrega / limite da patente, por categoria">
+                      {['I', 'II', 'III', 'IV'].filter((k) => situacao.categorias[k]?.limite || situacao.categorias[k]?.atual).map((k) => (
+                        <b key={k} className={situacao.categorias[k].atual >= situacao.categorias[k].limite ? 'cheio' : undefined}>{k}: {situacao.categorias[k].atual}/{situacao.categorias[k].limite}</b>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              )}
+              {item.conteudo_detalhado.length ? (
+                <ul>
+                  {item.conteudo_detalhado.map((c) => {
+                    const cat = c.categoria ?? '0'
+                    const lim = situacao?.categorias[cat]
+                    const semVaga = !!lim && lim.atual >= lim.limite
+                    const caro = c.preco != null && !!situacao && Number(situacao.dinheiro) < c.preco
+                    return (
+                      <li key={c.item_id ?? c.compendio_id}>
+                        <span className="interacao-conteudo-imagem">{c.image_url ? <img src={c.image_url} alt="" /> : <FontAwesomeIcon icon={faBriefcase} />}</span>
+                        <span className="interacao-conteudo-nome">
+                          {c.name}
+                          <small>{[sistema.categoriasDeItem.length ? `Categoria ${cat}` : '', c.ilimitado ? '∞' : `×${c.quantidade}`].filter(Boolean).join(' · ')}</small>
+                        </span>
+                        <span className="interacao-conteudo-botoes">
+                          {modoLoja !== 'dinheiro' && (
+                            <button type="button" className="janela-botao" disabled={ocupado || semVaga} title={semVaga ? `Sua patente não libera mais itens de categoria ${cat}` : 'Requisitar'} onClick={() => comprar(c, 'requisicao')}>Requisitar</button>
+                          )}
+                          {modoLoja !== 'requisicao' && c.preco != null && (
+                            <button type="button" className="janela-botao" disabled={ocupado || caro} title={caro ? 'Dinheiro insuficiente' : 'Comprar'} onClick={() => comprar(c, 'dinheiro')}>{formatarDinheiro(c.preco, sistema.moeda.simbolo)}</button>
+                          )}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : <p className="item-vazio">Nada à venda.</p>}
+            </section>
           )}
 
           {conteudoAberto && (

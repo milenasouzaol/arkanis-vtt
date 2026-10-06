@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { atividadeCompleta, copiaDoItem, itemDoCompendio, semAtividade, duplicarAtividade, etiquetasDoItem, nivelNoItem, novaAtividade, ordenarItens, rotuloDaAtivacao, textoDeUsos, type ItemMesa } from './itens'
+import { atividadeCompleta, copiaDoItem, formatarDinheiro, itemDoCompendio, semAtividade, duplicarAtividade, etiquetasDoItem, nivelNoItem, novaAtividade, ordenarItens, rotuloDaAtivacao, textoDeUsos, type ItemMesa } from './itens'
 
 const item = (c: Partial<ItemMesa> = {}): ItemMesa => ({
   id: 'i', campaign_id: 'c', folder_id: null, name: 'Espada', categoria: 'lootavel', image_url: null, raridade: null, quantidade: 1, carga: 1,
@@ -59,6 +59,10 @@ describe('itens da mesa', () => {
     expect(i).toMatchObject({ name: 'Arco', categoria: 'lootavel', carga: 2, compendio_id: 'e1', detalhes: { tipo: 'arma', categoriaSistema: 'I' } })
     expect(i.descricao).toBe('<p>Arma &lt;simples&gt;.</p><p>Disparo.</p>')
     expect(itemDoCompendio({ id: 'e2', nome: 'x', tipo: 'outro', categoria: '0', carga: 0, descricao: '', imagem: null }).detalhes.tipo).toBeUndefined()
+  })
+  it('dinheiro', () => {
+    expect(formatarDinheiro(30, 'R$')).toBe('R$ 30')
+    expect(formatarDinheiro(1500.5, 'R$')).toBe('R$ 1.500,5')
   })
   it('etiquetas', () => {
     expect(etiquetasDoItem(item({ detalhes: { tipo: 'arma' }, raridade: 'raro' }))).toEqual(['Item Lootável', 'Arma', 'Raro'])

@@ -4,7 +4,7 @@
 // (perícias, atributos, alcances, tipos de dano, recursos) vem de src/sistemas.
 import type { NivelAcesso } from './atores'
 
-export type CategoriaItem = 'lootavel' | 'conteiner' | 'documento' | 'amaldicoado' | 'armadilha'
+export type CategoriaItem = 'lootavel' | 'conteiner' | 'documento' | 'amaldicoado' | 'armadilha' | 'loja'
 export type Raridade = 'comum' | 'incomum' | 'raro' | 'muito_raro' | 'lendario' | 'amaldicoado'
 export type TipoItem = 'arma' | 'municao' | 'protecao' | 'geral' | 'paranormal'
 
@@ -14,7 +14,20 @@ export const CATEGORIAS_ITEM: { id: CategoriaItem; rotulo: string }[] = [
   { id: 'documento', rotulo: 'Documento/Pista' },
   { id: 'amaldicoado', rotulo: 'Artefato Amaldiçoado' },
   { id: 'armadilha', rotulo: 'Armadilha' },
+  { id: 'loja', rotulo: 'Loja' },
 ]
+
+// Como a loja cobra (pedido da Millie): requisição (patente), dinheiro, ou os dois (quem compra escolhe).
+export type ModoLoja = 'requisicao' | 'dinheiro' | 'ambos'
+export const MODOS_LOJA: { id: ModoLoja; rotulo: string }[] = [
+  { id: 'requisicao', rotulo: 'Requisição' },
+  { id: 'dinheiro', rotulo: 'Dinheiro' },
+  { id: 'ambos', rotulo: 'Os Dois' },
+]
+
+export function formatarDinheiro(valor: number, simbolo: string): string {
+  return `${simbolo} ${valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}`
+}
 
 export const RARIDADES: { id: Raridade; rotulo: string }[] = [
   { id: 'comum', rotulo: 'Comum' },
@@ -47,6 +60,7 @@ export type DetalhesItem = {
   tipo?: TipoItem
   categoriaSistema?: string // categoria de requisição do sistema (OP: 0, I, II, III, IV)
   preco?: number | null // preço em dinheiro, se o mestre quiser vender por dinheiro
+  loja?: { modo: ModoLoja } // categoria Loja: como ela cobra
   teste?: Teste
   usos?: { gastos: number; max: number | null; quem: QuemUsa; pessoa?: string | null }
 }
@@ -233,7 +247,8 @@ export type ItemMesa = {
   created_at: string
 }
 
-export type EntradaConteudo = { item_id?: string; compendio_id?: string; nome?: string; quantidade: number }
+// Na Loja (estoque): ilimitado = nunca acaba; preco = o desta loja (sem: o do item).
+export type EntradaConteudo = { item_id?: string; compendio_id?: string; nome?: string; quantidade: number; ilimitado?: boolean; preco?: number | null }
 
 // Item novo a partir de um equipamento do compêndio: já vem com nome, descrição, tipo,
 // categoria, carga e imagem, e ligado a ele.
