@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBackwardStep, faForwardStep, faPenToSquare, faPlay, faPlus, faSkull, faStop, faTrash, faUser, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useEffect, useRef } from 'react'
-import { posicaoNoCarrossel, type Combatente } from './combate'
+import { corDaVida, desmaiado, posicaoNoCarrossel, type Combatente } from './combate'
 import type { Barras, Combate } from './useCombate'
 import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
 
@@ -84,9 +84,10 @@ export default function PainelCombate({ souMestre, combates, vdDoCombate, ativo,
     )
   }
 
+  // A vida vai de verde a vermelho conforme cai.
   const barra = (valor: [number, number | null], classe: string) => (
     <span className={`combate-barra ${classe}`}>
-      {valor[1] ? <span style={{ width: `${Math.max(0, Math.min(100, (valor[0] / valor[1]) * 100))}%` }} /> : null}
+      {valor[1] ? <span style={{ width: `${Math.max(0, Math.min(100, (valor[0] / valor[1]) * 100))}%`, ...(classe === 'vida' ? { background: corDaVida(valor[0], valor[1]) } : {}) }} /> : null}
       <small>{valor[0]}{valor[1] !== null ? `/${valor[1]}` : ''}</small>
     </span>
   )
@@ -114,7 +115,10 @@ export default function PainelCombate({ souMestre, combates, vdDoCombate, ativo,
           return (
             <li key={c.id} className={`combate-linha${vez ? ' vez' : ''}${meu ? ' meu' : ''}`}>
               <button type="button" className="combate-quem" disabled={!verDetalhes} onClick={() => onAbrir(c)}>
-                <span className="ator-token">{c.image_url ? <img src={c.image_url} alt="" /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}</span>
+                <span className="ator-token">
+                  {c.image_url ? <img src={c.image_url} alt="" /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}
+                  {c.tipo === 'jogador' && desmaiado(b?.pv) && <span className="combate-desmaiado" title="Desmaiado"><FontAwesomeIcon icon={faSkull} /></span>}
+                </span>
                 <span className="combate-nome">
                   <strong>{c.name}</strong>
                   {b && (c.tipo === 'jogador' || souMestre) && (
@@ -156,9 +160,9 @@ export default function PainelCombate({ souMestre, combates, vdDoCombate, ativo,
 // turno a fila desliza pro lado e o próximo chega ao centro. Quem está na vez clica no
 // próprio card pra passar.
 const VISIVEIS_DE_CADA_LADO = 3
-const LARGURA_CENTRO = 60
-const LARGURA_LADO = 44
-const ESPACO = 8
+const LARGURA_CENTRO = 100
+const LARGURA_LADO = 78
+const ESPACO = 6
 
 function deslocamento(pos: number): number {
   if (pos === 0) return 0
@@ -167,9 +171,11 @@ function deslocamento(pos: number): number {
   return Math.sign(pos) * (primeiro + (Math.abs(pos) - 1) * passo)
 }
 
-export function IndicadorTurno({ ativo, ordem, meusPersonagens, souMestre, onPassar }: {
+export function IndicadorTurno({ ativo, ordem, barras, meusPersonagens, souMestre, onPassar }: {
   ativo: Combate
   ordem: Combatente[]
+  // Vida dos jogadores (o tracinho embaixo do card; ameaças não mostram).
+  barras: (c: Combatente) => Barras | null
   meusPersonagens: string[]
   souMestre: boolean
   onPassar: () => void
@@ -196,6 +202,7 @@ export function IndicadorTurno({ ativo, ordem, meusPersonagens, souMestre, onPas
           const vez = pos === 0
           const pode = vez && (minhaVez || souMestre)
           const distancia = Math.abs(pos)
+          const pv = c.tipo === 'jogador' ? barras(c)?.pv ?? null : null
           return (
             <button
               key={c.id}
@@ -204,21 +211,28 @@ export function IndicadorTurno({ ativo, ordem, meusPersonagens, souMestre, onPas
               disabled={!pode}
               aria-hidden={distancia > VISIVEIS_DE_CADA_LADO}
               tabIndex={pode ? 0 : -1}
-              title={pode ? (minhaVez ? 'Clique pra passar o turno' : 'Passar o turno') : c.name}
+              title={pode ? (minhaVez ? 'Clique pra passar o turno' : 'Passar o turno') : undefined}
               style={{
                 transform: `translateX(calc(-50% + ${deslocamento(pos)}px))`,
-                opacity: distancia > VISIVEIS_DE_CADA_LADO ? 0 : vez ? 1 : Math.max(0.2, 0.55 - (distancia - 1) * 0.12),
+                opacity: distancia > VISIVEIS_DE_CADA_LADO ? 0 : vez ? 1 : Math.max(0.35, 0.9 - (distancia - 1) * 0.18),
                 transition: deuVolta ? 'none' : undefined,
                 zIndex: 10 - distancia,
               }}
               onClick={onPassar}
             >
-              {c.image_url ? <img src={c.image_url} alt="" draggable={false} /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}
+              <span className="indicador-turno-imagem">
+                {c.image_url ? <img src={c.image_url} alt="" draggable={false} /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}
+                {desmaiado(pv) && <span className="indicador-turno-desmaiado" title="Desmaiado"><FontAwesomeIcon icon={faSkull} /></span>}
+              </span>
+              {pv && (
+                <span className="indicador-turno-vida">
+                  <span style={{ width: `${pv[1] ? Math.max(0, Math.min(100, (pv[0] / pv[1]) * 100)) : 100}%`, background: corDaVida(pv[0], pv[1]) }} />
+                </span>
+              )}
             </button>
           )
         })}
       </div>
-      <span className="indicador-turno-nome">{minhaVez ? 'Sua vez' : atual.name}</span>
     </div>
   )
 }

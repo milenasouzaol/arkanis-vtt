@@ -80,14 +80,20 @@ export function rolarFormula(texto: string, rotulo?: string, aleatorio: () => nu
     pedacos.push(`${t.sinal < 0 ? '−' : ''}[${valores.map((v, i) => (contam.has(i) ? String(v) : `~${v}~`)).join(', ')}]`)
   }
   if (soNumeros) return null
-  const formula = escreverFormula(termos)
+  // No chat: o nome diz se foi com vantagem/desvantagem e a fórmula fica limpa, sem o kh/kl (o
+  // dado que não contou aparece riscado no detalhe). Pedido da Millie, 06/10.
+  const manter = termos.find((t): t is Extract<Termo, { tipo: 'dados' }> => t.tipo === 'dados' && !!t.manter)?.manter
+  const nome = manter ? `Rolagem com ${manter.como === 'maior' ? 'Vantagem' : 'Desvantagem'}` : 'Rolagem'
+  const temSubtracao = termos.some((t) => t.tipo === 'dados' && t.sinal < 0)
+  const legivel = escreverFormula(termos.map((t) => (t.tipo === 'dados' ? { ...t, manter: undefined } : t)))
   return {
-    label: rotulo?.trim() || formula,
+    label: rotulo?.trim() || nome,
     total,
     detail: `${pedacos.join(' ')}${bonus ? ` ${bonus > 0 ? '+' : '−'} ${Math.abs(bonus)}` : ''}`,
     dice,
     bonus,
-    formula,
+    // A fórmula escrita só quando tem dado subtraindo (a montada pelos dados não sabe o sinal).
+    ...(temSubtracao ? { formula: legivel } : {}),
   }
 }
 

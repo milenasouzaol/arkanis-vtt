@@ -25,15 +25,18 @@ describe('rolador', () => {
     expect(r.total).toBe(6)
     expect(r.dice).toEqual([{ sides: 6, value: 4, discarded: false }])
     expect(r.bonus).toBe(2)
-    expect(r.label).toBe('1d6 + 2')
+    expect(r.label).toBe('Rolagem')
+    expect(r.formula).toBeUndefined()
     const v = rolarFormula('2d20kh1', 'Ataque', dados([20, 20], [7, 15]))!
     expect(v.total).toBe(15)
     expect(v.label).toBe('Ataque')
     expect(v.dice?.map((d) => d.discarded)).toEqual([true, false])
     const d = rolarFormula('2d20kl1', undefined, dados([20, 20], [7, 15]))!
     expect(d.total).toBe(7)
+    expect(d.label).toBe('Rolagem com Desvantagem')
     const m = rolarFormula('1d8-1d4', undefined, dados([8, 4], [5, 3]))!
     expect(m.total).toBe(2)
+    expect(m.formula).toBe('1d8 - 1d4')
     expect(rolarFormula('5')).toBeNull()
   })
   it('comando /r', () => {

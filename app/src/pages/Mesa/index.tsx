@@ -892,6 +892,7 @@ export default function Mesa() {
         <IndicadorTurno
           ativo={combate.ativo}
           ordem={combate.ordem}
+          barras={combate.barras}
           meusPersonagens={meusPersonagensIds}
           souMestre={souMestre}
           onPassar={() => combate.ativo && combate.passar(combate.ativo)}

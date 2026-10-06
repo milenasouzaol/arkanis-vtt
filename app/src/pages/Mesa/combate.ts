@@ -147,6 +147,16 @@ export function lerPericias(texto: string | null): { nome: string; teste: string
 // Carrossel do indicador de turno: a posição de cada um em relação a quem está na vez
 // (0 = no centro, positivo = os próximos, à direita; negativo = os que já foram, à esquerda).
 // A fila dá a volta (é por rodada), então metade fica de cada lado.
+// Cor da vida (verde cheia → vermelha quase no fim) e se desmaiou (pedido da Millie, 06/10).
+export function corDaVida(atual: number, max: number | null): string {
+  const f = max ? Math.max(0, Math.min(1, atual / max)) : 1
+  return `hsl(${Math.round(f * 120)}, 70%, 45%)`
+}
+
+export function desmaiado(pv: [number, number | null] | null | undefined): boolean {
+  return !!pv && pv[0] <= 0
+}
+
 export function posicaoNoCarrossel(indice: number, indiceAtual: number, total: number): number {
   if (total <= 0) return 0
   const frente = (((indice - indiceAtual) % total) + total) % total

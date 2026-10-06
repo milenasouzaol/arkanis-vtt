@@ -13801,86 +13801,123 @@ button.character-tile-link {
   gap: 8px;
 }
 
-/* Indicador de turno no topo do mapa, em carrossel (pedido da Millie, 04/10): quem está na
-   vez no centro, aceso; a fila desliza pro lado a cada turno. */
+/* Indicador de turno no topo do mapa, em carrossel (print da Millie, 06/10): grudado no topo,
+   sem fundo, cards retangulares com a imagem inteira; quem está na vez maior; embaixo dos
+   jogadores, o tracinho da vida (verde → vermelho) e a caveira quando desmaia. */
 .indicador-turno {
   position: absolute;
-  top: 10px;
+  top: 0;
   left: 50%;
   z-index: 15;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
   transform: translateX(-50%);
   pointer-events: none;
 }
 
 .indicador-turno-trilho {
   position: relative;
-  width: min(400px, calc(100vw - 140px));
-  height: 96px;
+  width: min(720px, calc(100vw - 140px));
+  height: 146px;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
 }
 
 .indicador-turno-card {
   position: absolute;
   left: 50%;
-  bottom: 2px;
-  width: 44px;
-  height: 66px;
+  top: 0;
+  width: 78px;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  overflow: hidden;
-  padding: 2px;
-  background: rgba(14, 14, 16, 0.75);
-  border: 1px solid var(--mesa-borda);
-  border-radius: 6px;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  background: none;
+  border: 0;
   color: var(--mesa-creme-dim);
-  font-size: 1.1rem;
-  filter: grayscale(0.7);
   pointer-events: auto;
-  transition: transform 0.5s cubic-bezier(0.22, 0.8, 0.3, 1), width 0.5s ease, height 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
+  transition: transform 0.5s cubic-bezier(0.22, 0.8, 0.3, 1), width 0.5s ease, opacity 0.5s ease;
 }
 
-.indicador-turno-card svg {
-  margin: auto;
+.indicador-turno-imagem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 104px;
+  overflow: hidden;
+  /* Imagem sem fundo: um cinza transparente atrás. */
+  background: rgba(150, 150, 160, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 0;
+  font-size: 1.4rem;
+  transition: height 0.5s ease, border-color 0.5s ease;
 }
 
-.indicador-turno-card img {
+.indicador-turno-imagem img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: bottom;
+  object-fit: cover;
+  object-position: top;
   pointer-events: none;
 }
 
 .indicador-turno-card.vez {
-  width: 60px;
-  height: 90px;
-  border-color: var(--mesa-creme);
+  width: 100px;
   color: var(--mesa-creme);
-  filter: none;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.indicador-turno-card.vez .indicador-turno-imagem {
+  height: 134px;
+  border-color: var(--mesa-creme);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
 }
 
 .indicador-turno-card.pode {
   cursor: pointer;
 }
 
-.indicador-turno-nome {
-  padding: 2px 10px;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 4px;
-  font: 600 0.85rem 'Signika', var(--sans);
-  white-space: nowrap;
+.indicador-turno-vida {
+  width: 70%;
+  height: 3px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 2px;
+}
+
+.indicador-turno-vida span {
+  display: block;
+  height: 100%;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+.indicador-turno-desmaiado,
+.combate-desmaiado {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: #e8e2d4;
+}
+
+.indicador-turno-desmaiado {
+  font-size: 1.6rem;
+}
+
+.combate-quem .ator-token {
+  position: relative;
+}
+
+.combate-desmaiado {
+  font-size: 0.9rem;
+  border-radius: inherit;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .indicador-turno-card {
+  .indicador-turno-card,
+  .indicador-turno-imagem {
     transition: none;
   }
 }
