@@ -16539,27 +16539,27 @@ label.compendio-linha {
   50% { opacity: 0.55; }
 }
 
-/* Bandeja de dados embaixo do campo do chat (print da Millie, 06/10). */
+/* Bandeja de dados embaixo do campo do chat (print da Millie, 06/10): pequena, com os dados
+   da ficha de Ordem; o que está marcado fica na cor da mesa (a que o mestre escolheu). */
 .chat-bandeja {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .chat-bandeja-dados {
   display: flex;
   justify-content: space-between;
-  gap: 2px;
-  padding-top: 8px;
 }
 
 .chat-bandeja-dado {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   flex: 1;
-  height: 30px;
-  padding: 0;
+  gap: 1px;
+  padding: 2px 0;
   background: none;
   border: 0;
   border-radius: 4px;
@@ -16568,115 +16568,115 @@ label.compendio-linha {
 }
 
 .chat-bandeja-dado:hover {
-  background: #ffffff12;
-  color: var(--mesa-creme);
+  background: #ffffff10;
 }
 
-.chat-dado-icone {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linejoin: round;
+.chat-bandeja-dado img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  opacity: 0.75;
 }
 
-.chat-bandeja-dado.marcado {
-  color: #f0e6d2;
+.chat-bandeja-dado small {
+  font: 600 0.6rem/1 'Signika', var(--sans);
 }
 
-.chat-bandeja-dado.marcado .chat-dado-icone {
-  fill: #f0e6d2;
-  stroke: #f0e6d2;
+.chat-bandeja-dado:hover img,
+.chat-bandeja-dado.marcado img {
+  opacity: 1;
+}
+
+.chat-bandeja-dado.marcado img {
+  filter: drop-shadow(0 0 3px var(--mesa-destaque));
+}
+
+.chat-bandeja-dado.marcado small {
+  color: var(--mesa-destaque);
 }
 
 .chat-bandeja-conta {
   position: absolute;
-  top: -9px;
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 18px;
-  padding: 0 4px;
-  background: #c4462f;
-  border-radius: 3px;
-  color: #fff;
-  font: 700 0.7rem/14px 'Signika', var(--sans);
+  top: -2px;
+  right: calc(50% - 16px);
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  background: var(--mesa-destaque);
+  border-radius: 999px;
+  color: #111;
+  font: 700 0.58rem/13px 'Signika', var(--sans);
 }
 
 .chat-bandeja-acoes {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .chat-bandeja-acoes > button,
 .chat-bandeja-mod {
-  height: 30px;
-  border-radius: 4px;
+  height: 22px;
+  border-radius: 3px;
 }
 
 .chat-bandeja-menos,
 .chat-bandeja-mais {
-  flex: 1;
+  width: 26px;
+  padding: 0;
   border: 1px solid var(--mesa-borda);
   background: #1c1d24;
   color: var(--mesa-creme);
+  font-size: 0.65rem;
   cursor: pointer;
 }
 
-.chat-bandeja-mais {
-  background: #1f8f4e;
-  border-color: #27a85d;
-  color: #fff;
-}
-
-.chat-bandeja-menos:hover {
-  background: #262832;
-}
-
+.chat-bandeja-menos:hover,
 .chat-bandeja-mais:hover {
-  background: #23a159;
+  border-color: var(--mesa-destaque);
 }
 
 .chat-bandeja-mod {
   display: grid;
   place-items: center;
-  min-width: 32px;
+  min-width: 22px;
   color: var(--mesa-creme);
-  font: 700 0.95rem 'Signika', var(--sans);
+  font: 700 0.75rem 'Signika', var(--sans);
 }
 
 .chat-bandeja-vantagem {
   display: flex;
-  flex-direction: column;
   gap: 2px;
+  margin-left: 4px;
 }
 
 .chat-bandeja-vantagem button {
-  height: 14px;
-  padding: 0 6px;
-  background: #2a2c35;
-  border: 0;
+  height: 18px;
+  padding: 0 5px;
+  background: #1c1d24;
+  border: 1px solid var(--mesa-borda);
   border-radius: 3px;
   color: var(--mesa-creme-dim);
-  font: 700 0.62rem/14px 'Signika', var(--sans);
+  font: 700 0.58rem/1 'Signika', var(--sans);
   cursor: pointer;
 }
 
 .chat-bandeja-vantagem button.ligado {
-  background: #c4462f;
-  color: #fff;
+  background: var(--mesa-destaque);
+  border-color: var(--mesa-destaque);
+  color: #111;
 }
 
 .chat-bandeja-rolar {
-  flex: 1.3;
-  background: none;
-  border: 0;
+  margin-left: auto;
+  padding: 0 10px;
+  background: #1c1d24;
+  border: 1px solid var(--mesa-borda);
   color: var(--mesa-creme);
-  font: 700 1rem 'Signika', var(--sans);
+  font: 700 0.75rem 'Signika', var(--sans);
   cursor: pointer;
 }
 
 .chat-bandeja-rolar:hover:not(:disabled) {
-  background: #ffffff12;
+  border-color: var(--mesa-destaque);
 }

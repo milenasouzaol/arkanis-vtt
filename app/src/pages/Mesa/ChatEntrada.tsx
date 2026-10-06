@@ -2,6 +2,12 @@ import { useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEve
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faChevronDown, faChevronRight, faImage, faMinus, faPlus, faTextSlash } from '@fortawesome/free-solid-svg-icons'
 import { aplicarFormato, alternarEmLinha, estiloDoCampo, FORMATO_PADRAO, formatoVazio, textoPuro, vazio, type EmLinha, type FormatoAtivo } from './chat'
+import d4Icon from '../../assets/dice-picker/d4.svg'
+import d6Icon from '../../assets/dice-picker/d6.svg'
+import d8Icon from '../../assets/dice-picker/d8.svg'
+import d10Icon from '../../assets/dice-picker/d10.svg'
+import d12Icon from '../../assets/dice-picker/d12.svg'
+import d20Icon from '../../assets/dice-picker/d20.svg'
 import { BANDEJA_VAZIA, bandejaVazia, comandoDeRolagem, DADOS_DA_BANDEJA, formulaDaBandeja, type Bandeja, type Vantagem } from './rolador'
 
 const TAMANHOS = [
@@ -52,24 +58,8 @@ function ehImagem(f: File) {
   return f.type.startsWith('image/')
 }
 
-// Desenho de cada dado da bandeja (contorno; marcado fica cheio).
-const FORMA_DO_DADO: Record<number, string> = {
-  4: 'M12 3 L21 20 H3 Z',
-  6: 'M4 4 H20 V20 H4 Z',
-  8: 'M12 2 L21 12 L12 22 L3 12 Z M3 12 H21',
-  10: 'M12 2 L21 10 L12 22 L3 10 Z M3 10 L12 13 L21 10 M12 13 V22',
-  12: 'M12 2 L21.5 9 L18 21 H6 L2.5 9 Z M12 7 L16.5 10.5 L15 16 H9 L7.5 10.5 Z',
-  20: 'M12 2 L21 7 V17 L12 22 L3 17 V7 Z M12 6 L17.5 15.5 H6.5 Z',
-  100: 'M7 4 L12.5 9 L7 18 L1.5 9 Z M17 6 L22.5 11 L17 20 L11.5 11 Z',
-}
-
-function IconeDado({ lados }: { lados: number }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className="chat-dado-icone">
-      <path d={FORMA_DO_DADO[lados]} />
-    </svg>
-  )
-}
+// Ícones dos dados: os mesmos do rolador da ficha de Ordem Paranormal (o d100 usa o d10).
+const ICONE_DO_DADO: Record<number, string> = { 4: d4Icon, 6: d6Icon, 8: d8Icon, 10: d10Icon, 12: d12Icon, 20: d20Icon, 100: d10Icon }
 
 function Marca({ ligada }: { ligada: boolean }) {
   return <span className="chat-formato-marca">{ligada && <FontAwesomeIcon icon={faCheck} />}</span>
@@ -394,8 +384,9 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
                     mudarDado(l, -1)
                   }}
                 >
+                  <img src={ICONE_DO_DADO[l]} alt="" draggable={false} />
+                  <small>d{l}</small>
                   {n > 0 && <span className="chat-bandeja-conta">{n}</span>}
-                  <IconeDado lados={l} />
                 </button>
               )
             })}
