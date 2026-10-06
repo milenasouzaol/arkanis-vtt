@@ -13,6 +13,19 @@ async function donoDaFicha(characterId: string, reserva: string): Promise<string
   return dono
 }
 
+// Quem só está olhando a ficha de outra pessoa (sem poder editar) pode rolar pra ver o resultado,
+// mas a rolagem não entra no Histórico nem no chat: não dá pra rolar como o personagem dos outros.
+const podeRegistrar = new Map<string, boolean>()
+
+async function podeRegistrarNaFicha(characterId: string): Promise<boolean> {
+  const conhecido = podeRegistrar.get(characterId)
+  if (conhecido !== undefined) return conhecido
+  const { data, error } = await supabase.rpc('pode_editar_ficha', { p_character_id: characterId })
+  if (error) return true // na dúvida, tenta gravar (o banco confere de novo)
+  podeRegistrar.set(characterId, !!data)
+  return !!data
+}
+
 export async function recordRoll(params: {
   characterId: string
   userId: string
@@ -32,6 +45,7 @@ export async function recordRoll(params: {
   // Dano com cada parte separada ("1d6 Impacto: 3", "4d6 Energia (Amaldiçoar Arma): 8").
   partes?: { formula: string; tipo: string; origem?: string; elemento?: string; lados: number; total: number }[]
 }) {
+  if (!(await podeRegistrarNaFicha(params.characterId))) return
   await supabase.from('character_rolls').insert({
     character_id: params.characterId,
     user_id: await donoDaFicha(params.characterId, params.userId),
