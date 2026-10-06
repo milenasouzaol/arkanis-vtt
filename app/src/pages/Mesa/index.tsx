@@ -60,7 +60,6 @@ import {
   type CategoriaEsquerda,
   type Membro,
 } from './mesa'
-import { tocarSom } from '../../lib/sons'
 
 // Item sem imagem colocado na mesa: uma maleta simples (o mestre pode trocar a imagem na ficha).
 const IMAGEM_ITEM_SEM_FOTO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="8" y="26" width="84" height="62" rx="8" fill="#2b2e38" stroke="#b9a46f" stroke-width="4"/><path d="M36 26V18a6 6 0 0 1 6-6h16a6 6 0 0 1 6 6v8" fill="none" stroke="#b9a46f" stroke-width="4"/><rect x="8" y="48" width="84" height="6" fill="#b9a46f"/></svg>')
@@ -310,7 +309,6 @@ export default function Mesa() {
   }
 
   function enviarMensagem(html: string) {
-    tocarSom('escrever')
     if (!userId || !eu) return Promise.resolve(false)
     const autor = autoria(modo, { nome: eu.nomeConta, foto: eu.fotoConta ?? null }, { nome: eu.personagem, foto: eu.fotoPersonagem ?? null })
     return chat.enviar({ userId, modo, autor, personagemId: modo === 'publico_usuario' ? null : eu.personagemId ?? null, html })
@@ -592,7 +590,6 @@ export default function Mesa() {
     .map((m) => ({ userId: m.userId, rotulo: m.personagem ? `${m.personagem} (${m.nomeConta})` : m.nomeConta }))
 
   function escolherAba(a: AbaDireita) {
-    tocarSom('aba')
     // Clicar na aba aberta recolhe o painel, como o Foundry faz.
     if (a === aba && !recolhida) setRecolhida(true)
     else {
@@ -849,7 +846,6 @@ export default function Mesa() {
           key={'id' in notaAberta ? notaAberta.id : 'nova'}
           nota={'id' in notaAberta ? notaAberta : null}
           onSalvar={({ name, texto }) => {
-            tocarSom('id' in notaAberta ? 'escrever' : 'criar')
             if ('id' in notaAberta) posicionaveis.salvar(notaAberta.id, { name, dados: { ...notaAberta.dados, texto } })
             else posicionaveis.criar({ categoria: 'nota', name, url: null, dados: { texto }, folder_id: notaAberta.pasta })
             setNotaAberta(null)

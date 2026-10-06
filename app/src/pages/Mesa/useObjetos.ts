@@ -3,7 +3,6 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import type { ObjetoCena } from './cenas'
 import type { CamposObjeto } from './tokens'
-import { tocarSom } from '../../lib/sons'
 
 const CAMPOS =
   'id, scene_id, campaign_id, name, image_url, x, y, width, height, rotation, layer, sort, locked, flip_h, flip_v, character_id, group_id, actor_id, move_permission, movable_by, luz, lanterna, lanterna_ajuste, so_uv, item_id, created_at'
@@ -145,7 +144,6 @@ export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
   // Jogador exclui o próprio token pela função do banco, que confere se é dele.
   const excluirComoJogador = useCallback(async (ids: string[]) => {
     if (!ids.length) return true
-    tocarSom('deletar')
     let removidos: ObjetoCena[] = []
     setObjetos((l) => {
       removidos = l.filter((o) => ids.includes(o.id))
@@ -158,7 +156,6 @@ export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
 
   const excluirVarios = useCallback(async (ids: string[]) => {
     if (!ids.length) return
-    tocarSom('deletar')
     setObjetos((l) => l.filter((o) => !ids.includes(o.id)))
     await supabase.from('scene_tokens').delete().in('id', ids)
   }, [])

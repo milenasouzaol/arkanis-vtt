@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { reforcoDoPico, somDoRitual } from './sons'
+import { naFicha, reforcoDoPico, somDoRitual } from './sons'
 
 describe('sons', () => {
   it('normaliza: som baixinho ganha reforço, som alto fica como está', () => {
@@ -15,5 +15,14 @@ describe('sons', () => {
     expect(somDoRitual('MEDO')).toBe('ritual-medo')
     expect(somDoRitual('Varia')).toBeNull()
     expect(somDoRitual(null)).toBeNull()
+  })
+  it('sons de interface: só na ficha', () => {
+    const em = (p: string) => { window.history.replaceState(null, '', p); return naFicha() }
+    expect(em('/personagem/abc-123')).toBe(true)
+    expect(em('/personagem/abc-123?mesa=x')).toBe(true)
+    expect(em('/mesa/abc')).toBe(false)
+    expect(em('/personagem/criar')).toBe(false)
+    expect(em('/personagem/criar/ordem_paranormal')).toBe(false)
+    expect(em('/')).toBe(false)
   })
 })

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { Pasta } from './cenas'
 import type { CategoriaPosicionavel, Posicionavel } from './posicionaveis'
-import { tocarSom } from '../../lib/sons'
 
 const CAMPOS_PASTA = 'id, campaign_id, categoria, parent_id, name, color, sort_mode, sort, created_at'
 const CAMPOS = 'id, campaign_id, categoria, folder_id, name, url, dados, sort, created_at'
@@ -62,7 +61,6 @@ export function usePosicionaveis(campanhaId: string | undefined, souMestre: bool
   }, [])
 
   const excluir = useCallback(async (id: string) => {
-    tocarSom('deletar')
     setItens((l) => l.filter((x) => x.id !== id))
     await supabase.from('posicionaveis').delete().eq('id', id)
   }, [])

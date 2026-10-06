@@ -4,7 +4,6 @@ import type { Pasta } from './cenas'
 import { canalDoSom, ordemDosSons, primeiroSom, proximoSom, segundosTocados, volumeFinal, type Playlist, type SomPlaylist } from './playlists'
 import { useTocarSons } from './useSons'
 import { useVolumesDoUsuario } from './volumesDoUsuario'
-import { tocarSom as somDeEfeito } from '../../lib/sons'
 
 const CAMPOS_PASTA = 'id, campaign_id, parent_id, name, color, sort_mode, sort, created_at'
 const CAMPOS_PLAYLIST = 'id, campaign_id, folder_id, name, modo, canal, descricao, sort, created_at'
@@ -117,10 +116,7 @@ export function usePlaylists(campanhaId: string | undefined, souMestre: boolean)
   // Dá pra tocar vários sons ao mesmo tempo, inclusive da mesma playlist (árvores + cachoeira).
   const tocarSom = useCallback((som: SomPlaylist) => marcar([som.id], true), [marcar])
 
-  const pararSom = useCallback((som: SomPlaylist) => {
-    somDeEfeito('parar')
-    return marcar([som.id], false)
-  }, [marcar])
+  const pararSom = useCallback((som: SomPlaylist) => marcar([som.id], false), [marcar])
 
   const tocarPlaylist = useCallback(async (p: Playlist) => {
     const lista = sonsDa(p.id)
@@ -129,7 +125,7 @@ export function usePlaylists(campanhaId: string | undefined, souMestre: boolean)
     if (som) await tocarSom(som)
   }, [sonsDa, tocarSom])
 
-  const pararPlaylist = useCallback((p: Playlist) => somDeEfeito('parar') ?? marcar(sons.filter((s) => s.playlist_id === p.id && s.tocando).map((s) => s.id), false), [sons, marcar])
+  const pararPlaylist = useCallback((p: Playlist) => marcar(sons.filter((s) => s.playlist_id === p.id && s.tocando).map((s) => s.id), false), [sons, marcar])
 
   // Um som (sem Repetir) acabou: o mestre passa pro próximo, conforme o modo da playlist.
   const avancando = useRef(new Set<string>())

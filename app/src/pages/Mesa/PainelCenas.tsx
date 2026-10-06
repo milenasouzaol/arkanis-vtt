@@ -5,7 +5,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import Janela, { Campo, CampoCor } from './Janela'
 import { montarArvore, pastasEmLista, type Cena, type NoPasta, type Pasta } from './cenas'
-import { tocarSom } from '../../lib/sons'
 
 type Alvo = { tipo: 'cena'; cena: Cena } | { tipo: 'pasta'; pasta: Pasta }
 type Menu = { x: number; y: number } & Alvo
@@ -234,7 +233,7 @@ export function CriarPasta({ inicial, onCriar, onFechar }: {
   const [modo, setModo] = useState<Pasta['sort_mode']>(inicial?.sort_mode ?? 'alfabetica')
   return (
     <Janela titulo={`Pasta: ${nome.trim() || 'Pasta'}`} icone={faFolder} largura={460} onFechar={onFechar}>
-      <form className="janela-form" onSubmit={(e) => { e.preventDefault(); if (!inicial) tocarSom('criar'); onCriar({ name: nome.trim() || 'Pasta', color: cor === '#000000' ? null : cor, sort_mode: modo }) }}>
+      <form className="janela-form" onSubmit={(e) => { e.preventDefault(); onCriar({ name: nome.trim() || 'Pasta', color: cor === '#000000' ? null : cor, sort_mode: modo }) }}>
         <Campo rotulo="Nome da Pasta">
           <input autoFocus value={nome} placeholder="Pasta" aria-label="Nome da Pasta" onChange={(e) => setNome(e.target.value)} />
         </Campo>

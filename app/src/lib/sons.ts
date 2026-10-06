@@ -24,6 +24,15 @@ export const SONS = {
 
 export type Som = keyof typeof SONS
 
+// Sons de interface (clique, abas, janelas, caixinhas, criar/apagar…) são só da ficha (pedido da
+// Millie: na mesa não). Na mesa ficam só o dado rolando e o som da arma.
+const SO_NA_FICHA = new Set<Som>(['clique', 'aba', 'abrir', 'fechar', 'parar', 'check', 'escrever', 'criar', 'deletar'])
+
+// A ficha do personagem (sozinha ou aberta dentro da mesa, que usa o mesmo endereço).
+export function naFicha(): boolean {
+  return /^\/personagem\/(?!criar(\/|$))[^/]+\/?$/.test(window.location.pathname)
+}
+
 // O mesmo som disparado várias vezes no mesmo instante (ex.: excluir 5 tokens) toca uma vez só.
 const ultimo: Partial<Record<Som, number>> = {}
 // Quando tocou o último som (qualquer um): o clique genérico não toca por cima de um som próprio.
@@ -94,6 +103,7 @@ function carregar(ctx: AudioContext, arquivo: string): Promise<{ buffer: AudioBu
 }
 
 export function tocarSom(som: Som) {
+  if (SO_NA_FICHA.has(som) && !naFicha()) return
   const volume = lerVolumes().efeitos
   if (volume <= 0) return
   const agora = performance.now()
@@ -154,7 +164,7 @@ export function dentroDaMesa(): boolean {
   }
 }
 
-// Liga os sons que valem pro site todo (pedido da Millie, 06/10):
+// Liga os sons de interface da ficha (pedido da Millie, 06/10; na mesa e no resto do site não):
 // * toda janelinha que abre (os fundos escuros "...-backdrop" da ficha e as janelas da mesa)
 //   toca "abrir" e, ao sumir, "fechar" — inclusive as que forem criadas depois;
 // * todo clique em botão toca a máquina de escrever, a não ser que o clique já tenha tocado um
@@ -170,11 +180,13 @@ export function ligarSonsDoSite() {
       m.addedNodes.forEach((n) => { if (temModulo(n)) abriu = true })
       m.removedNodes.forEach((n) => { if (temModulo(n)) fechou = true })
     }
+    if (!naFicha()) return
     if (abriu) tocarSom('abrir')
     else if (fechou) tocarSom('fechar')
   }).observe(document.body, { childList: true, subtree: true })
 
   document.addEventListener('click', (e) => {
+    if (!naFicha()) return
     const alvo = e.target instanceof Element ? e.target.closest('button, [role="button"], [role="tab"], summary') : null
     if (!alvo || (alvo as HTMLButtonElement).disabled || alvo.closest('[data-sem-som]')) return
     const quando = performance.now()

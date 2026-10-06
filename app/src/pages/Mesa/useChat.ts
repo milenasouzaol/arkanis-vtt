@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { juntarMensagem, linkificar, sanitizarHtml, type Mensagem, type ModoEnvio } from './chat'
-import { tocarSom } from '../../lib/sons'
 
 const CAMPOS = 'id, campaign_id, user_id, character_id, modo, autor_nome, autor_foto, conteudo, rolagem, acao, destacada, revelada, created_at'
 
@@ -89,7 +88,6 @@ export function useChat(campanhaId: string | undefined) {
   }, [])
 
   const excluir = useCallback(async (id: string) => {
-    tocarSom('deletar')
     const { error } = await supabase.from('chat_messages').delete().eq('id', id)
     if (!error) setMensagens((lista) => (lista ?? []).filter((m) => m.id !== id))
   }, [])
