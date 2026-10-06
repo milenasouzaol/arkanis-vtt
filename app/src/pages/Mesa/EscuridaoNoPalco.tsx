@@ -166,7 +166,7 @@ export function LuzesNoPalco({ mapa, souMestre, nivel, areas, cones, celula }: {
   cones: Cone[]
   celula: { w: number; h: number }
 }) {
-  if (!cones.length && !areas.length && !nivel) return null
+  if (!areas.length && !nivel) return null
   const borrar = Math.max(celula.w, celula.h) * 0.25
   const temEscuro = areas.length > 0 || nivel > 0
   return (
@@ -182,10 +182,6 @@ export function LuzesNoPalco({ mapa, souMestre, nivel, areas, cones, celula }: {
               <stop offset="0" stopColor="#000" stopOpacity={FORMA_DA_LANTERNA[c.tipo].forca} />
               <stop offset="0.6" stopColor="#000" stopOpacity={FORMA_DA_LANTERNA[c.tipo].forca} />
               <stop offset="1" stopColor="#000" stopOpacity="0" />
-            </radialGradient>
-            <radialGradient id={`luz-b-${c.id}`} gradientUnits="userSpaceOnUse" cx={c.cx} cy={c.cy} r={c.raio}>
-              <stop offset="0" stopColor={BRILHO[c.tipo]} stopOpacity={c.tipo === 'uv' ? 0.55 : 0.35} />
-              <stop offset="1" stopColor={BRILHO[c.tipo]} stopOpacity="0" />
             </radialGradient>
           </g>
         ))}
@@ -204,9 +200,53 @@ export function LuzesNoPalco({ mapa, souMestre, nivel, areas, cones, celula }: {
           {areas.map((a) => <rect key={a.id} x={a.x} y={a.y} width={a.width} height={a.height} fill="#000" />)}
         </g>
       )}
-      <g className="mesa-luzes-brilho" filter="url(#luz-borda)">
-        {cones.map((c) => <path key={c.id} d={caminhoDoCone(c)} fill={`url(#luz-b-${c.id})`} />)}
-      </g>
     </svg>
+  )
+}
+
+// Brilho das lanternas, por cima de tudo o que a luz pega (mapa, tokens, desenhos): a comum
+// clareia num tom quente; a UV pinta de roxo (pedido da Millie, 06/10: o token na luz UV tem
+// que ficar roxo, não como se fosse a lanterna normal).
+export function BrilhoDasLanternas({ mapa, cones, celula }: { mapa: { w: number; h: number }; cones: Cone[]; celula: { w: number; h: number } }) {
+  if (!cones.length) return null
+  const borrar = Math.max(celula.w, celula.h) * 0.25
+  const gradiente = (id: string, c: Cone, cor: string, opacidade: number) => (
+    <radialGradient id={id} gradientUnits="userSpaceOnUse" cx={c.cx} cy={c.cy} r={c.raio}>
+      <stop offset="0" stopColor={cor} stopOpacity={opacidade} />
+      <stop offset="0.6" stopColor={cor} stopOpacity={opacidade * 0.8} />
+      <stop offset="1" stopColor={cor} stopOpacity="0" />
+    </radialGradient>
+  )
+  const defs = (sufixo: string) => (
+    <defs>
+      <filter id={`brilho-borda-${sufixo}`} x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation={borrar} />
+      </filter>
+      {cones.map((c) => (
+        <g key={c.id}>
+          {sufixo === 'luz' ? gradiente(`brilho-${c.id}`, c, BRILHO[c.tipo], c.tipo === 'uv' ? 0.3 : 0.3) : gradiente(`tinta-${c.id}`, c, BRILHO.uv, 0.9)}
+        </g>
+      ))}
+    </defs>
+  )
+  const uv = cones.filter((c) => c.tipo === 'uv')
+  // Duas camadas: a UV tinge de roxo o que está embaixo (mistura "multiplicar"); depois todas acendem ("tela").
+  return (
+    <>
+      {uv.length > 0 && (
+        <svg className="mesa-luzes-brilho tinta" width={mapa.w} height={mapa.h} aria-hidden>
+          {defs('tinta')}
+          <g filter="url(#brilho-borda-tinta)">
+            {uv.map((c) => <path key={c.id} d={caminhoDoCone(c)} fill={`url(#tinta-${c.id})`} />)}
+          </g>
+        </svg>
+      )}
+      <svg className="mesa-luzes-brilho luz" width={mapa.w} height={mapa.h} aria-hidden>
+        {defs('luz')}
+        <g filter="url(#brilho-borda-luz)">
+          {cones.map((c) => <path key={c.id} d={caminhoDoCone(c)} fill={`url(#brilho-${c.id})`} />)}
+        </g>
+      </svg>
+    </>
   )
 }

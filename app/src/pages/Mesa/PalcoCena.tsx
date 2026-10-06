@@ -24,7 +24,7 @@ import type { MiraDeAlguem } from './useMira'
 import { medir, noCentro, textoDaDistancia, type Ponto } from './regua'
 import { useDesenhoNoPalco } from './DesenhosNoPalco'
 import { useSomNoPalco } from './SonsNoPalco'
-import { LuzesNoPalco, useEscuridaoNoPalco } from './EscuridaoNoPalco'
+import { BrilhoDasLanternas, LuzesNoPalco, useEscuridaoNoPalco } from './EscuridaoNoPalco'
 import { useEscuridao } from './useEscuridao'
 import { ajusteDaSeta, caminhoDaLuzUv, caminhoDoCone, coneDaLanterna, conesDosTokens, LANTERNAS, type AjusteLanterna, type Lanterna } from './luz'
 import type { useSons } from './useSons'
@@ -983,6 +983,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
 
           {/* Desenhos (12.13): por cima do mapa e da grade, embaixo dos tokens só quando não se está desenhando. */}
           {desenho.camada}
+          {/* Brilho das lanternas por cima dos tokens e desenhos (a UV pinta de roxo). */}
+          <BrilhoDasLanternas mapa={mapa} cones={cones} celula={celula} />
           {som.camada}
           {escuro.camada}
 

@@ -15299,7 +15299,20 @@ button.character-tile-link {
   pointer-events: none;
 }
 
+/* Por cima dos tokens e desenhos (mesmo nível, vem depois no mapa). */
 .mesa-luzes-brilho {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mesa-luzes-brilho.tinta {
+  mix-blend-mode: multiply;
+}
+
+.mesa-luzes-brilho.luz {
   mix-blend-mode: screen;
 }
 
