@@ -3,7 +3,8 @@ import { PATENTES, juntarProficiencias, patenteOf, proficienciasDeTexto } from '
 
 describe('patenteOf', () => {
   it('acha a patente pela chave', () => {
-    expect(patenteOf('agente_de_elite').label).toBe('Agente de Elite')
+    expect(patenteOf('agente_elite').label).toBe('Agente de Elite')
+    expect(patenteOf('oficial_operacoes').label).toBe('Oficial de Operações')
   })
 
   it('cai em Sem Patente quando o personagem ainda nao tem patente nenhuma', () => {

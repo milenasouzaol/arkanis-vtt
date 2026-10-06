@@ -11,15 +11,16 @@ import agenteEliteIcon from '../../assets/inventario/agente-de-elite.svg'
 // Cada patente libera um limite de itens por categoria (I a IV). "Sem Patente" nao e
 // uma patente do livro, e o estado de quem ainda nao tem nenhuma - so o item de
 // categoria I ja garantido.
-export type PatenteKey = 'sem_patente' | 'recruta' | 'operador' | 'agente_especial' | 'oficial_de_operacoes' | 'agente_de_elite'
+// As chaves são as do banco (enum patente): oficial_operacoes e agente_elite.
+export type PatenteKey = 'sem_patente' | 'recruta' | 'operador' | 'agente_especial' | 'oficial_operacoes' | 'agente_elite'
 
 export const PATENTES: { key: PatenteKey; label: string; icon: string; limites: [number, number, number, number] }[] = [
   { key: 'sem_patente', label: 'Sem Patente', icon: semPatenteIcon, limites: [1, 0, 0, 0] },
   { key: 'recruta', label: 'Recruta', icon: recrutaIcon, limites: [2, 1, 0, 0] },
   { key: 'operador', label: 'Operador', icon: operadorIcon, limites: [3, 2, 1, 0] },
   { key: 'agente_especial', label: 'Agente Especial', icon: agenteEspecialIcon, limites: [4, 3, 2, 1] },
-  { key: 'oficial_de_operacoes', label: 'Oficial de Operações', icon: oficialIcon, limites: [5, 4, 3, 2] },
-  { key: 'agente_de_elite', label: 'Agente de Elite', icon: agenteEliteIcon, limites: [6, 5, 4, 3] },
+  { key: 'oficial_operacoes', label: 'Oficial de Operações', icon: oficialIcon, limites: [5, 4, 3, 2] },
+  { key: 'agente_elite', label: 'Agente de Elite', icon: agenteEliteIcon, limites: [6, 5, 4, 3] },
 ]
 
 const CATEGORIAS = ['I', 'II', 'III', 'IV'] as const
