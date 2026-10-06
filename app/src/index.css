@@ -16716,3 +16716,16 @@ label.compendio-linha {
 .chat-bandeja-rolar:hover:not(:disabled) {
   border-color: var(--mesa-destaque);
 }
+
+/* Efeitos animados na mesa (fogo, água, nuvem…): por cima da escuridão e dos tokens. */
+.mesa-efeito {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.efeito-tipos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}

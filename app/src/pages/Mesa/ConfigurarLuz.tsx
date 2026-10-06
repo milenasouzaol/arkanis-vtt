@@ -52,13 +52,22 @@ export default function ConfigurarLuz({ objeto, onPrevia, onSalvar, onFechar }: 
           <Campo rotulo="Cor">
             <CampoCor rotulo="Cor da luz" valor={luz.cor} onMudar={(v) => mudar({ cor: v })} />
           </Campo>
-          <Campo rotulo="Abertura (graus)" dica="360 = em volta toda; menos que isso vira um cone (holofote, poste virado).">
-            <Deslizante rotulo="Abertura (graus)" valor={luz.angulo} min={10} max={360} passo={5} onMudar={(v) => mudar({ angulo: v })} />
+          {/* Forma (pedido da Millie, 06/10): em volta toda, ou um feixe como o da lanterna. */}
+          <Campo rotulo="Forma">
+            <div className="efeito-tipos" role="radiogroup" aria-label="Forma">
+              <button type="button" role="radio" aria-checked={luz.angulo >= 360} className={`janela-botao${luz.angulo >= 360 ? ' janela-botao-destaque' : ''}`} onClick={() => mudar({ angulo: 360 })}>Círculo</button>
+              <button type="button" role="radio" aria-checked={luz.angulo < 360} className={`janela-botao${luz.angulo < 360 ? ' janela-botao-destaque' : ''}`} onClick={() => luz.angulo >= 360 && mudar({ angulo: 60 })}>Feixe</button>
+            </div>
           </Campo>
           {luz.angulo < 360 && (
-            <Campo rotulo="Direção (graus)" dica="0 = pra direita, 90 = pra baixo. Gira junto com o objeto.">
-              <Deslizante rotulo="Direção (graus)" valor={luz.direcao} min={0} max={355} passo={5} onMudar={(v) => mudar({ direcao: v })} />
-            </Campo>
+            <>
+              <Campo rotulo="Abertura do feixe (graus)" dica="Pouco = feixe fino, como lanterna; mais = holofote.">
+                <Deslizante rotulo="Abertura do feixe (graus)" valor={luz.angulo} min={10} max={355} passo={5} onMudar={(v) => mudar({ angulo: v })} />
+              </Campo>
+              <Campo rotulo="Direção (graus)" dica="0 = direita, 90 = baixo, 180 = esquerda, 270 = cima. Gira junto com o objeto.">
+                <Deslizante rotulo="Direção (graus)" valor={luz.direcao} min={0} max={355} passo={5} onMudar={(v) => mudar({ direcao: v })} />
+              </Campo>
+            </>
           )}
           <Campo rotulo="Animação">
             <select value={luz.animacao} aria-label="Animação" onChange={(e) => mudar({ animacao: e.target.value as AnimacaoLuz })}>

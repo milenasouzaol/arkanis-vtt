@@ -240,6 +240,7 @@ export type ObjetoCena = {
   lanterna_ajuste?: { ox: number; oy: number; angulo: number } | null // Configurar Lanterna (seta)
   item_id?: string | null // item interativo que este token/objeto representa (KAN-53)
   luz_ajuste?: Partial<import('./luz').LuzAmbiente> | null // Luz Ambiente: raio, cor, intensidade, animação
+  efeito?: Partial<import('./efeitos').Efeito> | null // efeito animado: fogo, água, nuvem, veneno…
   created_at: string
 }
 

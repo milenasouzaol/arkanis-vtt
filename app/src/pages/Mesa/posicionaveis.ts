@@ -3,6 +3,7 @@
 import type { ObjetoCena } from './cenas'
 import type { Desenho } from './desenhos'
 import { IMAGEM_LUZ, type LuzAmbiente } from './luz'
+import { IMAGEM_EFEITO, type Efeito } from './efeitos'
 
 export type CategoriaPosicionavel = 'token' | 'objeto' | 'desenho' | 'luz' | 'som' | 'nota'
 
@@ -25,6 +26,7 @@ export type DadosPosicionavel = {
   suavizar?: boolean
   texto?: string // notas
   luz?: Partial<LuzAmbiente> | null // Luz Ambiente: raio, cor, intensidade, animação
+  efeito?: Partial<Efeito> | null // efeito animado (fogo, água…)
 }
 
 export type Posicionavel = {
@@ -71,8 +73,8 @@ export function vaiProMapa(p: Pick<Posicionavel, 'categoria' | 'url' | 'dados'>)
 }
 
 // O que veio da mesa arrastado pra aba vai pra qual aba.
-export function categoriaDoObjeto(o: Pick<ObjetoCena, 'layer' | 'luz'> & { image_url?: string }): CategoriaPosicionavel {
-  if (o.luz || o.image_url === IMAGEM_LUZ) return 'luz'
+export function categoriaDoObjeto(o: Pick<ObjetoCena, 'layer' | 'luz'> & { image_url?: string; efeito?: unknown }): CategoriaPosicionavel {
+  if (o.luz || o.image_url === IMAGEM_LUZ || o.image_url === IMAGEM_EFEITO) return 'luz'
   return o.layer === 'mapa' ? 'objeto' : 'token'
 }
 
@@ -81,7 +83,13 @@ export function guardarObjeto(o: ObjetoCena): Pick<Posicionavel, 'categoria' | '
   const categoria = categoriaDoObjeto(o)
   const padrao = categoria === 'luz' ? 'Luz Ambiente' : categoria === 'objeto' ? 'Objeto' : 'Token'
   // Luz guarda também a configuração dela (raio, cor…); a lâmpada sem imagem volta sem imagem.
-  if (categoria === 'luz') return { categoria, name: o.name?.trim() || padrao, url: o.image_url === IMAGEM_LUZ ? null : o.image_url, dados: o.luz_ajuste ? { luz: o.luz_ajuste } : {} }
+  if (categoria === 'luz') {
+    const dados: DadosPosicionavel = {}
+    if (o.luz_ajuste) dados.luz = o.luz_ajuste
+    if (o.efeito) dados.efeito = o.efeito
+    const marcador = o.image_url === IMAGEM_LUZ || o.image_url === IMAGEM_EFEITO
+    return { categoria, name: o.name?.trim() || (o.efeito ? 'Efeito' : padrao), url: marcador ? null : o.image_url, dados }
+  }
   return { categoria, name: o.name?.trim() || padrao, url: o.image_url, dados: {} }
 }
 

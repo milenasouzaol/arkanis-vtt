@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faArrowUpRightFromSquare, faBookmark, faCubes, faFile, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faFont, faLightbulb, faMusic,
+  faArrowUpRightFromSquare, faBookmark, faCubes, faFile, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faFont, faLightbulb, faFire, faMusic,
   faPenToSquare, faPencil, faPlus, faTrash, faUser,
 } from '@fortawesome/free-solid-svg-icons'
 import Janela, { Campo } from './Janela'
@@ -11,6 +11,7 @@ import { EditorTexto } from './PainelPlaylist'
 import { montarArvore, type NoPasta, type Pasta } from './cenas'
 import { aceitaArquivo, CATEGORIAS_POSICIONAVEIS, ehImagem, nomeDoArquivo, vaiProMapa, type CategoriaPosicionavel, type Posicionavel } from './posicionaveis'
 import { LUZ_PADRAO } from './luz'
+import { efeitoPadrao } from './efeitos'
 import { enviarArquivoPosicionavel, type usePosicionaveis } from './usePosicionaveis'
 
 export const TIPO_ARRASTO_POSICIONAVEL = 'application/x-arkanis-posicionavel'
@@ -99,6 +100,11 @@ export default function PainelPosicionaveis({ souMestre, userId, api, categoria,
   // Luz Ambiente sem imagem: só a luz (raio, cor, animação se acertam na mesa, no duplo clique).
   function criarLuz(pastaId: string | null) {
     api.criar({ categoria: 'luz', name: 'Luz', url: null, dados: { luz: { ...LUZ_PADRAO, raio: 4 } }, folder_id: pastaId })
+  }
+
+  // Efeito animado sem imagem (fogo; o tipo e a cor se trocam na mesa, no duplo clique).
+  function criarEfeito(pastaId: string | null) {
+    api.criar({ categoria: 'luz', name: 'Fogo', url: null, dados: { efeito: efeitoPadrao('fogo') }, folder_id: pastaId })
   }
 
   function botaoMais(pastaId: string | null) {
@@ -276,6 +282,12 @@ export default function PainelPosicionaveis({ souMestre, userId, api, categoria,
           <button type="button" className="posicionaveis-botao" aria-label="Criar Luz (sem imagem)" onClick={() => criarLuz(null)}>
             <FontAwesomeIcon icon={faLightbulb} />
             <span className="posicionaveis-dica" role="tooltip">Criar Luz (sem imagem)</span>
+          </button>
+        )}
+        {categoria === 'luz' && (
+          <button type="button" className="posicionaveis-botao" aria-label="Criar Efeito (fogo, água, nuvem…)" onClick={() => criarEfeito(null)}>
+            <FontAwesomeIcon icon={faFire} />
+            <span className="posicionaveis-dica" role="tooltip">Criar Efeito (fogo, água, nuvem…)</span>
           </button>
         )}
       </div>

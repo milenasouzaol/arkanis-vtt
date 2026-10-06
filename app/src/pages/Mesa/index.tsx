@@ -20,6 +20,7 @@ import PainelItens, { CriarItem } from './PainelItens'
 import FichaItem from './FichaItem'
 import { comandoDeRolagem, rolarFormula } from './rolador'
 import { IMAGEM_LUZ, LUZ_PADRAO } from './luz'
+import { IMAGEM_EFEITO } from './efeitos'
 import JanelaInteracao from './JanelaInteracao'
 import DadosNaTela from './DadosNaTela'
 import { useItens } from './useItens'
@@ -442,10 +443,13 @@ export default function Mesa() {
       return
     }
     // Luz Ambiente sem imagem: entra a lâmpada (só o mestre vê) com a luz configurada.
+    // Efeito sem imagem (fogo, água…): entra a chama (só o mestre vê) com o efeito; com luz, se tiver.
     if (p.categoria === 'luz' && !p.url) {
+      const soEfeito = !!p.dados.efeito && !p.dados.luz
       await objetos.criar({
-        ...base, name: p.name, image_url: IMAGEM_LUZ, ...caixaNoPonto(ponto, atual.grid_size, atual.grid_size),
-        layer: 'mapa', luz: true, luz_ajuste: p.dados.luz ?? { ...LUZ_PADRAO, raio: 4 },
+        ...base, name: p.name, image_url: soEfeito ? IMAGEM_EFEITO : IMAGEM_LUZ, ...caixaNoPonto(ponto, atual.grid_size, atual.grid_size),
+        layer: 'mapa', luz: !soEfeito, ...(soEfeito ? {} : { luz_ajuste: p.dados.luz ?? { ...LUZ_PADRAO, raio: 4 } }),
+        ...(p.dados.efeito ? { efeito: p.dados.efeito } : {}),
       })
       return
     }
@@ -472,6 +476,7 @@ export default function Mesa() {
       ...base, name: p.name, image_url: p.url, ...caixaNoPonto(ponto, largura, altura),
       layer: p.categoria === 'token' ? 'token' : 'mapa', luz: p.categoria === 'luz',
       ...(p.categoria === 'luz' && p.dados.luz ? { luz_ajuste: p.dados.luz } : {}),
+      ...(p.categoria === 'luz' && p.dados.efeito ? { efeito: p.dados.efeito } : {}),
     })
   }
 

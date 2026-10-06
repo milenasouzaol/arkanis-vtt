@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   faArrowDownWideShort, faArrowUpWideShort, faBullseye, faCopy, faCrosshairs, faLayerGroup, faLock, faLockOpen, faObjectGroup,
-  faObjectUngroup, faPaste, faLightbulb, faEye, faBriefcase, faHandPointer, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear, faPenToSquare, faSun,
+  faObjectUngroup, faPaste, faLightbulb, faEye, faBriefcase, faHandPointer, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear, faPenToSquare, faSun, faFire,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import EfeitoClimatico from './EfeitoClimatico'
@@ -29,6 +29,9 @@ import { BrilhoDasLanternas, LuzesNoPalco, useEscuridaoNoPalco } from './Escurid
 import { useEscuridao } from './useEscuridao'
 import { ajusteDaSeta, caminhoDaLuzUv, caminhoDoCone, coneDaLanterna, conesDosTokens, IMAGEM_LUZ, LANTERNAS, luzCompleta, luzesDoAmbiente, temLuzAmbiente, type AjusteLanterna, type Lanterna, type LuzAmbiente } from './luz'
 import ConfigurarLuz from './ConfigurarLuz'
+import ConfigurarEfeito from './ConfigurarEfeito'
+import EfeitosNoPalco from './EfeitosNoPalco'
+import { efeitoPadrao, IMAGEM_EFEITO, type Efeito } from './efeitos'
 import type { useSons } from './useSons'
 import type { useDesenhos } from './useDesenhos'
 
@@ -148,7 +151,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const objetos = obj.objetos
   // Objeto "só na luz UV": o jogador só vê dentro da luz UV (vai numa camada à parte).
   // A lâmpada de uma Luz Ambiente sem imagem só o mestre vê (os jogadores só veem a luz).
-  const visiveis = objetos.filter((o) => souMestre || (o.layer !== 'mestre' && !o.so_uv && o.image_url !== IMAGEM_LUZ))
+  const visiveis = objetos.filter((o) => souMestre || (o.layer !== 'mestre' && !o.so_uv && o.image_url !== IMAGEM_LUZ && o.image_url !== IMAGEM_EFEITO))
 
   // Quem pode mexer em cada objeto: o mestre sempre; o jogador no próprio personagem ou
   // quando o mestre liberou (Configurar Propriedade). O banco confere de novo.
@@ -204,7 +207,11 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const esc = useEscuridao(cena?.id ?? null)
   // Configurar Lanterna: token sendo configurado e a seta que a pessoa está desenhando.
   const [configLanterna, setConfigLanterna] = useState<string | null>(null)
-  const [configLuz, setConfigLuz] = useState<string | null>(null) // Configurar Luz (Luz Ambiente)
+  // Configurar Luz / Efeito: o objeto e como estava ao abrir (fechar sem salvar volta pra isso).
+  const [configLuz, setConfigLuzBruto] = useState<{ id: string; original: ObjetoCena['luz_ajuste'] } | null>(null)
+  const [configEfeito, setConfigEfeitoBruto] = useState<{ id: string; original: ObjetoCena['efeito'] } | null>(null)
+  const setConfigLuz = (id: string | null) => setConfigLuzBruto(id ? { id, original: objetos.find((x) => x.id === id)?.luz_ajuste ?? null } : null)
+  const setConfigEfeito = (id: string | null) => setConfigEfeitoBruto(id ? { id, original: objetos.find((x) => x.id === id)?.efeito ?? null } : null)
   const [seta, setSeta] = useState<{ a: Ponto; b: Ponto } | null>(null)
   useEffect(() => {
     if (!configLanterna) return
@@ -755,6 +762,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     if (o.item_id && podeEditar(o)) onEditarItem?.(o.item_id)
     else if (o.item_id) onInteragir?.(o, celula)
     else if (o.actor_id) onAbrirFicha(o.actor_id)
+    else if (souMestre && o.efeito && (o.image_url === IMAGEM_EFEITO || !(o.luz || o.luz_ajuste))) setConfigEfeito(o.id)
     else if (souMestre && (o.luz || o.luz_ajuste)) setConfigLuz(o.id)
     else if (souMestre) setPropriedade(o)
   }
@@ -868,6 +876,13 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
               return { luz_ajuste: { ...atual, ligada: !temLuzAmbiente(o) } }
             })),
           },
+        ],
+      },
+      {
+        tipo: 'sub', rotulo: 'Efeito Animado', icone: faFire,
+        itens: [
+          { rotulo: o.efeito ? 'Configurar Efeito' : 'Criar Efeito', onClick: () => setConfigEfeito(o.id) },
+          ...(o.efeito ? [{ tipo: 'linha' } as ItemMenu, { rotulo: 'Tirar Efeito', onClick: () => alterar(cada(() => ({ efeito: null }))) } as ItemMenu] : []),
         ],
       },
       { rotulo: `${o.so_uv ? '✓ ' : ''}Só Aparece na Luz UV`, icone: faEye, onClick: () => alterar(cada(() => ({ so_uv: !o.so_uv }))) },
@@ -1056,6 +1071,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
           {desenho.camada}
           {/* Brilho das lanternas por cima dos tokens e desenhos (a UV pinta de roxo). */}
           <BrilhoDasLanternas mapa={mapa} cones={cones} celula={celula} />
+          {/* Efeitos animados (fogo, água, nuvem…), por cima da escuridão. */}
+          <EfeitosNoPalco objetos={visiveis.filter((o) => o.efeito)} celula={celula} />
           {som.camada}
           {escuro.camada}
 
@@ -1144,9 +1161,9 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       </div>
 
       {(() => {
-        const o = configLuz ? objetos.find((x) => x.id === configLuz) : null
-        if (!o) return null
-        const original = o.luz_ajuste ?? null
+        const o = configLuz ? objetos.find((x) => x.id === configLuz.id) : null
+        if (!o || !configLuz) return null
+        const original = configLuz.original ?? null
         return (
           <ConfigurarLuz
             key={o.id}
@@ -1160,6 +1177,27 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
             onFechar={() => {
               obj.alterarVarios({ [o.id]: { luz_ajuste: original } }, false)
               setConfigLuz(null)
+            }}
+          />
+        )
+      })()}
+
+      {(() => {
+        const o = configEfeito ? objetos.find((x) => x.id === configEfeito.id) : null
+        if (!o || !configEfeito) return null
+        const original = configEfeito.original ?? null
+        return (
+          <ConfigurarEfeito
+            key={o.id}
+            objeto={o.efeito ? o : { ...o, efeito: efeitoPadrao('fogo') }}
+            onPrevia={(e: Efeito) => obj.alterarVarios({ [o.id]: { efeito: e } }, false)}
+            onSalvar={(e) => {
+              fazer({ tipo: 'alterar', antes: { [o.id]: { efeito: original } }, depois: { [o.id]: { efeito: e } } })
+              setConfigEfeito(null)
+            }}
+            onFechar={() => {
+              obj.alterarVarios({ [o.id]: { efeito: original } }, false)
+              setConfigEfeito(null)
             }}
           />
         )
