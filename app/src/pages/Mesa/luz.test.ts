@@ -49,10 +49,17 @@ describe('lanterna', () => {
     expect(l.y).toBeCloseTo(120, 0)
     expect(((l.angulo * 180) / Math.PI + 360) % 360).toBeCloseTo(45, 0)
   })
+  it('o comprimento da seta é o tamanho da luz (acompanha o tamanho do token)', () => {
+    const a = ajusteDaSeta(token, { x: 50, y: 50 }, { x: 350, y: 50 })
+    expect(a.alcance).toBe(3)
+    expect(coneDaLanterna({ ...token, lanterna_ajuste: a }, 'comum', celula).raio).toBe(300)
+    expect(coneDaLanterna({ ...token, height: 200, lanterna_ajuste: a }, 'comum', celula).raio).toBe(600)
+    expect(coneDaLanterna({ ...token, lanterna_ajuste: a }, 'uv', celula).raio).toBe(240)
+  })
   it('o ajuste acompanha quando o token vira na horizontal', () => {
     // lanterna na mão da direita, apontando pra direita
     const a = ajusteDaSeta(token, { x: 80, y: 50 }, { x: 180, y: 50 })
-    expect(a).toEqual({ ox: 0.8, oy: 0.5, angulo: 0 })
+    expect(a).toEqual({ ox: 0.8, oy: 0.5, angulo: 0, alcance: 1 })
     const virado = lanternaNoMapa({ ...token, flip_h: true, lanterna_ajuste: a })
     expect(virado.x).toBeCloseTo(20)
     expect(Math.cos(virado.angulo)).toBeCloseTo(-1)

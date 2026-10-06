@@ -26,7 +26,7 @@ import { useDesenhoNoPalco } from './DesenhosNoPalco'
 import { useSomNoPalco } from './SonsNoPalco'
 import { LuzesNoPalco, useEscuridaoNoPalco } from './EscuridaoNoPalco'
 import { useEscuridao } from './useEscuridao'
-import { ajusteDaSeta, caminhoDaLuzUv, conesDosTokens, LANTERNAS, type AjusteLanterna, type Lanterna } from './luz'
+import { ajusteDaSeta, caminhoDaLuzUv, caminhoDoCone, coneDaLanterna, conesDosTokens, LANTERNAS, type AjusteLanterna, type Lanterna } from './luz'
 import type { useSons } from './useSons'
 import type { useDesenhos } from './useDesenhos'
 
@@ -1004,6 +1004,13 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
                   <path d="M0 0L10 5L0 10z" fill="#ffe9b8" />
                 </marker>
               </defs>
+              {/* Prévia da luz: a seta decide a direção e até onde ela vai. */}
+              {(() => {
+                const o = objetos.find((x) => x.id === configLanterna)
+                if (!o || Math.hypot(seta.b.x - seta.a.x, seta.b.y - seta.a.y) < 5) return null
+                const c = coneDaLanterna({ ...o, lanterna_ajuste: ajusteDaSeta(o, seta.a, seta.b) }, o.lanterna ?? 'comum', celula)
+                return <path d={caminhoDoCone(c)} fill="rgba(255,233,184,0.12)" stroke="#ffe9b8" strokeWidth={1.5 / vista.escala} strokeDasharray={`${6 / vista.escala} ${4 / vista.escala}`} />
+              })()}
               <line x1={seta.a.x} y1={seta.a.y} x2={seta.b.x} y2={seta.b.y} stroke="#ffe9b8" strokeWidth={3 / vista.escala} markerEnd="url(#seta-lanterna-ponta)" />
               <circle cx={seta.a.x} cy={seta.a.y} r={5 / vista.escala} fill="#ffe9b8" />
             </svg>
@@ -1023,7 +1030,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       {aviso && !soltando && <div className="mesa-soltar" role="status">{aviso}</div>}
       {configLanterna && (
         <p className="mesa-desenho-aviso" role="status">
-          Configurar Lanterna: <kbd>Clique + Arraste</kbd> partindo da lanterna do token, na direção da luz · <kbd>Esc</kbd> cancela
+          Configurar Lanterna: <kbd>Clique + Arraste</kbd> partindo da lanterna do token, na direção da luz; o tamanho da seta é até onde a luz vai · <kbd>Esc</kbd> cancela
         </p>
       )}
 

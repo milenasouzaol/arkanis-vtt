@@ -21,7 +21,12 @@ export type Cone = { id: string; tipo: Lanterna; cx: number; cy: number; raio: n
 // desenha uma seta). Guardado no desenho, antes de virar e girar, então acompanha o token.
 //   ox/oy: fração da largura/altura a partir do canto de cima à esquerda
 //   angulo: graus, 0 = pra direita da imagem, sentido horário
-export type AjusteLanterna = { ox: number; oy: number; angulo: number }
+//   alcance: comprimento da seta = até onde a luz vai, em alturas do token (acompanha se o token
+//   for redimensionado; cada mapa tem uma escala, então quem decide o tamanho é a pessoa)
+export type AjusteLanterna = { ox: number; oy: number; angulo: number; alcance?: number }
+
+// A UV vai um pouco menos longe que a comum, com a mesma seta.
+const ALCANCE_RELATIVO: Record<Lanterna, number> = { comum: 1, uv: 0.8 }
 
 // Sem configurar: os tokens são de corpo inteiro, de lado, olhando pra direita; a luz sai da
 // altura do peito/mão, pra frente.
@@ -63,7 +68,8 @@ export function ajusteDaSeta(o: TokenDaLanterna, de: { x: number; y: number }, p
   if (o.flip_v) { ly = -ly; ang = -ang }
   const graus = ((((ang / RAD) % 360) + 360) % 360)
   const r3 = (n: number) => Math.round(n * 1000) / 1000
-  return { ox: r3(lx / o.width + 0.5), oy: r3(ly / o.height + 0.5), angulo: Math.round(graus * 10) / 10 }
+  const comprimento = Math.hypot(para.x - de.x, para.y - de.y)
+  return { ox: r3(lx / o.width + 0.5), oy: r3(ly / o.height + 0.5), angulo: Math.round(graus * 10) / 10, alcance: r3(comprimento / o.height) }
 }
 
 export function coneDaLanterna(o: TokenDaLanterna, tipo: Lanterna, celula: { w: number; h: number }, passos = 16): Cone {
@@ -71,7 +77,8 @@ export function coneDaLanterna(o: TokenDaLanterna, tipo: Lanterna, celula: { w: 
   const l = lanternaNoMapa(o)
   const cx = arred(l.x)
   const cy = arred(l.y)
-  const raio = alcance * Math.max(celula.w, celula.h)
+  const ajustado = o.lanterna_ajuste?.alcance
+  const raio = ajustado ? ajustado * o.height * ALCANCE_RELATIVO[tipo] : alcance * Math.max(celula.w, celula.h)
   const meia = (abertura / 2) * RAD
   const pontos = [{ x: cx, y: cy }]
   for (let i = 0; i <= passos; i++) {
