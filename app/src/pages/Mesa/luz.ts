@@ -15,7 +15,23 @@ export const FORMA_DA_LANTERNA: Record<Lanterna, { alcance: number; abertura: nu
   uv: { alcance: 4, abertura: 50, forca: 0.6 },
 }
 
-export type Cone = { id: string; tipo: Lanterna; cx: number; cy: number; raio: number; pontos: { x: number; y: number }[] }
+// Um foco de luz já no mapa: lanterna (cone) ou Luz Ambiente (círculo ou cone parado).
+//   forca: quanto apaga a escuridão (0..1); forte: parte do raio com luz cheia; cor: do brilho.
+export type Cone = {
+  id: string
+  tipo: Lanterna | 'ambiente'
+  cx: number
+  cy: number
+  raio: number
+  pontos: { x: number; y: number }[]
+  forca: number
+  forte: number
+  cor: string
+  brilho: number // opacidade do brilho por cima
+  animacao?: AnimacaoLuz
+}
+
+export const COR_DA_LANTERNA: Record<Lanterna, string> = { comum: '#ffe9b8', uv: '#9b4dff' }
 
 // Onde a lanterna está no desenho do token e pra onde aponta (Configurar Lanterna: a pessoa
 // desenha uma seta). Guardado no desenho, antes de virar e girar, então acompanha o token.
@@ -85,7 +101,7 @@ export function coneDaLanterna(o: TokenDaLanterna, tipo: Lanterna, celula: { w: 
     const a = l.angulo - meia + (2 * meia * i) / passos
     pontos.push({ x: arred(cx + Math.cos(a) * raio), y: arred(cy + Math.sin(a) * raio) })
   }
-  return { id: o.id, tipo, cx, cy, raio, pontos }
+  return { id: o.id, tipo, cx, cy, raio, pontos, forca: FORMA_DA_LANTERNA[tipo].forca, forte: 0.6, cor: COR_DA_LANTERNA[tipo], brilho: 0.3 }
 }
 
 const arred = (n: number) => Math.round(n * 10) / 10
@@ -110,3 +126,80 @@ export function caminhoDaLuzUv(cones: Cone[]): string | null {
   const uv = cones.filter((c) => c.tipo === 'uv')
   return uv.length ? uv.map(caminhoDoCone).join(' ') : null
 }
+
+// ---- Luz Ambiente (pedido da Millie, 06/10) ----
+// Luz parada no mapa (lâmpada, poste, fogueira, vela): clareia a escuridão em volta, no mesmo
+// sistema da lanterna. Guardada no objeto da cena (luz_ajuste).
+
+export type AnimacaoLuz = 'nenhuma' | 'tremular' | 'pulsar'
+
+export const ANIMACOES_LUZ: { id: AnimacaoLuz; rotulo: string }[] = [
+  { id: 'nenhuma', rotulo: 'Nenhuma' },
+  { id: 'tremular', rotulo: 'Tremular (fogo, vela)' },
+  { id: 'pulsar', rotulo: 'Pulsar' },
+]
+
+export type LuzAmbiente = {
+  ligada: boolean
+  raio: number | null // em quadrados da grade; null = metade do tamanho do objeto
+  forte: number // 0..1: parte do raio com luz cheia (o resto vai apagando)
+  cor: string
+  intensidade: number // 0..1
+  angulo: number // abertura em graus (360 = em volta toda)
+  direcao: number // graus, 0 = pra direita, sentido horário
+  animacao: AnimacaoLuz
+}
+
+export const LUZ_PADRAO: LuzAmbiente = { ligada: true, raio: null, forte: 0.5, cor: '#ffd9a0', intensidade: 0.8, angulo: 360, direcao: 0, animacao: 'nenhuma' }
+
+export function luzCompleta(l: Partial<LuzAmbiente> | null | undefined): LuzAmbiente {
+  return { ...LUZ_PADRAO, ...(l ?? {}) }
+}
+
+type ObjetoComLuz = Pick<ObjetoCena, 'id' | 'x' | 'y' | 'width' | 'height' | 'rotation' | 'layer'> & {
+  luz?: boolean
+  luz_ajuste?: Partial<LuzAmbiente> | null
+}
+
+// O objeto acende? O da aba Luzes Ambientes já nasce aceso; os outros, só se o mestre acendeu.
+export function temLuzAmbiente(o: ObjetoComLuz): boolean {
+  return o.luz_ajuste ? luzCompleta(o.luz_ajuste).ligada : !!o.luz
+}
+
+export function luzDoObjeto(o: ObjetoComLuz, celula: { w: number; h: number }, passos = 48): Cone {
+  const l = luzCompleta(o.luz_ajuste)
+  const cx = arred(o.x + o.width / 2)
+  const cy = arred(o.y + o.height / 2)
+  const raio = l.raio != null && l.raio > 0 ? l.raio * Math.max(celula.w, celula.h) : Math.max(o.width, o.height) / 2
+  const abertura = Math.min(360, Math.max(1, l.angulo))
+  const pontos: { x: number; y: number }[] = []
+  if (abertura >= 360) {
+    for (let i = 0; i < passos; i++) {
+      const a = (2 * Math.PI * i) / passos
+      pontos.push({ x: arred(cx + Math.cos(a) * raio), y: arred(cy + Math.sin(a) * raio) })
+    }
+  } else {
+    // Cone parado: gira junto com o objeto.
+    const dir = (l.direcao + o.rotation) * RAD
+    const meia = (abertura / 2) * RAD
+    const n = Math.max(4, Math.round((passos * abertura) / 360))
+    pontos.push({ x: cx, y: cy })
+    for (let i = 0; i <= n; i++) {
+      const a = dir - meia + (2 * meia * i) / n
+      pontos.push({ x: arred(cx + Math.cos(a) * raio), y: arred(cy + Math.sin(a) * raio) })
+    }
+  }
+  const k = Math.min(1, Math.max(0, l.intensidade))
+  return {
+    id: o.id, tipo: 'ambiente', cx, cy, raio: arred(raio), pontos,
+    forca: k, forte: Math.min(0.95, Math.max(0, l.forte)), cor: l.cor, brilho: 0.35 * k, animacao: l.animacao,
+  }
+}
+
+// As Luzes Ambientes acesas que essa pessoa vê (a da camada do mestre só o mestre).
+export function luzesDoAmbiente(objetos: ObjetoComLuz[], celula: { w: number; h: number }, souMestre: boolean): Cone[] {
+  return objetos.filter((o) => temLuzAmbiente(o) && (souMestre || o.layer !== 'mestre')).map((o) => luzDoObjeto(o, celula))
+}
+
+// Lâmpada que marca uma Luz Ambiente sem imagem (só o mestre vê; os jogadores só veem a luz).
+export const IMAGEM_LUZ = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#1c1d24" fill-opacity="0.85" stroke="#ffd9a0" stroke-width="4"/><path d="M50 20a20 20 0 0 0-12 36c3 2.5 4 5 4 8h16c0-3 1-5.5 4-8a20 20 0 0 0-12-36z" fill="#ffd9a0"/><rect x="42" y="68" width="16" height="5" rx="2" fill="#ffd9a0"/><rect x="44" y="76" width="12" height="5" rx="2" fill="#ffd9a0"/></svg>')

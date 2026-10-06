@@ -148,6 +148,7 @@ Imagem (token, objeto, luz, desenho em imagem) entra na mesa sempre no tamanho o
 - Tokens: importar PNG (botão ou arrastar) registra; nome = nome do arquivo; botão direito → Renomear; arrastar pra mesa insere. Uso: NPC sem ficha, árvore, carro.
 - Desenhos: PNG, PDF ou documento; e tudo que for feito com as Ferramentas de Desenho (de qualquer pessoa) fica registrado aqui sozinho.
 - Luzes Ambientes: efeitos de luz, aceita GIF.
+  - **Luz Ambiente de verdade (feito, migration 0129):** a luz clareia a escuridão em volta, no mesmo sistema da lanterna. **Configurar Luz** (duplo clique na luz, ou botão direito → Luz Ambiente → Configurar Luz): acesa, raio (quadrados; vazio = metade do objeto), luz forte, intensidade, cor, abertura (360 = em volta; menos vira cone, com direção que gira com o objeto) e animação (Tremular p/ fogo e vela, Pulsar). Mexe e vê na hora; fechar sem salvar volta. Botão direito em **qualquer** objeto/token → Acender/Apagar Luz. Na aba, o botão da lâmpada cria uma **luz sem imagem** (a lâmpada só o mestre vê). Guardar da mesa pra aba leva a configuração junto.
 - Sons Ambientes: áudios rápidos (porta batendo, vento); todo Som Ambiente criado na mesa fica registrado aqui sozinho.
 - Objetos (os "Tiles" do Foundry): imagem solta por cima do mapa e por baixo dos tokens (árvore, carro, mesa); sem ficha.
 - Notas: notas soltas.

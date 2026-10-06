@@ -2,6 +2,7 @@
 // Regras puras, testadas.
 import type { ObjetoCena } from './cenas'
 import type { Desenho } from './desenhos'
+import { IMAGEM_LUZ, type LuzAmbiente } from './luz'
 
 export type CategoriaPosicionavel = 'token' | 'objeto' | 'desenho' | 'luz' | 'som' | 'nota'
 
@@ -23,6 +24,7 @@ export type DadosPosicionavel = {
   volume?: number // sons
   suavizar?: boolean
   texto?: string // notas
+  luz?: Partial<LuzAmbiente> | null // Luz Ambiente: raio, cor, intensidade, animação
 }
 
 export type Posicionavel = {
@@ -64,19 +66,22 @@ export function nomeDoArquivo(nome: string): string {
 export function vaiProMapa(p: Pick<Posicionavel, 'categoria' | 'url' | 'dados'>): boolean {
   if (p.categoria === 'nota') return false
   if (p.categoria === 'desenho') return !!p.dados.desenho || (!!p.url && ehImagem(p.url))
+  if (p.categoria === 'luz') return true // sem imagem entra só a luz
   return !!p.url
 }
 
 // O que veio da mesa arrastado pra aba vai pra qual aba.
-export function categoriaDoObjeto(o: Pick<ObjetoCena, 'layer'> & { luz?: boolean }): CategoriaPosicionavel {
-  if (o.luz) return 'luz'
+export function categoriaDoObjeto(o: Pick<ObjetoCena, 'layer' | 'luz'> & { image_url?: string }): CategoriaPosicionavel {
+  if (o.luz || o.image_url === IMAGEM_LUZ) return 'luz'
   return o.layer === 'mapa' ? 'objeto' : 'token'
 }
 
 // Guarda só a imagem: ao voltar pra mesa, entra no tamanho original dela (pedido da Millie).
-export function guardarObjeto(o: ObjetoCena & { luz?: boolean }): Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'> {
+export function guardarObjeto(o: ObjetoCena): Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'> {
   const categoria = categoriaDoObjeto(o)
   const padrao = categoria === 'luz' ? 'Luz Ambiente' : categoria === 'objeto' ? 'Objeto' : 'Token'
+  // Luz guarda também a configuração dela (raio, cor…); a lâmpada sem imagem volta sem imagem.
+  if (categoria === 'luz') return { categoria, name: o.name?.trim() || padrao, url: o.image_url === IMAGEM_LUZ ? null : o.image_url, dados: o.luz_ajuste ? { luz: o.luz_ajuste } : {} }
   return { categoria, name: o.name?.trim() || padrao, url: o.image_url, dados: {} }
 }
 

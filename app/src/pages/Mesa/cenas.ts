@@ -239,6 +239,7 @@ export type ObjetoCena = {
   so_uv?: boolean // pros jogadores, só aparece na luz UV
   lanterna_ajuste?: { ox: number; oy: number; angulo: number } | null // Configurar Lanterna (seta)
   item_id?: string | null // item interativo que este token/objeto representa (KAN-53)
+  luz_ajuste?: Partial<import('./luz').LuzAmbiente> | null // Luz Ambiente: raio, cor, intensidade, animação
   created_at: string
 }
 

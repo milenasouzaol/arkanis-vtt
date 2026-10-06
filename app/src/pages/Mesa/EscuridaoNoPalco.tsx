@@ -4,7 +4,7 @@ import { faCheck, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons'
 import Janela from './Janela'
 import type { Cena } from './cenas'
 import { caixaDoArrasto } from './desenhos'
-import { caminhoDoCone, FORMA_DA_LANTERNA, type Cone } from './luz'
+import { caminhoDoCone, COR_DA_LANTERNA, type Cone } from './luz'
 import type { AreaEscura, useEscuridao } from './useEscuridao'
 
 type Ponto = { x: number; y: number }
@@ -153,8 +153,8 @@ export function useEscuridaoNoPalco({ cena, ferramenta, souMestre, esc, pontoNoM
   return { ativo, camada, janelas, aoApertar, aoMover, aoSoltar, aoTeclar }
 }
 
-// Cor do brilho de cada lanterna.
-const BRILHO = { comum: '#ffe9b8', uv: '#9b4dff' } as const
+// Fogo tremulando / pulsando (Luz Ambiente): a animação vai no recorte e no brilho.
+const animacaoDa = (c: Cone) => (c.animacao && c.animacao !== 'nenhuma' ? `luz-anim-${c.animacao}` : undefined)
 
 // Escuridão (a da cena + as áreas pintadas) com os cones das lanternas recortando ela, e o
 // brilho de cada lanterna por cima. O mestre vê a escuridão mais clara, pra poder trabalhar.
@@ -179,8 +179,8 @@ export function LuzesNoPalco({ mapa, souMestre, nivel, areas, cones, celula }: {
           <g key={c.id}>
             {/* Na máscara: preto = luz (a escuridão some), mais forte perto do token. */}
             <radialGradient id={`luz-m-${c.id}`} gradientUnits="userSpaceOnUse" cx={c.cx} cy={c.cy} r={c.raio}>
-              <stop offset="0" stopColor="#000" stopOpacity={FORMA_DA_LANTERNA[c.tipo].forca} />
-              <stop offset="0.6" stopColor="#000" stopOpacity={FORMA_DA_LANTERNA[c.tipo].forca} />
+              <stop offset="0" stopColor="#000" stopOpacity={c.forca} />
+              <stop offset={c.forte} stopColor="#000" stopOpacity={c.forca} />
               <stop offset="1" stopColor="#000" stopOpacity="0" />
             </radialGradient>
           </g>
@@ -189,7 +189,7 @@ export function LuzesNoPalco({ mapa, souMestre, nivel, areas, cones, celula }: {
           <mask id="luz-mascara" maskUnits="userSpaceOnUse" x={0} y={0} width={mapa.w} height={mapa.h}>
             <rect width={mapa.w} height={mapa.h} fill="#fff" />
             <g filter="url(#luz-borda)">
-              {cones.map((c) => <path key={c.id} d={caminhoDoCone(c)} fill={`url(#luz-m-${c.id})`} />)}
+              {cones.map((c) => <path key={c.id} className={animacaoDa(c)} d={caminhoDoCone(c)} fill={`url(#luz-m-${c.id})`} />)}
             </g>
           </mask>
         )}
@@ -213,7 +213,7 @@ export function BrilhoDasLanternas({ mapa, cones, celula }: { mapa: { w: number;
   const gradiente = (id: string, c: Cone, cor: string, opacidade: number) => (
     <radialGradient id={id} gradientUnits="userSpaceOnUse" cx={c.cx} cy={c.cy} r={c.raio}>
       <stop offset="0" stopColor={cor} stopOpacity={opacidade} />
-      <stop offset="0.6" stopColor={cor} stopOpacity={opacidade * 0.8} />
+      <stop offset={c.forte} stopColor={cor} stopOpacity={opacidade * 0.8} />
       <stop offset="1" stopColor={cor} stopOpacity="0" />
     </radialGradient>
   )
@@ -224,7 +224,7 @@ export function BrilhoDasLanternas({ mapa, cones, celula }: { mapa: { w: number;
       </filter>
       {cones.map((c) => (
         <g key={c.id}>
-          {sufixo === 'luz' ? gradiente(`brilho-${c.id}`, c, BRILHO[c.tipo], c.tipo === 'uv' ? 0.3 : 0.3) : gradiente(`tinta-${c.id}`, c, BRILHO.uv, 0.9)}
+          {sufixo === 'luz' ? gradiente(`brilho-${c.id}`, c, c.cor, c.brilho) : gradiente(`tinta-${c.id}`, c, COR_DA_LANTERNA.uv, 0.9)}
         </g>
       ))}
     </defs>
@@ -244,7 +244,7 @@ export function BrilhoDasLanternas({ mapa, cones, celula }: { mapa: { w: number;
       <svg className="mesa-luzes-brilho luz" width={mapa.w} height={mapa.h} aria-hidden>
         {defs('luz')}
         <g filter="url(#brilho-borda-luz)">
-          {cones.map((c) => <path key={c.id} d={caminhoDoCone(c)} fill={`url(#brilho-${c.id})`} />)}
+          {cones.map((c) => <path key={c.id} className={animacaoDa(c)} d={caminhoDoCone(c)} fill={`url(#brilho-${c.id})`} />)}
         </g>
       </svg>
     </>

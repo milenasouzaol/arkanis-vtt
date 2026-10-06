@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ajusteDaSeta, caminhoDaLuzUv, coneDaLanterna, conesDosTokens, lanternaNoMapa } from './luz'
+import { ajusteDaSeta, caminhoDaLuzUv, coneDaLanterna, conesDosTokens, lanternaNoMapa, luzDoObjeto, luzesDoAmbiente, temLuzAmbiente } from './luz'
 
 const token = { id: 't', x: 0, y: 0, width: 100, height: 100, rotation: 0, layer: 'token' as const }
 const celula = { w: 100, h: 100 }
@@ -63,5 +63,36 @@ describe('lanterna', () => {
     const virado = lanternaNoMapa({ ...token, flip_h: true, lanterna_ajuste: a })
     expect(virado.x).toBeCloseTo(20)
     expect(Math.cos(virado.angulo)).toBeCloseTo(-1)
+  })
+})
+
+describe('Luz Ambiente', () => {
+  const objeto = { id: 'l', x: 0, y: 0, width: 100, height: 100, rotation: 0, layer: 'mapa' as const }
+  it('a da aba Luzes acende sozinha; as outras só se o mestre acendeu', () => {
+    expect(temLuzAmbiente({ ...objeto, luz: true })).toBe(true)
+    expect(temLuzAmbiente(objeto)).toBe(false)
+    expect(temLuzAmbiente({ ...objeto, luz_ajuste: { ligada: true } })).toBe(true)
+    expect(temLuzAmbiente({ ...objeto, luz: true, luz_ajuste: { ligada: false } })).toBe(false)
+  })
+  it('raio em quadrados, ou metade do objeto; círculo em volta toda', () => {
+    const sem = luzDoObjeto({ ...objeto, luz: true }, celula)
+    expect(sem.raio).toBe(50)
+    expect(sem.cx).toBe(50)
+    const com = luzDoObjeto({ ...objeto, luz_ajuste: { raio: 3, intensidade: 0.5, cor: '#ff0000' } }, celula)
+    expect(com.raio).toBe(300)
+    expect(com.forca).toBe(0.5)
+    expect(com.cor).toBe('#ff0000')
+    expect(com.pontos.every((p) => Math.abs(Math.hypot(p.x - 50, p.y - 50) - 300) < 0.2)).toBe(true)
+  })
+  it('cone parado aponta pra direção e gira com o objeto', () => {
+    const c = luzDoObjeto({ ...objeto, rotation: 90, luz_ajuste: { raio: 1, angulo: 10, direcao: 0 } }, celula)
+    expect(c.pontos[0]).toEqual({ x: 50, y: 50 })
+    const meio = c.pontos[Math.floor(c.pontos.length / 2)]
+    expect(meio.y).toBeGreaterThan(140) // virou pra baixo
+  })
+  it('a da camada do mestre os jogadores não veem', () => {
+    const l = { ...objeto, layer: 'mestre' as const, luz: true }
+    expect(luzesDoAmbiente([l], celula, false)).toHaveLength(0)
+    expect(luzesDoAmbiente([l], celula, true)).toHaveLength(1)
   })
 })

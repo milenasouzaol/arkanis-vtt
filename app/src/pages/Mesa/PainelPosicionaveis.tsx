@@ -10,6 +10,7 @@ import { CriarPasta } from './PainelCenas'
 import { EditorTexto } from './PainelPlaylist'
 import { montarArvore, type NoPasta, type Pasta } from './cenas'
 import { aceitaArquivo, CATEGORIAS_POSICIONAVEIS, ehImagem, nomeDoArquivo, vaiProMapa, type CategoriaPosicionavel, type Posicionavel } from './posicionaveis'
+import { LUZ_PADRAO } from './luz'
 import { enviarArquivoPosicionavel, type usePosicionaveis } from './usePosicionaveis'
 
 export const TIPO_ARRASTO_POSICIONAVEL = 'application/x-arkanis-posicionavel'
@@ -93,6 +94,11 @@ export default function PainelPosicionaveis({ souMestre, userId, api, categoria,
       return
     }
     await api.criar({ categoria, name: nome, url, dados: {}, folder_id: pastaId })
+  }
+
+  // Luz Ambiente sem imagem: só a luz (raio, cor, animação se acertam na mesa, no duplo clique).
+  function criarLuz(pastaId: string | null) {
+    api.criar({ categoria: 'luz', name: 'Luz', url: null, dados: { luz: { ...LUZ_PADRAO, raio: 4 } }, folder_id: pastaId })
   }
 
   function botaoMais(pastaId: string | null) {
@@ -266,6 +272,12 @@ export default function PainelPosicionaveis({ souMestre, userId, api, categoria,
           <FontAwesomeIcon icon={faPlus} />
           <span className="posicionaveis-dica" role="tooltip">{DICA_IMPORTAR[categoria]}</span>
         </button>
+        {categoria === 'luz' && (
+          <button type="button" className="posicionaveis-botao" aria-label="Criar Luz (sem imagem)" onClick={() => criarLuz(null)}>
+            <FontAwesomeIcon icon={faLightbulb} />
+            <span className="posicionaveis-dica" role="tooltip">Criar Luz (sem imagem)</span>
+          </button>
+        )}
       </div>
 
       <input

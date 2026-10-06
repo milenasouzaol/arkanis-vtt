@@ -16513,3 +16513,28 @@ button.character-tile-link {
 label.compendio-linha {
   cursor: pointer;
 }
+
+/* Luz Ambiente animada (pedido da Millie, 06/10): fogo/vela tremulando, ou pulsando. */
+.luz-anim-tremular {
+  animation: luz-tremular 2.3s infinite;
+}
+
+.luz-anim-pulsar {
+  animation: luz-pulsar 3s ease-in-out infinite;
+}
+
+@keyframes luz-tremular {
+  0%, 100% { opacity: 1; }
+  12% { opacity: 0.82; }
+  20% { opacity: 0.95; }
+  33% { opacity: 0.76; }
+  45% { opacity: 1; }
+  58% { opacity: 0.86; }
+  70% { opacity: 0.97; }
+  84% { opacity: 0.8; }
+}
+
+@keyframes luz-pulsar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}

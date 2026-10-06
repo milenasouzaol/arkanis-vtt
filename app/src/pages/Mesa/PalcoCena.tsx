@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   faArrowDownWideShort, faArrowUpWideShort, faBullseye, faCopy, faCrosshairs, faLayerGroup, faLock, faLockOpen, faObjectGroup,
-  faObjectUngroup, faPaste, faLightbulb, faEye, faBriefcase, faHandPointer, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear, faPenToSquare,
+  faObjectUngroup, faPaste, faLightbulb, faEye, faBriefcase, faHandPointer, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear, faPenToSquare, faSun,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import EfeitoClimatico from './EfeitoClimatico'
@@ -27,7 +27,8 @@ import { useDesenhoNoPalco } from './DesenhosNoPalco'
 import { useSomNoPalco } from './SonsNoPalco'
 import { BrilhoDasLanternas, LuzesNoPalco, useEscuridaoNoPalco } from './EscuridaoNoPalco'
 import { useEscuridao } from './useEscuridao'
-import { ajusteDaSeta, caminhoDaLuzUv, caminhoDoCone, coneDaLanterna, conesDosTokens, LANTERNAS, type AjusteLanterna, type Lanterna } from './luz'
+import { ajusteDaSeta, caminhoDaLuzUv, caminhoDoCone, coneDaLanterna, conesDosTokens, IMAGEM_LUZ, LANTERNAS, luzCompleta, luzesDoAmbiente, temLuzAmbiente, type AjusteLanterna, type Lanterna, type LuzAmbiente } from './luz'
+import ConfigurarLuz from './ConfigurarLuz'
 import type { useSons } from './useSons'
 import type { useDesenhos } from './useDesenhos'
 
@@ -146,7 +147,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const copiados = useRef<ObjetoCena[]>([])
   const objetos = obj.objetos
   // Objeto "só na luz UV": o jogador só vê dentro da luz UV (vai numa camada à parte).
-  const visiveis = objetos.filter((o) => souMestre || (o.layer !== 'mestre' && !o.so_uv))
+  // A lâmpada de uma Luz Ambiente sem imagem só o mestre vê (os jogadores só veem a luz).
+  const visiveis = objetos.filter((o) => souMestre || (o.layer !== 'mestre' && !o.so_uv && o.image_url !== IMAGEM_LUZ))
 
   // Quem pode mexer em cada objeto: o mestre sempre; o jogador no próprio personagem ou
   // quando o mestre liberou (Configurar Propriedade). O banco confere de novo.
@@ -202,6 +204,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const esc = useEscuridao(cena?.id ?? null)
   // Configurar Lanterna: token sendo configurado e a seta que a pessoa está desenhando.
   const [configLanterna, setConfigLanterna] = useState<string | null>(null)
+  const [configLuz, setConfigLuz] = useState<string | null>(null) // Configurar Luz (Luz Ambiente)
   const [seta, setSeta] = useState<{ a: Ponto; b: Ponto } | null>(null)
   useEffect(() => {
     if (!configLanterna) return
@@ -752,6 +755,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     if (o.item_id && podeEditar(o)) onEditarItem?.(o.item_id)
     else if (o.item_id) onInteragir?.(o, celula)
     else if (o.actor_id) onAbrirFicha(o.actor_id)
+    else if (souMestre && (o.luz || o.luz_ajuste)) setConfigLuz(o.id)
     else if (souMestre) setPropriedade(o)
   }
 
@@ -852,6 +856,20 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
         ],
       },
       ...(o.layer !== 'mapa' ? [menuLanterna(o, (l) => alterar(cada(() => ({ lanterna: l }))))] : []),
+      {
+        tipo: 'sub', rotulo: 'Luz Ambiente', icone: faSun,
+        itens: [
+          { rotulo: 'Configurar Luz', onClick: () => setConfigLuz(o.id) },
+          { tipo: 'linha' },
+          {
+            rotulo: temLuzAmbiente(o) ? 'Apagar Luz' : 'Acender Luz',
+            onClick: () => alterar(cada((x) => {
+              const atual = luzCompleta(x.luz_ajuste ?? (x.luz ? null : { raio: 4 }))
+              return { luz_ajuste: { ...atual, ligada: !temLuzAmbiente(o) } }
+            })),
+          },
+        ],
+      },
       { rotulo: `${o.so_uv ? '✓ ' : ''}Só Aparece na Luz UV`, icone: faEye, onClick: () => alterar(cada(() => ({ so_uv: !o.so_uv }))) },
       {
         tipo: 'sub', rotulo: 'Alterar Camada', icone: faLayerGroup,
@@ -884,7 +902,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   const celula = cena ? celulaDaGrade(cena, mapa) : { w: 100, h: 100 }
   const hex = grade?.grid_type === 'hexagono' ? ladrilhoHex(celula.w) : null
   // Lanternas ligadas dos tokens que essa pessoa vê.
-  const cones = conesDosTokens(objetos, celula, souMestre)
+  const cones = [...luzesDoAmbiente(objetos, celula, souMestre), ...conesDosTokens(objetos, celula, souMestre)]
   const caminhoUv = caminhoDaLuzUv(cones)
   const traco = grade ? tracoDaGrade(grade.grid_style, grade.grid_thickness) : undefined
   // Alças e giro: o mestre e o dono do token (12.8).
@@ -1124,6 +1142,28 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
         {som.janelas}
         {escuro.janelas}
       </div>
+
+      {(() => {
+        const o = configLuz ? objetos.find((x) => x.id === configLuz) : null
+        if (!o) return null
+        const original = o.luz_ajuste ?? null
+        return (
+          <ConfigurarLuz
+            key={o.id}
+            objeto={o}
+            onPrevia={(l: LuzAmbiente) => obj.alterarVarios({ [o.id]: { luz_ajuste: l } }, false)}
+            onSalvar={(l) => {
+              // Desfazer volta pra como estava antes de abrir a janela (não pra última prévia).
+              fazer({ tipo: 'alterar', antes: { [o.id]: { luz_ajuste: original } }, depois: { [o.id]: { luz_ajuste: l } } })
+              setConfigLuz(null)
+            }}
+            onFechar={() => {
+              obj.alterarVarios({ [o.id]: { luz_ajuste: original } }, false)
+              setConfigLuz(null)
+            }}
+          />
+        )
+      })()}
 
       {propriedade && (
         <ConfigurarPropriedade

@@ -18,6 +18,7 @@ import PainelPlaylist from './PainelPlaylist'
 import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
 import PainelItens, { CriarItem } from './PainelItens'
 import FichaItem from './FichaItem'
+import { IMAGEM_LUZ, LUZ_PADRAO } from './luz'
 import JanelaInteracao from './JanelaInteracao'
 import DadosNaTela from './DadosNaTela'
 import { useItens } from './useItens'
@@ -432,6 +433,14 @@ export default function Mesa() {
       await desenhos.criar({ ...base, ...d, ...caixaNoPonto(ponto, d.width, d.height), author_id: userId, posicionavel_id: p.id })
       return
     }
+    // Luz Ambiente sem imagem: entra a lâmpada (só o mestre vê) com a luz configurada.
+    if (p.categoria === 'luz' && !p.url) {
+      await objetos.criar({
+        ...base, name: p.name, image_url: IMAGEM_LUZ, ...caixaNoPonto(ponto, atual.grid_size, atual.grid_size),
+        layer: 'mapa', luz: true, luz_ajuste: p.dados.luz ?? { ...LUZ_PADRAO, raio: 4 },
+      })
+      return
+    }
     if (!p.url) return
     if (p.categoria === 'desenho' && !ehImagem(p.url)) {
       window.open(p.url, '_blank', 'noopener')
@@ -454,6 +463,7 @@ export default function Mesa() {
     await objetos.criar({
       ...base, name: p.name, image_url: p.url, ...caixaNoPonto(ponto, largura, altura),
       layer: p.categoria === 'token' ? 'token' : 'mapa', luz: p.categoria === 'luz',
+      ...(p.categoria === 'luz' && p.dados.luz ? { luz_ajuste: p.dados.luz } : {}),
     })
   }
 
