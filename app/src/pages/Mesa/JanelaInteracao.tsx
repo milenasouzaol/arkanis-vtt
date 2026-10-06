@@ -94,11 +94,17 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
     }
   }
 
-  async function testar(nome: string, t: { pericia: string; atributo: string; dt: number | null }) {
+  // O jogador nem recebe a DT: quem diz se passou é o banco (passou_no_teste). O mestre confere aqui.
+  async function testar(nome: string, t: { pericia: string; atributo: string; dt?: number | null }, atividadeId: string) {
     const base = characterId ? await sistema.testeDoPersonagem(characterId, t.pericia, t.atributo) : null
     const teste = base ?? { nome: t.pericia || nome, dados: 1, bonus: 0 }
     const r = sistema.rolarTeste(teste)
-    return { nome: teste.nome, ...r, dt: t.dt, passou: passouNoTeste(r.total, t.dt) }
+    let passou = passouNoTeste(r.total, t.dt)
+    if (!souMestre) {
+      const { data, error } = await supabase.rpc('passou_no_teste', { p_token_id: token.id, p_atividade_id: atividadeId, p_total: r.total })
+      passou = !error && !!data
+    }
+    return { nome: teste.nome, ...r, dt: null, passou }
   }
 
   // Dano/cura num alvo, com as resistências dele (dano) ou até o máximo (cura).
@@ -145,8 +151,8 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
 
     // "Ao Passar no Teste": rola o teste primeiro; falhou, a atividade não acontece.
     if (a.ativacao.quando === 'teste' && teste) {
-      const t = await testar(nome, teste)
-      await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: { ...t, dt: null } })
+      const t = await testar(nome, teste, a.id)
+      await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: t })
       setLog((l) => [...l, `${nome}: ${t.total} → ${t.passou ? 'passou' : 'falhou'}`])
       if (!t.passou) {
         for (const p of proximas(a, false, lista, jaRodaram)) {
@@ -161,17 +167,17 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
     switch (a.tipo) {
       case 'checar': {
         if (passou) break // o teste já foi o de "Ao Passar no Teste"
-        const t = await testar(nome, a.checar!)
+        const t = await testar(nome, a.checar!, a.id)
         passou = t.passou
-        await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: { ...t, dt: null } })
+        await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: t })
         setLog((l) => [...l, `${nome}: ${t.total} → ${t.passou ? 'passou' : 'falhou'}`])
         break
       }
       case 'ritual': {
         const r = a.ritual!
-        const t = await testar(nome, r.evitar)
+        const t = await testar(nome, r.evitar, a.id)
         passou = t.passou
-        await postar({ atividade: nome, texto: `ativou ${sistema.magia.nome.toLowerCase()} ${r.ritual || ''}; teste pra evitar.${extra}`, teste: { ...t, dt: null } })
+        await postar({ atividade: nome, texto: `ativou ${sistema.magia.nome.toLowerCase()} ${r.ritual || ''}; teste pra evitar.${extra}`, teste: t })
         setLog((l) => [...l, `${r.ritual || nome}: ${t.passou ? 'evitou' : 'não evitou'}`])
         break
       }
