@@ -367,7 +367,7 @@ export default function FichaItem({ item, podeEditar, userId, jogadores, sistema
                       <td>
                         <button type="button" className="item-atividade-nome" onClick={() => setAtividade(a)}>
                           {a.icone ? <img src={a.icone} alt="" /> : <FontAwesomeIcon icon={ICONE_ATIVIDADE[a.tipo]} />}
-                          <span><strong>{a.nome}</strong><small>{rotuloDaAtivacao(a)}</small></span>
+                          <span><strong>{a.nome}</strong><small>{rotuloDaAtivacao(a)}{a.ativacao.quando === 'teste' && !a.ativacao.teste?.pericia && !a.ativacao.teste?.atributo ? <em className="item-aviso-curto"> · ⚠ falta escolher o teste</em> : null}</small></span>
                         </button>
                       </td>
                       <td className="item-atividade-usos">{textoDeUsos(a.ativacao.usos)}</td>
@@ -577,6 +577,9 @@ function EditorAtividade({ atividade, podeEditar, userId, irmas, onSalvar, onFec
               {at.quando === 'teste' && (
                 <Linha larga rotulo="Teste" dica="A pessoa faz este teste antes. Passou: a atividade acontece. Falhou: roda o que estiver em Efeito → Depois → Se Falhar.">
                   <SelectTeste teste={at.teste ?? { pericia: '', atributo: '', dt: null }} onMudar={(t) => mudarAt({ teste: t })} />
+                  {!at.teste?.pericia && !at.teste?.atributo && (
+                    <p className="item-aviso" role="alert">Escolha a perícia (ou o atributo) do teste. Sem isso, a atividade acontece direto, sem teste.</p>
+                  )}
                 </Linha>
               )}
               <input className="item-largo" value={at.condicao} placeholder="Observação (opcional, ex.: só à noite)" onChange={(e) => mudarAt({ condicao: e.target.value })} />

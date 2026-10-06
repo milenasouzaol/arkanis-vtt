@@ -16311,3 +16311,23 @@ button.character-tile-link {
   width: 100% !important;
   height: 100% !important;
 }
+
+.item-aviso {
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  background: rgba(224, 106, 90, 0.12);
+  border-left: 2px solid #e06a5a;
+  border-radius: 3px;
+  color: #f0a59a;
+  font-size: 0.8rem;
+}
+
+.item-aviso-curto {
+  color: #f0a59a;
+  font-style: normal;
+}
+
+.interacao-conteudo-botoes {
+  display: flex;
+  gap: 6px;
+}

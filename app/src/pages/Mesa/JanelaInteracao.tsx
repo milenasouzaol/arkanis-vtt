@@ -64,6 +64,13 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
 
   useEffect(() => { carregar() }, [carregar])
 
+  // Com o contêiner aberto, o conteúdo se atualiza sozinho: se outra pessoa pegar algo, some aqui.
+  useEffect(() => {
+    if (!conteudoAberto) return
+    const t = window.setInterval(() => { carregar() }, 3000)
+    return () => window.clearInterval(t)
+  }, [conteudoAberto, carregar])
+
   const distancia = meuToken ? distanciaEmMetros(meuToken, token, celula, metrosPorQuadrado) : null
   const metrosDoAlcance = (a: Atividade) => sistema.alcances.find((x) => x.id === a.ativacao.alcance)?.metros ?? null
   const alcanceOk = (a: Atividade) => souMestre || dentroDoAlcance(distancia, metrosDoAlcance(a))
@@ -247,17 +254,18 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
     }
   }
 
-  async function pegar(c: ItemDoToken['conteudo_detalhado'][number]) {
+  async function pegar(c: ItemDoToken['conteudo_detalhado'][number], quantos = 1) {
     if (!characterId) {
       setErro('Pra pegar itens, você precisa de um personagem com ficha.')
       return
     }
     setOcupado(true)
-    const { error } = await supabase.rpc('pegar_do_conteiner', { p_token_id: token.id, p_ref: c.item_id ?? c.compendio_id, p_character_id: characterId, p_quantidade: 1 })
+    const { error } = await supabase.rpc('pegar_do_conteiner', { p_token_id: token.id, p_ref: c.item_id ?? c.compendio_id, p_character_id: characterId, p_quantidade: quantos })
     if (error) setErro(motivo(error))
     else {
-      await postar({ atividade: 'Pegar', texto: `pegou ${c.name}.` })
-      setLog((l) => [...l, `Pegou ${c.name} (foi pro inventário)`])
+      const qual = quantos > 1 ? `${quantos}× ${c.name}` : c.name
+      await postar({ atividade: 'Pegar', texto: `pegou ${qual}.` })
+      setLog((l) => [...l, `Pegou ${qual} (foi pro inventário)`])
       await carregar()
     }
     if (vivo.current) setOcupado(false)
@@ -329,7 +337,10 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
                     <li key={c.item_id ?? c.compendio_id}>
                       <span className="interacao-conteudo-imagem">{c.image_url ? <img src={c.image_url} alt="" /> : <FontAwesomeIcon icon={faBriefcase} />}</span>
                       <span className="interacao-conteudo-nome">{c.name}{c.quantidade > 1 ? ` ×${c.quantidade}` : ''}</span>
-                      <button type="button" className="janela-botao" disabled={ocupado} onClick={() => pegar(c)}><FontAwesomeIcon icon={faHandHolding} /> Pegar</button>
+                      <span className="interacao-conteudo-botoes">
+                        <button type="button" className="janela-botao" disabled={ocupado} onClick={() => pegar(c)}><FontAwesomeIcon icon={faHandHolding} /> Pegar</button>
+                        {c.quantidade > 1 && <button type="button" className="janela-botao" disabled={ocupado} onClick={() => pegar(c, c.quantidade)}>Pegar Tudo</button>}
+                      </span>
                     </li>
                   ))}
                 </ul>
