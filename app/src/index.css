@@ -15895,15 +15895,27 @@ button.character-tile-link {
 }
 
 .item-mais {
-  display: block;
+  display: grid;
+  place-items: center;
   margin: 12px 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
   background: #0d0d10;
   border: 1px solid var(--item-ouro);
   border-radius: 4px;
   color: var(--mesa-creme);
+  font-size: 14px;
+  line-height: 1;
   cursor: pointer;
+}
+
+.item-mais svg {
+  display: block;
+}
+
+.item-mais:hover {
+  background: #1c1c22;
 }
 
 .item-encadear {
