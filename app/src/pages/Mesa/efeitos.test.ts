@@ -36,10 +36,10 @@ describe('efeitos animados', () => {
     expect(aparencia(p, e, 100).alfa).toBeLessThan(0.01)
   })
   it('quantas nascem guarda o resto', () => {
-    const e = { ...efeitoPadrao('nuvem'), quantidade: 1 } // 5/s
-    const a = quantasNascem(e, 0.1, 0)
+    const e = { ...efeitoPadrao('nuvem'), quantidade: 1 } // 12/s
+    const a = quantasNascem(e, 0.05, 0)
     expect(a.n).toBe(0)
-    expect(quantasNascem(e, 0.1, a.sobra).n).toBe(1)
+    expect(quantasNascem(e, 0.05, a.sobra).n).toBe(1)
   })
   it('cor clara brilha, escura pinta; miolo clareia', () => {
     expect(corClara('#ff5a14')).toBe(true)
