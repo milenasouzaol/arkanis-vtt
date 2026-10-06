@@ -234,7 +234,9 @@ export default function PainelPlaylist({ souMestre, userId, pl }: { souMestre: b
 // Descrição em texto rico (negrito, itálico, sublinhado, listas), igual ao jeito do chat.
 export function EditorTexto({ valor, rotulo, onMudar }: { valor: string; rotulo: string; onMudar: (html: string) => void }) {
   const caixa = useRef<HTMLDivElement>(null)
-  const inicial = useRef(sanitizarHtml(valor))
+  // O texto inicial entra uma vez só: o React 19 regrava o innerHTML sempre que o objeto do
+  // dangerouslySetInnerHTML muda, e isso apagava o que a pessoa digitava (cursor voltava pro começo).
+  const inicial = useRef({ __html: sanitizarHtml(valor) })
   const formatar = (comando: string) => {
     caixa.current?.focus()
     document.execCommand(comando)
@@ -261,7 +263,7 @@ export function EditorTexto({ valor, rotulo, onMudar }: { valor: string; rotulo:
         role="textbox"
         aria-label={rotulo}
         aria-multiline
-        dangerouslySetInnerHTML={{ __html: inicial.current }}
+        dangerouslySetInnerHTML={inicial.current}
         onInput={(e) => onMudar(sanitizarHtml((e.currentTarget as HTMLDivElement).innerHTML))}
       />
     </div>
