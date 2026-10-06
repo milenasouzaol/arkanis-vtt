@@ -448,8 +448,10 @@ export default function FichaItem({ item, podeEditar, userId, jogadores, sistema
         <Janela titulo={`Adicionar do Compêndio: ${i.name}`} icone={ICONE_COMPENDIO} largura={460} onFechar={() => setBuscandoCompendio(false)}>
           <BuscaCompendio
             sistema={sistema}
-            onEscolher={(e) => {
-              mudar({ conteudo: [...i.conteudo, { compendio_id: e.id, nome: e.nome, quantidade: 1 }] })
+            multiplo
+            jaTem={new Set(i.conteudo.map((c) => c.compendio_id).filter((x): x is string => !!x))}
+            onEscolherVarios={(lista) => {
+              mudar({ conteudo: [...i.conteudo, ...lista.map((e) => ({ compendio_id: e.id, nome: e.nome, quantidade: 1 }))] })
               setBuscandoCompendio(false)
             }}
           />

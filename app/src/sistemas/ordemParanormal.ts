@@ -72,10 +72,12 @@ export const ordemParanormal: Sistema = {
       { id: 'geral', rotulo: 'Geral' },
       { id: 'paranormal', rotulo: 'Paranormal' },
     ],
-    async buscar(termo, tipo) {
-      let q = supabase.from('equipment_items').select('id, name, type, category, spaces, description, image_url').order('name').limit(60)
+    // Sem filtro, as 60 primeiras; com tipo/categoria, tudo daquele filtro (pro "Marcar todos").
+    async buscar(termo, tipo, categoria) {
+      let q = supabase.from('equipment_items').select('id, name, type, category, spaces, description, image_url').order('name').limit(tipo || categoria ? 500 : 60)
       if (termo.trim()) q = q.ilike('name', `%${termo.trim()}%`)
       if (tipo) q = q.eq('type', tipo)
+      if (categoria) q = q.eq('category', categoria)
       const { data } = await q
       return ((data ?? []) as { id: string; name: string; type: string; category: string; spaces: number; description: string | null; image_url: string | null }[]).map(
         (e): EntradaCompendio => ({ id: e.id, nome: e.name, tipo: e.type, categoria: e.category, carga: Number(e.spaces) || 0, descricao: e.description ?? '', imagem: e.image_url }),

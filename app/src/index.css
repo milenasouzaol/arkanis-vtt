@@ -16420,3 +16420,24 @@ button.character-tile-link {
   font-weight: 400;
   font-size: 0.75rem;
 }
+
+/* Compêndio: marcar vários de uma vez */
+.compendio-marcar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.compendio-linha input[type="checkbox"] {
+  flex: none;
+  accent-color: #b9a46f;
+}
+
+.compendio-linha.ja {
+  opacity: 0.55;
+}
+
+label.compendio-linha {
+  cursor: pointer;
+}

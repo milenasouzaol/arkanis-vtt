@@ -35,5 +35,5 @@ export type Sistema = {
   moeda: { nome: string; simbolo: string }
   // Compêndio de equipamentos dos livros (null = o sistema não tem). Itens criados a partir dele,
   // ao serem pegos, entram no inventário como o equipamento de verdade.
-  compendio: { nome: string; tipos: Opcao[]; buscar(termo: string, tipo?: string): Promise<EntradaCompendio[]> } | null
+  compendio: { nome: string; tipos: Opcao[]; buscar(termo: string, tipo?: string, categoria?: string): Promise<EntradaCompendio[]> } | null
 }
