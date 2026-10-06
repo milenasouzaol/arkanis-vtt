@@ -21,6 +21,7 @@ import morteIcon from '../../assets/rituais/morte-simbolo.png'
 import conhecimentoIcon from '../../assets/rituais/conhecimento-simbolo.png'
 import energiaIcon from '../../assets/rituais/energia-simbolo.png'
 import medoIcon from '../../assets/rituais/medo-simbolo.png'
+import { somDoRitual, tocarSom } from '../../lib/sons'
 
 const ELEMENT_ICON: Record<string, string> = {
   sangue: sangueIcon,
@@ -244,6 +245,9 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
       setArmaPara({ ritual, mode, formula })
       return
     }
+    // Som do ritual pelo elemento (Sangue, Morte, Conhecimento, Energia, Medo).
+    const som = somDoRitual(arma?.elemento ?? ritual.elemento)
+    if (som) tocarSom(som)
     // Alquebrado: +1 PE no custo.
     const custo = custoDoRitual(ritual.circle, mode, ritual.discenteCost, ritual.verdadeiroCost) + custoExtraDeCondicoes(character.conditions)
     const recurso = recursoDoRitual(character.optional_rules)

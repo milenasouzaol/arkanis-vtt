@@ -41,6 +41,7 @@ import determinationHalf from '../../assets/determination-half.svg'
 import determinationFull from '../../assets/determination-full.svg'
 import conditionsBorderTop from '../../assets/conditions-border-top.svg'
 import conditionsBorderBottom from '../../assets/conditions-border-bottom.svg'
+import { tocarSom } from '../../lib/sons'
 
 function pvIconFor(pct: number): string {
   if (pct <= 0) return pvEmpty
@@ -591,7 +592,7 @@ export default function AgenteTab({
       <div className="vtt-col-combat">
         <nav className="vtt-subtabs">
           {(['Combate', 'Habilidades', 'Rituais', 'Inventário'] as const).map((t) => (
-            <button key={t} type="button" onClick={() => setRightTab(t)} disabled={rightTab === t}>{t}</button>
+            <button key={t} type="button" onClick={() => { tocarSom('aba'); setRightTab(t) }} disabled={rightTab === t}>{t}</button>
           ))}
         </nav>
 

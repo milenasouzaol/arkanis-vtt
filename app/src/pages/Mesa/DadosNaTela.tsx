@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { DIE_COLOR } from '../CharacterSheet/RollResult'
 import type { Mensagem } from './chat'
 import { chavesDe, dadosNovos, notacaoUnica, type Dado } from './dados3d'
+import { tocarSom } from '../../lib/sons'
 
 // Biblioteca de dados 3D (MIT): https://github.com/3d-dice/dice-box-threejs
 type Caixa = {
@@ -80,6 +81,7 @@ export default function DadosNaTela({ mensagens }: { mensagens: Mensagem[] | nul
     c.clearDice()
     const notacao = notacaoUnica(dados)
     if (notacao) {
+      tocarSom('dado')
       // Se algo travar, não prende a fila pra sempre.
       await Promise.race([c.roll(notacao).catch(() => null), new Promise((r) => setTimeout(r, 9000))])
     }

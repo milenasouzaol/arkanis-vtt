@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import cardBg from '../../assets/dice-roll/card-bg.png'
 import d6Icon from '../../assets/dice-roll/d6-icon.png'
@@ -6,6 +6,7 @@ import d8Icon from '../../assets/dice-roll/d8-icon.png'
 import d10Icon from '../../assets/dice-roll/d10-icon.png'
 import d12Icon from '../../assets/dice-roll/d12-icon.png'
 import d20Icon from '../../assets/dice-roll/d20-icon.png'
+import { dentroDaMesa, tocarSom } from '../../lib/sons'
 
 const DIE_ICON: Record<number, string> = { 6: d6Icon, 8: d8Icon, 10: d10Icon, 12: d12Icon, 20: d20Icon }
 export const DIE_COLOR: Record<number, string> = { 4: '#3b6fd6', 6: '#12786a', 8: '#8a721f', 10: '#d1571f', 12: '#249c3d', 20: '#7c4fe0' }
@@ -104,8 +105,15 @@ export function RollCard({
   const [revealed, setRevealed] = useState(semRolagem)
   const [flipping, setFlipping] = useState(false)
 
+  // Rolou: o som do dado (dentro da mesa quem toca é a mesa, junto com os dados 3D).
+  useEffect(() => {
+    if (!semRolagem && !dentroDaMesa()) tocarSom('dado')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function toggle() {
     if (flipping || semRolagem) return
+    tocarSom('virar')
     setFlipping(true)
     setTimeout(() => {
       setRevealed((v) => !v)

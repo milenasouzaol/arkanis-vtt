@@ -82,4 +82,4 @@ _KAN-1 a KAN-3 são as tarefas de exemplo que o próprio Jira criou ao montar o 
 | [KAN-57](KAN-57-rituais-de-arma.md) | Ficha: rituais que encantam arma | back + front | em análise | [KAN-57](https://arkaniss.atlassian.net/browse/KAN-57) |
 | [KAN-58](KAN-58-interludio-relaxar.md) | Interlúdio: Relaxar com mais gente | front | em análise | [KAN-58](https://arkaniss.atlassian.net/browse/KAN-58) |
 | [KAN-59](KAN-59-lanterna-escuridao.md) | Mesa: Lanterna do token (comum e UV) e Áreas de Escuridão | back + front | em análise | [KAN-59](https://arkaniss.atlassian.net/browse/KAN-59) |
-| [KAN-60](KAN-60-dados-3d-sonoplastia.md) | Mesa: dados 3D na tela e sonoplastia | front | em andamento | [KAN-60](https://arkaniss.atlassian.net/browse/KAN-60) |
+| [KAN-60](KAN-60-dados-3d-sonoplastia.md) | Mesa: dados 3D na tela e sonoplastia | front | em análise | [KAN-60](https://arkaniss.atlassian.net/browse/KAN-60) |

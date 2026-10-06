@@ -1,7 +1,7 @@
 ---
 id: KAN-60
 titulo: "Mesa: dados 3D na tela e sonoplastia"
-status: em andamento
+status: em análise
 spec: docs/VTT_Mesa.md (12.13b)
 ---
 
