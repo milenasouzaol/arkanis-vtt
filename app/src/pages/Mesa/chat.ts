@@ -288,6 +288,7 @@ export function resumoDaMensagem(m: Pick<Mensagem, 'conteudo' | 'rolagem' | 'aca
   let texto = ''
   if (m.acao?.tipo === 'ataque') texto = `está atacando ${m.acao.alvos.map((a) => a.nome).join(', ')}`
   else if (m.acao?.tipo === 'cura') texto = `está usando ${m.acao.fonte} em ${m.acao.alvos.map((a) => a.nome).join(', ')}`
+  else if (m.acao?.tipo === 'interacao') texto = m.acao.texto
   else if (m.rolagem) texto = m.rolagem.sem_rolagem ? m.rolagem.label : `${m.rolagem.label}: ${m.rolagem.total}`
   else if (m.conteudo) {
     texto = m.conteudo

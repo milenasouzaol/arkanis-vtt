@@ -1,8 +1,8 @@
 import { createContext, useContext, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronRight, faCrosshairs, faDiceD20, faBurst, faHeartPulse, faPersonRunning, faRotateLeft, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
+import { faBriefcase, faChevronDown, faChevronRight, faCrosshairs, faDiceD20, faBurst, faHeartPulse, faPersonRunning, faRotateLeft, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
 import type { Mensagem } from './chat'
-import { nomeDoTipo, SIGLA_RECURSO, textoDosAlvos, type AcaoAtaque, type AcaoCura } from './mira'
+import { nomeDoTipo, SIGLA_RECURSO, textoDosAlvos, type AcaoAtaque, type AcaoCura, type AcaoInteracao } from './mira'
 import PartesDoDano from './PartesDoDano'
 import { reagirAoAtaque, rolarAtaqueDaMensagem, rolarCuraDaMensagem, rolarDanoDaMensagem, rolarTesteDaCura } from './acoesDeMira'
 
@@ -21,6 +21,7 @@ export const QuemVeContexto = createContext<QuemVe | null>(null)
 export default function AcaoNoChat({ mensagem }: { mensagem: Mensagem }) {
   const acao = mensagem.acao
   if (!acao) return null
+  if (acao.tipo === 'interacao') return <CartaoInteracao acao={acao} />
   return acao.tipo === 'cura' ? <CartaoCura mensagem={mensagem} acao={acao} /> : <CartaoAtaque mensagem={mensagem} acao={acao} />
 }
 
@@ -242,6 +243,60 @@ function CartaoCura({ mensagem, acao }: { mensagem: Mensagem; acao: AcaoCura }) 
         )
       )}
       {erro && <p className="chat-acao-erro" role="alert">{erro}</p>}
+    </div>
+  )
+}
+
+// Interação com um item da mesa (KAN-53): o que a pessoa fez, o teste (com a DT) e o resultado.
+function CartaoInteracao({ acao }: { acao: AcaoInteracao }) {
+  const [verDados, setVerDados] = useState(false)
+  const t = acao.teste
+  return (
+    <div className="chat-acao chat-interacao">
+      <p className="chat-acao-titulo">
+        {acao.imagem ? <img className="chat-interacao-imagem" src={acao.imagem} alt="" /> : <FontAwesomeIcon icon={faBriefcase} />}
+        <span><strong>{acao.item}</strong> · {acao.atividade}<br />{acao.texto}</span>
+      </p>
+      {t && (
+        <>
+          <p className="chat-rolagem-rotulo">Teste de {t.nome}{t.dt !== null ? ` (DT ${t.dt})` : ''}</p>
+          <button type="button" className="chat-rolagem-total" aria-expanded={verDados} onClick={() => setVerDados((v) => !v)}>
+            <span>{t.total}</span>
+            <FontAwesomeIcon icon={verDados ? faChevronDown : faChevronRight} />
+          </button>
+          {verDados && (
+            <div className="chat-rolagem-dados">
+              {t.rolls.map((v, i) => <span key={i} className={`chat-dado${v !== t.kept ? ' descartado' : ''}`} title="d20">{v}</span>)}
+              {t.bonus ? <span className="chat-rolagem-bonus">{t.bonus > 0 ? `+${t.bonus}` : t.bonus}</span> : null}
+            </div>
+          )}
+          <p className={`chat-interacao-resultado${t.passou ? ' passou' : ' falhou'}`}>{t.passou ? 'Passou' : 'Falhou'}</p>
+        </>
+      )}
+      {acao.rolagem && (
+        <>
+          <p className="chat-rolagem-rotulo">{acao.rolagem.rotulo}</p>
+          <button type="button" className="chat-rolagem-total" aria-expanded={verDados} onClick={() => setVerDados((v) => !v)}>
+            <span>{acao.rolagem.total}</span>
+            <FontAwesomeIcon icon={verDados ? faChevronDown : faChevronRight} />
+          </button>
+          {verDados && !t && (
+            <div className="chat-rolagem-dados">
+              {acao.rolagem.dados.map((d, i) => <span key={i} className="chat-dado" title={`d${d.sides}`}>{d.value}</span>)}
+            </div>
+          )}
+        </>
+      )}
+      {acao.alvos && acao.alvos.length > 0 && (
+        <ul className="chat-acao-alvos">
+          {acao.alvos.map((a, i) => (
+            <li key={i} className="acertou">
+              <span className="chat-acao-alvo">{a.nome}</span>
+              <span className="chat-acao-dano">{a.texto}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

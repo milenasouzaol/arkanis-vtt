@@ -149,7 +149,7 @@ export async function rolarTesteDaCura(m: Mensagem): Promise<string | null> {
 }
 
 // Máximo de Vida/Sanidade/PE do alvo (a mesma conta das barras da ficha).
-async function maximoDoAlvo(d: DadosDoAlvo, recurso: Recurso): Promise<number | null> {
+export async function maximoDoAlvo(d: DadosDoAlvo, recurso: Recurso): Promise<number | null> {
   if (d.tipo === 'criatura') return recurso === 'pv' ? d.pv_maximo ?? null : null
   if (d.tipo !== 'ficha') return null
   if (recurso === 'pv' && d.max_pv_override != null) return d.max_pv_override

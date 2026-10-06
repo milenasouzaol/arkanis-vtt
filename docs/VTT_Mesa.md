@@ -216,6 +216,9 @@ Uso: arrastar da lista pra mesa; clicar dispara a interação e manda pro chat (
 - **Requisição**: categoria do sistema (OP: 0, I–IV, limitada pela patente) e/ou preço em dinheiro (os dois valem na Loja).
 - Na mesa: um token/objeto pode representar um item (baú no mapa, NPC vendedor ligado a uma Loja); clicar abre a janela de interação; só interage quem tiver um token dentro do alcance da atividade (o mestre sempre).
 - Ordem de construção: base + baú com teste → loja → efeitos visuais.
+- **Na mesa (feito):** arrastar o item da aba Itens pra mesa (entra no tamanho da imagem; sem imagem, uma maleta). Botão direito num token/objeto (mestre) → **Vincular Item** liga qualquer token a um item (ex.: NPC vendedor). Jogador **clica** no item pra interagir; o mestre usa o **duplo clique** ou **botão direito → Interagir**.
+- **Janela de interação:** imagem, descrição e um botão por atividade que dispara Ao Clicar. Botão trava se o token do jogador estiver longe (alcance da atividade, pelos quadrados da grade) ou se acabaram os usos. Os testes rolam pela ficha (adaptador do sistema); o encadeamento roda sozinho; Abrir Contêiner mostra o conteúdo com **Pegar** (vai pro inventário da ficha como item próprio); Dano/Cura/Ataque aplicam nos alvos (resistências e máximos da ficha); Mostrar Documento abre o texto/imagem; cada passo vira um cartão no chat (teste com DT e PASSOU/FALHOU).
+- Sumonar só avisa no chat (o mestre coloca a ameaça); Transformar troca a imagem do token de quem interagiu.
 
 ### 12.11 Barra Direita — Diário (7º ícone, livro)
 Anotações/handouts gerais (motor genérico). **Criar Entrada**, **Criar Pasta**, busca "Procurar Registros de Diário", ordem alfabética ou recência. Criar Entrada pede Nome ("Registro de Diário").

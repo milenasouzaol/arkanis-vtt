@@ -69,7 +69,20 @@ export type AcaoCura = {
   }
 }
 
-export type Acao = AcaoAtaque | AcaoCura
+// Alguém interagiu com um item da mesa (KAN-53): um passo por mensagem.
+export type AcaoInteracao = {
+  tipo: 'interacao'
+  item: string
+  imagem: string | null
+  atividade: string
+  texto: string // "tentou Arrombar", "abriu o Baú Velho"
+  teste?: { nome: string; rolls: number[]; kept: number; bonus: number; total: number; dt: number | null; passou: boolean }
+  rolagem?: { rotulo: string; total: number; dados: { sides: number; value: number }[] }
+  alvos?: { nome: string; texto: string }[] // "−7 PV", "+5 PV", "errou"
+  estado: Record<string, never>
+}
+
+export type Acao = AcaoAtaque | AcaoCura | AcaoInteracao
 
 // O que o banco devolve sobre o alvo (dados_do_alvo).
 export type DadosDoAlvo =

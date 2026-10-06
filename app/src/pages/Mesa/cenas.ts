@@ -238,6 +238,7 @@ export type ObjetoCena = {
   lanterna?: 'comum' | 'uv' | null // lanterna do token, ligada (pedido da Millie, 05/10)
   so_uv?: boolean // pros jogadores, só aparece na luz UV
   lanterna_ajuste?: { ox: number; oy: number; angulo: number } | null // Configurar Lanterna (seta)
+  item_id?: string | null // item interativo que este token/objeto representa (KAN-53)
   created_at: string
 }
 

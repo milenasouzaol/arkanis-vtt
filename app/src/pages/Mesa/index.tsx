@@ -18,6 +18,7 @@ import PainelPlaylist from './PainelPlaylist'
 import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
 import PainelItens, { CriarItem } from './PainelItens'
 import FichaItem from './FichaItem'
+import JanelaInteracao from './JanelaInteracao'
 import { useItens } from './useItens'
 import { nivelNoItem } from './itens'
 import { usePosicionaveis } from './usePosicionaveis'
@@ -58,6 +59,9 @@ import {
   type CategoriaEsquerda,
   type Membro,
 } from './mesa'
+
+// Item sem imagem colocado na mesa: uma maleta simples (o mestre pode trocar a imagem na ficha).
+const IMAGEM_ITEM_SEM_FOTO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="8" y="26" width="84" height="62" rx="8" fill="#2b2e38" stroke="#b9a46f" stroke-width="4"/><path d="M36 26V18a6 6 0 0 1 6-6h16a6 6 0 0 1 6 6v8" fill="none" stroke="#b9a46f" stroke-width="4"/><rect x="8" y="48" width="84" height="6" fill="#b9a46f"/></svg>')
 
 type Campanha = {
   id: string
@@ -160,6 +164,8 @@ export default function Mesa() {
   const [pastaItem, setPastaItem] = useState<{ pai: string | null; editando?: Pasta } | null>(null)
   const [itensAbertos, setItensAbertos] = useState<string[]>([])
   const [propriedadeItem, setPropriedadeItem] = useState<string | null>(null)
+  // Interagindo com um item da mesa: o token dele e o tamanho do quadrado (pro alcance).
+  const [interagindo, setInteragindo] = useState<{ tokenId: string; celula: { w: number; h: number } } | null>(null)
   // Posicionáveis (12.6): armazém do mestre.
   const posicionaveis = usePosicionaveis(pronta?.campanha.id, !!pronta && pronta.campanha.owner_id === userId)
   const [categoriaPosicionavel, setCategoriaPosicionavel] = useState<CategoriaPosicionavel>('token')
@@ -393,6 +399,21 @@ export default function Mesa() {
     avisar(null)
   }
 
+  // ---- Itens na mesa (KAN-53) ----
+
+  // Item arrastado da aba Itens: entra no tamanho da imagem dele (sem imagem, um quadrado da grade).
+  async function colocarItem(itemId: string, ponto: { x: number; y: number }) {
+    const i = itens.itens.find((x) => x.id === itemId)
+    const atual = cenas.atual
+    if (!i || !atual) return
+    const url = i.image_url ?? IMAGEM_ITEM_SEM_FOTO
+    const nat = i.image_url ? await tamanhoDaImagem(i.image_url) : { w: 0, h: 0 }
+    await objetos.criar({
+      scene_id: atual.id, campaign_id: campanha.id, name: i.name, image_url: url, item_id: i.id, layer: 'mapa',
+      ...caixaNoPonto(ponto, nat.w || atual.grid_size, nat.h || atual.grid_size),
+    })
+  }
+
   // ---- Posicionáveis (12.6) ----
 
   // Arrastou da aba pra mesa: entra uma cópia onde soltou.
@@ -610,6 +631,9 @@ export default function Mesa() {
         pedidoPaletaSom={pedidoPaletaSom}
         pedidoLimparSom={pedidoLimparSom}
         pedidoLimparEscuridao={pedidoLimparEscuridao}
+        onInteragir={(o, celula) => setInteragindo({ tokenId: o.id, celula })}
+        onColocarItem={colocarItem}
+        itensDaCampanha={itens.itens}
         ehMeuToken={(o) => {
           if (o.character_id && o.character_id === eu?.personagemId) return true
           const a = o.actor_id ? atores.atores.find((x) => x.id === o.actor_id) : undefined
@@ -874,6 +898,31 @@ export default function Mesa() {
           onFechar={() => setCriandoAtor(null)}
         />
       )}
+
+      {(() => {
+        const t = interagindo && objetos.objetos.find((o) => o.id === interagindo.tokenId)
+        if (!interagindo || !t || !cenas.atual) return null
+        // Quem interage: o token do personagem do jogador mais perto do item (o mestre não precisa).
+        const meus = objetos.objetos.filter((o) => o.character_id && o.character_id === eu?.personagemId)
+        const centro = (o: { x: number; y: number; width: number; height: number }) => [o.x + o.width / 2, o.y + o.height / 2]
+        const [ix, iy] = centro(t)
+        const meuToken = meus.sort((a, b) => Math.hypot(centro(a)[0] - ix, centro(a)[1] - iy) - Math.hypot(centro(b)[0] - ix, centro(b)[1] - iy))[0] ?? null
+        return (
+          <JanelaInteracao
+            key={t.id}
+            token={t}
+            objetos={objetos.objetos}
+            meuToken={meuToken}
+            characterId={souMestre ? null : eu?.personagemId ?? null}
+            souMestre={souMestre}
+            sistemaId={campanha.system}
+            celula={interagindo.celula}
+            metrosPorQuadrado={cenas.atual.grid_distance || 1.5}
+            meusAlvos={alvosComNome.map((a) => a.token_id)}
+            onFechar={() => setInteragindo(null)}
+          />
+        )
+      })()}
 
       {criandoItem && (
         <CriarItem

@@ -1,0 +1,306 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faBriefcase, faHandHolding, faLock } from '@fortawesome/free-solid-svg-icons'
+import Janela from './Janela'
+import { supabase } from '../../lib/supabase'
+import { sistemaDe } from '../../sistemas'
+import { sanitizarHtml } from './chat'
+import type { ObjetoCena } from './cenas'
+import { ICONE_ATIVIDADE } from './FichaItem'
+import { atividadeCompleta, TEM_TESTE, type Atividade, type ItemMesa } from './itens'
+import { botoesDaInteracao, dentroDoAlcance, distanciaEmMetros, passouNoTeste, proximas, semUsos } from './interacao'
+import { dadosDoAlvo, maximoDoAlvo } from './acoesDeMira'
+import { danoNoAlvo, defesaDoAlvo, perfilDoAlvo, rolarAtaque, rolarCura, rolarDanoDoAtaque, type AcaoInteracao, type Recurso } from './mira'
+
+type ItemDoToken = ItemMesa & { conteudo_detalhado: { item_id: string; quantidade: number; name: string; image_url: string | null; carga: number }[] }
+type Registro = Omit<AcaoInteracao, 'tipo' | 'estado' | 'item' | 'imagem'>
+
+const motivo = (e: { message?: string } | null) => (e ? e.message || 'Não deu certo.' : null)
+
+// Janela de interação (KAN-53, parte 2): clicou num item da mesa (baú, porta, armadilha…),
+// abre esta janelinha com a imagem, a descrição e as ações. Roda a atividade escolhida e o que
+// vem depois (Se passar / Se falhar / Em seguida); cada passo vai pro chat.
+export default function JanelaInteracao({ token, objetos, meuToken, characterId, souMestre, sistemaId, celula, metrosPorQuadrado, meusAlvos, onFechar }: {
+  token: ObjetoCena // o item na mesa
+  objetos: ObjetoCena[] // tokens da cena (pros alvos)
+  meuToken: ObjetoCena | null // de quem interage
+  characterId: string | null // a ficha de quem interage (pros testes e o inventário)
+  souMestre: boolean
+  sistemaId: string | null | undefined
+  celula: { w: number; h: number }
+  metrosPorQuadrado: number
+  meusAlvos: string[]
+  onFechar: () => void
+}) {
+  const sistema = sistemaDe(sistemaId)
+  const [item, setItem] = useState<ItemDoToken | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const [log, setLog] = useState<string[]>([])
+  const [ocupado, setOcupado] = useState(false)
+  const [conteudoAberto, setConteudoAberto] = useState(false)
+  const [documento, setDocumento] = useState(false)
+  const vivo = useRef(true)
+  useEffect(() => () => { vivo.current = false }, [])
+
+  const carregar = useCallback(async () => {
+    const { data, error } = await supabase.rpc('item_do_token', { p_token_id: token.id })
+    if (!vivo.current) return null
+    if (error) {
+      setErro(motivo(error))
+      return null
+    }
+    const i = data as ItemDoToken
+    const completo = { ...i, atividades: (i.atividades ?? []).map(atividadeCompleta), conteudo_detalhado: i.conteudo_detalhado ?? [] }
+    setItem(completo)
+    return completo
+  }, [token.id])
+
+  useEffect(() => { carregar() }, [carregar])
+
+  const distancia = meuToken ? distanciaEmMetros(meuToken, token, celula, metrosPorQuadrado) : null
+  const metrosDoAlcance = (a: Atividade) => sistema.alcances.find((x) => x.id === a.ativacao.alcance)?.metros ?? null
+  const alcanceOk = (a: Atividade) => souMestre || dentroDoAlcance(distancia, metrosDoAlcance(a))
+
+  async function postar(r: Registro) {
+    if (!item) return
+    const acao = { item: item.name, imagem: item.image_url, ...r }
+    await supabase.rpc('postar_interacao', { p_token_id: token.id, p_character_id: characterId, p_acao: acao })
+  }
+
+  // Quem a atividade atinge.
+  function alvosDe(a: Atividade): ObjetoCena[] {
+    const tokens = objetos.filter((o) => o.layer !== 'mapa' && (souMestre || o.layer !== 'mestre'))
+    switch (a.ativacao.alvos) {
+      case 'quem_tocou': return meuToken ? [meuToken] : []
+      case 'jogadores': return tokens.filter((o) => o.character_id)
+      case 'todos': return tokens
+      case 'mira': return tokens.filter((o) => meusAlvos.includes(o.id))
+      default: return []
+    }
+  }
+
+  async function testar(nome: string, t: { pericia: string; atributo: string; dt: number | null }) {
+    const base = characterId ? await sistema.testeDoPersonagem(characterId, t.pericia, t.atributo) : null
+    const teste = base ?? { nome: t.pericia || nome, dados: 1, bonus: 0 }
+    const r = sistema.rolarTeste(teste)
+    return { nome: teste.nome, ...r, dt: t.dt, passou: passouNoTeste(r.total, t.dt) }
+  }
+
+  // Dano/cura num alvo, com as resistências dele (dano) ou até o máximo (cura).
+  async function aplicar(a: Atividade, alvo: ObjetoCena, valor: number, tipoOuRecurso: string, cura: boolean): Promise<string> {
+    const d = await dadosDoAlvo(alvo.id)
+    if (!d) return 'sem ficha'
+    if (cura) {
+      const recurso = tipoOuRecurso as Recurso
+      const max = await maximoDoAlvo(d, recurso)
+      const { error } = await supabase.rpc('aplicar_por_item', { p_token_id: token.id, p_atividade_id: a.id, p_alvo_token: alvo.id, p_recurso: recurso, p_valor: -valor, p_maximo: max })
+      return error ? motivo(error)! : `+${valor} ${recurso.toUpperCase()}`
+    }
+    const r = danoNoAlvo([{ valor, tipo: tipoOuRecurso }], perfilDoAlvo(d))
+    for (const [recurso, v] of [['pv', r.pv], ['san', r.san]] as const) {
+      if (!v) continue
+      const { error } = await supabase.rpc('aplicar_por_item', { p_token_id: token.id, p_atividade_id: a.id, p_alvo_token: alvo.id, p_recurso: recurso, p_valor: v, p_maximo: null })
+      if (error) return motivo(error)!
+    }
+    const partes = [r.pv ? `−${r.pv} PV` : '', r.san ? `−${r.san} SAN` : ''].filter(Boolean).join(' ')
+    return partes || (r.motivos.length ? r.motivos.join(', ') : 'sem dano')
+  }
+
+  // Roda uma atividade e o que vem depois dela.
+  async function rodar(a: Atividade, lista: Atividade[], jaRodaram: Set<string>) {
+    jaRodaram.add(a.id)
+    const { error } = await supabase.rpc('usar_atividade', { p_token_id: token.id, p_atividade_id: a.id })
+    if (error) {
+      setErro(motivo(error))
+      return
+    }
+    let passou: boolean | null = null
+    const nome = a.nome
+    const extra = a.textoChat ? ` ${a.textoChat}` : ''
+
+    switch (a.tipo) {
+      case 'checar': {
+        const t = await testar(nome, a.checar!)
+        passou = t.passou
+        await postar({ atividade: nome, texto: `tentou ${nome}.${extra}`, teste: t })
+        setLog((l) => [...l, `${nome}: ${t.total}${t.dt !== null ? ` contra DT ${t.dt}` : ''} → ${t.passou ? 'passou' : 'falhou'}`])
+        break
+      }
+      case 'ritual': {
+        const r = a.ritual!
+        const t = await testar(nome, r.evitar)
+        passou = t.passou
+        await postar({ atividade: nome, texto: `ativou ${sistema.magia.nome.toLowerCase()} ${r.ritual || ''}; teste pra evitar.${extra}`, teste: t })
+        setLog((l) => [...l, `${r.ritual || nome}: ${t.passou ? 'evitou' : 'não evitou'}`])
+        break
+      }
+      case 'ataque': {
+        const x = a.ataque!
+        const ataque = { nome, dados: 1, bonus: x.bonus, margem: 20, multiplicador: 2, partes: x.dano ? [{ formula: x.dano, tipo: x.tipoDano }] : [], bonus_dano: 0, corpo: x.alcance === 'corpo' }
+        const rol = rolarAtaque(ataque)
+        const alvos = alvosDe(a)
+        const linhas: { nome: string; texto: string }[] = []
+        let acertou = false
+        const dano = ataque.partes.length ? rolarDanoDoAtaque(ataque, rol.critico) : null
+        for (const alvo of alvos) {
+          const d = await dadosDoAlvo(alvo.id)
+          const def = d ? defesaDoAlvo(d) : null
+          const acerto = def === null || rol.total >= def
+          acertou ||= acerto
+          linhas.push({ nome: alvo.name ?? 'Alvo', texto: acerto ? (dano ? await aplicar(a, alvo, dano.total, x.tipoDano, false) : 'acertou') : 'errou' })
+        }
+        passou = acertou
+        await postar({ atividade: nome, texto: `atacou${alvos.length ? '' : ' (sem alvo)'}.${extra}`, rolagem: { rotulo: `Ataque${rol.critico ? ' (crítico!)' : ''}`, total: rol.total, dados: rol.rolls.map((v) => ({ sides: 20, value: v })) }, alvos: linhas })
+        setLog((l) => [...l, `${nome}: ${rol.total} → ${acertou ? 'acertou' : 'errou'}`])
+        break
+      }
+      case 'dano':
+      case 'cura': {
+        const cura = a.tipo === 'cura'
+        const formula = cura ? a.cura!.formula : a.dano!.formula
+        const r = rolarCura(formula)
+        if (!r) {
+          setErro(`Não deu pra rolar "${formula}".`)
+          return
+        }
+        const linhas: { nome: string; texto: string }[] = []
+        for (const alvo of alvosDe(a)) linhas.push({ nome: alvo.name ?? 'Alvo', texto: await aplicar(a, alvo, r.total, cura ? a.cura!.recurso : a.dano!.tipoDano, cura) })
+        await postar({ atividade: nome, texto: `${cura ? 'curou' : 'causou dano'}.${extra}`, rolagem: { rotulo: `${cura ? 'Cura' : 'Dano'}: ${formula}`, total: r.total, dados: r.dados }, alvos: linhas })
+        setLog((l) => [...l, `${nome}: ${r.total}`])
+        break
+      }
+      case 'conteiner':
+        await carregar()
+        setConteudoAberto(true)
+        await postar({ atividade: nome, texto: `abriu ${item?.name ?? 'o item'}.${extra}` })
+        setLog((l) => [...l, `${nome}: aberto`])
+        break
+      case 'documento':
+        setDocumento(true)
+        await postar({ atividade: nome, texto: `leu ${item?.name ?? 'o item'}.${extra}` })
+        break
+      case 'sumonar': {
+        const s = a.sumonar!
+        await postar({ atividade: nome, texto: `fez surgir ${s.quantidade}× ${s.ameaca || 'ameaça'}! (o mestre coloca na mesa)${extra}` })
+        setLog((l) => [...l, `${nome}: ${s.quantidade}× ${s.ameaca}`])
+        break
+      }
+      case 'transformar': {
+        const t = a.transformar!
+        if (meuToken && t.imagem) {
+          const { error: e2 } = await supabase.rpc('trocar_variacao', { p_token_id: meuToken.id, p_url: t.imagem, p_altura: null })
+          if (e2) setErro(motivo(e2))
+        }
+        await postar({ atividade: nome, texto: `foi transformado${t.duracao ? ` (${t.duracao})` : ''}.${extra}` })
+        break
+      }
+    }
+
+    for (const p of proximas(a, TEM_TESTE.includes(a.tipo) ? passou : null, lista, jaRodaram)) {
+      if (!vivo.current) return
+      await rodar(p, lista, jaRodaram)
+    }
+  }
+
+  async function clicar(a: Atividade) {
+    if (!item) return
+    setErro(null)
+    setOcupado(true)
+    try {
+      await rodar(a, item.atividades, new Set())
+      await carregar()
+    } finally {
+      if (vivo.current) setOcupado(false)
+    }
+  }
+
+  async function pegar(c: ItemDoToken['conteudo_detalhado'][number]) {
+    if (!characterId) {
+      setErro('Pra pegar itens, você precisa de um personagem com ficha.')
+      return
+    }
+    setOcupado(true)
+    const { error } = await supabase.rpc('pegar_do_conteiner', { p_token_id: token.id, p_item_id: c.item_id, p_character_id: characterId, p_quantidade: 1 })
+    if (error) setErro(motivo(error))
+    else {
+      await postar({ atividade: 'Pegar', texto: `pegou ${c.name}.` })
+      setLog((l) => [...l, `Pegou ${c.name} (foi pro inventário)`])
+      await carregar()
+    }
+    if (vivo.current) setOcupado(false)
+  }
+
+  const botoes = item ? botoesDaInteracao(item.atividades) : []
+
+  return (
+    <Janela titulo={item?.name ?? token.name ?? 'Item'} icone={faBriefcase} largura={420} inicial={{ x: Math.max(16, window.innerWidth / 2 - 210), y: 90 }} className="janela-interacao" onFechar={onFechar}>
+      {!item && !erro && <p className="item-vazio">Abrindo…</p>}
+      {item && (
+        <div className="interacao">
+          <div className="interacao-topo">
+            <span className="interacao-imagem">{item.image_url ? <img src={item.image_url} alt="" /> : <FontAwesomeIcon icon={faBriefcase} />}</span>
+            {item.descricao && <div className="interacao-descricao" dangerouslySetInnerHTML={{ __html: sanitizarHtml(item.descricao) }} />}
+          </div>
+
+          {botoes.length > 0 && (
+            <div className="interacao-acoes">
+              {botoes.map((a) => {
+                const longe = !alcanceOk(a)
+                const acabou = semUsos(a)
+                const rotuloAlcance = sistema.alcances.find((x) => x.id === a.ativacao.alcance)?.rotulo
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    className="interacao-acao"
+                    disabled={ocupado || longe || acabou}
+                    title={acabou ? 'Sem usos' : longe ? `Chegue mais perto (alcance: ${rotuloAlcance})` : a.nome}
+                    onClick={() => clicar(a)}
+                  >
+                    {a.icone ? <img src={a.icone} alt="" /> : <FontAwesomeIcon icon={ICONE_ATIVIDADE[a.tipo]} />}
+                    <span>{a.nome}</span>
+                    {(longe || acabou) && <small><FontAwesomeIcon icon={faLock} /> {acabou ? 'Sem usos' : `Chegue mais perto (${rotuloAlcance})`}</small>}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {!botoes.length && !conteudoAberto && <p className="item-vazio">Nada pra fazer aqui.</p>}
+          {!meuToken && !souMestre && <p className="item-dica">Você precisa de um token seu nesta cena pra interagir.</p>}
+
+          {log.length > 0 && (
+            <ul className="interacao-log">
+              {log.map((l, i) => <li key={i}>{l}</li>)}
+            </ul>
+          )}
+
+          {conteudoAberto && (
+            <section className="interacao-conteudo">
+              <h3>Conteúdo</h3>
+              {item.conteudo_detalhado.length ? (
+                <ul>
+                  {item.conteudo_detalhado.map((c) => (
+                    <li key={c.item_id}>
+                      <span className="interacao-conteudo-imagem">{c.image_url ? <img src={c.image_url} alt="" /> : <FontAwesomeIcon icon={faBriefcase} />}</span>
+                      <span className="interacao-conteudo-nome">{c.name}{c.quantidade > 1 ? ` ×${c.quantidade}` : ''}</span>
+                      <button type="button" className="janela-botao" disabled={ocupado} onClick={() => pegar(c)}><FontAwesomeIcon icon={faHandHolding} /> Pegar</button>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="item-vazio">Vazio.</p>}
+            </section>
+          )}
+
+          {documento && (
+            <section className="interacao-documento">
+              {item.efeitos?.imagem && <img src={item.efeitos.imagem} alt="" />}
+              {item.efeitos?.documento && <div dangerouslySetInnerHTML={{ __html: sanitizarHtml(item.efeitos.documento) }} />}
+              {!item.efeitos?.imagem && !item.efeitos?.documento && <p className="item-vazio">Não tem nada escrito.</p>}
+            </section>
+          )}
+        </div>
+      )}
+      {erro && <p className="chat-acao-erro" role="alert">{erro}</p>}
+    </Janela>
+  )
+}
