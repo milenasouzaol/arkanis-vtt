@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronRight, type IconDefinition } from '@fortawesome/free-solid-svg-icons'
 
@@ -31,14 +31,26 @@ function Lista({ itens, onFechar, subAEsquerda, style, raiz }: {
   style?: React.CSSProperties
   raiz?: boolean
 }) {
-  const [aberto, setAberto] = useState<number | null>(null)
+  const [aberto, setAbertoAgora] = useState<number | null>(null)
+  // Sair do item espera um instante antes de fechar o submenu: o mouse atravessa o vão (e a
+  // diagonal) até o submenu sem ele sumir (bug que a Millie achou, 06/10).
+  const fechar = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(fechar.current), [])
+  const setAberto = (i: number | null) => {
+    window.clearTimeout(fechar.current)
+    setAbertoAgora(i)
+  }
+  const fecharDepois = (i: number) => {
+    window.clearTimeout(fechar.current)
+    fechar.current = window.setTimeout(() => setAbertoAgora((a) => (a === i ? null : a)), 300)
+  }
   return (
     <ul className={`menu-ctx${raiz ? ' raiz' : ` sub${subAEsquerda ? ' esquerda' : ''}`}`} role="menu" style={style} onContextMenu={(e) => e.preventDefault()}>
       {itens.map((item, i) => {
         if (item.tipo === 'linha') return <li key={i} className="menu-ctx-linha" role="separator" />
         if (item.tipo === 'sub') {
           return (
-            <li key={i} className="menu-ctx-item" onMouseEnter={() => setAberto(i)} onMouseLeave={() => setAberto((a) => (a === i ? null : a))}>
+            <li key={i} className="menu-ctx-item" onMouseEnter={() => setAberto(i)} onMouseLeave={() => fecharDepois(i)}>
               <button type="button" role="menuitem" aria-haspopup="true" aria-expanded={aberto === i} onClick={() => setAberto(i)}>
                 {item.icone && <FontAwesomeIcon icon={item.icone} fixedWidth />} <span>{item.rotulo}</span>
                 <FontAwesomeIcon icon={faChevronRight} className="menu-ctx-seta" />
@@ -48,7 +60,7 @@ function Lista({ itens, onFechar, subAEsquerda, style, raiz }: {
           )
         }
         return (
-          <li key={i} className="menu-ctx-item" onMouseEnter={() => setAberto(null)}>
+          <li key={i} className="menu-ctx-item" onMouseEnter={() => aberto !== null && fecharDepois(aberto)}>
             <button
               type="button"
               role="menuitem"
