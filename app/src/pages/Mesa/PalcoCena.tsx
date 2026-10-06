@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   faArrowDownWideShort, faArrowUpWideShort, faBullseye, faCopy, faCrosshairs, faLayerGroup, faLock, faLockOpen, faObjectGroup,
-  faObjectUngroup, faPaste, faLightbulb, faEye, faBriefcase, faHandPointer, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear,
+  faObjectUngroup, faPaste, faLightbulb, faEye, faBriefcase, faHandPointer, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear, faPenToSquare,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import EfeitoClimatico from './EfeitoClimatico'
@@ -51,7 +51,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, ehMeuToken, onInteragir, onColocarItem, itensDaCampanha = [], onColocarPosicionavel, onGuardarPosicionaveis }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, ehMeuToken, onInteragir, onColocarItem, itensDaCampanha = [], onEditarItem, podeEditarItem, onColocarPosicionavel, onGuardarPosicionaveis }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -93,7 +93,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   // o mestre liga um item a qualquer token (Vincular Item).
   onInteragir?: (o: ObjetoCena, celula: { w: number; h: number }) => void
   onColocarItem?: (itemId: string, ponto: { x: number; y: number }) => void
-  itensDaCampanha?: { id: string; name: string }[]
+  itensDaCampanha?: { id: string; name: string; categoria?: string }[]
+  // Duplo clique / botão direito "Editar" abre a ficha do item (loja, documento, baú…) pra quem é dono dele.
+  onEditarItem?: (itemId: string) => void
+  podeEditarItem?: (itemId: string) => boolean
   // Posicionáveis (12.6): arrastar da aba pra mesa usa; da mesa pra aba guarda.
   onColocarPosicionavel?: (id: string, ponto: { x: number; y: number }) => void
   onGuardarPosicionaveis?: (itens: Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'>[]) => void
@@ -736,6 +739,22 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
 
   // ---- Menu do botão direito (12.8) ----
 
+  const podeEditar = (o: ObjetoCena | null) => !!o?.item_id && !!onEditarItem && (souMestre || !!podeEditarItem?.(o.item_id))
+  function editarItem(o: ObjetoCena): ItemMenu {
+    const cat = itensDaCampanha.find((i) => i.id === o.item_id)?.categoria
+    const rotulo = cat === 'loja' ? 'Editar Loja' : cat === 'conteiner' ? 'Editar Contêiner' : cat === 'documento' ? 'Editar Documento' : 'Editar Item'
+    return { rotulo, icone: faPenToSquare, onClick: () => onEditarItem?.(o.item_id!) }
+  }
+
+  // Duplo clique abre a configuração do que é: item (loja, documento…) → ficha do item; personagem →
+  // ficha; o resto (mestre) → Configurar Propriedade. Jogador sem ser dono do item: interage.
+  function duploClique(o: ObjetoCena) {
+    if (o.item_id && podeEditar(o)) onEditarItem?.(o.item_id)
+    else if (o.item_id) onInteragir?.(o, celula)
+    else if (o.actor_id) onAbrirFicha(o.actor_id)
+    else if (souMestre) setPropriedade(o)
+  }
+
   function itensDoMenu(): ItemMenu[] {
     if (!menu) return []
     const ping = (foco: boolean) => obj.pingar({ id: crypto.randomUUID(), x: menu.mapa.x, y: menu.mapa.y, foco, nome: nomeUsuario })
@@ -776,6 +795,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       return [
         ...pingItens,
         ...(o?.item_id ? [{ rotulo: 'Interagir', icone: faHandPointer, onClick: () => onInteragir?.(o, celula) } as ItemMenu] : []),
+        ...(o && podeEditar(o) ? [editarItem(o)] : []),
         ...doPersonagem,
         // Dono do token (jogador): também vira na horizontal/vertical (12.8).
         ...(o && !souMestre && podeMover(o)
@@ -822,7 +842,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       ...historicoItens,
       ...doPersonagem,
       { tipo: 'linha' },
-      ...(o.item_id ? [{ rotulo: 'Interagir', icone: faHandPointer, onClick: () => onInteragir?.(o, celula) } as ItemMenu] : []),
+      ...(o.item_id ? [editarItem(o), { rotulo: 'Interagir', icone: faHandPointer, onClick: () => onInteragir?.(o, celula) } as ItemMenu] : []),
       { rotulo: 'Configurar Propriedade', icone: faUserGear, onClick: () => setPropriedade(o) },
       {
         tipo: 'sub', rotulo: 'Vincular Item', icone: faBriefcase,
@@ -960,7 +980,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
                 onPointerEnter={() => (sobre.current = o.id)}
                 onPointerLeave={() => sobre.current === o.id && (sobre.current = null)}
                 onContextMenu={(e) => menuDoObjeto(e, o)}
-                onDoubleClick={() => (o.item_id ? onInteragir?.(o, celula) : o.actor_id && onAbrirFicha(o.actor_id))}
+                onDoubleClick={(e) => {
+                  // Com Desenho/Som ligados, o duplo clique é da ferramenta (fechar polígono, editar).
+                  if (desenho.ativo || som.ativo || configLanterna) return
+                  e.stopPropagation()
+                  duploClique(o)
+                }}
               >
                 <img src={o.image_url} alt={o.name ?? ''} draggable={false} style={{ transform: `scale(${o.flip_h ? -1 : 1}, ${o.flip_v ? -1 : 1})` }} />
                 {o.locked && selecionados.includes(o.id) && <FontAwesomeIcon icon={faLock} className="mesa-objeto-trava" style={{ fontSize: 16 / vista.escala }} />}

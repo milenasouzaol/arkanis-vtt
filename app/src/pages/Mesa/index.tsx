@@ -635,6 +635,11 @@ export default function Mesa() {
         onInteragir={(o, celula) => setInteragindo({ tokenId: o.id, celula })}
         onColocarItem={colocarItem}
         itensDaCampanha={itens.itens}
+        onEditarItem={(id) => setItensAbertos((l) => (l.includes(id) ? l : [...l, id]))}
+        podeEditarItem={(id) => {
+          const i = itens.itens.find((x) => x.id === id)
+          return !!i && nivelNoItem(i, userId ?? '', souMestre) === 'dono'
+        }}
         ehMeuToken={(o) => {
           if (o.character_id && o.character_id === eu?.personagemId) return true
           const a = o.actor_id ? atores.atores.find((x) => x.id === o.actor_id) : undefined
