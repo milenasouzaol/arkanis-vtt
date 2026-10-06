@@ -50,7 +50,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, onColocarPosicionavel, onGuardarPosicionaveis }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, ehMeuToken, onColocarPosicionavel, onGuardarPosicionaveis }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -86,6 +86,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   pedidoLimparSom?: number
   // Áreas de Escuridão (pedido da Millie, 05/10).
   pedidoLimparEscuridao?: number
+  // O jogador exclui o próprio token (o do personagem dele, ou de um personagem de que é dono).
+  ehMeuToken?: (o: ObjetoCena) => boolean
   // Posicionáveis (12.6): arrastar da aba pra mesa usa; da mesa pra aba guarda.
   onColocarPosicionavel?: (id: string, ponto: { x: number; y: number }) => void
   onGuardarPosicionaveis?: (itens: Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'>[]) => void
@@ -264,6 +266,18 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     [objetos, fazer],
   )
 
+  // Jogador: exclui só os tokens que são dele (sem desfazer, então pergunta antes).
+  const excluirComoDono = useCallback(
+    (ids: string[]) => {
+      const meus = objetos.filter((o) => ids.includes(o.id) && ehMeuToken?.(o))
+      if (!meus.length) return
+      if (!window.confirm(meus.length === 1 ? `Excluir o token "${meus[0].name ?? 'Token'}" da cena?` : `Excluir ${meus.length} tokens seus da cena?`)) return
+      setSelecionados([])
+      obj.excluirComoJogador(meus.map((o) => o.id))
+    },
+    [objetos, ehMeuToken, obj],
+  )
+
   const copiar = useCallback((ids: string[]) => {
     copiados.current = objetos.filter((o) => ids.includes(o.id))
   }, [objetos])
@@ -354,7 +368,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       if (!selecionados.length) return
       if (e.key === 'Escape') setSelecionados([])
       if (souMestre && ctrl && e.key.toLowerCase() === 'c') copiar(selecionados)
-      if (souMestre && (e.key === 'Delete' || e.key === 'Backspace')) eliminar(selecionados)
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (souMestre) eliminar(selecionados)
+        else excluirComoDono(selecionados)
+      }
       const d = deslocamentoDaTecla(e.key, cena?.grid_size ?? 100)
       if (d) {
         e.preventDefault()
@@ -367,7 +384,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     }
     window.addEventListener('keydown', tecla)
     return () => window.removeEventListener('keydown', tecla)
-  }, [desenho, som, focado, regua, obj, userId, nomeUsuario, selecionados, souMestre, objetos, visiveis, cena?.grid_size, podeMover, moverPor, eliminar, copiar, colar, desfazer, refazer, onAlternarAlvo, onLimparAlvos])
+  }, [desenho, som, focado, regua, obj, userId, nomeUsuario, selecionados, souMestre, objetos, visiveis, cena?.grid_size, podeMover, moverPor, eliminar, excluirComoDono, copiar, colar, desfazer, refazer, onAlternarAlvo, onLimparAlvos])
 
   // Rodinha: zoom no ponto do mouse; com Shift ou Ctrl em cima de algo selecionado, gira (12.13).
   useEffect(() => {
@@ -752,6 +769,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
                 ],
               } as ItemMenu,
               ...(o.layer !== 'mapa' ? [menuLanterna(o, (l) => lanternaComoDono(o, l))] : []),
+            ]
+          : []),
+        ...(o && !souMestre && ehMeuToken?.(o)
+          ? [
+              { tipo: 'linha' } as ItemMenu,
+              { rotulo: 'Excluir Token', icone: faTrash, perigo: true, onClick: () => excluirComoDono([o.id]) } as ItemMenu,
             ]
           : []),
         ...(souMestre

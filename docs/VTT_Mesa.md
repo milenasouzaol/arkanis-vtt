@@ -231,7 +231,7 @@ Anotações/handouts gerais (motor genérico). **Criar Entrada**, **Criar Pasta*
 Categorias no topo, ferramentas embaixo.
 
 **Controles de Token:**
-- Selecionar Tokens — clique / arrastar seleção / Shift+clique; arrastar move; Shift ou Ctrl+rolagem gira; clique direito HUD; duplo clique abre ficha; DELETE exclui; Ctrl+clique waypoint.
+- Selecionar Tokens — clique / arrastar seleção / Shift+clique; arrastar move; Shift ou Ctrl+rolagem gira; clique direito HUD; duplo clique abre ficha; DELETE exclui (o mestre, qualquer token; o jogador, só o próprio — o do personagem dele ou de um personagem de que é dono —, também pelo botão direito → Excluir Token); Ctrl+clique waypoint.
 - Selecionar Alvos — mira com **M**; qualquer um mira tokens alheios.
 - Medir Distância — em **metros**; Ctrl+clique waypoint.
 

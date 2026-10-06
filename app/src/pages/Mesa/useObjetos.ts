@@ -141,11 +141,24 @@ export function useObjetos(cenaId: string | null, onPing: (p: Ping) => void) {
     return !error
   }, [])
 
+  // Jogador exclui o próprio token pela função do banco, que confere se é dele.
+  const excluirComoJogador = useCallback(async (ids: string[]) => {
+    if (!ids.length) return true
+    let removidos: ObjetoCena[] = []
+    setObjetos((l) => {
+      removidos = l.filter((o) => ids.includes(o.id))
+      return l.filter((o) => !ids.includes(o.id))
+    })
+    const { error } = await supabase.rpc('excluir_meus_tokens', { p_ids: ids })
+    if (error) setObjetos((l) => removidos.reduce(trocar, l))
+    return !error
+  }, [])
+
   const excluirVarios = useCallback(async (ids: string[]) => {
     if (!ids.length) return
     setObjetos((l) => l.filter((o) => !ids.includes(o.id)))
     await supabase.from('scene_tokens').delete().in('id', ids)
   }, [])
 
-  return { objetos, criar, criarVarios, alterarVarios, moverComoJogador, transformarComoJogador, virarComoJogador, lanternaComoJogador, ajustarLanternaComoJogador, excluirVarios, transmitirArrasto, pingar, reguas, transmitirRegua }
+  return { objetos, criar, criarVarios, alterarVarios, moverComoJogador, transformarComoJogador, virarComoJogador, lanternaComoJogador, ajustarLanternaComoJogador, excluirComoJogador, excluirVarios, transmitirArrasto, pingar, reguas, transmitirRegua }
 }

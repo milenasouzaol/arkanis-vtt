@@ -599,6 +599,11 @@ export default function Mesa() {
         pedidoPaletaSom={pedidoPaletaSom}
         pedidoLimparSom={pedidoLimparSom}
         pedidoLimparEscuridao={pedidoLimparEscuridao}
+        ehMeuToken={(o) => {
+          if (o.character_id && o.character_id === eu?.personagemId) return true
+          const a = o.actor_id ? atores.atores.find((x) => x.id === o.actor_id) : undefined
+          return !!a && nivelNoAtor(a) === 'dono'
+        }}
         pedidoPaleta={pedidoPaleta}
         pedidoLimpar={pedidoLimpar}
         combates={combate.combates}
