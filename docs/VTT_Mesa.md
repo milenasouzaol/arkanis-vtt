@@ -209,6 +209,14 @@ Formulário: Imagem; Nome; Raridade (Comum, Incomum, Raro, Muito Raro, Lendário
 
 Uso: arrastar da lista pra mesa; clicar dispara a interação e manda pro chat ("Você encontrou [nome]").
 
+**Motor de interatividade (pedido da Millie, 06/10).** Itens e tokens interativos servem pra qualquer sistema de jogo: o que é do sistema (perícias, atributos, alcances, tipos de dano, recursos, nome da magia, categorias de requisição, como rolar um teste pela ficha) fica num adaptador em `app/src/sistemas` (hoje: Ordem Paranormal). Mesa de outro jogo = adaptador novo.
+- Atividades encadeadas: as que têm teste (Checar, Ataque, Ritual) têm **Se passar → …** e **Se falhar → …**; as outras, **Em seguida → …**. Atividade com Quando Dispara = Nenhuma só roda pelo encadeamento. Ex.: Baú: Checar Crime DT 20 → passou: Abrir Contêiner; falhou: Dano (armadilha).
+- Tipos novos: **Abrir Contêiner** (mostra o Conteúdo do item pra pegar e ir pro inventário) e **Mostrar Documento** (documento/imagem da aba Efeitos).
+- **Conteúdo** (Contêiner): itens da campanha + quantidade.
+- **Requisição**: categoria do sistema (OP: 0, I–IV, limitada pela patente) e/ou preço em dinheiro (os dois valem na Loja).
+- Na mesa: um token/objeto pode representar um item (baú no mapa, NPC vendedor ligado a uma Loja); clicar abre a janela de interação; só interage quem tiver um token dentro do alcance da atividade (o mestre sempre).
+- Ordem de construção: base + baú com teste → loja → efeitos visuais.
+
 ### 12.11 Barra Direita — Diário (7º ícone, livro)
 Anotações/handouts gerais (motor genérico). **Criar Entrada**, **Criar Pasta**, busca "Procurar Registros de Diário", ordem alfabética ou recência. Criar Entrada pede Nome ("Registro de Diário").
 - O mestre vê todos os diários, inclusive dos jogadores; libera acesso via Configurar Propriedade.

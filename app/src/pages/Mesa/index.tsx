@@ -16,6 +16,10 @@ import { useSons } from './useSons'
 import { usePlaylists } from './usePlaylists'
 import PainelPlaylist from './PainelPlaylist'
 import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
+import PainelItens, { CriarItem } from './PainelItens'
+import FichaItem from './FichaItem'
+import { useItens } from './useItens'
+import { nivelNoItem } from './itens'
 import { usePosicionaveis } from './usePosicionaveis'
 import { caixaNoPonto, CATEGORIAS_POSICIONAVEIS, ehImagem, type CategoriaPosicionavel, type Posicionavel } from './posicionaveis'
 import { tamanhoInicial, type Pasta } from './cenas'
@@ -62,6 +66,7 @@ type Campanha = {
   invite_code: string
   accent_color: string | null
   active_scene_id: string | null
+  system: string // sistema de jogo (src/sistemas)
 }
 
 type Estado =
@@ -91,7 +96,7 @@ export default function Mesa() {
       // RLS só devolve a campanha pra quem é dono ou membro.
       const { data: campanha } = await supabase
         .from('campaigns')
-        .select('id, name, owner_id, invite_code, accent_color, active_scene_id')
+        .select('id, name, owner_id, invite_code, accent_color, active_scene_id, system')
         .eq('id', id)
         .maybeSingle()
       if (cancelado) return
@@ -149,6 +154,12 @@ export default function Mesa() {
   const sons = useSons(cenas.atual?.id ?? null)
   // Lista de Reprodução: toca pra todo mundo mesmo com a aba fechada.
   const playlists = usePlaylists(pronta?.campanha.id, !!pronta && pronta.campanha.owner_id === userId)
+  // Itens (12.10): itens interativos da campanha.
+  const itens = useItens(pronta?.campanha.id)
+  const [criandoItem, setCriandoItem] = useState<{ pasta: string | null } | null>(null)
+  const [pastaItem, setPastaItem] = useState<{ pai: string | null; editando?: Pasta } | null>(null)
+  const [itensAbertos, setItensAbertos] = useState<string[]>([])
+  const [propriedadeItem, setPropriedadeItem] = useState<string | null>(null)
   // Posicionáveis (12.6): armazém do mestre.
   const posicionaveis = usePosicionaveis(pronta?.campanha.id, !!pronta && pronta.campanha.owner_id === userId)
   const [categoriaPosicionavel, setCategoriaPosicionavel] = useState<CategoriaPosicionavel>('token')
@@ -764,6 +775,23 @@ export default function Mesa() {
                   onExcluirPasta: (p) => window.confirm(`Remover a pasta "${p.name}"? Os personagens dela ficam soltos.`) && atores.excluirPasta(p.id),
                 }}
               />
+            ) : aba === 'itens' ? (
+              <PainelItens
+                souMestre={souMestre}
+                userId={userId ?? ''}
+                itens={itens.itens}
+                pastas={itens.pastas}
+                acoes={{
+                  onAbrir: (i) => setItensAbertos((l) => (l.includes(i.id) ? l : [...l, i.id])),
+                  onPropriedade: (i) => setPropriedadeItem(i.id),
+                  onDuplicar: (i) => itens.duplicar(i),
+                  onExcluir: (i) => window.confirm(`Excluir o item "${i.name}"?`) && itens.excluir(i.id),
+                  onCriar: (pasta) => setCriandoItem({ pasta }),
+                  onCriarPasta: (pai) => setPastaItem({ pai }),
+                  onEditarPasta: (p) => setPastaItem({ pai: p.parent_id, editando: p }),
+                  onExcluirPasta: (p) => window.confirm(`Remover a pasta "${p.name}"? Os itens dela ficam soltos.`) && itens.excluirPasta(p.id),
+                }}
+              />
             ) : aba === 'posicionaveis' ? (
               <PainelPosicionaveis
                 souMestre={souMestre}
@@ -846,6 +874,60 @@ export default function Mesa() {
           onFechar={() => setCriandoAtor(null)}
         />
       )}
+
+      {criandoItem && (
+        <CriarItem
+          onCriar={async (nome, categoria) => {
+            const pasta = criandoItem.pasta
+            setCriandoItem(null)
+            const novo = await itens.criar(nome, categoria, pasta)
+            if (novo) setItensAbertos((l) => [...l, novo.id])
+          }}
+          onFechar={() => setCriandoItem(null)}
+        />
+      )}
+
+      {pastaItem && (
+        <CriarPasta
+          inicial={pastaItem.editando}
+          onCriar={(campos) => {
+            if (pastaItem.editando) itens.salvarPasta(pastaItem.editando.id, campos)
+            else itens.criarPasta({ ...campos, parent_id: pastaItem.pai })
+            setPastaItem(null)
+          }}
+          onFechar={() => setPastaItem(null)}
+        />
+      )}
+
+      {itensAbertos.map((id) => {
+        const i = itens.itens.find((x) => x.id === id)
+        if (!i) return null
+        return (
+          <FichaItem
+            key={id}
+            item={i}
+            podeEditar={nivelNoItem(i, userId ?? '', souMestre) === 'dono'}
+            userId={userId ?? ''}
+            jogadores={jogadoresParaCena}
+            sistemaId={campanha.system}
+            outrosItens={itens.itens}
+            onSalvar={(campos) => itens.salvar(id, campos)}
+            onFechar={() => setItensAbertos((l) => l.filter((x) => x !== id))}
+          />
+        )
+      })}
+
+      {(() => {
+        const i = itens.itens.find((x) => x.id === propriedadeItem)
+        return i ? (
+          <ConfigurarPropriedadeAtor
+            ator={i}
+            jogadores={jogadoresParaCena}
+            onSalvar={(campos) => { itens.salvar(i.id, campos); setPropriedadeItem(null) }}
+            onFechar={() => setPropriedadeItem(null)}
+          />
+        ) : null
+      })()}
 
       {pastaAtor && (
         <CriarPasta

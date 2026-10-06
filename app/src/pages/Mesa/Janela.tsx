@@ -4,8 +4,13 @@ import { faXmark, type IconDefinition } from '@fortawesome/free-solid-svg-icons'
 
 // Janela flutuante da mesa, como as do Foundry: barra de título arrastável e X pra fechar.
 // Com `altura`, a janela abre nesse tamanho e dá pra redimensionar pelo canto (ficha portátil).
-export default function Janela({ titulo, icone, largura = 420, altura, inicial, onFechar, children }: {
+export default function Janela({ titulo, icone, largura = 420, altura, inicial, onFechar, children, topo, semTitulo, className }: {
   titulo: string
+  // Botões/controles extras na barra de cima (ex.: o modo de edição da ficha do item).
+  topo?: ReactNode
+  // Título só pra leitores de tela (a ficha do item mostra o nome grande no corpo).
+  semTitulo?: boolean
+  className?: string
   icone?: IconDefinition
   largura?: number
   altura?: number
@@ -31,14 +36,15 @@ export default function Janela({ titulo, icone, largura = 420, altura, inicial, 
 
   return (
     <section
-      className={`janela${altura ? ' redimensionavel' : ''}`}
+      className={`janela${altura ? ' redimensionavel' : ''}${className ? ` ${className}` : ''}`}
       role="dialog"
       aria-label={titulo}
       style={{ left: pos.x, top: pos.y, width: `min(${largura}px, calc(100vw - 32px))`, height: altura ? `min(${altura}px, calc(100vh - ${pos.y + 16}px))` : undefined, maxHeight: `calc(100vh - ${pos.y + 16}px)` }}
     >
       <header className="janela-topo" onPointerDown={comecar} onPointerMove={mover} onPointerUp={() => (arrasto.current = null)}>
         {icone && <FontAwesomeIcon icon={icone} />}
-        <h2>{titulo}</h2>
+        {topo}
+        <h2 className={semTitulo ? 'janela-titulo-oculto' : undefined}>{titulo}</h2>
         <button type="button" className="janela-fechar" aria-label="Fechar" onClick={onFechar}>
           <FontAwesomeIcon icon={faXmark} />
         </button>

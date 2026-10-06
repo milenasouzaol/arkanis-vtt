@@ -103,7 +103,8 @@ export function CriarPersonagem({ pastas, pastaInicial, onCriarNPC, onCriarAmeac
 
 // Configuração de Propriedade (12.7): quem acessa a ficha deste NPC/Ameaça.
 export function ConfigurarPropriedadeAtor({ ator, jogadores, onSalvar, onFechar }: {
-  ator: Ator
+  // Personagem da mesa ou Item (os dois têm o mesmo controle de acesso).
+  ator: Pick<Ator, 'name' | 'acesso_padrao' | 'acesso_jogadores' | 'mostrar_mestres'>
   jogadores: { userId: string; rotulo: string }[]
   onSalvar: (campos: Pick<Ator, 'acesso_padrao' | 'acesso_jogadores' | 'mostrar_mestres'>) => void
   onFechar: () => void
