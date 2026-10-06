@@ -279,6 +279,31 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
   }
 
   const botoes = item ? botoesDaInteracao(item.atividades) : []
+  // Item lootável (ou artefato, ou marcado "vai pro inventário") no mapa: dá pra pegar direto,
+  // encostado no item (alcance Toque), sem precisar criar atividade.
+  const pegavel = !!item && (item.categoria === 'lootavel' || item.categoria === 'amaldicoado' || !!item.efeitos?.inventario)
+  const toque = sistema.alcances.find((x) => x.id === 'toque')?.metros ?? 1.5
+  const pertoPraPegar = souMestre || dentroDoAlcance(distancia, toque)
+
+  async function pegarDoChao() {
+    if (!item) return
+    if (!characterId) {
+      setErro(souMestre ? 'O mestre não tem ficha: teste com o personagem de um jogador.' : 'Pra pegar itens, você precisa de um personagem com ficha.')
+      return
+    }
+    setOcupado(true)
+    setErro(null)
+    const qual = item.quantidade > 1 ? `${item.quantidade}× ${item.name}` : item.name
+    // Registra antes: depois de pego, o item sai do mapa.
+    await postar({ atividade: 'Pegar', texto: `pegou ${qual}.` })
+    const { error } = await supabase.rpc('pegar_item_do_chao', { p_token_id: token.id, p_character_id: characterId })
+    if (error) {
+      setErro(motivo(error))
+      if (vivo.current) setOcupado(false)
+      return
+    }
+    onFechar()
+  }
 
   return (
     <Janela titulo={item?.name ?? token.name ?? 'Item'} icone={faBriefcase} largura={420} inicial={{ x: Math.max(16, window.innerWidth / 2 - 210), y: 90 }} className="janela-interacao" onFechar={onFechar}>
@@ -303,6 +328,21 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
               </div>
             </section>
           )}
+          {!pedido && pegavel && (
+            <div className="interacao-acoes">
+              <button
+                type="button"
+                className="interacao-acao"
+                disabled={ocupado || !pertoPraPegar}
+                title={pertoPraPegar ? 'Pegar (vai pro inventário)' : 'Chegue mais perto (Toque)'}
+                onClick={pegarDoChao}
+              >
+                <FontAwesomeIcon icon={faHandHolding} />
+                <span>Pegar{item.quantidade > 1 ? ` (${item.quantidade})` : ''}</span>
+                {!pertoPraPegar && <small><FontAwesomeIcon icon={faLock} /> Chegue mais perto (Toque)</small>}
+              </button>
+            </div>
+          )}
           {!pedido && botoes.length > 0 && (
             <div className="interacao-acoes">
               {botoes.map((a) => {
@@ -326,7 +366,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
               })}
             </div>
           )}
-          {!botoes.length && !conteudoAberto && <p className="item-vazio">Nada pra fazer aqui.</p>}
+          {!botoes.length && !pegavel && !conteudoAberto && <p className="item-vazio">Nada pra fazer aqui.</p>}
           {!meuToken && !souMestre && <p className="item-dica">Você precisa de um token seu nesta cena pra interagir.</p>}
 
           {log.length > 0 && (
