@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faXmark, type IconDefinition } from '@fortawesome/free-solid-svg-icons'
-import { tocarSom } from '../../lib/sons'
 
 // Janela flutuante da mesa, como as do Foundry: barra de título arrastável e X pra fechar.
 // Com `altura`, a janela abre nesse tamanho e dá pra redimensionar pelo canto (ficha portátil).
@@ -20,11 +19,6 @@ export default function Janela({ titulo, icone, largura = 420, altura, inicial, 
   children: ReactNode
 }) {
   const [pos, setPos] = useState(() => inicial ?? { x: Math.max(16, (window.innerWidth - largura) / 2 - 160), y: 80 })
-  // Som de abrir e de fechar a janela.
-  useEffect(() => {
-    tocarSom('abrir')
-    return () => tocarSom('fechar')
-  }, [])
   const arrasto = useRef<{ dx: number; dy: number } | null>(null)
 
   function comecar(e: React.PointerEvent<HTMLElement>) {

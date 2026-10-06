@@ -14,13 +14,10 @@ import CharacterSheet from './pages/CharacterSheet'
 import EntrarCampanha from './pages/EntrarCampanha'
 import Mesa from './pages/Mesa'
 import CriarCampanha from './pages/CriarCampanha'
-import { tocarSom } from './lib/sons'
+import { ligarSonsDoSite } from './lib/sons'
 
-// Marcar/desmarcar qualquer caixinha do site faz o som de "check" (pedido da Millie, 06/10).
-document.addEventListener('change', (e) => {
-  const t = e.target
-  if (t instanceof HTMLInputElement && t.type === 'checkbox') tocarSom('check')
-}, true)
+// Sons do site todo: abrir/fechar janelinhas, clique em botão e caixinhas (lib/sons.ts).
+ligarSonsDoSite()
 
 function App() {
   return (

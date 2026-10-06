@@ -6,8 +6,9 @@ export const SONS = {
   dado: 'dado.mp3', // dados caindo
   virar: 'virar-cartao.mp3', // virar o cartão de rolagem
   aba: 'abrir.mp3', // trocar de aba
+  clique: 'abrir.mp3', // qualquer clique em botão (máquina de escrever): diminuir vida, adicionar…
   abrir: 'abrir.mp3', // abrir janela/módulo
-  fechar: 'fechar.mp3', // fechar janela/módulo
+  fechar: 'fechar.mp3', // fechar janela/módulo ("desligando áudio")
   parar: 'fechar.mp3', // desligar um som da Lista de Reprodução
   check: 'check.mp3', // marcar uma caixinha
   escrever: 'escrever.mp3', // mandar mensagem, salvar nota
@@ -24,6 +25,11 @@ export type Som = keyof typeof SONS
 
 // O mesmo som disparado várias vezes no mesmo instante (ex.: excluir 5 tokens) toca uma vez só.
 const ultimo: Partial<Record<Som, number>> = {}
+// Quando tocou o último som (qualquer um): o clique genérico não toca por cima de um som próprio.
+let ultimoQualquer = -1e9
+export function tocouDesde(t: number): boolean {
+  return ultimoQualquer >= t
+}
 
 // Os arquivos vêm com volumes muito diferentes (os cliques chegam a ser 40x mais baixos que o
 // dado) e o <audio> do navegador para em 100%. Então cada som é normalizado: ao carregar, mede o
@@ -92,6 +98,7 @@ export function tocarSom(som: Som) {
   const agora = performance.now()
   if ((ultimo[som] ?? -1e9) > agora - 90) return
   ultimo[som] = agora
+  ultimoQualquer = agora
   const a = audio()
   if (!a) return
   carregar(a.ctx, SONS[som]).then((s) => {
@@ -119,4 +126,38 @@ export function dentroDaMesa(): boolean {
   } catch {
     return true
   }
+}
+
+// Liga os sons que valem pro site todo (pedido da Millie, 06/10):
+// * toda janelinha que abre (os fundos escuros "...-backdrop" da ficha e as janelas da mesa)
+//   toca "abrir" e, ao sumir, "fechar" — inclusive as que forem criadas depois;
+// * todo clique em botão toca a máquina de escrever, a não ser que o clique já tenha tocado um
+//   som próprio (aba, virar cartão, ritual, abrir janela…);
+// * marcar/desmarcar caixinha toca "check".
+export function ligarSonsDoSite() {
+  const ehModulo = (n: Node): boolean => n instanceof HTMLElement && (/(^|\s)[\w-]*backdrop(\s|$)/.test(n.className) || n.classList.contains('janela'))
+  const temModulo = (n: Node): boolean => ehModulo(n) || (n instanceof HTMLElement && !!n.querySelector('[class*="backdrop"], .janela'))
+  new MutationObserver((mudancas) => {
+    let abriu = false
+    let fechou = false
+    for (const m of mudancas) {
+      m.addedNodes.forEach((n) => { if (temModulo(n)) abriu = true })
+      m.removedNodes.forEach((n) => { if (temModulo(n)) fechou = true })
+    }
+    if (abriu) tocarSom('abrir')
+    else if (fechou) tocarSom('fechar')
+  }).observe(document.body, { childList: true, subtree: true })
+
+  document.addEventListener('click', (e) => {
+    const alvo = e.target instanceof Element ? e.target.closest('button, [role="button"], [role="tab"], summary') : null
+    if (!alvo || (alvo as HTMLButtonElement).disabled || alvo.closest('[data-sem-som]')) return
+    const quando = performance.now()
+    // Espera o clique terminar: se ele mesmo tocou um som (ou abriu/fechou uma janela), fica só esse.
+    setTimeout(() => { if (!tocouDesde(quando)) tocarSom('clique') }, 30)
+  }, true)
+
+  document.addEventListener('change', (e) => {
+    const t = e.target
+    if (t instanceof HTMLInputElement && t.type === 'checkbox') tocarSom('check')
+  }, true)
 }

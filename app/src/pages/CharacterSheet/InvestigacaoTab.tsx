@@ -7,6 +7,7 @@ import clipe from '../../assets/investigacao/clipe.svg'
 import arkanisLogo from '../../assets/icons/arkanis-logo.png'
 import lixeira from '../../assets/combate/lixeira.png'
 import lixeiraAberta from '../../assets/combate/lixeira-aberta.png'
+import { tocarSom } from '../../lib/sons'
 
 type Page = {
   id: string
@@ -70,6 +71,7 @@ export default function InvestigacaoTab({ character, originName, className }: { 
   }
 
   async function addPage() {
+    tocarSom('criar')
     const { data } = await supabase
       .from('character_investigation_pages')
       .insert({ character_id: character.id, title: TITULO_PADRAO, sort_order: pages.length })
@@ -83,6 +85,7 @@ export default function InvestigacaoTab({ character, originName, className }: { 
 
   async function confirmDelete() {
     if (!deleting) return
+    tocarSom('deletar')
     const id = deleting.id
     setDeleting(null)
     setPages((ps) => ps.filter((p) => p.id !== id))
@@ -104,6 +107,7 @@ export default function InvestigacaoTab({ character, originName, className }: { 
 
   /** Clicar na aba ja aberta abre o modal de renomear; na fechada, so troca de aba. */
   function clicarNaAba(p: Page) {
+    if (activePage !== p.id) tocarSom('criar') // virar a página
     if (activePage === p.id) setRenaming({ id: p.id, valor: p.title })
     else setActivePage(p.id)
   }
