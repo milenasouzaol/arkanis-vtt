@@ -61,6 +61,8 @@ Vale pra rolagens e qualquer mensagem — testes de perícia, atributo, ataques,
 - Em Linha: Negrito, Itálico, Código, Sublinhado, Tachado, Sobrescrito, Subscrito.
 - Não incluir: Cabeçalhos, Bloco, Alinhamento, Tabela.
 
+**Rolagem digitada e bandeja de dados (feito, print da Millie 06/10):** `/r 1d20+5` (ou `/roll`) rola e vai pro chat como rolagem (com os dados 3D). Aceita d4…d100 (`d%`), vários termos com + e −, `kh`/`kl` (manter maiores/menores: `2d20kh1`) e rótulo depois de `#` (`/r 2d6+2 # Dano`). Fórmula que não dá pra ler avisa com exemplos. Embaixo do campo, a **bandeja**: d4 d6 d8 d10 d12 d20 d100 (clique põe um, botão direito tira, a contagem aparece em cima), − / modificador / +, **ADV/DIS** (vantagem: mais um dado e fica com o maior; no d20 fica com 1, como em Ordem) e **Roll**. O código vai aparecendo no campo enquanto clica.
+
 Ícones extras: Linha horizontal; Inserir imagem (seletor de arquivos + drag-and-drop no campo); Limpar Formatação. Link sem botão: URL colada vira link clicável ao enviar.
 
 **Modo de envio — 5 ícones acima da formatação:**

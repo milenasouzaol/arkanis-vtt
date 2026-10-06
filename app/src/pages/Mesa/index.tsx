@@ -18,6 +18,7 @@ import PainelPlaylist from './PainelPlaylist'
 import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
 import PainelItens, { CriarItem } from './PainelItens'
 import FichaItem from './FichaItem'
+import { comandoDeRolagem, rolarFormula } from './rolador'
 import { IMAGEM_LUZ, LUZ_PADRAO } from './luz'
 import JanelaInteracao from './JanelaInteracao'
 import DadosNaTela from './DadosNaTela'
@@ -38,7 +39,7 @@ import { useCombate, type Combate } from './useCombate'
 import type { Combatente } from './combate'
 import type { Cena } from './cenas'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
-import { autoria, resumoDaMensagem, type Mensagem, type ModoEnvio } from './chat'
+import { autoria, resumoDaMensagem, textoPuro, type Mensagem, type ModoEnvio } from './chat'
 import { enviarImagemDoChat, useChat } from './useChat'
 import PainelChat from './PainelChat'
 import ChatEntrada from './ChatEntrada'
@@ -312,6 +313,13 @@ export default function Mesa() {
   function enviarMensagem(html: string) {
     if (!userId || !eu) return Promise.resolve(false)
     const autor = autoria(modo, { nome: eu.nomeConta, foto: eu.fotoConta ?? null }, { nome: eu.personagem, foto: eu.fotoPersonagem ?? null })
+    // /r 1d20+5 (digitado ou pela bandeja de dados): rola e vai pro chat como rolagem.
+    const pedido = comandoDeRolagem(textoPuro(html))
+    if (pedido === 'invalida') return Promise.resolve(false)
+    if (pedido) {
+      const rolagem = rolarFormula(pedido.formula, pedido.rotulo)
+      return rolagem ? chat.enviarRolagem({ userId, modo, autor, rolagem }) : Promise.resolve(false)
+    }
     return chat.enviar({ userId, modo, autor, personagemId: modo === 'publico_usuario' ? null : eu.personagemId ?? null, html })
   }
 

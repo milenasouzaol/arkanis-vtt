@@ -24,6 +24,8 @@ export type Rolagem = {
   sem_rolagem?: boolean
   // Dano com cada parte separada, cada uma com o seu tipo e de onde veio.
   partes?: ParteRolada[] | null
+  // Rolagem digitada (/r): a fórmula como a pessoa pediu (2d20kh1 + 1d6 - 3).
+  formula?: string
 }
 
 export type Mensagem = {
@@ -216,6 +218,7 @@ export function juntarMensagem(lista: Mensagem[], m: Mensagem): Mensagem[] {
 
 // "2d20 + 1d6 + 3" a partir dos dados da rolagem; sem dados estruturados, usa o detalhe.
 export function formulaDaRolagem(r: Rolagem): string {
+  if (r.formula) return r.formula
   if (!r.dice?.length) return r.detail
   const contagem = new Map<number, number>()
   for (const d of r.dice) contagem.set(d.sides, (contagem.get(d.sides) ?? 0) + 1)

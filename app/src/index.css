@@ -16538,3 +16538,145 @@ label.compendio-linha {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.55; }
 }
+
+/* Bandeja de dados embaixo do campo do chat (print da Millie, 06/10). */
+.chat-bandeja {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat-bandeja-dados {
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+  padding-top: 8px;
+}
+
+.chat-bandeja-dado {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 1;
+  height: 30px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  color: var(--mesa-creme-dim);
+  cursor: pointer;
+}
+
+.chat-bandeja-dado:hover {
+  background: #ffffff12;
+  color: var(--mesa-creme);
+}
+
+.chat-dado-icone {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.chat-bandeja-dado.marcado {
+  color: #f0e6d2;
+}
+
+.chat-bandeja-dado.marcado .chat-dado-icone {
+  fill: #f0e6d2;
+  stroke: #f0e6d2;
+}
+
+.chat-bandeja-conta {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 18px;
+  padding: 0 4px;
+  background: #c4462f;
+  border-radius: 3px;
+  color: #fff;
+  font: 700 0.7rem/14px 'Signika', var(--sans);
+}
+
+.chat-bandeja-acoes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-bandeja-acoes > button,
+.chat-bandeja-mod {
+  height: 30px;
+  border-radius: 4px;
+}
+
+.chat-bandeja-menos,
+.chat-bandeja-mais {
+  flex: 1;
+  border: 1px solid var(--mesa-borda);
+  background: #1c1d24;
+  color: var(--mesa-creme);
+  cursor: pointer;
+}
+
+.chat-bandeja-mais {
+  background: #1f8f4e;
+  border-color: #27a85d;
+  color: #fff;
+}
+
+.chat-bandeja-menos:hover {
+  background: #262832;
+}
+
+.chat-bandeja-mais:hover {
+  background: #23a159;
+}
+
+.chat-bandeja-mod {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  color: var(--mesa-creme);
+  font: 700 0.95rem 'Signika', var(--sans);
+}
+
+.chat-bandeja-vantagem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat-bandeja-vantagem button {
+  height: 14px;
+  padding: 0 6px;
+  background: #2a2c35;
+  border: 0;
+  border-radius: 3px;
+  color: var(--mesa-creme-dim);
+  font: 700 0.62rem/14px 'Signika', var(--sans);
+  cursor: pointer;
+}
+
+.chat-bandeja-vantagem button.ligado {
+  background: #c4462f;
+  color: #fff;
+}
+
+.chat-bandeja-rolar {
+  flex: 1.3;
+  background: none;
+  border: 0;
+  color: var(--mesa-creme);
+  font: 700 1rem 'Signika', var(--sans);
+  cursor: pointer;
+}
+
+.chat-bandeja-rolar:hover:not(:disabled) {
+  background: #ffffff12;
+}

@@ -1,7 +1,8 @@
 import { useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck, faChevronDown, faChevronRight, faImage, faMinus, faTextSlash } from '@fortawesome/free-solid-svg-icons'
-import { aplicarFormato, alternarEmLinha, estiloDoCampo, FORMATO_PADRAO, formatoVazio, vazio, type EmLinha, type FormatoAtivo } from './chat'
+import { faCheck, faChevronDown, faChevronRight, faImage, faMinus, faPlus, faTextSlash } from '@fortawesome/free-solid-svg-icons'
+import { aplicarFormato, alternarEmLinha, estiloDoCampo, FORMATO_PADRAO, formatoVazio, textoPuro, vazio, type EmLinha, type FormatoAtivo } from './chat'
+import { BANDEJA_VAZIA, bandejaVazia, comandoDeRolagem, DADOS_DA_BANDEJA, formulaDaBandeja, type Bandeja, type Vantagem } from './rolador'
 
 const TAMANHOS = [
   { rotulo: 'Pequeno', px: 12 },
@@ -51,6 +52,25 @@ function ehImagem(f: File) {
   return f.type.startsWith('image/')
 }
 
+// Desenho de cada dado da bandeja (contorno; marcado fica cheio).
+const FORMA_DO_DADO: Record<number, string> = {
+  4: 'M12 3 L21 20 H3 Z',
+  6: 'M4 4 H20 V20 H4 Z',
+  8: 'M12 2 L21 12 L12 22 L3 12 Z M3 12 H21',
+  10: 'M12 2 L21 10 L12 22 L3 10 Z M3 10 L12 13 L21 10 M12 13 V22',
+  12: 'M12 2 L21.5 9 L18 21 H6 L2.5 9 Z M12 7 L16.5 10.5 L15 16 H9 L7.5 10.5 Z',
+  20: 'M12 2 L21 7 V17 L12 22 L3 17 V7 Z M12 6 L17.5 15.5 H6.5 Z',
+  100: 'M7 4 L12.5 9 L7 18 L1.5 9 Z M17 6 L22.5 11 L17 20 L11.5 11 Z',
+}
+
+function IconeDado({ lados }: { lados: number }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className="chat-dado-icone">
+      <path d={FORMA_DO_DADO[lados]} />
+    </svg>
+  )
+}
+
 function Marca({ ligada }: { ligada: boolean }) {
   return <span className="chat-formato-marca">{ligada && <FontAwesomeIcon icon={faCheck} />}</span>
 }
@@ -74,6 +94,24 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
   // Sublinhado/tachado do campo passariam pro texto de exemplo; o formato só entra com algo escrito.
   const [campoVazio, setCampoVazio] = useState(true)
   const [aviso, setAviso] = useState<string | null>(null)
+  // Bandeja de dados (pedido da Millie, 06/10): clica nos dados, +/− no modificador,
+  // vantagem/desvantagem; o código aparece no campo (/r 1d6+2) e Roll rola.
+  const [bandeja, setBandejaBruta] = useState<Bandeja>(BANDEJA_VAZIA)
+
+  function setBandeja(nova: Bandeja) {
+    setBandejaBruta(nova)
+    const campo = campoRef.current
+    if (!campo) return
+    // Só reescreve o campo se ele está vazio ou com uma rolagem (não apaga uma mensagem escrita).
+    const atual = textoPuro(campo.innerHTML)
+    if (atual && !atual.startsWith('/r')) return
+    campo.textContent = bandejaVazia(nova) ? '' : `/r ${formulaDaBandeja(nova)}`
+    setCampoVazio(!campo.textContent)
+  }
+
+  const mudarDado = (lados: number, delta: number) =>
+    setBandeja({ ...bandeja, dados: { ...bandeja.dados, [lados]: Math.max(0, Math.min(99, (bandeja.dados[lados] ?? 0) + delta)) } })
+  const mudarVantagem = (v: Vantagem) => setBandeja({ ...bandeja, vantagem: bandeja.vantagem === v ? 'normal' : v })
 
   function setFormato(novo: FormatoAtivo) {
     setFormatoBruto(novo)
@@ -141,13 +179,21 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
     const campo = campoRef.current
     if (!campo || enviando || vazio(campo.innerHTML)) return
     setEnviando(true)
-    const ok = await onEnviar(aplicarFormato(campo.innerHTML, formato))
+    // Rolagem vai sem formato (é um comando, não texto).
+    const rolagem = comandoDeRolagem(textoPuro(campo.innerHTML))
+    if (rolagem === 'invalida') {
+      setEnviando(false)
+      setAviso('Não entendi a rolagem. Ex.: /r 1d20+5, /r 2d6-1, /r 2d20kh1 # Ataque')
+      return
+    }
+    const ok = await onEnviar(rolagem ? campo.textContent ?? '' : aplicarFormato(campo.innerHTML, formato))
     setEnviando(false)
     if (ok) {
       campo.innerHTML = ''
       setCampoVazio(true)
       setAviso(null)
-    } else setAviso('Não deu pra enviar a mensagem.')
+      setBandejaBruta(BANDEJA_VAZIA)
+    } else setAviso(rolagem ? 'Não deu pra rolar.' : 'Não deu pra enviar a mensagem.')
   }
 
   function teclar(e: KeyboardEvent<HTMLDivElement>) {
@@ -330,6 +376,46 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
         onPaste={colar}
         onDrop={soltar}
       />
+      {!compacto && (
+        <div className="chat-bandeja" onMouseDown={manterFoco}>
+          <div className="chat-bandeja-dados">
+            {DADOS_DA_BANDEJA.map((l) => {
+              const n = bandeja.dados[l] ?? 0
+              return (
+                <button
+                  key={l}
+                  type="button"
+                  className={`chat-bandeja-dado${n ? ' marcado' : ''}`}
+                  aria-label={`d${l}${n ? ` (${n})` : ''}`}
+                  title={`d${l}: clique põe um, botão direito tira`}
+                  onClick={() => mudarDado(l, 1)}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    mudarDado(l, -1)
+                  }}
+                >
+                  {n > 0 && <span className="chat-bandeja-conta">{n}</span>}
+                  <IconeDado lados={l} />
+                </button>
+              )
+            })}
+          </div>
+          <div className="chat-bandeja-acoes">
+            <button type="button" className="chat-bandeja-menos" aria-label="Modificador −1" title="Modificador −1" onClick={() => setBandeja({ ...bandeja, modificador: bandeja.modificador - 1 })}>
+              <FontAwesomeIcon icon={faMinus} />
+            </button>
+            <span className="chat-bandeja-mod" aria-label="Modificador">{bandeja.modificador > 0 ? `+${bandeja.modificador}` : bandeja.modificador}</span>
+            <button type="button" className="chat-bandeja-mais" aria-label="Modificador +1" title="Modificador +1" onClick={() => setBandeja({ ...bandeja, modificador: bandeja.modificador + 1 })}>
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
+            <span className="chat-bandeja-vantagem">
+              <button type="button" aria-pressed={bandeja.vantagem === 'vantagem'} className={bandeja.vantagem === 'vantagem' ? 'ligado' : undefined} title="Vantagem: rola mais um dado e fica com o maior" onClick={() => mudarVantagem('vantagem')}>ADV</button>
+              <button type="button" aria-pressed={bandeja.vantagem === 'desvantagem'} className={bandeja.vantagem === 'desvantagem' ? 'ligado' : undefined} title="Desvantagem: rola mais um dado e fica com o menor" onClick={() => mudarVantagem('desvantagem')}>DIS</button>
+            </span>
+            <button type="button" className="chat-bandeja-rolar" disabled={enviando} onClick={() => enviar()}>Roll</button>
+          </div>
+        </div>
+      )}
       {aviso && <p className="chat-aviso">{aviso}</p>}
     </div>
   )
