@@ -1,6 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBackwardStep, faForwardStep, faPenToSquare, faPlay, faPlus, faSkull, faStop, faTrash, faUser, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useEffect, useRef } from 'react'
+import caveiraVazia from '../../assets/empty-skull-icon.svg'
+import caveiraMarcada from '../../assets/marked-skull-icon.svg'
 import { corDaVida, desmaiado, posicaoNoCarrossel, type Combatente } from './combate'
 import type { Barras, Combate } from './useCombate'
 import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
@@ -117,7 +119,6 @@ export default function PainelCombate({ souMestre, combates, vdDoCombate, ativo,
               <button type="button" className="combate-quem" disabled={!verDetalhes} onClick={() => onAbrir(c)}>
                 <span className="ator-token">
                   {c.image_url ? <img src={c.image_url} alt="" /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}
-                  {c.tipo === 'jogador' && desmaiado(b?.pv) && <span className="combate-desmaiado" title="Desmaiado"><FontAwesomeIcon icon={faSkull} /></span>}
                 </span>
                 <span className="combate-nome">
                   <strong>{c.name}</strong>
@@ -129,6 +130,7 @@ export default function PainelCombate({ souMestre, combates, vdDoCombate, ativo,
                     </span>
                   )}
                   {souMestre && !b && vida && <span className="combate-barras">{barra(vida, 'vida')}</span>}
+                  {c.tipo === 'jogador' && b && desmaiado(b.pv) && <Caveiras marcas={b.mortes ?? 0} className="combate-caveiras" />}
                 </span>
               </button>
               <span className="combate-iniciativa" title="Iniciativa">{c.iniciativa}</span>
@@ -152,6 +154,16 @@ export default function PainelCombate({ souMestre, combates, vdDoCombate, ativo,
         <p>Rodada Atual: <strong>{ativo.rodada}</strong></p>
       </footer>
     </div>
+  )
+}
+
+// As 3 caveiras de morte (as mesmas da barra de vida da ficha): vão marcando a cada turno
+// em que a pessoa começa morrendo.
+function Caveiras({ marcas, className }: { marcas: number; className: string }) {
+  return (
+    <span className={className} title={`Morrendo: ${[0, 1, 2].filter((i) => (marcas >> i) & 1).length} de 3`}>
+      {[0, 1, 2].map((i) => <img key={i} src={(marcas >> i) & 1 ? caveiraMarcada : caveiraVazia} alt="" draggable={false} />)}
+    </span>
   )
 }
 
@@ -202,7 +214,8 @@ export function IndicadorTurno({ ativo, ordem, barras, meusPersonagens, souMestr
           const vez = pos === 0
           const pode = vez && (minhaVez || souMestre)
           const distancia = Math.abs(pos)
-          const pv = c.tipo === 'jogador' ? barras(c)?.pv ?? null : null
+          const bc = c.tipo === 'jogador' ? barras(c) : null
+          const pv = bc?.pv ?? null
           return (
             <button
               key={c.id}
@@ -222,13 +235,13 @@ export function IndicadorTurno({ ativo, ordem, barras, meusPersonagens, souMestr
             >
               <span className="indicador-turno-imagem">
                 {c.image_url ? <img src={c.image_url} alt="" draggable={false} /> : <FontAwesomeIcon icon={c.tipo === 'ameaca' ? faSkull : faUser} />}
-                {desmaiado(pv) && <span className="indicador-turno-desmaiado" title="Desmaiado"><FontAwesomeIcon icon={faSkull} /></span>}
               </span>
               {pv && (
                 <span className="indicador-turno-vida">
                   <span style={{ width: `${pv[1] ? Math.max(0, Math.min(100, (pv[0] / pv[1]) * 100)) : 100}%`, background: corDaVida(pv[0], pv[1]) }} />
                 </span>
               )}
+              {desmaiado(pv) && <Caveiras marcas={bc?.mortes ?? 0} className="indicador-turno-caveiras" />}
             </button>
           )
         })}

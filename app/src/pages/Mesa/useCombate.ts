@@ -17,7 +17,8 @@ export type Combate = {
 }
 
 // Barrinhas do jogador (12.4): Vida, Esforço (PE) e Sanidade, atual e máximo.
-export type Barras = { pv: [number, number | null]; pe: [number, number | null]; san: [number, number | null] }
+// mortes: caveiras marcadas na ficha (pv_death_marks, 3 bits) — morrendo, uma por turno.
+export type Barras = { pv: [number, number | null]; pe: [number, number | null]; san: [number, number | null]; mortes?: number }
 
 type FichaBarras = {
   id: string
@@ -31,9 +32,10 @@ type FichaBarras = {
   current_sanity: number | null
   max_pv_override: number | null
   max_sanity_override: number | null
+  pv_death_marks: number | null
 }
 
-const CAMPOS_FICHA = 'id, name, avatar_url, attributes, nex_percent, class_id, current_pv, current_pe, current_sanity, max_pv_override, max_sanity_override'
+const CAMPOS_FICHA = 'id, name, avatar_url, attributes, nex_percent, class_id, current_pv, current_pe, current_sanity, max_pv_override, max_sanity_override, pv_death_marks'
 
 type FichaIniciativa = { id: string; user_id: string; name: string | null; avatar_url: string | null; attributes: unknown; conditions: unknown }
 
@@ -112,6 +114,7 @@ export function useCombate(campanhaId: string | undefined) {
       pv: [f.current_pv ?? maxPv ?? 0, maxPv],
       pe: [f.current_pe ?? max?.maxPe ?? 0, max?.maxPe ?? null],
       san: [f.current_sanity ?? maxSan ?? 0, maxSan],
+      mortes: f.pv_death_marks ?? 0,
     }
   }
 
