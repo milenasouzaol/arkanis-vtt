@@ -10,6 +10,9 @@ export type TesteDoPersonagem = { nome: string; dados: number; bonus: number }
 // Resultado de uma rolagem de teste.
 export type RolagemDeTeste = { rolls: number[]; kept: number; bonus: number; total: number }
 
+// Uma entrada do compêndio do sistema (equipamentos prontos dos livros).
+export type EntradaCompendio = { id: string; nome: string; tipo: string; categoria: string; carga: number; descricao: string; imagem: string | null }
+
 export type Sistema = {
   id: string
   nome: string
@@ -28,4 +31,7 @@ export type Sistema = {
   // Monta o teste de uma perícia (ou só atributo) a partir da ficha do personagem.
   testeDoPersonagem(characterId: string, pericia: string, atributo?: string): Promise<TesteDoPersonagem | null>
   rolarTeste(t: Pick<TesteDoPersonagem, 'dados' | 'bonus'>): RolagemDeTeste
+  // Compêndio de equipamentos dos livros (null = o sistema não tem). Itens criados a partir dele,
+  // ao serem pegos, entram no inventário como o equipamento de verdade.
+  compendio: { nome: string; tipos: Opcao[]; buscar(termo: string, tipo?: string): Promise<EntradaCompendio[]> } | null
 }

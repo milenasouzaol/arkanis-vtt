@@ -4,7 +4,7 @@ import type { Pasta } from './cenas'
 import { atividadeCompleta, copiaDoItem, type Atividade, type CategoriaItem, type ItemMesa } from './itens'
 
 const CAMPOS_PASTA = 'id, campaign_id, parent_id, name, color, sort_mode, sort, created_at'
-const CAMPOS = 'id, campaign_id, folder_id, name, categoria, image_url, raridade, quantidade, carga, descricao, detalhes, atividades, efeitos, conteudo, acesso_padrao, acesso_jogadores, mostrar_mestres, sort, created_at'
+const CAMPOS = 'id, campaign_id, folder_id, name, categoria, image_url, raridade, quantidade, carga, descricao, detalhes, atividades, efeitos, conteudo, compendio_id, acesso_padrao, acesso_jogadores, mostrar_mestres, sort, created_at'
 
 function trocar<T extends { id: string }>(lista: T[], item: T): T[] {
   return lista.some((x) => x.id === item.id) ? lista.map((x) => (x.id === item.id ? item : x)) : [...lista, item]
@@ -62,9 +62,10 @@ export function useItens(campanhaId: string | undefined) {
     }
   }, [campanhaId])
 
-  const criar = useCallback(async (name: string, categoria: CategoriaItem, folderId: string | null) => {
+  // extra: campos já preenchidos (ex.: item do compêndio).
+  const criar = useCallback(async (name: string, categoria: CategoriaItem, folderId: string | null, extra: Partial<ItemMesa> = {}) => {
     if (!campanhaId) return null
-    const { data } = await supabase.from('campaign_items').insert({ campaign_id: campanhaId, name, categoria, folder_id: folderId }).select(CAMPOS).single()
+    const { data } = await supabase.from('campaign_items').insert({ campaign_id: campanhaId, name, categoria, folder_id: folderId, ...extra }).select(CAMPOS).single()
     const novo = data ? normal(data as ItemMesa) : null
     if (novo) setItens((l) => trocar(l, novo))
     return novo

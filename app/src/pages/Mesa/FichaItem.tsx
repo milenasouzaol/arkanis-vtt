@@ -14,6 +14,7 @@ import {
   type Atividade, type DetalhesItem, type ItemMesa, type Teste, type TipoAtividade,
 } from './itens'
 import { enviarImagemDoItem } from './useItens'
+import { BuscaCompendio, ICONE_COMPENDIO } from './EscolherDoCompendio'
 import { supabase } from '../../lib/supabase'
 import { sistemaDe, type Sistema } from '../../sistemas'
 
@@ -127,6 +128,7 @@ export default function FichaItem({ item, podeEditar, userId, jogadores, sistema
   const [editandoTexto, setEditandoTexto] = useState(false)
   const [atividade, setAtividade] = useState<Atividade | null>(null)
   const [menu, setMenu] = useState<{ x: number; y: number; itens: ItemMenu[] } | null>(null)
+  const [buscandoCompendio, setBuscandoCompendio] = useState(false)
   const imagem = useRef<HTMLInputElement>(null)
   const ed = podeEditar && editando
   const det = i.detalhes
@@ -252,6 +254,7 @@ export default function FichaItem({ item, podeEditar, userId, jogadores, sistema
               </section>
               <ul className="item-etiquetas">
                 {etiquetasDoItem(i).map((t) => <li key={t}>{t}</li>)}
+                {i.compendio_id && <li title="Ligado ao equipamento do livro: ao ser pego, entra no inventário com as estatísticas dele">Compêndio</li>}
               </ul>
             </>
           )}
@@ -297,20 +300,35 @@ export default function FichaItem({ item, podeEditar, userId, jogadores, sistema
                   <ul className="item-conteudo">
                     {i.conteudo.map((c, n) => (
                       <li key={n}>
-                        <select value={c.item_id} aria-label="Item" onChange={(e) => mudar({ conteudo: i.conteudo.map((x, k) => (k === n ? { ...x, item_id: e.target.value } : x)) })}>
-                          {outrosItens.filter((o) => o.id !== i.id).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-                        </select>
+                        {c.compendio_id ? (
+                          <span className="item-conteudo-compendio" title="Equipamento do compêndio: entra no inventário com as estatísticas do livro">
+                            <FontAwesomeIcon icon={ICONE_COMPENDIO} /> {c.nome ?? 'Equipamento'}
+                          </span>
+                        ) : (
+                          <select value={c.item_id} aria-label="Item" onChange={(e) => mudar({ conteudo: i.conteudo.map((x, k) => (k === n ? { ...x, item_id: e.target.value } : x)) })}>
+                            {outrosItens.filter((o) => o.id !== i.id).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                          </select>
+                        )}
                         <input type="number" min={1} value={c.quantidade} aria-label="Quantidade" onChange={(e) => mudar({ conteudo: i.conteudo.map((x, k) => (k === n ? { ...x, quantidade: Math.max(1, Number(e.target.value) || 1) } : x)) })} />
                         <button type="button" aria-label="Tirar do contêiner" onClick={() => mudar({ conteudo: i.conteudo.filter((_, k) => k !== n) })}><FontAwesomeIcon icon={faTrash} /></button>
                       </li>
                     ))}
                   </ul>
-                  {ed && outrosItens.some((o) => o.id !== i.id) && (
-                    <button type="button" className="janela-botao" onClick={() => mudar({ conteudo: [...i.conteudo, { item_id: outrosItens.find((o) => o.id !== i.id)!.id, quantidade: 1 }] })}>
-                      <FontAwesomeIcon icon={faPlus} /> Adicionar Item
-                    </button>
+                  {ed && (
+                    <div className="item-dois">
+                      {outrosItens.some((o) => o.id !== i.id) && (
+                        <button type="button" className="janela-botao" onClick={() => mudar({ conteudo: [...i.conteudo, { item_id: outrosItens.find((o) => o.id !== i.id)!.id, quantidade: 1 }] })}>
+                          <FontAwesomeIcon icon={faPlus} /> Item da Campanha
+                        </button>
+                      )}
+                      {sistema.compendio && (
+                        <button type="button" className="janela-botao" onClick={() => setBuscandoCompendio(true)}>
+                          <FontAwesomeIcon icon={ICONE_COMPENDIO} /> Do Compêndio
+                        </button>
+                      )}
+                    </div>
                   )}
-                  {!outrosItens.some((o) => o.id !== i.id) && <p className="item-vazio">Crie outros itens pra colocar dentro.</p>}
+                  {!i.conteudo.length && <p className="item-vazio">Vazio.</p>}
                 </Grupo>
               )}
               <Grupo titulo="Usos">
@@ -403,6 +421,18 @@ export default function FichaItem({ item, podeEditar, userId, jogadores, sistema
         <div onPointerDown={(e) => e.stopPropagation()}>
           <MenuContexto x={menu.x} y={menu.y} itens={menu.itens} onFechar={() => setMenu(null)} />
         </div>
+      )}
+
+      {buscandoCompendio && (
+        <Janela titulo={`Adicionar do Compêndio: ${i.name}`} icone={ICONE_COMPENDIO} largura={460} onFechar={() => setBuscandoCompendio(false)}>
+          <BuscaCompendio
+            sistema={sistema}
+            onEscolher={(e) => {
+              mudar({ conteudo: [...i.conteudo, { compendio_id: e.id, nome: e.nome, quantidade: 1 }] })
+              setBuscandoCompendio(false)
+            }}
+          />
+        </Janela>
       )}
 
       {atividade && (

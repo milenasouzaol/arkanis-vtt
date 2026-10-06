@@ -926,10 +926,11 @@ export default function Mesa() {
 
       {criandoItem && (
         <CriarItem
-          onCriar={async (nome, categoria) => {
+          sistemaId={campanha.system}
+          onCriar={async (nome, categoria, extra) => {
             const pasta = criandoItem.pasta
             setCriandoItem(null)
-            const novo = await itens.criar(nome, categoria, pasta)
+            const novo = await itens.criar(nome, categoria, pasta, extra)
             if (novo) setItensAbertos((l) => [...l, novo.id])
           }}
           onFechar={() => setCriandoItem(null)}

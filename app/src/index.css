@@ -16187,3 +16187,69 @@ button.character-tile-link {
 .chat-interacao-resultado.falhou {
   color: #e06a5a;
 }
+
+
+/* Compêndio (equipamentos prontos dos livros) */
+.compendio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.compendio-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.compendio-busca {
+  flex: 1 1 180px;
+}
+
+.compendio-busca {
+  margin: 0;
+}
+
+.compendio-filtros select {
+  padding: 6px 8px;
+  background: #2b2e38;
+  border: 0;
+  border-radius: 4px;
+  color: var(--mesa-creme);
+}
+
+.compendio-lista {
+  max-height: 380px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.compendio-nome {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+
+.compendio-nome small {
+  color: var(--mesa-creme-dim);
+  font-weight: 400;
+  font-size: 0.78rem;
+}
+
+.item-conteudo-compendio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: #2b2e38;
+  border-radius: 4px;
+}
+
+.item-conteudo-compendio svg {
+  color: #b9a46f;
+}

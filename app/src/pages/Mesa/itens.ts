@@ -6,7 +6,7 @@ import type { NivelAcesso } from './atores'
 
 export type CategoriaItem = 'lootavel' | 'conteiner' | 'documento' | 'amaldicoado' | 'armadilha'
 export type Raridade = 'comum' | 'incomum' | 'raro' | 'muito_raro' | 'lendario' | 'amaldicoado'
-export type TipoItem = 'arma' | 'municao' | 'protecao' | 'geral'
+export type TipoItem = 'arma' | 'municao' | 'protecao' | 'geral' | 'paranormal'
 
 export const CATEGORIAS_ITEM: { id: CategoriaItem; rotulo: string }[] = [
   { id: 'lootavel', rotulo: 'Item Lootável' },
@@ -30,6 +30,7 @@ export const TIPOS_ITEM: { id: TipoItem; rotulo: string }[] = [
   { id: 'municao', rotulo: 'Munição' },
   { id: 'protecao', rotulo: 'Proteção' },
   { id: 'geral', rotulo: 'Geral' },
+  { id: 'paranormal', rotulo: 'Paranormal' },
 ]
 
 // Usos do item (Detalhes): limite (vazio = ∞) e quem pode usar.
@@ -213,12 +214,33 @@ export type ItemMesa = {
   detalhes: DetalhesItem
   atividades: Atividade[]
   efeitos: { inventario?: boolean; documento?: string; imagem?: string | null }
-  conteudo: { item_id: string; quantidade: number }[] // o que tem dentro (Contêiner)
+  // O que tem dentro (Contêiner): item da campanha (item_id) ou equipamento do compêndio (compendio_id).
+  conteudo: EntradaConteudo[]
+  compendio_id: string | null // criado a partir deste equipamento do compêndio
   acesso_padrao: NivelAcesso
   acesso_jogadores: Record<string, NivelAcesso>
   mostrar_mestres: boolean
   sort: number
   created_at: string
+}
+
+export type EntradaConteudo = { item_id?: string; compendio_id?: string; nome?: string; quantidade: number }
+
+// Item novo a partir de um equipamento do compêndio: já vem com nome, descrição, tipo,
+// categoria, carga e imagem, e ligado a ele.
+export function itemDoCompendio(e: { id: string; nome: string; tipo: string; categoria: string; carga: number; descricao: string; imagem: string | null }) {
+  const escapar = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const descricao = e.descricao.trim() ? e.descricao.trim().split(/\n{2,}/).map((p) => `<p>${escapar(p).replace(/\n/g, '<br>')}</p>`).join('') : null
+  const tipo = TIPOS_ITEM.some((t) => t.id === e.tipo) ? (e.tipo as TipoItem) : undefined
+  return {
+    name: e.nome,
+    categoria: 'lootavel' as CategoriaItem,
+    image_url: e.imagem,
+    carga: e.carga,
+    descricao,
+    detalhes: { tipo, categoriaSistema: e.categoria || undefined } as DetalhesItem,
+    compendio_id: e.id,
+  }
 }
 
 export function nivelNoItem(i: Pick<ItemMesa, 'acesso_padrao' | 'acesso_jogadores'>, userId: string, souMestre: boolean): NivelAcesso {

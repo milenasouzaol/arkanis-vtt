@@ -12,7 +12,7 @@ import { botoesDaInteracao, dentroDoAlcance, distanciaEmMetros, passouNoTeste, p
 import { dadosDoAlvo, maximoDoAlvo } from './acoesDeMira'
 import { danoNoAlvo, defesaDoAlvo, perfilDoAlvo, rolarAtaque, rolarCura, rolarDanoDoAtaque, type AcaoInteracao, type Recurso } from './mira'
 
-type ItemDoToken = ItemMesa & { conteudo_detalhado: { item_id: string; quantidade: number; name: string; image_url: string | null; carga: number }[] }
+type ItemDoToken = ItemMesa & { conteudo_detalhado: { item_id: string | null; compendio_id: string | null; quantidade: number; name: string; image_url: string | null; carga: number }[] }
 type Registro = Omit<AcaoInteracao, 'tipo' | 'estado' | 'item' | 'imagem'>
 
 const motivo = (e: { message?: string } | null) => (e ? e.message || 'Não deu certo.' : null)
@@ -220,7 +220,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
       return
     }
     setOcupado(true)
-    const { error } = await supabase.rpc('pegar_do_conteiner', { p_token_id: token.id, p_item_id: c.item_id, p_character_id: characterId, p_quantidade: 1 })
+    const { error } = await supabase.rpc('pegar_do_conteiner', { p_token_id: token.id, p_ref: c.item_id ?? c.compendio_id, p_character_id: characterId, p_quantidade: 1 })
     if (error) setErro(motivo(error))
     else {
       await postar({ atividade: 'Pegar', texto: `pegou ${c.name}.` })
@@ -280,7 +280,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
               {item.conteudo_detalhado.length ? (
                 <ul>
                   {item.conteudo_detalhado.map((c) => (
-                    <li key={c.item_id}>
+                    <li key={c.item_id ?? c.compendio_id}>
                       <span className="interacao-conteudo-imagem">{c.image_url ? <img src={c.image_url} alt="" /> : <FontAwesomeIcon icon={faBriefcase} />}</span>
                       <span className="interacao-conteudo-nome">{c.name}{c.quantidade > 1 ? ` ×${c.quantidade}` : ''}</span>
                       <button type="button" className="janela-botao" disabled={ocupado} onClick={() => pegar(c)}><FontAwesomeIcon icon={faHandHolding} /> Pegar</button>

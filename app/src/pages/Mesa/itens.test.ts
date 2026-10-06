@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { atividadeCompleta, copiaDoItem, semAtividade, duplicarAtividade, etiquetasDoItem, nivelNoItem, novaAtividade, ordenarItens, rotuloDaAtivacao, textoDeUsos, type ItemMesa } from './itens'
+import { atividadeCompleta, copiaDoItem, itemDoCompendio, semAtividade, duplicarAtividade, etiquetasDoItem, nivelNoItem, novaAtividade, ordenarItens, rotuloDaAtivacao, textoDeUsos, type ItemMesa } from './itens'
 
 const item = (c: Partial<ItemMesa> = {}): ItemMesa => ({
   id: 'i', campaign_id: 'c', folder_id: null, name: 'Espada', categoria: 'lootavel', image_url: null, raridade: null, quantidade: 1, carga: 1,
-  descricao: null, detalhes: {}, atividades: [], efeitos: {}, conteudo: [], acesso_padrao: 'nenhum', acesso_jogadores: {}, mostrar_mestres: true, sort: 0, created_at: '2026-10-06T10:00:00Z',
+  descricao: null, detalhes: {}, atividades: [], efeitos: {}, conteudo: [], compendio_id: null, acesso_padrao: 'nenhum', acesso_jogadores: {}, mostrar_mestres: true, sort: 0, created_at: '2026-10-06T10:00:00Z',
   ...c,
 })
 
@@ -53,6 +53,12 @@ describe('itens da mesa', () => {
     const [nA, nB] = c.atividades
     expect(nA.seSim).toEqual([nB.id])
     expect(nA.id).not.toBe('a')
+  })
+  it('item do compêndio já vem preenchido e ligado ao equipamento', () => {
+    const i = itemDoCompendio({ id: 'e1', nome: 'Arco', tipo: 'arma', categoria: 'I', carga: 2, descricao: 'Arma <simples>.\n\nDisparo.', imagem: null })
+    expect(i).toMatchObject({ name: 'Arco', categoria: 'lootavel', carga: 2, compendio_id: 'e1', detalhes: { tipo: 'arma', categoriaSistema: 'I' } })
+    expect(i.descricao).toBe('<p>Arma &lt;simples&gt;.</p><p>Disparo.</p>')
+    expect(itemDoCompendio({ id: 'e2', nome: 'x', tipo: 'outro', categoria: '0', carga: 0, descricao: '', imagem: null }).detalhes.tipo).toBeUndefined()
   })
   it('etiquetas', () => {
     expect(etiquetasDoItem(item({ detalhes: { tipo: 'arma' }, raridade: 'raro' }))).toEqual(['Item Lootável', 'Arma', 'Raro'])

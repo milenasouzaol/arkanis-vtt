@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { attrValue, rollAttributeTest, trainingBonus, type Attributes, type Training } from '../lib/rules'
 import { PERICIAS } from '../pages/CharacterSheet/itemMods'
 import { penalidadeDeCondicoes } from '../pages/CharacterSheet/condicoes'
-import type { Sistema } from './tipos'
+import type { EntradaCompendio, Sistema } from './tipos'
 
 export const ATRIBUTOS_OP = [
   { id: 'agilidade', rotulo: 'Agilidade' },
@@ -59,6 +59,26 @@ export const ordemParanormal: Sistema = {
     const cond = penalidadeDeCondicoes(ficha.conditions as string[] | null, { atributo: attr ?? '', pericia })
     const nome = pericia || ATRIBUTOS_OP.find((a) => a.id === attr)?.rotulo || 'Teste'
     return { nome, dados: attrValue(ficha.attributes as Attributes, attr) + cond.dados, bonus }
+  },
+
+  compendio: {
+    nome: 'Equipamentos',
+    tipos: [
+      { id: 'arma', rotulo: 'Arma' },
+      { id: 'municao', rotulo: 'Munição' },
+      { id: 'protecao', rotulo: 'Proteção' },
+      { id: 'geral', rotulo: 'Geral' },
+      { id: 'paranormal', rotulo: 'Paranormal' },
+    ],
+    async buscar(termo, tipo) {
+      let q = supabase.from('equipment_items').select('id, name, type, category, spaces, description, image_url').order('name').limit(60)
+      if (termo.trim()) q = q.ilike('name', `%${termo.trim()}%`)
+      if (tipo) q = q.eq('type', tipo)
+      const { data } = await q
+      return ((data ?? []) as { id: string; name: string; type: string; category: string; spaces: number; description: string | null; image_url: string | null }[]).map(
+        (e): EntradaCompendio => ({ id: e.id, nome: e.name, tipo: e.type, categoria: e.category, carga: Number(e.spaces) || 0, descricao: e.description ?? '', imagem: e.image_url }),
+      )
+    },
   },
 
   rolarTeste({ dados, bonus }) {

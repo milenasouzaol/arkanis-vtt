@@ -7,7 +7,9 @@ import {
 import Janela, { Campo } from './Janela'
 import MenuContexto, { type ItemMenu } from './MenuContexto'
 import { montarArvore, type NoPasta, type Pasta } from './cenas'
-import { CATEGORIAS_ITEM, nivelNoItem, ordenarItens, type CategoriaItem, type ItemMesa } from './itens'
+import { CATEGORIAS_ITEM, itemDoCompendio, nivelNoItem, ordenarItens, type CategoriaItem, type ItemMesa } from './itens'
+import { BuscaCompendio, ICONE_COMPENDIO } from './EscolherDoCompendio'
+import { sistemaDe } from '../../sistemas'
 
 export const TIPO_ARRASTO_ITEM = 'application/x-arkanis-item'
 
@@ -182,11 +184,34 @@ export default function PainelItens({ souMestre, userId, itens, pastas, acoes }:
 }
 
 // Criar Item: nome e categoria (spec 12.10).
-export function CriarItem({ onCriar, onFechar }: { onCriar: (nome: string, categoria: CategoriaItem) => void; onFechar: () => void }) {
+// Criar Item: do zero (nome e categoria) ou do compêndio do sistema (equipamento pronto dos
+// livros, já preenchido e ligado a ele).
+export function CriarItem({ sistemaId, onCriar, onFechar }: {
+  sistemaId: string | null | undefined
+  onCriar: (nome: string, categoria: CategoriaItem, extra?: Partial<ItemMesa>) => void
+  onFechar: () => void
+}) {
+  const sistema = sistemaDe(sistemaId)
+  const [modo, setModo] = useState<'novo' | 'compendio'>('novo')
   const [nome, setNome] = useState('')
   const [categoria, setCategoria] = useState<CategoriaItem>('lootavel')
   return (
-    <Janela titulo="Criar Item" icone={faBriefcase} largura={420} onFechar={onFechar}>
+    <Janela titulo="Criar Item" icone={faBriefcase} largura={460} onFechar={onFechar}>
+      {sistema.compendio && (
+        <div className="criar-personagem-tipos" role="radiogroup" aria-label="Como criar">
+          <label className={`criar-personagem-tipo${modo === 'novo' ? ' ativo' : ''}`}>
+            <input type="radio" checked={modo === 'novo'} onChange={() => setModo('novo')} />
+            <FontAwesomeIcon icon={faBriefcase} /> Novo
+          </label>
+          <label className={`criar-personagem-tipo${modo === 'compendio' ? ' ativo' : ''}`}>
+            <input type="radio" checked={modo === 'compendio'} onChange={() => setModo('compendio')} />
+            <FontAwesomeIcon icon={ICONE_COMPENDIO} /> Do Compêndio
+          </label>
+        </div>
+      )}
+      {modo === 'compendio' ? (
+        <BuscaCompendio sistema={sistema} onEscolher={(e) => { const c = itemDoCompendio(e); onCriar(c.name, c.categoria, c) }} />
+      ) : (
       <form className="janela-form" onSubmit={(e) => { e.preventDefault(); onCriar(nome.trim() || 'Novo Item', categoria) }}>
         <Campo rotulo="Nome">
           <input autoFocus value={nome} placeholder="Novo Item" aria-label="Nome" onChange={(e) => setNome(e.target.value)} />
@@ -198,6 +223,7 @@ export function CriarItem({ onCriar, onFechar }: { onCriar: (nome: string, categ
         </Campo>
         <button type="submit" className="janela-botao"><FontAwesomeIcon icon={faFloppyDisk} /> Criar Item</button>
       </form>
+      )}
     </Janela>
   )
 }
