@@ -16292,3 +16292,22 @@ button.character-tile-link {
   grid-template-columns: 1fr;
   gap: 6px;
 }
+
+/* Dados 3D (dice-box-threejs): por cima da mesa, sem pegar o mouse. */
+.dados-na-tela {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+
+.dados-na-tela.ativo {
+  opacity: 1;
+}
+
+.dados-na-tela canvas {
+  width: 100% !important;
+  height: 100% !important;
+}

@@ -258,6 +258,9 @@ Categorias no topo, ferramentas embaixo.
 
 Fora: Paredes.
 
+### 12.13b Dados 3D (pedido da Millie, 06/10)
+Toda rolagem nova que chega no chat (ficha, Ataque/Dano da mira, teste e cura, interação com item) cai na tela como dados 3D, pra todo mundo que vê a mensagem, parando no mesmo resultado do chat. Biblioteca dice-box-threejs (MIT). Cada dado na cor do tipo (as mesmas dos dadinhos do chat: d20 roxo, d6 verde…). Mensagens que já estavam no chat ao abrir a mesa não rolam de novo. Sons: a definir (a Millie vai trazer os arquivos em VTT/sons).
+
 ### 12.14 Rodapé Esquerdo — Painel de Sessão
 Nome da conta do mestre + latência + FPS. Abaixo, um item por jogador conectado: "Nome do Personagem (PrimeiroNome)".
 

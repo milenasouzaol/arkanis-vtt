@@ -19,6 +19,7 @@ import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
 import PainelItens, { CriarItem } from './PainelItens'
 import FichaItem from './FichaItem'
 import JanelaInteracao from './JanelaInteracao'
+import DadosNaTela from './DadosNaTela'
 import { useItens } from './useItens'
 import { nivelNoItem } from './itens'
 import { usePosicionaveis } from './usePosicionaveis'
@@ -648,6 +649,9 @@ export default function Mesa() {
           if (c) combate.adicionarAtor(c, atorId)
         }}
       />
+
+      {/* Dados 3D caindo na tela a cada rolagem nova do chat, pra todo mundo. */}
+      <DadosNaTela mensagens={chat.mensagens} />
 
       {destaque && destaque.id !== destaqueFechado && (
         <div className="mesa-destaque" role="status">
