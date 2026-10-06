@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBriefcase, faCoins, faDiceD20, faHandHolding, faLock, faStore, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faBriefcase, faCoins, faDiceD20, faHandHolding, faLock, faStore, faWeightHanging, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { patenteOf } from '../CharacterSheet/InventarioTopBox'
 import Janela from './Janela'
 import { supabase } from '../../lib/supabase'
 import { sistemaDe } from '../../sistemas'
@@ -14,7 +15,7 @@ import { danoNoAlvo, defesaDoAlvo, perfilDoAlvo, rolarAtaque, rolarCura, rolarDa
 
 type EntradaDetalhada = { item_id: string | null; compendio_id: string | null; quantidade: number; ilimitado?: boolean; name: string; image_url: string | null; carga: number; preco?: number | null; categoria?: string }
 type ItemDoToken = ItemMesa & { conteudo_detalhado: EntradaDetalhada[] }
-type Situacao = { dinheiro: number; patente: string | null; categorias: Record<string, { atual: number; limite: number }> }
+type Situacao = { dinheiro: number; patente: string | null; carga?: number; carga_maxima?: number; categorias: Record<string, { atual: number; limite: number }> }
 type Registro = Omit<AcaoInteracao, 'tipo' | 'estado' | 'item' | 'imagem'>
 
 const motivo = (e: { message?: string } | null) => (e ? e.message || 'Não deu certo.' : null)
@@ -428,14 +429,44 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
               <h3>{item.name}</h3>
               {situacao && (
                 <div className="vitrine-situacao">
-                  {modoLoja !== 'requisicao' && <span><FontAwesomeIcon icon={faCoins} /> {formatarDinheiro(Number(situacao.dinheiro), sistema.moeda.simbolo)}</span>}
+                  {/* Patente (ícone da ficha) e os itens por categoria: carrega / limite. */}
+                  {modoLoja !== 'dinheiro' && (() => {
+                    const pat = patenteOf(situacao.patente)
+                    return (
+                      <div className="vitrine-patente" title={`Patente: ${pat.label}`}>
+                        <img src={pat.icon} alt="" />
+                        <span>{pat.label}</span>
+                      </div>
+                    )
+                  })()}
                   {modoLoja !== 'dinheiro' && (
-                    <span className="vitrine-limites" title="Itens que você carrega / limite da patente, por categoria">
-                      {['I', 'II', 'III', 'IV'].filter((k) => situacao.categorias[k]?.limite || situacao.categorias[k]?.atual).map((k) => (
-                        <b key={k} className={situacao.categorias[k].atual >= situacao.categorias[k].limite ? 'cheio' : undefined}>{k}: {situacao.categorias[k].atual}/{situacao.categorias[k].limite}</b>
-                      ))}
-                    </span>
+                    <div className="vitrine-categorias" title="Itens que você carrega / limite da patente, por categoria">
+                      {['I', 'II', 'III', 'IV'].map((k) => {
+                        const c = situacao.categorias[k] ?? { atual: 0, limite: 0 }
+                        const estado = c.atual > c.limite ? ' passou' : c.atual === c.limite ? ' cheio' : ''
+                        return (
+                          <span key={k} className={`vitrine-categoria${estado}${!c.limite && !c.atual ? ' vazia' : ''}`}>
+                            <b>{k}</b>
+                            <small>{c.atual}/{c.limite}</small>
+                          </span>
+                        )
+                      })}
+                    </div>
                   )}
+                  <div className="vitrine-numeros">
+                    {situacao.carga_maxima != null && (() => {
+                      const carga = Number(situacao.carga ?? 0)
+                      const max = Number(situacao.carga_maxima)
+                      return (
+                        <span className={`vitrine-carga${carga > max ? ' passou' : ''}`} title={`Carga: ${carga} de ${max} (sobra ${Math.max(0, max - carga)})`}>
+                          <FontAwesomeIcon icon={faWeightHanging} /> {carga}/{max}
+                        </span>
+                      )
+                    })()}
+                    {modoLoja !== 'requisicao' && (
+                      <span className="vitrine-dinheiro" title={sistema.moeda.nome}><FontAwesomeIcon icon={faCoins} /> {formatarDinheiro(Number(situacao.dinheiro), sistema.moeda.simbolo)}</span>
+                    )}
+                  </div>
                 </div>
               )}
               {item.conteudo_detalhado.length ? (

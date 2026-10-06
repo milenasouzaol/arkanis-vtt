@@ -16388,29 +16388,101 @@ button.character-tile-link {
   color: var(--item-ouro);
 }
 
-/* Vitrine da Loja */
+/* Vitrine da Loja: patente (ícone da ficha), categorias I–IV, carga e dinheiro */
 .vitrine-situacao {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding: 6px 10px;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
   background: #121216;
-  border-radius: 4px;
+  border: 1px solid #2a2c35;
+  border-radius: 6px;
+}
+
+.vitrine-patente {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 64px;
+}
+
+.vitrine-patente img {
+  width: 56px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.vitrine-patente span {
+  color: var(--mesa-creme);
+  font: 700 0.68rem 'Signika', var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vitrine-categorias {
+  display: flex;
+  gap: 6px;
+}
+
+.vitrine-categoria {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 38px;
+  padding: 3px 6px;
+  background: #1c1d24;
+  border: 1px solid #b9a46f55;
+  border-radius: 5px;
+  line-height: 1.1;
+}
+
+.vitrine-categoria b {
+  color: #b9a46f;
+  font: 700 0.85rem 'Roboto Slab', serif;
+}
+
+.vitrine-categoria small {
+  color: var(--mesa-creme);
+  font-size: 0.78rem;
+}
+
+.vitrine-categoria.vazia {
+  opacity: 0.4;
+}
+
+.vitrine-categoria.cheio {
+  border-color: #d9a521;
+}
+
+.vitrine-categoria.cheio small {
+  color: #d9a521;
+}
+
+.vitrine-categoria.passou {
+  border-color: #e06a5a;
+}
+
+.vitrine-categoria.passou small {
+  color: #e06a5a;
+}
+
+.vitrine-numeros {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin-left: auto;
   font-size: 0.85rem;
 }
 
-.vitrine-situacao svg {
+.vitrine-numeros svg {
   color: #b9a46f;
 }
 
-.vitrine-limites {
-  display: flex;
-  gap: 8px;
-}
-
-.vitrine-limites b.cheio {
+.vitrine-carga.passou {
   color: #e06a5a;
 }
 
