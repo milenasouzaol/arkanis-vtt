@@ -17165,3 +17165,253 @@ label.compendio-linha {
   color: var(--mesa-creme);
   font-size: 0.8rem;
 }
+
+/* Configurações (KAN-54, prints do Foundry da Millie, 06/10). */
+.mesa-config-sistema {
+  margin: 0 0 6px;
+  color: var(--mesa-creme);
+  font: 700 1rem 'Signika', var(--sans);
+  text-align: center;
+}
+
+.config-jogo {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 16px;
+  min-height: 380px;
+}
+
+.config-jogo-lado {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 14px;
+  border-right: 1px solid #ffffff14;
+}
+
+.config-jogo-busca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #ffffff0d;
+  border-radius: 4px;
+  color: var(--mesa-creme-dim);
+}
+
+.config-jogo-busca input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--mesa-creme);
+}
+
+.config-jogo-categoria {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--mesa-destaque);
+  color: var(--mesa-creme);
+  font: 600 0.85rem 'Signika', var(--sans);
+}
+
+.config-jogo-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.config-jogo-linha {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  align-items: center;
+  gap: 4px 14px;
+}
+
+.config-jogo-linha strong {
+  color: var(--mesa-creme);
+  font: 700 0.9rem 'Signika', var(--sans);
+}
+
+.config-jogo-linha p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--mesa-creme-dim);
+  font-size: 0.84rem;
+}
+
+.config-rodape {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.config-grupo legend {
+  padding: 0 6px;
+  font: 700 0.95rem 'Signika', var(--sans);
+}
+
+.config-dica {
+  margin: 0;
+  color: var(--mesa-creme-dim);
+  font-size: 0.84rem;
+}
+
+.config-permissoes {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.config-permissoes thead th {
+  padding: 10px 8px;
+  background: #ffffff10;
+  color: var(--mesa-creme);
+  font: 700 0.85rem 'Signika', var(--sans);
+  text-align: center;
+}
+
+.config-permissoes thead th:first-child {
+  text-align: left;
+}
+
+.config-permissoes td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #ffffff10;
+  text-align: center;
+  vertical-align: top;
+}
+
+.config-permissoes td:first-child {
+  text-align: left;
+}
+
+.config-permissoes td strong {
+  display: block;
+  color: var(--mesa-creme);
+  font-size: 0.88rem;
+}
+
+.config-permissoes td small {
+  display: block;
+  margin-top: 4px;
+  color: var(--mesa-creme-dim);
+  font-size: 0.8rem;
+}
+
+.config-permissoes input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--mesa-destaque);
+}
+
+.config-fonte-previa {
+  margin: 8px 0 12px;
+  color: var(--mesa-creme);
+  font-size: 1.6rem;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.config-fontes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.config-fontes li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: #ffffff08;
+  border-radius: 4px;
+}
+
+.config-fontes li span {
+  flex: 1;
+  color: var(--mesa-creme);
+  font-size: 1.1rem;
+}
+
+.config-fontes li small {
+  color: var(--mesa-creme-dim);
+}
+
+.config-controles dl {
+  margin: 0;
+}
+
+.config-controles dl > div {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid #ffffff0d;
+}
+
+.config-controles dt,
+.config-controles dd {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.config-controles dd {
+  color: var(--mesa-creme-dim);
+}
+
+.config-controles kbd {
+  padding: 2px 6px;
+  background: #ffffff12;
+  border: 1px solid #ffffff22;
+  border-radius: 3px;
+  color: var(--mesa-creme);
+  font: 600 0.78rem 'Signika', var(--sans);
+}
+
+.config-usuarios {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.config-usuarios li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-bottom: 1px solid #ffffff10;
+}
+
+.config-usuario-nome {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.config-usuario-nome strong {
+  color: var(--mesa-creme);
+}
+
+.config-usuario-nome small {
+  color: var(--mesa-creme-dim);
+}
+
+label.janela-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}

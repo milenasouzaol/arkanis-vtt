@@ -278,6 +278,11 @@ Nome da conta do mestre + latência + FPS. Abaixo, um item por jogador conectado
 - **Sair:** volta pro site.
 - **Link de Convite:** gerar/copiar.
 
+### Configurações (KAN-54, feito; migration 0133)
+Aba Configurações no formato do print do Foundry da Millie: Arkanis, Sistema de Jogo, **Ajustes e Configuração** (Configurações, Controles; mestre: Configuração do Mundo e Usuários) e **Acesso ao Jogo** (Links de Convite, Sair = desloga, Voltar às Campanhas).
+- **Configurações do Jogo** (busca + seções, cada uma abre a sua janela com Redefinir / Salvar Alterações): Interface de Usuário (escala, no navegador), Som (Música, Ambiente, Efeitos), **Dados** (mostrar os dados 3D, tamanho, tempo na tela; aparência dos SEUS dados: uma cor por tipo ou todos iguais, cor do número, contorno, material Plástico/Metal/Metal Polido/Madeira/Vidro, textura; Rolar de Teste; fica no perfil (profiles.dados3d) e todo mundo vê os seus assim), Chat (nome da conta), e do mestre: **Permissões de Usuários** (Criar Diário — vale no banco —, Pingar o Mapa, Usar a Régua), **Fontes Adicionais** (envia .ttf/.otf/.woff, nome, peso e estilo; carrega pra todo mundo e entra no menu de fontes do chat; com o nome Modesto Condensed vira a fonte dos títulos do Diário) e **Monitor de Combate** (vida no carrossel; caveiras automáticas — vale no passar_turno).
+- **Controles**: lista dos atalhos. **Configuração do Mundo**: nome e cor da mesa. **Usuários**: quem está na campanha; o mestre tira alguém.
+
 ## D. Pendências da mesa (spec 9)
 - Fora do escopo por enquanto: Paredes e Iluminação.
 - Definir implementação técnica dos Efeitos Climáticos (12.5) e do áudio por link/upload (12.5, 12.12, 12.13).

@@ -25,8 +25,9 @@ type Acoes = {
 
 // Aba Diário (KAN-53, spec 12.11 + prints do Foundry da Millie): Criar Entrada / Criar Pasta,
 // "Procurar Registros de Diário", ordem alfabética ou de criação, e a lista dos registros.
-export default function PainelDiario({ souMestre, userId, entradas, pastas, acoes }: {
+export default function PainelDiario({ souMestre, userId, podeCriar = true, entradas, pastas, acoes }: {
   souMestre: boolean
+  podeCriar?: boolean // Permissões: o jogador pode criar registros?
   userId: string
   entradas: EntradaDiario[]
   pastas: Pasta[]
@@ -127,9 +128,11 @@ export default function PainelDiario({ souMestre, userId, entradas, pastas, acoe
   return (
     <div className="cenas-painel">
       <div className="cenas-botoes">
-        <button type="button" className="mesa-botao" onClick={() => acoes.onCriar(null)}>
-          <FontAwesomeIcon icon={faBookOpen} /> Criar Entrada
-        </button>
+        {podeCriar && (
+          <button type="button" className="mesa-botao" onClick={() => acoes.onCriar(null)}>
+            <FontAwesomeIcon icon={faBookOpen} /> Criar Entrada
+          </button>
+        )}
         {souMestre && (
           <button type="button" className="mesa-botao" onClick={() => acoes.onCriarPasta(null)}>
             <FontAwesomeIcon icon={faFolder} /> Criar Pasta

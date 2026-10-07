@@ -18,6 +18,12 @@ import PainelPlaylist from './PainelPlaylist'
 import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
 import PainelItens, { CriarItem } from './PainelItens'
 import FichaItem from './FichaItem'
+import { ConfiguracoesDoJogo, JanelaChat, JanelaCombate, JanelaControles, JanelaDados, JanelaFontes, JanelaInterface, JanelaMundo, JanelaPermissoes, JanelaSom, JanelaUsuarios, type SecaoConfig } from './JanelasConfig'
+import type { JanelaDoPainel } from './PainelConfig'
+import { aplicarInterface, combateDa, lerInterface, nomesDasFontes, podeJogador, type ConfigCampanha, type PermissoesCampanha } from './configuracoes'
+import type { EstiloDados } from './estiloDados'
+import { FONTES } from './ChatEntrada'
+import { sistemaDe } from '../../sistemas'
 import PainelDiario, { CriarEntrada } from './PainelDiario'
 import JanelaDiario from './JanelaDiario'
 import { enviarArquivoDoDiario, useDiario } from './useDiario'
@@ -79,6 +85,8 @@ type Campanha = {
   accent_color: string | null
   active_scene_id: string | null
   system: string // sistema de jogo (src/sistemas)
+  permissoes: PermissoesCampanha // o que os jogadores podem (Configurações → Permissões)
+  configuracoes: ConfigCampanha // fontes adicionais, Monitor de Combate
 }
 
 type Estado =
@@ -100,6 +108,16 @@ export default function Mesa() {
   const [categoria, setCategoria] = useState<CategoriaEsquerda>('tokens')
   const [ferramenta, setFerramenta] = useState('selecionar')
   const [copiado, setCopiado] = useState(false)
+  // Configurações (KAN-54): o dado de cada um, e as janelas abertas.
+  const [estilosDados, setEstilosDados] = useState<Record<string, Partial<EstiloDados> | null>>({})
+  const [janelasConfig, setJanelasConfig] = useState<(JanelaDoPainel | SecaoConfig)[]>([])
+  const abrirConfig = (j: JanelaDoPainel | SecaoConfig) => setJanelasConfig((l) => (l.includes(j) ? l : [...l, j]))
+  const fecharConfig = (j: JanelaDoPainel | SecaoConfig) => setJanelasConfig((l) => l.filter((x) => x !== j))
+
+  // Escala da interface (Configurações → Interface de Usuário), guardada no navegador.
+  useEffect(() => {
+    aplicarInterface(lerInterface())
+  }, [])
 
   useEffect(() => {
     if (!id || !userId) return
@@ -108,7 +126,7 @@ export default function Mesa() {
       // RLS só devolve a campanha pra quem é dono ou membro.
       const { data: campanha } = await supabase
         .from('campaigns')
-        .select('id, name, owner_id, invite_code, accent_color, active_scene_id, system')
+        .select('id, name, owner_id, invite_code, accent_color, active_scene_id, system, permissoes, configuracoes')
         .eq('id', id)
         .maybeSingle()
       if (cancelado) return
@@ -121,7 +139,7 @@ export default function Mesa() {
         supabase.from('characters').select('id, user_id, name, avatar_url').eq('campaign_id', id),
       ])
       const ids = [...new Set([campanha.owner_id, ...(linhas ?? []).map((l) => l.user_id)])]
-      const { data: perfis } = await supabase.from('profiles').select('id, display_name, avatar_url').in('id', ids)
+      const { data: perfis } = await supabase.from('profiles').select('id, display_name, avatar_url, dados3d').in('id', ids)
       if (cancelado) return
       const perfil = new Map((perfis ?? []).map((p) => [p.id, p]))
       const membros: Membro[] = ids.map((uid) => {
@@ -136,6 +154,7 @@ export default function Mesa() {
           fotoPersonagem: p?.avatar_url ?? null,
         }
       })
+      setEstilosDados(Object.fromEntries((perfis ?? []).map((p) => [p.id, p.dados3d as Partial<EstiloDados> | null])))
       const meuModo = (linhas ?? []).find((l) => l.user_id === userId)?.chat_mode as ModoEnvio | undefined
       setEstado({ tipo: 'pronta', campanha, membros, meuModo: meuModo ?? 'publico_personagem' })
     })()
@@ -274,6 +293,42 @@ export default function Mesa() {
   const limparAlvos = mira.limpar
   useEffect(() => limparAlvos(), [cenaVista, limparAlvos])
 
+  // Mudanças na campanha (nome, cor, permissões, fontes, combate) e no dado de alguém, na hora.
+  useEffect(() => {
+    const campanhaId = pronta?.campanha.id
+    if (!campanhaId) return
+    const ids = (pronta?.membros ?? []).map((m) => m.userId)
+    const canal = supabase
+      .channel(`config:${pronta?.campanha.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'campaigns', filter: `id=eq.${pronta?.campanha.id}` }, (p) => {
+        const n = p.new as Partial<Campanha>
+        setEstado((e) => (e.tipo === 'pronta' ? { ...e, campanha: { ...e.campanha, name: n.name ?? e.campanha.name, accent_color: n.accent_color ?? null, permissoes: n.permissoes ?? {}, configuracoes: n.configuracoes ?? {} } } : e))
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=in.(${ids.join(',')})` }, (p) => {
+        const n = p.new as { id: string; dados3d: Partial<EstiloDados> | null; display_name: string | null }
+        setEstilosDados((m) => ({ ...m, [n.id]: n.dados3d }))
+        if (n.display_name) setEstado((e) => (e.tipo === 'pronta' ? { ...e, membros: e.membros.map((x) => (x.userId === n.id ? { ...x, nomeConta: n.display_name! } : x)) } : e))
+      })
+      .subscribe()
+    return () => {
+      supabase.removeChannel(canal)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pronta?.campanha.id, pronta?.membros.length])
+
+  // Fontes Adicionais: entram no navegador de todo mundo (e no menu de fontes do chat).
+  useEffect(() => {
+    for (const f of pronta?.campanha.configuracoes?.fontes ?? []) {
+      try {
+        const face = new FontFace(f.nome, `url(${JSON.stringify(f.url)})`, { weight: f.peso, style: f.estilo })
+        face.load().then((x) => document.fonts.add(x)).catch(() => {})
+      } catch {
+        // fonte inválida: ignora
+      }
+    }
+    for (const n of nomesDasFontes(pronta?.campanha.configuracoes)) if (!FONTES.includes(n)) FONTES.push(n)
+  }, [pronta?.campanha.configuracoes])
+
   if (estado.tipo === 'carregando') {
     return <main className="mesa mesa-aviso"><p>Carregando a mesa…</p></main>
   }
@@ -306,6 +361,16 @@ export default function Mesa() {
     await navigator.clipboard.writeText(linkDeConvite(window.location.origin, campanha.invite_code))
     setCopiado(true)
     setTimeout(() => setCopiado(false), 2000)
+  }
+
+  async function salvarCampanha(campos: Partial<Pick<Campanha, 'name' | 'accent_color' | 'permissoes' | 'configuracoes'>>) {
+    const { error } = await supabase.from('campaigns').update(campos).eq('id', campanha.id)
+    if (error) {
+      avisar('Não deu pra salvar a configuração.', true)
+      return false
+    }
+    setEstado((e) => (e.tipo === 'pronta' ? { ...e, campanha: { ...e.campanha, ...campos } } : e))
+    return true
   }
 
   const eu = estado.membros.find((m) => m.userId === userId)
@@ -673,6 +738,7 @@ export default function Mesa() {
           const i = itens.itens.find((x) => x.id === id)
           return !!i && nivelNoItem(i, userId ?? '', souMestre) === 'dono'
         }}
+        podePingar={podeJogador(campanha.permissoes, 'pingar', souMestre)}
         ehMeuToken={(o) => {
           if (o.character_id && o.character_id === eu?.personagemId) return true
           const a = o.actor_id ? atores.atores.find((x) => x.id === o.actor_id) : undefined
@@ -689,7 +755,7 @@ export default function Mesa() {
       />
 
       {/* Dados 3D caindo na tela a cada rolagem nova do chat, pra todo mundo. */}
-      <DadosNaTela mensagens={chat.mensagens} />
+      <DadosNaTela mensagens={chat.mensagens} estilos={estilosDados} />
 
       {destaque && destaque.id !== destaqueFechado && (
         <div className="mesa-destaque" role="status">
@@ -711,7 +777,7 @@ export default function Mesa() {
           <BarraIcones lado="esquerda" itens={souMestre ? CATEGORIAS_ESQUERDA : CATEGORIAS_ESQUERDA.filter((c) => c.id !== 'som' && c.id !== 'escuridao')} ativo={categoria} onEscolher={(c) => { setCategoria(c); const primeira = FERRAMENTAS[c][0]; if (primeira) setFerramenta(primeira.id) }} />
         </div>
         <div className="mesa-coluna">
-          {FERRAMENTAS[categoria].map((f) => (
+          {FERRAMENTAS[categoria].filter((f) => f.id !== 'medir' || podeJogador(campanha.permissoes, 'medir', souMestre)).map((f) => (
             <BotaoIcone
               key={f.id}
               id={f.id}
@@ -808,7 +874,7 @@ export default function Mesa() {
                 ativo={combate.ativo}
                 ordem={combate.ordem}
                 vidaDe={vidaDoCombatente}
-                barras={combate.barras}
+                barras={(c) => (combateDa(campanha.configuracoes).vidaNoCarrossel ? combate.barras(c) : null)}
                 meusPersonagens={meusPersonagensIds}
                 onCriar={() => setMontandoCombate({})}
                 onEditar={(c) => setMontandoCombate({ editando: c })}
@@ -872,6 +938,7 @@ export default function Mesa() {
               <PainelDiario
                 souMestre={souMestre}
                 userId={userId ?? ''}
+                podeCriar={podeJogador(campanha.permissoes, 'criarDiario', souMestre)}
                 entradas={diario.entradas}
                 pastas={diario.pastas}
                 acoes={{
@@ -902,7 +969,18 @@ export default function Mesa() {
             ) : aba === 'playlist' ? (
               <PainelPlaylist souMestre={souMestre} userId={userId ?? ''} pl={playlists} />
             ) : aba === 'config' ? (
-              <PainelConfig souMestre={souMestre} copiado={copiado} onCopiarConvite={copiarConvite} onSair={() => navigate('/jogar')} />
+              <PainelConfig
+                souMestre={souMestre}
+                sistema={sistemaDe(campanha.system).nome}
+                copiado={copiado}
+                onCopiarConvite={copiarConvite}
+                onAbrir={abrirConfig}
+                onSair={async () => {
+                  await supabase.auth.signOut()
+                  navigate('/')
+                }}
+                onVoltar={() => navigate('/jogar')}
+              />
             ) : (
               <p className="mesa-painel-vazio">{abaAtual.rotulo}: em construção ({abaAtual.card}).</p>
             )}
@@ -938,7 +1016,7 @@ export default function Mesa() {
         <IndicadorTurno
           ativo={combate.ativo}
           ordem={combate.ordem}
-          barras={combate.barras}
+          barras={(c) => (combateDa(campanha.configuracoes).vidaNoCarrossel ? combate.barras(c) : null)}
           meusPersonagens={meusPersonagensIds}
           souMestre={souMestre}
           onPassar={() => combate.ativo && combate.passar(combate.ativo)}
@@ -1022,6 +1100,79 @@ export default function Mesa() {
           onFechar={() => setPastaItem(null)}
         />
       )}
+
+      {janelasConfig.map((j) => {
+        const fechar = () => fecharConfig(j)
+        if (j === 'jogo') return <ConfiguracoesDoJogo key={j} souMestre={souMestre} onAbrir={abrirConfig} onFechar={fechar} />
+        if (j === 'controles') return <JanelaControles key={j} souMestre={souMestre} onFechar={fechar} />
+        if (j === 'interface') return <JanelaInterface key={j} onFechar={fechar} />
+        if (j === 'som') return <JanelaSom key={j} onFechar={fechar} />
+        if (j === 'dados') {
+          return (
+            <JanelaDados
+              key={j}
+              estiloAtual={userId ? estilosDados[userId] : null}
+              onSalvarEstilo={async (e) => {
+                if (!userId) return false
+                const { error } = await supabase.from('profiles').update({ dados3d: e }).eq('id', userId)
+                if (!error) setEstilosDados((m) => ({ ...m, [userId]: e }))
+                return !error
+              }}
+              onFechar={fechar}
+            />
+          )
+        }
+        if (j === 'chat') {
+          return (
+            <JanelaChat
+              key={j}
+              nomeAtual={eu?.nomeConta ?? ''}
+              onSalvar={async (nome) => {
+                if (!userId) return false
+                const { error } = await supabase.from('profiles').update({ display_name: nome }).eq('id', userId)
+                if (!error) setEstado((e) => (e.tipo === 'pronta' ? { ...e, membros: e.membros.map((x) => (x.userId === userId ? { ...x, nomeConta: nome } : x)) } : e))
+                return !error
+              }}
+              onFechar={fechar}
+            />
+          )
+        }
+        if (!souMestre) return null
+        if (j === 'permissoes') return <JanelaPermissoes key={j} atuais={campanha.permissoes ?? {}} onSalvar={(p) => salvarCampanha({ permissoes: p })} onFechar={fechar} />
+        if (j === 'fontes') {
+          return (
+            <JanelaFontes
+              key={j}
+              config={campanha.configuracoes ?? {}}
+              onEnviarArquivo={async (f) => {
+                if (!userId) return null
+                const caminho = `${userId}/${Date.now()}-${f.name.replace(/[^\w.-]/g, '_')}`
+                const { error } = await supabase.storage.from('fontes').upload(caminho, f)
+                return error ? null : supabase.storage.from('fontes').getPublicUrl(caminho).data.publicUrl
+              }}
+              onSalvar={(c) => salvarCampanha({ configuracoes: c })}
+              onFechar={fechar}
+            />
+          )
+        }
+        if (j === 'combate') return <JanelaCombate key={j} config={campanha.configuracoes ?? {}} onSalvar={(c) => salvarCampanha({ configuracoes: c })} onFechar={fechar} />
+        if (j === 'mundo') return <JanelaMundo key={j} nome={campanha.name} cor={campanha.accent_color} onSalvar={(c) => salvarCampanha(c)} onFechar={fechar} />
+        if (j === 'usuarios') {
+          return (
+            <JanelaUsuarios
+              key={j}
+              membros={estado.membros}
+              onRemover={async (uid) => {
+                const { error } = await supabase.from('campaign_members').delete().eq('campaign_id', campanha.id).eq('user_id', uid)
+                if (error) return avisar('Não deu pra tirar da campanha.', true)
+                setEstado((e) => (e.tipo === 'pronta' ? { ...e, membros: e.membros.filter((x) => x.userId !== uid) } : e))
+              }}
+              onFechar={fechar}
+            />
+          )
+        }
+        return null
+      })}
 
       {criandoEntrada && (
         <CriarEntrada

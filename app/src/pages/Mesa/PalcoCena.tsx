@@ -55,7 +55,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, ehMeuToken, onInteragir, onColocarItem, itensDaCampanha = [], onEditarItem, podeEditarItem, onColocarPosicionavel, onGuardarPosicionaveis }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, ehMeuToken, podePingar = true, onInteragir, onColocarItem, itensDaCampanha = [], onEditarItem, podeEditarItem, onColocarPosicionavel, onGuardarPosicionaveis }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -93,6 +93,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   pedidoLimparEscuridao?: number
   // O jogador exclui o próprio token (o do personagem dele, ou de um personagem de que é dono).
   ehMeuToken?: (o: ObjetoCena) => boolean
+  // Permissões (Configurações): o jogador pode usar o Ping Todos?
+  podePingar?: boolean
   // Itens interativos (KAN-53): clicar abre a interação; arrastar da aba Itens coloca na mesa;
   // o mestre liga um item a qualquer token (Vincular Item).
   onInteragir?: (o: ObjetoCena, celula: { w: number; h: number }) => void
@@ -771,7 +773,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     if (!menu) return []
     const ping = (foco: boolean) => obj.pingar({ id: crypto.randomUUID(), x: menu.mapa.x, y: menu.mapa.y, foco, nome: nomeUsuario })
     const pingItens: ItemMenu[] = [
-      { rotulo: 'Ping Todos', icone: faTowerBroadcast, onClick: () => ping(false) },
+      ...(podePingar ? [{ rotulo: 'Ping Todos', icone: faTowerBroadcast, onClick: () => ping(false) } as ItemMenu] : []),
       ...(souMestre ? [{ rotulo: 'Ping de Foco', icone: faCrosshairs, onClick: () => ping(true) } as ItemMenu] : []),
     ]
     const historicoItens: ItemMenu[] = souMestre
