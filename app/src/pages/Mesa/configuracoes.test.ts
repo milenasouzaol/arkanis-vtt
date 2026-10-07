@@ -26,3 +26,21 @@ describe('configurações', () => {
     expect(unico.name).not.toBe(conjuntoDoDado(ESTILO_PADRAO, 20, tipos).name)
   })
 })
+
+import { brilhoDoEstilo, clarear } from './brilhoDosDados'
+
+describe('animação dos dados', () => {
+  it('cada textura ganha o seu efeito; metal sem textura brilha', () => {
+    expect(brilhoDoEstilo({ textura: 'fire', material: 'plastico' })).toBe('fogo')
+    expect(brilhoDoEstilo({ textura: 'stars', material: 'plastico' })).toBe('constelacao')
+    expect(brilhoDoEstilo({ textura: 'astral', material: 'vidro' })).toBe('constelacao')
+    expect(brilhoDoEstilo({ textura: 'none', material: 'metal' })).toBe('metal')
+    expect(brilhoDoEstilo({ textura: 'none', material: 'plastico' })).toBeNull()
+    expect(brilhoDoEstilo({ textura: 'marble', material: 'plastico' })).toBeNull()
+  })
+  it('clarear puxa pro branco; metal polido virou metal', () => {
+    expect(clarear('#000000', 1)).toBe('#ffffff')
+    expect(clarear('#ff0000', 0)).toBe('#ff0000')
+    expect(estiloCompleto({ material: 'metal_polido' as never }).material).toBe('metal')
+  })
+})

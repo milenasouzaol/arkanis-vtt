@@ -17415,3 +17415,23 @@ label.janela-botao {
   gap: 6px;
   cursor: pointer;
 }
+
+/* Animação em volta dos dados 3D (fogo, constelação, glitter…), por cima deles. */
+.dados-brilho {
+  position: fixed;
+  inset: 0;
+  z-index: 34; /* atrás dos dados: o fogo sai por trás, o número fica à vista */
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+
+.dados-brilho.ativo {
+  opacity: 1;
+}
+
+.dados-brilho.frente {
+  z-index: 36;
+}

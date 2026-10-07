@@ -19,7 +19,6 @@ export const ESTILO_PADRAO: EstiloDados = { modo: 'tipo', cor: '#7c4fe0', numero
 export const MATERIAIS_DADO: { id: MaterialDado; rotulo: string; biblioteca: string }[] = [
   { id: 'plastico', rotulo: 'Plástico', biblioteca: 'plastic' },
   { id: 'metal', rotulo: 'Metal', biblioteca: 'metal' },
-  { id: 'metal_polido', rotulo: 'Metal Polido', biblioteca: 'perfectmetal' },
   { id: 'madeira', rotulo: 'Madeira', biblioteca: 'wood' },
   { id: 'vidro', rotulo: 'Vidro', biblioteca: 'glass' },
 ]
@@ -57,7 +56,8 @@ export function estiloCompleto(e: Partial<EstiloDados> | null | undefined): Esti
     cor: HEX.test(x.cor) ? x.cor : ESTILO_PADRAO.cor,
     numero: HEX.test(x.numero) ? x.numero : ESTILO_PADRAO.numero,
     contorno: HEX.test(x.contorno) ? x.contorno : ESTILO_PADRAO.contorno,
-    material: MATERIAIS_DADO.some((m) => m.id === x.material) ? x.material : 'plastico',
+    // Metal Polido saiu (ficava preto sem reflexo de ambiente): vira Metal.
+    material: x.material === 'metal_polido' ? 'metal' : MATERIAIS_DADO.some((m) => m.id === x.material) ? x.material : 'plastico',
     textura: TEXTURAS_DADO.some((t) => t.id === x.textura) ? x.textura : 'none',
   }
 }

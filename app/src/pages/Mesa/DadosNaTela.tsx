@@ -4,6 +4,7 @@ import type { Mensagem } from './chat'
 import { chavesDe, dadosNovos, notacaoUnica, type Dado } from './dados3d'
 import { tocarSom, tocarSomDeArma } from '../../lib/sons'
 import { armaDoRotulo } from '../../lib/somDasArmas'
+import { brilhoDoEstilo, iniciarBrilho, type CaixaComCena } from './brilhoDosDados'
 import { conjuntoDoDado, estiloCompleto, EVENTO_PREFERENCIAS, lerPreferenciasDados, type EstiloDados, type PreferenciasDados } from './estiloDados'
 
 // Rolar de teste (Configurações → Dados): mostra os dados com o estilo escolhido, só pra quem testou.
@@ -56,6 +57,9 @@ export default function DadosNaTela({ mensagens, estilos = {} }: { mensagens: Me
   const rolando = useRef(false)
   const timer = useRef<number | undefined>(undefined)
   const palco = useRef<HTMLDivElement>(null)
+  // Animação em volta dos dados (fogo, constelação…), conforme o estilo de quem rolou.
+  const camada = useRef<HTMLCanvasElement>(null)
+  const pararBrilho = useRef<(() => void) | null>(null)
 
   async function iniciar(): Promise<Caixa | null> {
     if (caixa.current) return caixa.current
@@ -126,6 +130,15 @@ export default function DadosNaTela({ mensagens, estilos = {} }: { mensagens: Me
       }
     }
     conjuntos.current = novos
+    pararBrilho.current?.()
+    pararBrilho.current = null
+    const brilho = brilhoDoEstilo(estilo)
+    if (brilho && camada.current) {
+      pararBrilho.current = iniciarBrilho(camada.current, c as unknown as CaixaComCena, brilho, (l) => (estilo.modo === 'unica' ? estilo.cor : DIE_COLOR[l] ?? '#7c4fe0'))
+      // Brilho de metal, glitter e gelo na frente do dado; fogo, fumaça, água e constelação atrás.
+      camada.current.classList.toggle('frente', brilho === 'metal' || brilho === 'glitter' || brilho === 'gelo')
+      camada.current.classList.add('ativo')
+    }
     const notacao = notacaoUnica(dados)
     if (notacao) {
       tocarSom('dado')
@@ -135,6 +148,9 @@ export default function DadosNaTela({ mensagens, estilos = {} }: { mensagens: Me
     }
     timer.current = window.setTimeout(() => {
       c.clearDice()
+      pararBrilho.current?.()
+      pararBrilho.current = null
+      camada.current?.classList.remove('ativo')
       palco.current?.classList.remove('ativo')
       rolando.current = false
       proxima()
@@ -165,7 +181,15 @@ export default function DadosNaTela({ mensagens, estilos = {} }: { mensagens: Me
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mensagens])
 
-  useEffect(() => () => window.clearTimeout(timer.current), [])
+  useEffect(() => () => {
+    window.clearTimeout(timer.current)
+    pararBrilho.current?.()
+  }, [])
 
-  return <div id="dados-na-tela" ref={palco} className="dados-na-tela" aria-hidden />
+  return (
+    <>
+      <div id="dados-na-tela" ref={palco} className="dados-na-tela" aria-hidden />
+      <canvas ref={camada} className="dados-brilho" aria-hidden />
+    </>
+  )
 }
