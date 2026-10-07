@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { recordRoll } from '../../lib/rollHistory'
-import { attrValue, computeDerivedStats, computePatentePd, rollAttributeTest, trainingBonus, CONDITION_ESCALATION, CONDITION_TEST_MODIFIERS, type AttributeKey, type Training } from '../../lib/rules'
+import { attrValue, computeDerivedStats, computePatentePd, rollAttributeTest, trainingBonus, CONDITION_ESCALATION, type AttributeKey, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
 import RollResult, { type RollResultData } from './RollResult'
 import HabilidadesTab from './HabilidadesTab'
@@ -269,40 +269,22 @@ export default function AgenteTab({
     await updateCharacterField('avatar_url', publicUrl)
   }
 
-  async function syncConditionModifier(name: string) {
-    const rule = CONDITION_TEST_MODIFIERS[name]
-    if (!rule) return
-    await supabase.from('character_modifiers').upsert(
-      { character_id: character.id, scope: rule.scope, name, dice_bonus: rule.dice_bonus, value_bonus: 0, threat_margin_bonus: 0, multiplier_bonus: 0, is_active: true },
-      { onConflict: 'character_id,scope,name' },
-    )
-  }
-
   async function addCondition(name: string) {
     const current = character.conditions ?? []
     const escalatesTo = CONDITION_ESCALATION[name]
     if (escalatesTo && current.includes(name)) {
       const next = [...current.filter((c) => c !== name), escalatesTo]
       await supabase.from('characters').update({ conditions: next }).eq('id', character.id)
-      if (CONDITION_TEST_MODIFIERS[name] && !next.includes(name)) {
-        await supabase.from('character_modifiers').delete().eq('character_id', character.id).eq('name', name)
-      }
-      await syncConditionModifier(escalatesTo)
     } else {
       await supabase.from('characters').update({ conditions: [...current, name] }).eq('id', character.id)
-      await syncConditionModifier(name)
     }
     onUpdated()
   }
 
   async function removeCondition(index: number) {
     const current = character.conditions ?? []
-    const removedName = current[index]
     const next = current.filter((_, i) => i !== index)
     await supabase.from('characters').update({ conditions: next }).eq('id', character.id)
-    if (removedName && CONDITION_TEST_MODIFIERS[removedName] && !next.includes(removedName)) {
-      await supabase.from('character_modifiers').delete().eq('character_id', character.id).eq('name', removedName)
-    }
     onUpdated()
   }
 

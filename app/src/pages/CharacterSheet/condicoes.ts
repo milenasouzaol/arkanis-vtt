@@ -1,6 +1,5 @@
-// Condições que mexem na ficha automaticamente (pedido da Millie, 05/10), além das quatro
-// genéricas que já viram Modificador de Teste/Ataque (Abalado, Apavorado, Agarrado e Enredado,
-// em lib/rules.ts — essas continuam lá, aqui só entra o que faltava).
+// Condições que mexem na ficha automaticamente (pedido da Millie, 05/10). Abalado, Apavorado,
+// Agarrado e Enredado também entram aqui (07/10: antes ficavam numa tabela que a ficha não lia).
 //
 // O que dá pra automatizar: dados a menos em testes de certos atributos/perícias/ataques, a
 // Defesa e o custo de rituais. O que depende de turno (dano no início do turno, rolar 1d6 no
@@ -15,6 +14,7 @@ export type ContextoDoTeste = {
 
 type Regra = {
   dados: number
+  todos?: boolean // qualquer teste (perícia, atributo, ataque, ritual)
   atributos?: string[]
   pericias?: string[]
   ataque?: 'qualquer' | 'corpo'
@@ -24,6 +24,9 @@ const FISICOS = ['agilidade', 'forca', 'vigor']
 const MENTAIS = ['intelecto', 'presenca']
 
 const REGRAS: Record<string, Regra[]> = {
+  Abalado: [{ dados: -1, todos: true }],
+  Apavorado: [{ dados: -2, todos: true }],
+  Enredado: [{ dados: -1, ataque: 'qualquer' }],
   Frustrado: [{ dados: -1, atributos: MENTAIS }],
   Esmorecido: [{ dados: -2, atributos: MENTAIS }],
   Fraco: [{ dados: -1, atributos: FISICOS }],
@@ -34,13 +37,17 @@ const REGRAS: Record<string, Regra[]> = {
   // Cego: -2d20 nas perícias de Agilidade e Força, e fica desprevenido (-1d20 Reflexos)
   Cego: [{ dados: -2, atributos: ['agilidade', 'forca'] }, { dados: -1, pericias: ['Reflexos'] }],
   Desprevenido: [{ dados: -1, pericias: ['Reflexos'] }],
-  Agarrado: [{ dados: -1, pericias: ['Reflexos'] }], // o -1d20 em ataque já é Modificador
+  Agarrado: [{ dados: -1, pericias: ['Reflexos'] }, { dados: -1, ataque: 'qualquer' }],
   Atordoado: [{ dados: -1, pericias: ['Reflexos'] }],
   Surpreendido: [{ dados: -1, pericias: ['Reflexos'] }],
   Fascinado: [{ dados: -2, pericias: ['Percepção'] }],
   Ofuscado: [{ dados: -1, pericias: ['Percepção'] }, { dados: -1, ataque: 'qualquer' }],
   Surdo: [{ dados: -2, pericias: ['Iniciativa'] }],
   Caído: [{ dados: -2, ataque: 'corpo' }],
+  // Efeitos (inimigos, extras) que mexem em dado; o resto é dano/ação que o mestre aplica.
+  'Fortalecimento Paranormal': [{ dados: 1, atributos: FISICOS }],
+  Guerrilheiro: [{ dados: 1, ataque: 'qualquer' }],
+  'Sugada Mortal': [{ dados: -2, atributos: FISICOS }], // debilitado
 }
 
 function normalizar(t: string) {
@@ -48,6 +55,7 @@ function normalizar(t: string) {
 }
 
 function vale(r: Regra, c: ContextoDoTeste): boolean {
+  if (r.todos) return true
   if (r.ataque) return !!c.ataque && (r.ataque === 'qualquer' || r.ataque === c.ataque)
   if (r.pericias) return !!c.pericia && r.pericias.some((p) => normalizar(p) === normalizar(c.pericia!))
   if (r.atributos) return !!c.atributo && r.atributos.includes(c.atributo)

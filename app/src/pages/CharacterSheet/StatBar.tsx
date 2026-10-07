@@ -4,6 +4,9 @@ import markedSkullIcon from '../../assets/marked-skull-icon.svg'
 import emptyBrainIcon from '../../assets/empty-brain-icon.svg'
 import markedBrainIcon from '../../assets/marked-brain-icon.svg'
 
+// A caixinha do número do tamanho do número, pra barra "/" ficar com o mesmo espaço dos dois lados.
+const larguraDoNumero = (n: number) => `${Math.max(1, String(n).length) + 0.3}ch`
+
 export default function StatBar({
   label,
   icon,
@@ -69,7 +72,7 @@ export default function StatBar({
                 Curar
               </button>
               <span className="stat-bar-value">
-                {current}/{max}
+                {current}<span className="stat-bar-sep">/</span>{max}
               </span>
               <span className="stat-bar-death-marks">
                 {[0, 1, 2].map((i) => (
@@ -94,16 +97,18 @@ export default function StatBar({
                     type="number"
                     className="stat-bar-value-input"
                     value={current}
+                    style={{ width: larguraDoNumero(current) }}
                     onChange={(e) => onCurrentChange(Number(e.target.value))}
                     aria-label={label}
                   />
                 ) : current}
-                /
+                <span className="stat-bar-sep">/</span>
                 {onMaxChange ? (
                   <input
                     type="number"
                     className="stat-bar-value-input stat-bar-max-input"
                     value={max}
+                    style={{ width: larguraDoNumero(max) }}
                     onChange={(e) => onMaxChange(Number(e.target.value))}
                     aria-label={`Máximo de ${label}`}
                   />

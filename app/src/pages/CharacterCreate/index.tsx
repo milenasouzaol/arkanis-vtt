@@ -102,6 +102,26 @@ export default function CharacterCreate() {
     }
     if (abilityRows.length) await supabase.from('character_abilities').insert(abilityRows)
 
+    // Origem (pedido da Millie, 07/10): as duas perícias dela já vêm treinadas na ficha. Na origem
+    // própria, as escolhidas e o poder que a pessoa escreveu.
+    let periciasDaOrigem: (string | null)[] = []
+    if (draft.originId) {
+      const { data: origem } = await supabase.from('origins').select('skill_1_id, skill_2_id').eq('id', draft.originId).single()
+      periciasDaOrigem = [origem?.skill_1_id ?? null, origem?.skill_2_id ?? null]
+    } else if (draft.customOrigin) {
+      periciasDaOrigem = [draft.customOrigin.skill1Id, draft.customOrigin.skill2Id]
+      if (draft.customOrigin.powerName.trim()) {
+        await supabase.from('character_abilities').insert({
+          character_id: character.id,
+          custom_ability: { name: draft.customOrigin.powerName.trim(), description: draft.customOrigin.powerDescription.trim(), hasElement: false },
+        })
+      }
+    }
+    const treinadas = [...new Set(periciasDaOrigem.filter((x): x is string => !!x))]
+    if (treinadas.length) {
+      await supabase.from('character_skills').upsert(treinadas.map((skill_id) => ({ character_id: character.id, skill_id, training: 'treinado' })))
+    }
+
     setFinishing(false)
     // Quem veio de um convite volta pra ele pra levar o personagem novo pra campanha.
     navigate(destinoDepoisDoConvite(`/personagem/${character.id}`))

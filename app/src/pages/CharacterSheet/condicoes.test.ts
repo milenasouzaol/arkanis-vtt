@@ -31,8 +31,8 @@ describe('penalidade nos testes', () => {
     expect(r.motivos).toEqual(['Cego -3d20', 'Fraco -1d20'])
   })
 
-  it('as genéricas ficam com o Modificador (não contam aqui de novo)', () => {
-    expect(penalidadeDeCondicoes(['Abalado', 'Apavorado'], { atributo: 'presenca', pericia: 'Diplomacia' }).dados).toBe(0)
+  it('as genéricas contam aqui (antes ficavam num Modificador que não pesava em toda rolagem)', () => {
+    expect(penalidadeDeCondicoes(['Abalado', 'Apavorado'], { atributo: 'presenca', pericia: 'Diplomacia' }).dados).toBe(-3)
   })
 })
 
@@ -54,4 +54,18 @@ it('Alquebrado deixa ritual 1 PE mais caro', () => {
 it('rótulo mostra o porquê', () => {
   expect(rotuloComCondicoes('Teste de Diplomacia', ['Frustrado -1d20'])).toBe('Teste de Diplomacia (Frustrado -1d20)')
   expect(rotuloComCondicoes('Teste de Luta', [])).toBe('Teste de Luta')
+})
+
+describe('Abalado, Apavorado, Agarrado e Enredado (07/10)', () => {
+  it('Abalado tira 1d20 e Apavorado 2d20 de qualquer teste', () => {
+    expect(penalidadeDeCondicoes(['Abalado'], { atributo: 'forca' }).dados).toBe(-1)
+    expect(penalidadeDeCondicoes(['Apavorado'], { atributo: 'intelecto', pericia: 'Investigação' }).dados).toBe(-2)
+    expect(penalidadeDeCondicoes(['Apavorado'], { atributo: 'agilidade', ataque: 'distancia' }).motivos).toEqual(['Apavorado -2d20'])
+  })
+
+  it('Agarrado e Enredado tiram 1d20 dos ataques', () => {
+    expect(penalidadeDeCondicoes(['Enredado'], { atributo: 'forca', ataque: 'corpo' }).dados).toBe(-1)
+    expect(penalidadeDeCondicoes(['Enredado'], { atributo: 'forca', pericia: 'Atletismo' }).dados).toBe(0)
+    expect(penalidadeDeCondicoes(['Agarrado'], { atributo: 'agilidade', ataque: 'distancia' }).dados).toBe(-1)
+  })
 })

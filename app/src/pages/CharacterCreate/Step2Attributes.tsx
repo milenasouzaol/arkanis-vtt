@@ -46,12 +46,12 @@ export default function Step2Attributes({
 }) {
   const { attributes } = draft
   const { remaining } = computePool(attributes)
-  const isValid = remaining === 0
   const paperStyle = { backgroundImage: `url(${papelTextura})` }
 
   function setValue(key: keyof Attributes, raw: number) {
     if (Number.isNaN(raw)) return
-    const next = Math.max(0, Math.min(3, Math.round(raw)))
+    // Sem limite de pontos (pedido da Millie, 07/10): a ficha pode não ser de NEX 5%.
+    const next = Math.max(0, Math.min(9, Math.round(raw)))
     onChange({ ...attributes, [key]: next })
   }
 
@@ -74,7 +74,7 @@ export default function Step2Attributes({
                 className="attr-radar-input"
                 style={{ top: node.top, left: node.left }}
                 min={0}
-                max={3}
+                max={9}
                 value={attributes[node.key]}
                 onChange={(e) => setValue(node.key, Number(e.target.value))}
               />
@@ -83,7 +83,10 @@ export default function Step2Attributes({
 
           <p>Todos os seus atributos começam em 1 e você recebe 4 pontos para distribuir entre eles como quiser.</p>
           <p>Você também pode reduzir um atributo para 0 para receber 1 ponto adicional. O valor máximo inicial que você pode ter em cada atributo é 3.</p>
-          <p className="creation-footnote">Pontos restantes: {remaining}</p>
+          <p className="creation-footnote">
+            {remaining >= 0 ? `Pontos restantes: ${remaining}` : `${-remaining} ponto${remaining === -1 ? '' : 's'} além da criação básica`}
+            {' '}(é só uma referência: dá pra seguir com qualquer valor)
+          </p>
         </div>
       </div>
 
@@ -111,7 +114,7 @@ export default function Step2Attributes({
       <button type="button" className="creation-back-arrow" onClick={onBack} aria-label="Voltar">
         <img src={stepArrow} alt="" />
       </button>
-      <button type="button" className="creation-next-arrow" onClick={onNext} disabled={!isValid} aria-label="Avançar">
+      <button type="button" className="creation-next-arrow" onClick={onNext} aria-label="Avançar">
         <img src={stepArrow} alt="" />
       </button>
     </div>

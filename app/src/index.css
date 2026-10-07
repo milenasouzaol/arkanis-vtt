@@ -3027,6 +3027,10 @@ code, .counter {
   pointer-events: auto;
 }
 
+.stat-bar-sep {
+  margin: 0 0.3em;
+}
+
 .stat-bar-note {
   font-size: 0.75em;
   color: var(--text-dim);
