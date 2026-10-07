@@ -1,7 +1,7 @@
 // Efeitos dos elementos de Ordem nos dados 3D (pedido da Millie, 06/10), desenhados em volta de
 // cada dado (ver brilhoDosDados):
 //   Sangue: gotas escorrendo e dentes/garras de osso saindo das bordas.
-//   Morte: gavinhas de lodo preto enrolando em espiral, rabiscos brancos em redemoinho, lodo pingando.
+//   Morte: gavinhas de lodo preto enrolando em espiral, lodo pingando e a poça embaixo.
 //   Energia: chamas espectrais magenta, roxas e ciano subindo em volta, e estalinhos elétricos rosa.
 //   Conhecimento: letras e sigilos dourados girando e brilhando, com fumaça dourada leve.
 
@@ -97,27 +97,9 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
     for (let i = chance(5); i > 0; i--) ps.push(nova({ ch: 'fumaca', x: (Math.random() - 0.5) * raio * 1.4, y: (Math.random() - 0.3) * raio, vy: -raio * 0.35, vida: 2 + Math.random(), tam: raio * 0.6 }))
   }
 
-  // Morte: rabiscos brancos em redemoinho girando em volta (como o desenho a giz da referência)
-  // e a poça de lodo embaixo.
+  // Morte: a poça de lodo embaixo do dado (os rabiscos saíram: a Millie não gostou).
   if (el === 'morte') {
     ctx.save()
-    ctx.lineCap = 'round'
-    ctx.strokeStyle = '#f2f2ee'
-    for (let b = 0; b < 7; b++) {
-      const giro = t * (0.7 + b * 0.05) + b * 0.9
-      ctx.globalAlpha = 0.18 + 0.12 * Math.sin(t * 2 + b)
-      ctx.lineWidth = 0.8 + (b % 3) * 0.4
-      ctx.beginPath()
-      for (let k = 0; k <= 26; k++) {
-        const a = giro + k * 0.2
-        const r = raio * (2.1 - k * 0.045) + Math.sin(k * 3.1 + b + t * 4) * raio * 0.04
-        const x = cx + Math.cos(a) * r
-        const y = cy + Math.sin(a) * r * 0.85
-        if (k) ctx.lineTo(x, y)
-        else ctx.moveTo(x, y)
-      }
-      ctx.stroke()
-    }
     ctx.globalAlpha = 0.95
     ctx.fillStyle = '#070707'
     ctx.beginPath()
