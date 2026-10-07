@@ -3,11 +3,14 @@
 // constelação, glitter, gelo, brilho de metal, gotas d'água, fumaça de caveira. Desenhado numa
 // camada por cima, seguindo a posição de cada dado na tela.
 import type { EstiloDados } from './estiloDados'
+import { ELEMENTOS, novoEstado, passoDoElemento, type Elemento, type EstadoDoDado } from './elementosDosDados'
 
-export type BrilhoDado = 'fogo' | 'constelacao' | 'glitter' | 'gelo' | 'metal' | 'agua' | 'fumaca'
+export type BrilhoDado = 'fogo' | 'constelacao' | 'glitter' | 'gelo' | 'metal' | 'agua' | 'fumaca' | Elemento
 
 // Qual efeito o estilo ganha (a textura manda; sem textura, o material metal brilha).
-export function brilhoDoEstilo(e: Pick<EstiloDados, 'textura' | 'material'>): BrilhoDado | null {
+export function brilhoDoEstilo(e: Pick<EstiloDados, 'textura' | 'material'> & { efeito?: EstiloDados['efeito'] }): BrilhoDado | null {
+  if (e.efeito === 'nenhum') return null
+  if (e.efeito && ELEMENTOS.some((x) => x.id === e.efeito)) return e.efeito as Elemento
   switch (e.textura) {
     case 'fire': return 'fogo'
     case 'stars':
@@ -69,6 +72,8 @@ export function iniciarBrilho(camada: HTMLCanvasElement, caixa: CaixaComCena, ti
   const ctx = camada.getContext('2d')
   if (!ctx) return () => {}
   const porDado = new Map<DadoNaCena, Particula[]>()
+  const elemento = ELEMENTOS.some((x) => x.id === tipo) ? (tipo as Elemento) : null
+  const doElemento = new Map<DadoNaCena, EstadoDoDado>()
   let quadro = 0
   let antes = performance.now()
   const dpr = Math.min(2, window.devicePixelRatio || 1)
@@ -99,6 +104,13 @@ export function iniciarBrilho(camada: HTMLCanvasElement, caixa: CaixaComCena, ti
       const cx = ((c.x + 1) / 2) * r.width
       const cy = ((1 - c.y) / 2) * r.height
       const raio = Math.max(12, Math.abs(((b.x - c.x) / 2) * r.width) * 2.4)
+      // Elementos de Ordem (sangue, morte, energia, conhecimento): desenho próprio.
+      if (elemento) {
+        let est = doElemento.get(d)
+        if (!est) doElemento.set(d, (est = novoEstado()))
+        passoDoElemento(ctx, elemento, est, cx, cy, raio, t, dt, bolinha)
+        continue
+      }
       let ps = porDado.get(d)
       if (!ps) porDado.set(d, (ps = []))
 

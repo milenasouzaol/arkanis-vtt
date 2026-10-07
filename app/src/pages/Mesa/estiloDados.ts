@@ -1,3 +1,5 @@
+import { ELEMENTOS, type Elemento } from './elementosDosDados'
+
 // Dado 3D de cada pessoa (Configurações, KAN-54, pedido da Millie, 06/10): cor, número, contorno,
 // material e textura, como no Dice So Nice. Fica no perfil, então todo mundo vê os dados de quem
 // rolou do jeito que essa pessoa escolheu. Regras puras, testadas.
@@ -11,9 +13,11 @@ export type EstiloDados = {
   contorno: string
   material: MaterialDado
   textura: string // 'none' ou uma das TEXTURAS_DADO
+  // Animação: pela textura (fogo, estrelas…), nenhuma, ou um elemento de Ordem.
+  efeito: 'auto' | 'nenhum' | Elemento
 }
 
-export const ESTILO_PADRAO: EstiloDados = { modo: 'tipo', cor: '#7c4fe0', numero: '#ffffff', contorno: '#000000', material: 'plastico', textura: 'none' }
+export const ESTILO_PADRAO: EstiloDados = { modo: 'tipo', cor: '#7c4fe0', numero: '#ffffff', contorno: '#000000', material: 'plastico', textura: 'none', efeito: 'auto' }
 
 // Nome do material na biblioteca dos dados.
 export const MATERIAIS_DADO: { id: MaterialDado; rotulo: string; biblioteca: string }[] = [
@@ -59,6 +63,7 @@ export function estiloCompleto(e: Partial<EstiloDados> | null | undefined): Esti
     // Metal Polido saiu (ficava preto sem reflexo de ambiente): vira Metal.
     material: x.material === 'metal_polido' ? 'metal' : MATERIAIS_DADO.some((m) => m.id === x.material) ? x.material : 'plastico',
     textura: TEXTURAS_DADO.some((t) => t.id === x.textura) ? x.textura : 'none',
+    efeito: x.efeito === 'nenhum' || ELEMENTOS.some((e) => e.id === x.efeito) ? x.efeito : 'auto',
   }
 }
 

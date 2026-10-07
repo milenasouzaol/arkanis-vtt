@@ -44,3 +44,13 @@ describe('animação dos dados', () => {
     expect(estiloCompleto({ material: 'metal_polido' as never }).material).toBe('metal')
   })
 })
+
+describe('elementos nos dados', () => {
+  it('o efeito do elemento vence a textura; Nenhum desliga', () => {
+    expect(brilhoDoEstilo({ textura: 'fire', material: 'plastico', efeito: 'sangue' })).toBe('sangue')
+    expect(brilhoDoEstilo({ textura: 'fire', material: 'plastico', efeito: 'nenhum' })).toBeNull()
+    expect(brilhoDoEstilo({ textura: 'fire', material: 'plastico', efeito: 'auto' })).toBe('fogo')
+    expect(estiloCompleto({ efeito: 'energia' }).efeito).toBe('energia')
+    expect(estiloCompleto({ efeito: 'banana' as never }).efeito).toBe('auto')
+  })
+})

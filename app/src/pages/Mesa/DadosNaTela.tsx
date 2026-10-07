@@ -136,7 +136,7 @@ export default function DadosNaTela({ mensagens, estilos = {} }: { mensagens: Me
     if (brilho && camada.current) {
       pararBrilho.current = iniciarBrilho(camada.current, c as unknown as CaixaComCena, brilho, (l) => (estilo.modo === 'unica' ? estilo.cor : DIE_COLOR[l] ?? '#7c4fe0'))
       // Brilho de metal, glitter e gelo na frente do dado; fogo, fumaça, água e constelação atrás.
-      camada.current.classList.toggle('frente', brilho === 'metal' || brilho === 'glitter' || brilho === 'gelo')
+      camada.current.classList.toggle('frente', brilho === 'metal' || brilho === 'glitter' || brilho === 'gelo' || brilho === 'energia')
       camada.current.classList.add('ativo')
     }
     const notacao = notacaoUnica(dados)

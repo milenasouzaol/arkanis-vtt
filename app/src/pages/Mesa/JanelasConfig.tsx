@@ -6,6 +6,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import Janela, { Campo, CampoCor, Deslizante } from './Janela'
 import { EVENTO_TESTAR_DADOS } from './DadosNaTela'
+import { ELEMENTOS, type Elemento } from './elementosDosDados'
 import {
   ESTILO_PADRAO, estiloCompleto, lerPreferenciasDados, MATERIAIS_DADO, PREFERENCIAS_PADRAO, salvarPreferenciasDados, TEXTURAS_DADO,
   type EstiloDados, type MaterialDado, type PreferenciasDados,
@@ -185,6 +186,21 @@ export function JanelaDados({ estiloAtual, onSalvarEstilo, onFechar }: {
           <Campo rotulo="Textura">
             <select value={estilo.textura} aria-label="Textura" onChange={(e) => mudar({ textura: e.target.value })}>
               {TEXTURAS_DADO.map((t) => <option key={t.id} value={t.id}>{t.rotulo}</option>)}
+            </select>
+          </Campo>
+          <Campo rotulo="Efeito" dica="A animação em volta dos dados. Escolher um elemento já põe as cores dele (dá pra mudar depois).">
+            <select
+              value={estilo.efeito}
+              aria-label="Efeito"
+              onChange={(e) => {
+                const v = e.target.value as EstiloDados['efeito']
+                const el = ELEMENTOS.find((x) => x.id === v)
+                mudar(el ? { efeito: v, modo: 'unica', textura: 'none', ...el.cores } : { efeito: v })
+              }}
+            >
+              <option value="auto">Pela textura (fogo, estrelas, gelo…)</option>
+              <option value="nenhum">Nenhum</option>
+              {ELEMENTOS.map((x) => <option key={x.id} value={x.id as Elemento}>{x.rotulo}</option>)}
             </select>
           </Campo>
           <button type="button" className="janela-botao" onClick={() => window.dispatchEvent(new CustomEvent(EVENTO_TESTAR_DADOS, { detail: estilo }))}>
