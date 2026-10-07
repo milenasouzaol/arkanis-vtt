@@ -9,7 +9,7 @@ function cena(p: Partial<Cena>): Cena {
   return {
     id: 's', campaign_id: 'c', folder_id: null, name: 'Cena', sort: 0, show_in_nav: false, visibility: 'todos', visible_to: [],
     background_url: null, background_color: '#000000', grid_type: 'quadrado', grid_size: 100, grid_colunas: null, grid_linhas: null, grid_distance: 1.5, grid_units: 'm',
-    grid_style: 'solida', grid_thickness: 1, grid_color: '#000000', grid_opacity: 0.25, darkness: 0, weather: null,
+    grid_style: 'solida', grid_thickness: 1, grid_color: '#000000', grid_opacity: 0.25, darkness: 0, weather: null, weather_cor: null, filtro_cor: null, filtro_intensidade: 0.3,
     luminosity: 0, saturation: 0, shadows: 0, created_at: '2026-10-03T00:00:00Z', ...p,
   }
 }

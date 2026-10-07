@@ -1160,7 +1160,9 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       ) : (
         <p className="mesa-palco-vazio">{souMestre ? 'Nenhuma cena ativa. Crie uma na aba Cenas ou arraste uma imagem pra cá.' : 'Nenhuma cena ativa'}</p>
       )}
-      {cena?.weather && <EfeitoClimatico key={cena.weather} clima={cena.weather} />}
+      {/* Filtro de iluminação: uma luz colorida por cima do mapa inteiro (lua de sangue, luz verde…). */}
+      {cena?.filtro_cor && <div className="mesa-filtro-luz" style={{ background: cena.filtro_cor, opacity: cena.filtro_intensidade }} aria-hidden />}
+      {cena?.weather && <EfeitoClimatico key={cena.weather} clima={cena.weather} cor={cena.weather_cor} />}
       {soltando && <div className="mesa-soltar">{cena?.background_url ? 'Solte pra colocar a imagem na cena' : 'Solte pra usar como fundo da cena'}</div>}
       {aviso && !soltando && <div className="mesa-soltar" role="status">{aviso}</div>}
       {configLanterna && (

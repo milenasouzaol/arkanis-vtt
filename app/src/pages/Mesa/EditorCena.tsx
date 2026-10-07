@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBorderAll, faCubes, faFileImage, faFloppyDisk, faImage, faMap, faSun } from '@fortawesome/free-solid-svg-icons'
 import Janela, { Campo, CampoCor, CampoNumero, Deslizante } from './Janela'
-import { camposDaCena, celulaDaGrade, colunasDoTamanho, linhasSugeridas, CLIMAS, type Cena, type CamposCena, type Clima, type EstiloGrade, type TipoGrade } from './cenas'
+import { camposDaCena, celulaDaGrade, colunasDoTamanho, linhasSugeridas, CLIMAS, COR_PADRAO_CLIMA, type Cena, type CamposCena, type Clima, type EstiloGrade, type TipoGrade } from './cenas'
 
 type Aba = 'basicos' | 'grade' | 'ambiente' | 'diversos'
 
@@ -178,6 +178,31 @@ export default function EditorCena({ cena, jogadores, onSalvar, onImagem, onFech
                 {CLIMAS.map((c) => <option key={c.id} value={c.id}>{c.rotulo}</option>)}
               </select>
             </Campo>
+
+            {rascunho.weather && COR_PADRAO_CLIMA[rascunho.weather] && (
+              <Campo rotulo="Cor do Efeito" dica="Chuva vermelha vira chuva de sangue; fumaça vermelha, lua de sangue.">
+                <div className="janela-linha">
+                  <CampoCor rotulo="Cor do Efeito" valor={rascunho.weather_cor ?? COR_PADRAO_CLIMA[rascunho.weather]!} onMudar={(v) => mudar('weather_cor', v)} />
+                  {rascunho.weather_cor && <button type="button" className="janela-link" onClick={() => mudar('weather_cor', null)}>Cor normal</button>}
+                </div>
+              </Campo>
+            )}
+
+            <Campo rotulo="Filtro de Iluminação" dica="Uma luz colorida por cima do mapa inteiro (vermelha pra lua de sangue, verde pra algo tóxico…). Dá pra combinar com o efeito climático.">
+              <label className="janela-check">
+                <input type="checkbox" checked={!!rascunho.filtro_cor} onChange={(e) => mudar('filtro_cor', e.target.checked ? '#b3121a' : null)} /> Ligar
+              </label>
+            </Campo>
+            {rascunho.filtro_cor && (
+              <>
+                <Campo rotulo="Cor da Luz">
+                  <CampoCor rotulo="Cor da Luz" valor={rascunho.filtro_cor} onMudar={(v) => mudar('filtro_cor', v)} />
+                </Campo>
+                <Campo rotulo="Intensidade da Luz">
+                  <Deslizante rotulo="Intensidade da Luz" min={0.05} max={1} valor={rascunho.filtro_intensidade} onMudar={(v) => mudar('filtro_intensidade', v)} />
+                </Campo>
+              </>
+            )}
           </>
         )}
 

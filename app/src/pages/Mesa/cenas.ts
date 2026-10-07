@@ -2,7 +2,7 @@
 
 export type TipoGrade = 'quadrado' | 'sem' | 'hexagono'
 export type EstiloGrade = 'solida' | 'tracejada' | 'pontilhada'
-export type Clima = 'folhas' | 'chuva' | 'tempestade' | 'nevoa' | 'neve' | 'nebulosa'
+export type Clima = 'folhas' | 'chuva' | 'tempestade' | 'nevoa' | 'neve' | 'nebulosa' | 'fumaca'
 export type Visibilidade = 'mestre' | 'todos' | 'jogadores'
 
 export type Cena = {
@@ -29,6 +29,11 @@ export type Cena = {
   grid_opacity: number
   darkness: number
   weather: Clima | null
+  // Cor do efeito climático (chuva de sangue…); vazio = a cor normal dele.
+  weather_cor: string | null
+  // Filtro de iluminação: uma cor por cima do mapa inteiro (vazio = sem filtro).
+  filtro_cor: string | null
+  filtro_intensidade: number
   luminosity: number
   saturation: number
   shadows: number
@@ -53,13 +58,25 @@ export const CLIMAS: { id: Clima; rotulo: string }[] = [
   { id: 'nevoa', rotulo: 'Névoa' },
   { id: 'neve', rotulo: 'Neve' },
   { id: 'nebulosa', rotulo: 'Nebulosa' },
+  { id: 'fumaca', rotulo: 'Fumaça (lua de sangue)' },
 ]
+
+// Cor de partida de cada efeito (o mestre troca).
+export const COR_PADRAO_CLIMA: Record<Clima, string | null> = {
+  folhas: null, chuva: '#c8d2e1', tempestade: '#c8d2e1', nevoa: '#d7dae1', neve: '#ffffff', nebulosa: '#d7dae1', fumaca: '#a3121c',
+}
+
+// #rrggbb → 'r, g, b' (o canvas usa assim).
+export function rgbDe(hex: string | null | undefined): string | null {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex ?? '')
+  return m ? `${parseInt(m[1], 16)}, ${parseInt(m[2], 16)}, ${parseInt(m[3], 16)}` : null
+}
 
 // Campos que o editor da cena altera (o resto é identidade da linha).
 export const CAMPOS_EDITAVEIS = [
   'name', 'folder_id', 'show_in_nav', 'visibility', 'visible_to', 'background_url', 'background_color',
   'grid_type', 'grid_size', 'grid_colunas', 'grid_linhas', 'grid_distance', 'grid_units', 'grid_style', 'grid_thickness', 'grid_color', 'grid_opacity',
-  'darkness', 'weather', 'luminosity', 'saturation', 'shadows',
+  'darkness', 'weather', 'weather_cor', 'filtro_cor', 'filtro_intensidade', 'luminosity', 'saturation', 'shadows',
 ] as const
 
 export type CamposCena = Pick<Cena, (typeof CAMPOS_EDITAVEIS)[number]>

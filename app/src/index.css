@@ -18187,3 +18187,12 @@ label.janela-botao {
 .config-tempo-par .janela-controle select {
   width: 100%;
 }
+
+/* Filtro de iluminação da cena (pedido da Millie, 07/10): luz colorida que não esconde o mapa. */
+.mesa-filtro-luz {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: color;
+  transition: background 0.6s, opacity 0.6s;
+}

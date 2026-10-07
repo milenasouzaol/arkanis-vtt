@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { Clima } from './cenas'
+import { COR_PADRAO_CLIMA, rgbDe, type Clima } from './cenas'
 
 // Efeito Climático da cena (12.5), desenhado com partículas num canvas por cima do mapa.
 // Leve e sem arquivo de vídeo; cada efeito é uma receita de partículas.
@@ -15,18 +15,18 @@ type Receita = {
 
 const rnd = (a: number, b: number) => a + Math.random() * (b - a)
 
-function chuva(forte: boolean): Receita {
+function chuva(forte: boolean, cor: string): Receita {
   return {
     quantas: (area) => Math.round((area / 1e6) * (forte ? 900 : 450)),
     nova: (w, h, inicio) => ({
       x: rnd(-w * 0.2, w), y: inicio ? rnd(0, h) : rnd(-h * 0.2, 0),
       vx: forte ? rnd(5, 7) : rnd(2, 3), vy: forte ? rnd(26, 34) : rnd(18, 24),
-      tam: forte ? rnd(18, 28) : rnd(12, 20), giro: 0, vgiro: 0, alfa: rnd(0.2, forte ? 0.5 : 0.4), cor: '200, 210, 225',
+      tam: forte ? rnd(18, 28) : rnd(12, 20), giro: 0, vgiro: 0, alfa: rnd(0.25, forte ? 0.6 : 0.5), cor,
     }),
     desenhar: (ctx, p) => {
       const k = p.tam / Math.hypot(p.vx, p.vy)
       ctx.strokeStyle = `rgba(${p.cor}, ${p.alfa})`
-      ctx.lineWidth = 1
+      ctx.lineWidth = forte ? 1.6 : 1.3
       ctx.beginPath()
       ctx.moveTo(p.x, p.y)
       ctx.lineTo(p.x - p.vx * k, p.y - p.vy * k)
@@ -35,13 +35,13 @@ function chuva(forte: boolean): Receita {
   }
 }
 
-function neve(rapida: boolean): Receita {
+function neve(rapida: boolean, cor: string): Receita {
   return {
     quantas: (area) => Math.round((area / 1e6) * (rapida ? 320 : 220)),
     nova: (w, h, inicio) => ({
       x: rnd(-w * 0.3, w), y: inicio ? rnd(0, h) : rnd(-40, 0),
       vx: rapida ? rnd(3, 6) : rnd(-0.4, 0.4), vy: rapida ? rnd(3, 5) : rnd(0.6, 1.6),
-      tam: rnd(1, 3.2), giro: rnd(0, Math.PI * 2), vgiro: rnd(0.01, 0.03), alfa: rnd(0.5, 0.95), cor: '255, 255, 255',
+      tam: rnd(1, 3.2), giro: rnd(0, Math.PI * 2), vgiro: rnd(0.01, 0.03), alfa: rnd(0.5, 0.95), cor,
     }),
     desenhar: (ctx, p) => {
       ctx.fillStyle = `rgba(${p.cor}, ${p.alfa})`
@@ -74,13 +74,13 @@ const folhas: Receita = {
   },
 }
 
-function nevoa(vento: number): Receita {
+function nevoa(vento: number, cor: string, densa = false): Receita {
   return {
-    quantas: (area) => Math.max(10, Math.round((area / 1e6) * 14)),
+    quantas: (area) => Math.max(densa ? 18 : 10, Math.round((area / 1e6) * (densa ? 24 : 14))),
     nova: (w, h, inicio) => ({
       x: inicio ? rnd(-w * 0.2, w) : rnd(-w * 0.5, -w * 0.2), y: rnd(-h * 0.1, h * 1.1),
       vx: rnd(0.25, 0.6) * vento, vy: rnd(-0.05, 0.05), tam: rnd(Math.min(w, h) * 0.25, Math.min(w, h) * 0.55),
-      giro: 0, vgiro: 0, alfa: rnd(0.06, 0.16), cor: '215, 218, 225',
+      giro: 0, vgiro: 0, alfa: densa ? rnd(0.1, 0.22) : rnd(0.06, 0.16), cor,
     }),
     desenhar: (ctx, p) => {
       const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.tam)
@@ -92,26 +92,30 @@ function nevoa(vento: number): Receita {
   }
 }
 
-function receitas(clima: Clima): Receita[] {
+function receitas(clima: Clima, cor: string): Receita[] {
   switch (clima) {
-    case 'chuva': return [chuva(false)]
-    case 'tempestade': return [chuva(true)]
-    case 'neve': return [neve(false)]
+    case 'chuva': return [chuva(false, cor)]
+    case 'tempestade': return [chuva(true, cor)]
+    case 'neve': return [neve(false, cor)]
     case 'folhas': return [folhas]
-    case 'nevoa': return [nevoa(1)]
+    case 'nevoa': return [nevoa(1, cor)]
     // Nebulosa: vento + névoa + neve caindo mais rápido.
-    case 'nebulosa': return [nevoa(4), neve(true)]
+    case 'nebulosa': return [nevoa(4, cor), neve(true, '255, 255, 255')]
+    // Fumaça (lua de sangue): nuvens da cor escolhida passando devagar, sobre um véu leve.
+    case 'fumaca': return [nevoa(0.6, cor, true)]
   }
 }
 
-export default function EfeitoClimatico({ clima }: { clima: Clima }) {
+// cor: a cor que o mestre escolheu (#rrggbb); vazio = a de sempre do efeito.
+export default function EfeitoClimatico({ clima, cor }: { clima: Clima; cor?: string | null }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return
-    const lista = receitas(clima)
+    const rgb = rgbDe(cor) ?? rgbDe(COR_PADRAO_CLIMA[clima]) ?? '215, 218, 225'
+    const lista = receitas(clima, rgb)
     let grupos: Particula[][] = []
     let w = 0
     let h = 0
@@ -134,6 +138,11 @@ export default function EfeitoClimatico({ clima }: { clima: Clima }) {
 
     const quadro = () => {
       ctx.clearRect(0, 0, w, h)
+      // Fumaça: o mapa todo levemente na cor, sem esconder nada.
+      if (clima === 'fumaca') {
+        ctx.fillStyle = `rgba(${rgb}, 0.12)`
+        ctx.fillRect(0, 0, w, h)
+      }
       lista.forEach((r, i) => {
         for (const p of grupos[i]) {
           p.x += p.vx
@@ -172,7 +181,7 @@ export default function EfeitoClimatico({ clima }: { clima: Clima }) {
       cancelAnimationFrame(raf)
       observador.disconnect()
     }
-  }, [clima])
+  }, [clima, cor])
 
   return <canvas ref={canvasRef} className="mesa-clima" aria-hidden />
 }

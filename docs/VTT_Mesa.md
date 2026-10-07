@@ -133,7 +133,7 @@ Botões **Criar Cena** e **Criar Pasta**.
 - "Imagem de Fundo" (seletor ou drag-and-drop; se ajusta à tela) e Cor de Fundo.
 - Grade: tamanho em px + Quadrado / Sem grade / Hexágono.
 - Nível de Escuridão: slider 0–1.
-- Efeito Climático: Folhas de Outono, Chuva, Tempestade (chuva + raios), Névoa, Neve, Nebulosa (vento + névoa + neve rápida). Implementação a definir em Code.
+- Efeito Climático: Folhas de Outono, Chuva, Tempestade (chuva + raios), Névoa, Neve, Nebulosa (vento + névoa + neve rápida), **Fumaça (lua de sangue)**. Partículas em canvas. **Cor do Efeito** (chuva de sangue, névoa vermelha…; migration 0142, scenes.weather_cor). **Filtro de Iluminação**: uma luz colorida por cima do mapa inteiro, com intensidade (scenes.filtro_cor / filtro_intensidade), combinável com o clima.
 - Salvar Alterações.
 
 Miniatura na lista reflete ao vivo a imagem de fundo. Menu de contexto da cena: **Editar**, **Trazer todos pra cá** (mestre), **Excluir**, **Duplicar**.
