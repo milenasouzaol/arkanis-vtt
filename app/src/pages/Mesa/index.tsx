@@ -18,6 +18,10 @@ import PainelPlaylist from './PainelPlaylist'
 import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
 import PainelItens, { CriarItem } from './PainelItens'
 import FichaItem from './FichaItem'
+import PainelDiario, { CriarEntrada } from './PainelDiario'
+import JanelaDiario from './JanelaDiario'
+import { enviarArquivoDoDiario, useDiario } from './useDiario'
+import { exportarDiario, importarDiario, nivelNoDiario } from './diario'
 import { comandoDeRolagem, rolarFormula } from './rolador'
 import { IMAGEM_LUZ, LUZ_PADRAO } from './luz'
 import { IMAGEM_EFEITO } from './efeitos'
@@ -168,6 +172,12 @@ export default function Mesa() {
   const [pastaItem, setPastaItem] = useState<{ pai: string | null; editando?: Pasta } | null>(null)
   const [itensAbertos, setItensAbertos] = useState<string[]>([])
   const [propriedadeItem, setPropriedadeItem] = useState<string | null>(null)
+  // Diário (KAN-53, spec 12.11).
+  const diario = useDiario(pronta?.campanha.id)
+  const [criandoEntrada, setCriandoEntrada] = useState<{ pasta: string | null } | null>(null)
+  const [pastaDiario, setPastaDiario] = useState<{ pai: string | null; editando?: Pasta } | null>(null)
+  const [diariosAbertos, setDiariosAbertos] = useState<string[]>([])
+  const [propriedadeDiario, setPropriedadeDiario] = useState<string | null>(null)
   // Interagindo com um item da mesa: o token dele e o tamanho do quadrado (pro alcance).
   const [interagindo, setInteragindo] = useState<{ tokenId: string; celula: { w: number; h: number } } | null>(null)
   // Posicionáveis (12.6): armazém do mestre.
@@ -858,6 +868,37 @@ export default function Mesa() {
                 onAbrirNota={setNotaAberta}
                 avisar={(t, erro) => avisar(t, erro)}
               />
+            ) : aba === 'diario' ? (
+              <PainelDiario
+                souMestre={souMestre}
+                userId={userId ?? ''}
+                entradas={diario.entradas}
+                pastas={diario.pastas}
+                acoes={{
+                  onAbrir: (e) => setDiariosAbertos((l) => (l.includes(e.id) ? l : [...l, e.id])),
+                  onPropriedade: (e) => setPropriedadeDiario(e.id),
+                  onDuplicar: (e) => userId && diario.duplicar(e, userId),
+                  onExcluir: (e) => window.confirm(`Excluir o registro "${e.name}"?`) && diario.excluir(e.id),
+                  onExportar: (e) => {
+                    const blob = new Blob([exportarDiario(e)], { type: 'application/json' })
+                    const a = document.createElement('a')
+                    a.href = URL.createObjectURL(blob)
+                    a.download = `${e.name.replace(/[^\w\- ]+/g, '_') || 'diario'}.json`
+                    a.click()
+                    URL.revokeObjectURL(a.href)
+                  },
+                  onImportar: async (e, arquivo) => {
+                    const dados = importarDiario(await arquivo.text())
+                    if (!dados) return avisar('Esse arquivo não é um registro de diário.', true)
+                    if (!window.confirm(`Trocar as páginas de "${e.name}" pelas do arquivo (${dados.paginas.length})?`)) return
+                    diario.salvar(e.id, { paginas: dados.paginas })
+                  },
+                  onCriar: (pasta) => setCriandoEntrada({ pasta }),
+                  onCriarPasta: (pai) => setPastaDiario({ pai }),
+                  onEditarPasta: (p) => setPastaDiario({ pai: p.parent_id, editando: p }),
+                  onExcluirPasta: (p) => window.confirm(`Remover a pasta "${p.name}"? Os registros dela ficam soltos.`) && diario.excluirPasta(p.id),
+                }}
+              />
             ) : aba === 'playlist' ? (
               <PainelPlaylist souMestre={souMestre} userId={userId ?? ''} pl={playlists} />
             ) : aba === 'config' ? (
@@ -981,6 +1022,57 @@ export default function Mesa() {
           onFechar={() => setPastaItem(null)}
         />
       )}
+
+      {criandoEntrada && (
+        <CriarEntrada
+          onCriar={async (nome) => {
+            const nova = await diario.criar(nome, souMestre ? criandoEntrada.pasta : null)
+            setCriandoEntrada(null)
+            if (nova) setDiariosAbertos((l) => [...l, nova.id])
+            else avisar('Não deu pra criar o registro.', true)
+          }}
+          onFechar={() => setCriandoEntrada(null)}
+        />
+      )}
+
+      {pastaDiario && (
+        <CriarPasta
+          inicial={pastaDiario.editando}
+          onCriar={(campos) => {
+            if (pastaDiario.editando) diario.salvarPasta(pastaDiario.editando.id, campos)
+            else diario.criarPasta({ ...campos, parent_id: pastaDiario.pai })
+            setPastaDiario(null)
+          }}
+          onFechar={() => setPastaDiario(null)}
+        />
+      )}
+
+      {diariosAbertos.map((id) => {
+        const e = diario.entradas.find((x) => x.id === id)
+        if (!e) return null
+        return (
+          <JanelaDiario
+            key={id}
+            entrada={e}
+            podeEditar={nivelNoDiario(e, userId ?? '', souMestre) === 'dono'}
+            onSalvar={(campos) => diario.salvar(id, campos).then((erro) => erro && avisar('Não deu pra salvar o diário.', true))}
+            onEnviarArquivo={(f) => (userId ? enviarArquivoDoDiario(userId, f) : Promise.resolve(null))}
+            onFechar={() => setDiariosAbertos((l) => l.filter((x) => x !== id))}
+          />
+        )
+      })}
+
+      {(() => {
+        const e = diario.entradas.find((x) => x.id === propriedadeDiario)
+        return e ? (
+          <ConfigurarPropriedadeAtor
+            ator={e}
+            jogadores={jogadoresParaCena}
+            onSalvar={(campos) => { diario.salvar(e.id, campos); setPropriedadeDiario(null) }}
+            onFechar={() => setPropriedadeDiario(null)}
+          />
+        ) : null
+      })()}
 
       {itensAbertos.map((id) => {
         const i = itens.itens.find((x) => x.id === id)

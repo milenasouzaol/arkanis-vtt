@@ -229,6 +229,8 @@ Uso: arrastar da lista pra mesa; clicar dispara a interação e manda pro chat (
 - Sumonar só avisa no chat (o mestre coloca a ameaça); Transformar troca a imagem do token de quem interagiu.
 
 ### 12.11 Barra Direita — Diário (7º ícone, livro)
+**Feito (migration 0132: journal_entries, journal_folders, bucket diario):** aba com Criar Entrada (todos; jogador fica dono do que cria), Criar Pasta (mestre), busca e ordem. Janela no visual dos prints: índice numerado à esquerda (cadeado — desbloqueado arrasta pra reordenar —, Página Única/Múltiplas Páginas, Procurar Páginas por nome ou conteúdo, recolher a barra), página à direita com o nome do registro em cima (duplo clique renomeia), pena pra editar a página, Adicionar Página (Nome + Tipo: Texto, Imagem, PDF, Vídeo) e setas. Vídeo: link do YouTube ou arquivo, Mostrar Controles, Auto-Reproduzir (sem som), Loop, Volume, Tempo de Início. Menu: Editar/Ver, Configurar Propriedade, Exportar/Importar Dados (JSON), Duplicar, Excluir (mestre ou autor). Tipos do D&D (Class Summary, Spell List etc.) ficaram de fora. Fonte dos títulos: Roboto Condensed (a Modesto Condensed do Foundry não está no projeto).
+
 Anotações/handouts gerais (motor genérico). **Criar Entrada**, **Criar Pasta**, busca "Procurar Registros de Diário", ordem alfabética ou recência. Criar Entrada pede Nome ("Registro de Diário").
 - O mestre vê todos os diários, inclusive dos jogadores; libera acesso via Configurar Propriedade.
 - Controles: **Diário Desbloqueado / Clique para Bloquear**; **Página Única / Múltiplas Páginas**.
