@@ -143,9 +143,9 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
     // Referência da Millie: roxo profundo e granulado, com veias finas e ramificadas fluindo
     // (rosa-magenta, roxo e um pouco de azul), brilhando.
     const g = ctx.createLinearGradient(0, 0, LADO, LADO)
-    g.addColorStop(0, '#2c0a5c')
-    g.addColorStop(0.5, '#4a148a')
-    g.addColorStop(1, '#30106a')
+    g.addColorStop(0, '#4a1690')
+    g.addColorStop(0.5, '#6a22c0')
+    g.addColorStop(1, '#4e1a9a')
     ctx.fillStyle = g
     ctx.fillRect(0, 0, LADO, LADO)
     for (let i = 0; i < 26; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 40 + rnd() * 120, rnd() < 0.5 ? '#6a22b8' : '#1e0646', 0.4)
@@ -157,7 +157,7 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
     }
     ctx.globalAlpha = 1
     for (let i = 0; i < 9; i++) veia(ctx, rnd, rnd() < 0.55 ? '#ff5fd6' : rnd() < 0.6 ? '#b06bff' : '#6f8dff')
-    return { name: 'energia', composite: 'source-over', texture: c, material: 'plastic' }
+    return { name: 'energia', composite: 'source-over', texture: c, material: 'metal' } // metalizado (pedido da Millie)
   }
 
   // Conhecimento: ouro (dourado e dourado escuro), escovado, com sigilos gravados.

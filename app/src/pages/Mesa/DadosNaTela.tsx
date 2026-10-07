@@ -18,7 +18,7 @@ type Caixa = {
   roll(n: string): Promise<unknown>
   clearDice(): void
   DiceColors: { makeColorSet(c: Record<string, unknown>): Promise<unknown> }
-  DiceFactory: { create(tipo: string): unknown; applyColorSet(c: unknown): void; baseScale: number; geometries: Record<string, unknown> }
+  DiceFactory: { create(tipo: string): unknown; applyColorSet(c: unknown): void; baseScale: number; geometries: Record<string, unknown>; createMaterials(...a: unknown[]): unknown }
 }
 
 const ESCALA_BASE = 90
@@ -81,6 +81,19 @@ export default function DadosNaTela({ mensagens, estilos = {} }: { mensagens: Me
         await c.initialize()
         // A fábrica de dados usa a cor ativa na hora de criar: a cor certa (do estilo de quem rolou,
         // por tipo) entra logo antes de cada dado nascer.
+        // Metal: a biblioteca zera o reflexo de ambiente e o metal fica preto. Menos metálico e mais
+        // polido, ele pega o brilho das luzes da cena e fica metalizado de verdade.
+        const materiais = c.DiceFactory.createMaterials.bind(c.DiceFactory)
+        c.DiceFactory.createMaterials = (...a: unknown[]) => {
+          const m = materiais(...a)
+          for (const x of (Array.isArray(m) ? m : [m]) as { metalness?: number; roughness?: number }[]) {
+            if (x && (x.metalness ?? 0) > 0.5) {
+              x.metalness = 0.45
+              x.roughness = 0.28
+            }
+          }
+          return m
+        }
         const criar = c.DiceFactory.create.bind(c.DiceFactory)
         c.DiceFactory.create = (tipo: string) => {
           const conj = conjuntos.current[tipo]
