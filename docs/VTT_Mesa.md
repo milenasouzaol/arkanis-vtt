@@ -204,6 +204,8 @@ Itens/objetos interagíveis na mesa. **Criar Item**, **Criar Pasta**, busca "Pro
 
 Categorias: **Item Lootável** (Arma/Munição/Proteção/Geral), **Contêiner**, **Documento/Pista**, **Artefato Amaldiçoado**, **Armadilha**.
 
+**Criar Item a partir de um objeto do mapa** (feito; migration 0138): o mestre arrasta a imagem (documento, papel, arma…) pra mesa, botão direito → **Criar Item** → Nome, Tipo (Documento/Pista, Item Lootável, Artefato Amaldiçoado), **Quantos podem pegar** (número, ou **Infinito**) e **Peso** (espaços). O objeto vira o item e a ficha do item abre pra completar. Jogador: botão direito → **Coletar Item** (ou Interagir → Pegar; precisa estar encostado). Com número, cada pessoa pega 1 e o botão mostra quantos restam; acabou, o objeto some. Infinito: todo mundo pega 1 e o objeto fica. A mesma ficha não pega o mesmo item duas vezes. No inventário, item com imagem tem **Ver imagem** (documento pra ler de novo). Itens antigos, sem esse modo, continuam como eram (pega tudo de uma vez).
+
 Formulário: Imagem; Nome; Raridade (Comum, Incomum, Raro, Muito Raro, Lendário, Artefato Amaldiçoado); Quantidade; Peso = Carga.
 - **Descrição:** editor rico do chat.
 - **Detalhes:** Tipo (Arma/Munição/Proteção/Geral); Teste de interação (Perícia, Atributo, DT); Usos (limite 1–∞; quem pode usar: pessoa específica, todos, ou uso único compartilhado).

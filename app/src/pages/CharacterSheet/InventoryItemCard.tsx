@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
 
 export type InventoryCardItem = {
@@ -87,6 +89,8 @@ export default function InventoryItemCard({
   actions?: React.ReactNode
 }) {
   const linhaResumo = resumo(item)
+  // Documento coletado na mesa (ou qualquer item com arte): abre a imagem grande pra ler de novo.
+  const [vendo, setVendo] = useState(false)
   const listaDetalhes = detalhes(item)
 
   return (
@@ -131,10 +135,24 @@ export default function InventoryItemCard({
             </>
           )}
 
+          {item.image_url && (
+            <button type="button" className="inv-item-btn inv-item-ver" onClick={() => setVendo(true)}>Ver imagem</button>
+          )}
+
           {children}
 
           {actions && <div className="inv-item-actions">{actions}</div>}
         </>
+      )}
+      {vendo && item.image_url && createPortal(
+        <div className="inv-item-imagem-fundo" role="dialog" aria-label={item.name} onClick={() => setVendo(false)}>
+          <img src={item.image_url} alt={item.name} />
+          <button type="button" className="ritual-close-outside" aria-label="Fechar" onClick={() => setVendo(false)}>
+            <span className="ritual-close-word">FECHAR</span>
+            <span className="ritual-close-x">X</span>
+          </button>
+        </div>,
+        document.body,
       )}
     </div>
   )

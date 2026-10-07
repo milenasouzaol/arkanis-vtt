@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   faArrowDownWideShort, faArrowUpWideShort, faBullseye, faCopy, faCrosshairs, faLayerGroup, faLock, faLockOpen, faObjectGroup,
-  faObjectUngroup, faPaste, faLightbulb, faEye, faBriefcase, faHandPointer, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear, faPenToSquare, faSun, faFire,
+  faObjectUngroup, faPaste, faLightbulb, faEye, faBriefcase, faHandPointer, faHandHolding, faSquarePlus, faIdCard, faImages, faRotateLeft, faRotateRight, faShieldHalved, faSlidersH, faTowerBroadcast, faTrash, faUpDown, faLeftRight, faUserGear, faPenToSquare, faSun, faFire,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import EfeitoClimatico from './EfeitoClimatico'
@@ -56,7 +56,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, ehMeuToken, podePingar = true, onInteragir, onColocarItem, itensDaCampanha = [], onEditarItem, podeEditarItem, onColocarPosicionavel, onColocarDaBiblioteca, onGuardarPosicionaveis }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, ehMeuToken, podePingar = true, onInteragir, onColocarItem, itensDaCampanha = [], onEditarItem, podeEditarItem, onColocarPosicionavel, onColocarDaBiblioteca, onGuardarPosicionaveis, onCriarItemDoObjeto }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -98,7 +98,10 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   podePingar?: boolean
   // Itens interativos (KAN-53): clicar abre a interação; arrastar da aba Itens coloca na mesa;
   // o mestre liga um item a qualquer token (Vincular Item).
-  onInteragir?: (o: ObjetoCena, celula: { w: number; h: number }) => void
+  // coletar: já tenta pegar o item pro inventário (botão direito → Coletar Item).
+  onInteragir?: (o: ObjetoCena, celula: { w: number; h: number }, coletar?: boolean) => void
+  // Mestre: objeto do mapa (documento, papel…) vira item que os jogadores coletam.
+  onCriarItemDoObjeto?: (o: ObjetoCena) => void
   onColocarItem?: (itemId: string, ponto: { x: number; y: number }) => void
   itensDaCampanha?: { id: string; name: string; categoria?: string }[]
   // Duplo clique / botão direito "Editar" abre a ficha do item (loja, documento, baú…) pra quem é dono dele.
@@ -817,7 +820,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
     if (!o || !souMestre) {
       return [
         ...pingItens,
-        ...(o?.item_id ? [{ rotulo: 'Interagir', icone: faHandPointer, onClick: () => onInteragir?.(o, celula) } as ItemMenu] : []),
+        ...(o?.item_id
+          ? [
+              { rotulo: 'Interagir', icone: faHandPointer, onClick: () => onInteragir?.(o, celula) } as ItemMenu,
+              { rotulo: 'Coletar Item', icone: faHandHolding, onClick: () => onInteragir?.(o, celula, true) } as ItemMenu,
+            ]
+          : []),
         ...(o && podeEditar(o) ? [editarItem(o)] : []),
         ...doPersonagem,
         // Dono do token (jogador): também vira na horizontal/vertical (12.8).
@@ -867,6 +875,9 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       { tipo: 'linha' },
       ...(o.item_id ? [editarItem(o), { rotulo: 'Interagir', icone: faHandPointer, onClick: () => onInteragir?.(o, celula) } as ItemMenu] : []),
       { rotulo: 'Configurar Propriedade', icone: faUserGear, onClick: () => setPropriedade(o) },
+      ...(!o.item_id && !o.actor_id && !o.character_id && onCriarItemDoObjeto
+        ? [{ rotulo: 'Criar Item', icone: faSquarePlus, onClick: () => onCriarItemDoObjeto(o) } as ItemMenu]
+        : []),
       {
         tipo: 'sub', rotulo: 'Vincular Item', icone: faBriefcase,
         itens: [

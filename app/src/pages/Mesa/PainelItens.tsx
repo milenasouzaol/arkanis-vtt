@@ -7,7 +7,7 @@ import {
 import Janela, { Campo } from './Janela'
 import MenuContexto, { type ItemMenu } from './MenuContexto'
 import { montarArvore, type NoPasta, type Pasta } from './cenas'
-import { CATEGORIAS_ITEM, itemDoCompendio, nivelNoItem, ordenarItens, type CategoriaItem, type ItemMesa } from './itens'
+import { CATEGORIAS_ITEM, itemDoCompendio, itemDoObjeto, nivelNoItem, ordenarItens, type CategoriaItem, type ItemMesa } from './itens'
 import { BuscaCompendio, ICONE_COMPENDIO } from './EscolherDoCompendio'
 import { sistemaDe } from '../../sistemas'
 
@@ -224,6 +224,58 @@ export function CriarItem({ sistemaId, onCriar, onFechar }: {
         <button type="submit" className="janela-botao"><FontAwesomeIcon icon={faFloppyDisk} /> Criar Item</button>
       </form>
       )}
+    </Janela>
+  )
+}
+
+// Criar Item a partir de um objeto do mapa (pedido da Millie, 07/10): botão direito no documento,
+// papel, arma… → nome, tipo, quantos podem pegar (ou infinito) e o peso. O objeto vira o item e
+// os jogadores coletam pro inventário.
+const TIPOS_DO_OBJETO = CATEGORIAS_ITEM.filter((c) => ['documento', 'lootavel', 'amaldicoado'].includes(c.id))
+
+export function CriarItemDoObjeto({ nomeInicial, imagem, onCriar, onFechar }: {
+  nomeInicial: string
+  imagem: string | null
+  onCriar: (nome: string, categoria: CategoriaItem, extra: Partial<ItemMesa>) => void
+  onFechar: () => void
+}) {
+  const [nome, setNome] = useState(nomeInicial)
+  const [categoria, setCategoria] = useState<CategoriaItem>('documento')
+  const [quantidade, setQuantidade] = useState('1')
+  const [infinito, setInfinito] = useState(false)
+  const [peso, setPeso] = useState('0')
+  return (
+    <Janela titulo="Criar Item" icone={faBriefcase} largura={420} onFechar={onFechar}>
+      <form
+        className="janela-form"
+        onSubmit={(e) => {
+          e.preventDefault()
+          const n = (v: string) => Number(v.replace(',', '.')) || 0
+          onCriar(nome.trim() || 'Novo Item', categoria, itemDoObjeto({ categoria, imagem, quantidade: n(quantidade), infinito, peso: n(peso) }))
+        }}
+      >
+        {imagem && <img className="criar-item-objeto-imagem" src={imagem} alt="" />}
+        <Campo rotulo="Nome">
+          <input autoFocus value={nome} placeholder="Novo Item" aria-label="Nome" onChange={(e) => setNome(e.target.value)} onFocus={(e) => e.currentTarget.select()} />
+        </Campo>
+        <Campo rotulo="Tipo">
+          <select value={categoria} aria-label="Tipo" onChange={(e) => setCategoria(e.target.value as CategoriaItem)}>
+            {TIPOS_DO_OBJETO.map((c) => <option key={c.id} value={c.id}>{c.rotulo}</option>)}
+          </select>
+        </Campo>
+        <Campo rotulo="Quantos podem pegar" dica={infinito ? 'Todo mundo pega um, e o objeto fica no mapa.' : 'Cada pessoa pega um; quando acabar, o objeto some do mapa.'}>
+          <div className="criar-item-quantidade">
+            <input type="number" min={1} value={quantidade} disabled={infinito} aria-label="Quantos podem pegar" onChange={(e) => setQuantidade(e.target.value)} />
+            <label className="janela-check">
+              <input type="checkbox" checked={infinito} onChange={(e) => setInfinito(e.target.checked)} /> Infinito
+            </label>
+          </div>
+        </Campo>
+        <Campo rotulo="Peso (espaços)" dica="Papel e coisas leves: 0.">
+          <input type="number" min={0} step={0.5} value={peso} aria-label="Peso" onChange={(e) => setPeso(e.target.value)} />
+        </Campo>
+        <button type="submit" className="janela-botao"><FontAwesomeIcon icon={faFloppyDisk} /> Criar Item</button>
+      </form>
     </Janela>
   )
 }

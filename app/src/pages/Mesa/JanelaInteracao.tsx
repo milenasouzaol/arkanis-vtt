@@ -23,7 +23,7 @@ const motivo = (e: { message?: string } | null) => (e ? e.message || 'Não deu c
 // Janela de interação (KAN-53, parte 2): clicou num item da mesa (baú, porta, armadilha…),
 // abre esta janelinha com a imagem, a descrição e as ações. Roda a atividade escolhida e o que
 // vem depois (Se passar / Se falhar / Em seguida); cada passo vai pro chat.
-export default function JanelaInteracao({ token, objetos, meuToken, characterId, souMestre, sistemaId, celula, metrosPorQuadrado, meusAlvos, onFechar }: {
+export default function JanelaInteracao({ token, objetos, meuToken, characterId, souMestre, sistemaId, celula, metrosPorQuadrado, meusAlvos, coletarAoAbrir = false, onFechar }: {
   token: ObjetoCena // o item na mesa
   objetos: ObjetoCena[] // tokens da cena (pros alvos)
   meuToken: ObjetoCena | null // de quem interage
@@ -33,6 +33,8 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
   celula: { w: number; h: number }
   metrosPorQuadrado: number
   meusAlvos: string[]
+  // Botão direito → Coletar Item: já tenta pegar assim que abrir.
+  coletarAoAbrir?: boolean
   onFechar: () => void
 }) {
   const sistema = sistemaDe(sistemaId)
@@ -325,6 +327,16 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
   const toque = sistema.alcances.find((x) => x.id === 'toque')?.metros ?? 1.5
   const pertoPraPegar = souMestre || dentroDoAlcance(distancia, toque)
 
+  // Coletar Item (botão direito): pega assim que o item carregar, se der.
+  const jaColetou = useRef(false)
+  useEffect(() => {
+    if (!coletarAoAbrir || !item || jaColetou.current) return
+    jaColetou.current = true
+    if (!pegavel) setErro('Isso não dá pra pegar.')
+    else if (!pertoPraPegar) setErro('Chegue mais perto pra pegar (Toque).')
+    else pegarDoChao()
+  })
+
   async function pegarDoChao() {
     if (!item) return
     if (!characterId) {
@@ -333,10 +345,14 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
     }
     setOcupado(true)
     setErro(null)
-    const qual = item.quantidade > 1 ? `${item.quantidade}× ${item.name}` : item.name
-    // Registra antes: depois de pego, o item sai do mapa.
-    await postar({ atividade: 'Pegar', texto: `pegou ${qual}.` })
+    const coleta = item.efeitos?.coleta
+    // Criado do objeto (por pessoa / infinito): cada um pega um. Sem isso, pega tudo de uma vez.
+    const qual = !coleta && item.quantidade > 1 ? `${item.quantidade}× ${item.name}` : item.name
+    // Registra antes quando o item sai do mapa ao ser pego; senão, só depois de dar certo.
+    const saiDoMapa = !coleta || (coleta === 'porPessoa' && item.quantidade <= 1)
+    if (saiDoMapa) await postar({ atividade: 'Pegar', texto: `pegou ${qual}.` })
     const { error } = await supabase.rpc('pegar_item_do_chao', { p_token_id: token.id, p_character_id: characterId })
+    if (!error && !saiDoMapa) await postar({ atividade: 'Pegar', texto: `pegou ${qual}.` })
     if (error) {
       setErro(motivo(error))
       if (vivo.current) setOcupado(false)
@@ -387,7 +403,7 @@ export default function JanelaInteracao({ token, objetos, meuToken, characterId,
                 onClick={pegarDoChao}
               >
                 <FontAwesomeIcon icon={faHandHolding} />
-                <span>Pegar{item.quantidade > 1 ? ` (${item.quantidade})` : ''}</span>
+                <span>Pegar{item.efeitos?.coleta === 'infinito' ? ' (∞)' : item.efeitos?.coleta === 'porPessoa' ? ` (restam ${item.quantidade})` : item.quantidade > 1 ? ` (${item.quantidade})` : ''}</span>
                 {!pertoPraPegar && <small><FontAwesomeIcon icon={faLock} /> Chegue mais perto (Toque)</small>}
               </button>
             </div>

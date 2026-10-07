@@ -236,7 +236,8 @@ export type ItemMesa = {
   descricao: string | null
   detalhes: DetalhesItem
   atividades: Atividade[]
-  efeitos: { inventario?: boolean; documento?: string; imagem?: string | null }
+  // coleta (Criar Item do objeto): porPessoa = cada um pega 1 até acabar a quantidade; infinito = todos pegam 1.
+  efeitos: { inventario?: boolean; documento?: string; imagem?: string | null; coleta?: ColetaItem }
   // O que tem dentro (Contêiner): item da campanha (item_id) ou equipamento do compêndio (compendio_id).
   conteudo: EntradaConteudo[]
   compendio_id: string | null // criado a partir deste equipamento do compêndio
@@ -248,6 +249,19 @@ export type ItemMesa = {
 }
 
 // Na Loja (estoque): ilimitado = nunca acaba; preco = o desta loja (sem: o do item).
+export type ColetaItem = 'porPessoa' | 'infinito'
+
+// Objeto do mapa virando item (pedido da Millie, 07/10): nome, tipo, quantos podem pegar (ou
+// infinito) e o peso. Vai pro inventário de quem pegar; documento abre a imagem dele.
+export function itemDoObjeto(o: { categoria: CategoriaItem; imagem: string | null; quantidade: number; infinito: boolean; peso: number }): Partial<ItemMesa> {
+  return {
+    image_url: o.imagem,
+    quantidade: o.infinito ? 1 : Math.max(1, Math.round(o.quantidade)),
+    carga: Math.max(0, o.peso),
+    efeitos: { inventario: true, coleta: o.infinito ? 'infinito' : 'porPessoa', ...(o.categoria === 'documento' ? { imagem: o.imagem } : {}) },
+  }
+}
+
 export type EntradaConteudo = { item_id?: string; compendio_id?: string; nome?: string; quantidade: number; ilimitado?: boolean; preco?: number | null }
 
 // Item novo a partir de um equipamento do compêndio: já vem com nome, descrição, tipo,

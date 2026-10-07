@@ -16,7 +16,7 @@ import { useSons } from './useSons'
 import { usePlaylists } from './usePlaylists'
 import PainelPlaylist from './PainelPlaylist'
 import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
-import PainelItens, { CriarItem } from './PainelItens'
+import PainelItens, { CriarItem, CriarItemDoObjeto } from './PainelItens'
 import FichaItem from './FichaItem'
 import { ConfiguracoesDoJogo, JanelaChat, JanelaCombate, JanelaControles, JanelaDados, JanelaFontes, JanelaInterface, JanelaMundo, JanelaPermissoes, JanelaSom, JanelaUsuarios, type SecaoConfig } from './JanelasConfig'
 import type { JanelaDoPainel } from './PainelConfig'
@@ -48,7 +48,7 @@ import CriarCombate, { type AtorDoCombate } from './CriarCombate'
 import EditorAmeaca, { carregarParaEditar, criaturaVazia, type CriaturaEditavel } from './EditorAmeaca'
 import { useCombate, type Combate } from './useCombate'
 import type { Combatente } from './combate'
-import type { Cena } from './cenas'
+import type { Cena, ObjetoCena } from './cenas'
 import { useFps, useSessaoMesa } from './useSessaoMesa'
 import { autoria, resumoDaMensagem, textoPuro, type Mensagem, type ModoEnvio } from './chat'
 import { enviarImagemDoChat, useChat } from './useChat'
@@ -198,7 +198,9 @@ export default function Mesa() {
   const [diariosAbertos, setDiariosAbertos] = useState<string[]>([])
   const [propriedadeDiario, setPropriedadeDiario] = useState<string | null>(null)
   // Interagindo com um item da mesa: o token dele e o tamanho do quadrado (pro alcance).
-  const [interagindo, setInteragindo] = useState<{ tokenId: string; celula: { w: number; h: number } } | null>(null)
+  const [interagindo, setInteragindo] = useState<{ tokenId: string; celula: { w: number; h: number }; coletar?: boolean } | null>(null)
+  // Objeto do mapa virando item (botão direito → Criar Item).
+  const [itemDoObjeto, setItemDoObjeto] = useState<ObjetoCena | null>(null)
   // Posicionáveis (12.6): armazém do mestre.
   const posicionaveis = usePosicionaveis(pronta?.campanha.id, !!pronta && pronta.campanha.owner_id === userId)
   const [categoriaPosicionavel, setCategoriaPosicionavel] = useState<CategoriaPosicionavel>('token')
@@ -742,7 +744,8 @@ export default function Mesa() {
         pedidoPaletaSom={pedidoPaletaSom}
         pedidoLimparSom={pedidoLimparSom}
         pedidoLimparEscuridao={pedidoLimparEscuridao}
-        onInteragir={(o, celula) => setInteragindo({ tokenId: o.id, celula })}
+        onInteragir={(o, celula, coletar) => setInteragindo({ tokenId: o.id, celula, coletar })}
+        onCriarItemDoObjeto={setItemDoObjeto}
         onColocarItem={colocarItem}
         itensDaCampanha={itens.itens}
         onEditarItem={(id) => setItensAbertos((l) => (l.includes(id) ? l : [...l, id]))}
@@ -1083,10 +1086,31 @@ export default function Mesa() {
             celula={interagindo.celula}
             metrosPorQuadrado={cenas.atual.grid_distance || 1.5}
             meusAlvos={alvosComNome.map((a) => a.token_id)}
+            coletarAoAbrir={!!interagindo.coletar}
             onFechar={() => setInteragindo(null)}
           />
         )
       })()}
+
+      {itemDoObjeto && (
+        <CriarItemDoObjeto
+          nomeInicial={itemDoObjeto.name?.trim() || 'Documento'}
+          imagem={itemDoObjeto.image_url}
+          onCriar={async (nome, categoria, extra) => {
+            const o = itemDoObjeto
+            setItemDoObjeto(null)
+            const novo = await itens.criar(nome, categoria, null, extra)
+            if (!novo) {
+              avisar('Não deu pra criar o item.', true)
+              return
+            }
+            // O objeto do mapa passa a ser o item (dá pra coletar), e a ficha abre pra completar.
+            await objetos.alterarVarios({ [o.id]: { item_id: novo.id, name: nome } })
+            setItensAbertos((l) => [...l, novo.id])
+          }}
+          onFechar={() => setItemDoObjeto(null)}
+        />
+      )}
 
       {criandoItem && (
         <CriarItem

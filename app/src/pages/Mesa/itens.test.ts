@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { atividadeCompleta, copiaDoItem, formatarDinheiro, itemDoCompendio, semAtividade, duplicarAtividade, etiquetasDoItem, nivelNoItem, novaAtividade, ordenarItens, rotuloDaAtivacao, textoDeUsos, type ItemMesa } from './itens'
+import { atividadeCompleta, copiaDoItem, formatarDinheiro, itemDoCompendio, itemDoObjeto, semAtividade, duplicarAtividade, etiquetasDoItem, nivelNoItem, novaAtividade, ordenarItens, rotuloDaAtivacao, textoDeUsos, type ItemMesa } from './itens'
 
 const item = (c: Partial<ItemMesa> = {}): ItemMesa => ({
   id: 'i', campaign_id: 'c', folder_id: null, name: 'Espada', categoria: 'lootavel', image_url: null, raridade: null, quantidade: 1, carga: 1,
@@ -67,5 +67,25 @@ describe('itens da mesa', () => {
   it('etiquetas', () => {
     expect(etiquetasDoItem(item({ detalhes: { tipo: 'arma' }, raridade: 'raro' }))).toEqual(['Item Lootável', 'Arma', 'Raro'])
     expect(etiquetasDoItem(item({ categoria: 'armadilha', detalhes: { tipo: 'arma' } }))).toEqual(['Armadilha'])
+  })
+})
+
+describe('itemDoObjeto (Criar Item do objeto do mapa)', () => {
+  it('documento: cada pessoa pega um, até acabar, e a imagem vira o documento', () => {
+    const i = itemDoObjeto({ categoria: 'documento', imagem: '/x.webp', quantidade: 3, infinito: false, peso: 0 })
+    expect(i).toEqual({ image_url: '/x.webp', quantidade: 3, carga: 0, efeitos: { inventario: true, coleta: 'porPessoa', imagem: '/x.webp' } })
+  })
+
+  it('infinito: todo mundo pega e o peso vale', () => {
+    const i = itemDoObjeto({ categoria: 'lootavel', imagem: null, quantidade: 0, infinito: true, peso: 2 })
+    expect(i.efeitos).toEqual({ inventario: true, coleta: 'infinito' })
+    expect(i.carga).toBe(2)
+    expect(i.quantidade).toBe(1)
+  })
+
+  it('quantidade nunca fica abaixo de 1 e o peso nunca negativo', () => {
+    const i = itemDoObjeto({ categoria: 'lootavel', imagem: null, quantidade: -4, infinito: false, peso: -1 })
+    expect(i.quantidade).toBe(1)
+    expect(i.carga).toBe(0)
   })
 })
