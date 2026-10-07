@@ -38,3 +38,25 @@ export function useVolumesDoUsuario(): VolumesDoUsuario {
   }, [])
   return v
 }
+
+// "Desligar sons" da ficha (Configurações da ficha → Opções de som): cala os efeitos sonoros
+// (cliques, dados, armas) sem perder o volume escolhido. O controle de volume da ficha é o mesmo
+// dos Efeitos Sonoros daqui.
+const CHAVE_MUDO = 'arkanis-efeitos-mudos'
+
+export function efeitosMudos(): boolean {
+  try {
+    return localStorage.getItem(CHAVE_MUDO) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function salvarEfeitosMudos(mudo: boolean) {
+  try {
+    localStorage.setItem(CHAVE_MUDO, String(mudo))
+  } catch {
+    // sem armazenamento: vale só até recarregar
+  }
+  window.dispatchEvent(new CustomEvent(EVENTO, { detail: lerVolumes() }))
+}

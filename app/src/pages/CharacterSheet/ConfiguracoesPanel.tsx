@@ -9,6 +9,7 @@ import sangueSimbolo from '../../assets/elementos/sangue-simbolo.png'
 import morteSimbolo from '../../assets/elementos/morte-simbolo.png'
 import conhecimentoSimbolo from '../../assets/elementos/conhecimento-simbolo.png'
 import energiaSimbolo from '../../assets/elementos/energia-simbolo.png'
+import { efeitosMudos, lerVolumes, salvarEfeitosMudos, salvarVolume } from '../Mesa/volumesDoUsuario'
 import medoSimbolo from '../../assets/elementos/medo-simbolo.png'
 
 const RULES: { key: string; label: string; locked?: boolean }[] = [
@@ -52,16 +53,14 @@ export default function ConfiguracoesPanel({
   onClose: () => void
 }) {
   const [configTab, setConfigTab] = useState<(typeof CONFIG_TABS)[number]>('Aparência')
-  const [volume, setVolume] = useState(100)
-  const [muted, setMuted] = useState(false)
+  // Mesmo volume dos Efeitos Sonoros da mesa (antes salvava num lugar que nenhum som lia).
+  const [volume, setVolume] = useState(() => Math.round(lerVolumes().efeitos * 100))
+  const [muted, setMuted] = useState(efeitosMudos)
   const [bgAnimated, setBgAnimated] = useState(true)
   const [showTrayModal, setShowTrayModal] = useState(false)
   const [showFrameModal, setShowFrameModal] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem('vtt_volume')
-    if (stored) setVolume(Number(stored))
-    setMuted(localStorage.getItem('vtt_muted') === 'true')
     setBgAnimated(localStorage.getItem('vtt_bg_animated') !== 'false')
   }, [])
 
@@ -76,13 +75,13 @@ export default function ConfiguracoesPanel({
 
   function setVolumeAndStore(v: number) {
     setVolume(v)
-    localStorage.setItem('vtt_volume', String(v))
+    salvarVolume('efeitos', v / 100)
   }
 
   function toggleMuted() {
     const next = !muted
     setMuted(next)
-    localStorage.setItem('vtt_muted', String(next))
+    salvarEfeitosMudos(next)
   }
 
   function toggleBgAnimated() {
