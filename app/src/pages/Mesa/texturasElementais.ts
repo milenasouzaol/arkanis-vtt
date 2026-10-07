@@ -87,13 +87,14 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
   const rnd = semente({ sangue: 11, morte: 23, energia: 37, conhecimento: 51 }[el])
 
   if (el === 'sangue') {
-    ctx.fillStyle = '#4e0306'
+    // Mais escuro e macabro (pedido da Millie): sangue quase coagulado, preto-avermelhado.
+    ctx.fillStyle = '#240103'
     ctx.fillRect(0, 0, LADO, LADO)
-    for (let i = 0; i < 40; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 40 + rnd() * 120, rnd() < 0.5 ? '#8a0a12' : '#2a0003', 0.6)
+    for (let i = 0; i < 40; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 40 + rnd() * 120, rnd() < 0.45 ? '#5c040b' : '#0c0001', 0.65)
     // Veias escuras.
-    ctx.strokeStyle = '#1e0002'
+    ctx.strokeStyle = '#070000'
     for (let i = 0; i < 14; i++) {
-      ctx.globalAlpha = 0.5
+      ctx.globalAlpha = 0.65
       ctx.lineWidth = 1 + rnd() * 3
       ctx.beginPath()
       let x = rnd() * LADO
@@ -107,7 +108,7 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
       ctx.stroke()
     }
     ctx.globalAlpha = 1
-    reflexos(ctx, rnd, 26, '#ff9a9a', 0.35)
+    reflexos(ctx, rnd, 22, '#c25a5a', 0.28)
     return { name: 'sangue', composite: 'source-over', texture: c, material: 'glass' }
   }
 

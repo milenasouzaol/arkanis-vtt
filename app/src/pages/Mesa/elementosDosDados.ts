@@ -8,7 +8,7 @@
 export type Elemento = 'sangue' | 'morte' | 'energia' | 'conhecimento'
 
 export const ELEMENTOS: { id: Elemento; rotulo: string; cores: { cor: string; numero: string; contorno: string; material: 'plastico' | 'metal' | 'madeira' | 'vidro' } }[] = [
-  { id: 'sangue', rotulo: 'Sangue', cores: { cor: '#6e0b0b', numero: '#f1e6cf', contorno: '#1a0000', material: 'vidro' } },
+  { id: 'sangue', rotulo: 'Sangue', cores: { cor: '#3a0306', numero: '#d9ccb0', contorno: '#0a0000', material: 'vidro' } },
   { id: 'morte', rotulo: 'Morte (lodo)', cores: { cor: '#141414', numero: '#f0f0f0', contorno: '#000000', material: 'plastico' } },
   { id: 'energia', rotulo: 'Energia', cores: { cor: '#4a148a', numero: '#ffe9fb', contorno: '#ff3fd2', material: 'metal' } },
   { id: 'conhecimento', rotulo: 'Conhecimento', cores: { cor: '#b8862a', numero: '#fff7c8', contorno: '#ffb300', material: 'plastico' } },
@@ -160,8 +160,8 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
       const desce = raio * (el === 'morte' ? 0.9 : 1.4) * k * k
       const espesso = el === 'morte' ? 1.5 : 1
       ctx.globalAlpha = Math.min(1, (1 - k) * 2.2)
-      ctx.strokeStyle = '#7d0710'
-      ctx.fillStyle = el === 'morte' ? '#0a0a0c' : '#9a0b14'
+      ctx.strokeStyle = '#2a0105'
+      ctx.fillStyle = el === 'morte' ? '#0a0a0c' : '#3d0207'
       ctx.lineCap = 'round'
       ctx.lineWidth = p.tam * 0.9 * espesso
       ctx.beginPath()
@@ -178,14 +178,14 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
       }
       // Brilho de molhado.
       ctx.globalAlpha *= el === 'morte' ? 0.25 : 0.55
-      ctx.fillStyle = el === 'morte' ? '#5a4f6a' : '#ff8a8a'
+      ctx.fillStyle = el === 'morte' ? '#5a4f6a' : '#8a3a3a'
       ctx.beginPath()
       ctx.arc(cx + p.x - p.tam * 0.35, cy + y0 + desce - p.tam * 0.4, p.tam * 0.3, 0, Math.PI * 2)
       ctx.fill()
     } else if (p.ch === 'garra') {
       ctx.globalAlpha = 1
-      ctx.fillStyle = '#efe4cc'
-      ctx.strokeStyle = '#4a0606'
+      ctx.fillStyle = '#cfc2a2' // osso velho
+      ctx.strokeStyle = '#1e0103'
       ctx.lineWidth = 1.2
       garra(ctx, cx, cy, p.ang, raio * 0.55, p.tam * Math.min(1, sobe * 1.6), raio * 0.11)
     } else if (p.ch === 'espiral') {
