@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { computeDerivedStats, type Training } from '../../lib/rules'
 import { lerTeste, nomesNumerados, ordemDeIniciativa, rolarTeste, testeDeIniciativa, type Combatente } from './combate'
+import { variacoesDaCriatura } from './atores'
 import { penalidadeDeCondicoes, rotuloComCondicoes } from '../CharacterSheet/condicoes'
 
 export type Combate = {
@@ -170,7 +171,7 @@ export function useCombate(campanhaId: string | undefined) {
   // Ameaças do bestiário viram personagens (com a vida cheia) na pasta do combate.
   const criarAtoresDoBestiario = useCallback(async (combate: Combate, criaturaIds: string[]) => {
     if (!campanhaId || !criaturaIds.length) return []
-    const { data: criaturas } = await supabase.from('creatures').select('id, name, image_url, pv_maximo').in('id', [...new Set(criaturaIds)])
+    const { data: criaturas } = await supabase.from('creatures').select('id, name, image_url, pv_maximo, token_variacoes').in('id', [...new Set(criaturaIds)])
     const porId = new Map((criaturas ?? []).map((c) => [c.id, c]))
     const validas = criaturaIds.filter((id) => porId.has(id))
     if (!validas.length) return []
@@ -180,7 +181,7 @@ export function useCombate(campanhaId: string | undefined) {
       .from('campaign_actors')
       .insert(validas.map((id, i) => {
         const c = porId.get(id)!
-        return { campaign_id: campanhaId, tipo: 'ameaca', creature_id: id, name: nomes[i], token_url: c.image_url, pv_atual: c.pv_maximo ?? null, folder_id: pasta }
+        return { campaign_id: campanhaId, tipo: 'ameaca', creature_id: id, name: nomes[i], token_url: c.image_url, token_variacoes: variacoesDaCriatura(c.token_variacoes), pv_atual: c.pv_maximo ?? null, folder_id: pasta }
       }))
       .select('id')
     return (data ?? []).map((a) => a.id as string)

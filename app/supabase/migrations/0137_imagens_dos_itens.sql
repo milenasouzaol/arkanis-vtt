@@ -1,0 +1,51 @@
+-- Biblioteca de Tokens (07/10): itens do sistema ganham a imagem do pacote de armas e equipáveis
+-- (só onde ainda não tinham imagem).
+with imagens(nome, url) as (values
+  ('Granada de Fragmentação', '/biblioteca/img/373.webp'),
+  ('Granada Incendiária', '/biblioteca/img/372.webp'),
+  ('Granada de Atordoamento', '/biblioteca/img/376.webp'),
+  ('Dinamite', '/biblioteca/img/377.webp'),
+  ('Granada de Fumaça', '/biblioteca/img/379.webp'),
+  ('Pistola', '/biblioteca/img/381.webp'),
+  ('Revólver', '/biblioteca/img/382.webp'),
+  ('Fuzil de caça', '/biblioteca/img/383.webp'),
+  ('Pistola pesada', '/biblioteca/img/384.webp'),
+  ('Espingarda', '/biblioteca/img/394.webp'),
+  ('Espingarda de cano duplo', '/biblioteca/img/392.webp'),
+  ('Fuzil de assalto', '/biblioteca/img/388.webp'),
+  ('Pistola Sinalizadora', '/biblioteca/img/393.webp'),
+  ('Fuzil de precisão', '/biblioteca/img/400.webp'),
+  ('Besta', '/biblioteca/img/405.webp'),
+  ('Marreta', '/biblioteca/img/413.webp'),
+  ('Arma Improvisada', '/biblioteca/img/395.webp'),
+  ('Katana', '/biblioteca/img/410.webp'),
+  ('Lança', '/biblioteca/img/398.webp'),
+  ('Machado', '/biblioteca/img/401.webp'),
+  ('Garra do Harpia', '/biblioteca/img/402.webp'),
+  ('Espada', '/biblioteca/img/404.webp'),
+  ('Punhal', '/biblioteca/img/407.webp'),
+  ('Maça', '/biblioteca/img/409.webp'),
+  ('Arco', '/biblioteca/img/412.webp'),
+  ('Bastão', '/biblioteca/img/414.webp'),
+  ('Acha', '/biblioteca/img/416.webp'),
+  ('Pé de Cabra', '/biblioteca/img/417.webp'),
+  ('Machete', '/biblioteca/img/418.webp'),
+  ('Gadanho', '/biblioteca/img/419.webp'),
+  ('Nunchaku', '/biblioteca/img/420.webp'),
+  ('Machadinha', '/biblioteca/img/422.webp'),
+  ('Cajado', '/biblioteca/img/424.webp'),
+  ('Picareta', '/biblioteca/img/426.webp'),
+  ('Martelo', '/biblioteca/img/428.webp'),
+  ('Capacete Tático', '/biblioteca/img/321.webp'),
+  ('Câmera Filmadora', '/biblioteca/img/331.webp'),
+  ('Celular', '/biblioteca/img/336.webp'),
+  ('Lanterna Tática', '/biblioteca/img/347.webp'),
+  ('Bandoleira', '/biblioteca/img/431.webp'),
+  ('Mochila Militar', '/biblioteca/img/447.webp'),
+  ('Crânio Dominador', '/biblioteca/img/498.webp'),
+  ('Manual operacional', '/biblioteca/img/355.webp')
+)
+update public.equipment_items e
+   set image_url = i.url
+  from imagens i
+ where e.name = i.nome and coalesce(e.image_url, '') = '';

@@ -17562,3 +17562,108 @@ label.janela-botao {
     flex-wrap: wrap;
   }
 }
+
+/* ---- Biblioteca de Tokens (pedido da Millie, 07/10) ---- */
+
+.biblioteca {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.biblioteca-filtro {
+  display: flex;
+  gap: 8px;
+}
+
+.biblioteca-filtro input {
+  flex: 1;
+  min-width: 0;
+}
+
+.biblioteca-filtro select {
+  max-width: 200px;
+}
+
+.biblioteca > .janela-dica {
+  margin: 0;
+}
+
+.biblioteca-grade {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  align-content: start;
+  gap: 8px;
+}
+
+.biblioteca-token {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--mesa-creme);
+  font-size: 0.75rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.biblioteca-token:hover {
+  background: #1d1b21;
+}
+
+.biblioteca-token.ativo {
+  border-color: rgba(240, 240, 242, 0.5);
+}
+
+.biblioteca-imagem {
+  width: 96px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  box-sizing: border-box;
+  background: #0b0a0d;
+  border: 1px solid #4a4650;
+  border-radius: 6px;
+}
+
+.biblioteca-imagem img {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.biblioteca-imagem {
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.biblioteca-codigo {
+  color: var(--mesa-creme-dim);
+}
+
+.biblioteca-marca {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--mesa-creme);
+}
+
+.biblioteca-mais {
+  grid-column: 1 / -1;
+  justify-self: center;
+}

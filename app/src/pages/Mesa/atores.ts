@@ -58,6 +58,11 @@ export function variacoesDoToken(a: Pick<Ator, 'token_url' | 'token_variacoes'>)
 }
 
 // Nome padrão de cada variação nova = nome do arquivo, sem extensão (como nos Posicionáveis).
+// Tokens que a criatura do bestiário já traz (Biblioteca de Tokens): viram as variações do personagem.
+export function variacoesDaCriatura(lista: { nome: string; url: string }[] | null | undefined): Variacao[] {
+  return (lista ?? []).map((v) => ({ id: crypto.randomUUID(), nome: v.nome, url: v.url, pasta: null }))
+}
+
 export function nomeDoArquivo(nome: string): string {
   return nome.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || 'Variação'
 }

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faImage, faImages, faPlus, faSkull, faUser, faUserGear, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faBookOpen, faCheck, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faImage, faImages, faPlus, faSkull, faUser, faUserGear, faXmark } from '@fortawesome/free-solid-svg-icons'
 import MenuContexto, { type ItemMenu } from './MenuContexto'
 import { supabase } from '../../lib/supabase'
 import Janela, { Campo } from './Janela'
 import FichaAmeaca from './FichaAmeaca'
+import JanelaBiblioteca from './JanelaBiblioteca'
 import { agruparVariacoes, NIVEIS, nomeDoArquivo, ROTULO_TIPO, type Ator, type NivelAcesso, type PastaDeVariacao, type Variacao } from './atores'
 import { pastasEmLista, type Pasta } from './cenas'
 import type { CriaturaResumo } from './useAtores'
@@ -173,6 +174,8 @@ export function ConfigurarToken({ ator, onEnviar, onSalvar, onFechar }: {
   const [menu, setMenu] = useState<{ x: number; y: number; itens: ItemMenu[] } | null>(null)
   const [fechadas, setFechadas] = useState<Set<string>>(new Set())
   const [sobre, setSobre] = useState<string | null>(null)
+  // Biblioteca de Tokens aberta pra escolher o principal ou pra somar variações.
+  const [biblioteca, setBiblioteca] = useState<'principal' | 'variacao' | null>(null)
   const principalRef = useRef<HTMLInputElement>(null)
   const variacaoRef = useRef<HTMLInputElement>(null)
   // Pasta em que entram as próximas imagens enviadas pelo "+".
@@ -252,6 +255,7 @@ export function ConfigurarToken({ ator, onEnviar, onSalvar, onFechar }: {
   const grupos = agruparVariacoes(variacoes, pastas)
 
   return (
+    <>
     <Janela titulo={`Configurar Token: ${ator.name}`} icone={faImage} largura={560} onFechar={onFechar}>
       <div className="janela-form janela-rolagem token-config">
         <fieldset className="janela-grupo">
@@ -261,6 +265,7 @@ export function ConfigurarToken({ ator, onEnviar, onSalvar, onFechar }: {
             <button type="button" className="token-quadro" onClick={() => principalRef.current?.click()} aria-label="Escolher token principal">
               {principal ? <img src={principal} alt="" /> : <FontAwesomeIcon icon={faPlus} />}
             </button>
+            <button type="button" className="mesa-botao" onClick={() => setBiblioteca('principal')}><FontAwesomeIcon icon={faBookOpen} /> Da Biblioteca</button>
             {principal && <button type="button" className="janela-link" onClick={() => setPrincipal(null)}>Tirar</button>}
           </div>
           <input ref={principalRef} type="file" accept="image/*" hidden onChange={(e) => { enviar(Array.from(e.target.files ?? []), true); e.target.value = '' }} />
@@ -270,6 +275,7 @@ export function ConfigurarToken({ ator, onEnviar, onSalvar, onFechar }: {
           <legend>Tokens Variáveis</legend>
           <div className="token-variacoes-topo">
             <p className="janela-dica">Arraste uma variação pra outra pasta pra mudar ela de lugar. Botão direito renomeia, move ou tira.</p>
+            <button type="button" className="mesa-botao" onClick={() => { destinoRef.current = null; setBiblioteca('variacao') }}><FontAwesomeIcon icon={faBookOpen} /> Da Biblioteca</button>
             <button type="button" className="mesa-botao" onClick={criarPasta}><FontAwesomeIcon icon={faFolderPlus} /> Criar Pasta</button>
           </div>
 
@@ -341,6 +347,23 @@ export function ConfigurarToken({ ator, onEnviar, onSalvar, onFechar }: {
 
       {menu && <MenuContexto x={menu.x} y={menu.y} itens={menu.itens} onFechar={() => setMenu(null)} />}
     </Janela>
+    {biblioteca && (
+      <JanelaBiblioteca
+        titulo={biblioteca === 'principal' ? 'Biblioteca: Token Principal' : 'Biblioteca: Tokens Variáveis'}
+        dica={biblioteca === 'principal' ? 'Clique no token pra ser o principal.' : 'Clique nos tokens pra somar às variações.'}
+        escolhidos={biblioteca === 'principal' ? (principal ? [principal] : []) : variacoes.map((v) => v.url)}
+        onEscolher={(t, url) => {
+          if (biblioteca === 'principal') {
+            setPrincipal(url)
+            setBiblioteca(null)
+          } else if (!variacoes.some((v) => v.url === url)) {
+            setVariacoes((l) => [...l, { id: crypto.randomUUID(), nome: t.nome, url, pasta: destinoRef.current }])
+          }
+        }}
+        onFechar={() => setBiblioteca(null)}
+      />
+    )}
+    </>
   )
 }
 

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faArrowUpRightFromSquare, faBookmark, faCubes, faFile, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faFont, faLightbulb, faFire, faMusic,
+  faArrowUpRightFromSquare, faBookmark, faBookOpen, faCubes, faFile, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faFont, faLightbulb, faFire, faMusic,
   faPenToSquare, faPencil, faPlus, faTrash, faUser,
 } from '@fortawesome/free-solid-svg-icons'
 import Janela, { Campo } from './Janela'
@@ -12,6 +12,7 @@ import { montarArvore, type NoPasta, type Pasta } from './cenas'
 import { aceitaArquivo, CATEGORIAS_POSICIONAVEIS, ehImagem, nomeDoArquivo, vaiProMapa, type CategoriaPosicionavel, type Posicionavel } from './posicionaveis'
 import { LUZ_PADRAO } from './luz'
 import { efeitoPadrao } from './efeitos'
+import JanelaBiblioteca from './JanelaBiblioteca'
 import { enviarArquivoPosicionavel, type usePosicionaveis } from './usePosicionaveis'
 
 export const TIPO_ARRASTO_POSICIONAVEL = 'application/x-arkanis-posicionavel'
@@ -58,6 +59,7 @@ export default function PainelPosicionaveis({ souMestre, userId, api, categoria,
   const [pasta, setPasta] = useState<{ pai: string | null; editando?: Pasta } | null>(null)
   const [renomeando, setRenomeando] = useState<Posicionavel | null>(null)
   const [soltando, setSoltando] = useState<string | null>(null) // id da pasta (ou '' = raiz)
+  const [biblioteca, setBiblioteca] = useState(false)
   const arquivo = useRef<HTMLInputElement>(null)
   const pastaDoImport = useRef<string | null>(null)
 
@@ -278,6 +280,12 @@ export default function PainelPosicionaveis({ souMestre, userId, api, categoria,
           <FontAwesomeIcon icon={faPlus} />
           <span className="posicionaveis-dica" role="tooltip">{DICA_IMPORTAR[categoria]}</span>
         </button>
+        {(categoria === 'token' || categoria === 'objeto') && (
+          <button type="button" className="posicionaveis-botao" aria-label="Biblioteca de Tokens" onClick={() => setBiblioteca(true)}>
+            <FontAwesomeIcon icon={faBookOpen} />
+            <span className="posicionaveis-dica" role="tooltip">Biblioteca de Tokens</span>
+          </button>
+        )}
         {categoria === 'luz' && (
           <button type="button" className="posicionaveis-botao" aria-label="Criar Luz (sem imagem)" onClick={() => criarLuz(null)}>
             <FontAwesomeIcon icon={faLightbulb} />
@@ -337,6 +345,19 @@ export default function PainelPosicionaveis({ souMestre, userId, api, categoria,
             setPasta(null)
           }}
           onFechar={() => setPasta(null)}
+        />
+      )}
+
+      {biblioteca && (
+        <JanelaBiblioteca
+          dica={`Clique pra guardar em ${cat.rotulo}, ou arraste direto pra mesa.`}
+          escolhidos={daAba.map((p) => p.url ?? '')}
+          onEscolher={(t, url) => {
+            if (daAba.some((p) => p.url === url)) return
+            api.criar({ categoria, name: t.nome, url, dados: {}, folder_id: null })
+            avisar(`${t.nome} guardado em ${cat.rotulo}.`, true)
+          }}
+          onFechar={() => setBiblioteca(false)}
         />
       )}
 

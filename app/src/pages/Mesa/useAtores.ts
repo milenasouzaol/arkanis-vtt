@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { copiaDoAtor, type Ator } from './atores'
+import { copiaDoAtor, variacoesDaCriatura, type Ator } from './atores'
 import type { Pasta } from './cenas'
 
 const CAMPOS =
@@ -89,7 +89,12 @@ export function useAtores(campanhaId: string | undefined) {
 
   const criarAmeaca = useCallback(async (c: CriaturaResumo & { pv_maximo?: number | null }, pastaId: string | null) => {
     if (!campanhaId) return null
-    return inserir({ campaign_id: campanhaId, tipo: 'ameaca', creature_id: c.id, name: c.name, token_url: c.image_url, pv_atual: c.pv_maximo ?? null, folder_id: pastaId })
+    // Todas as formas da criatura (Biblioteca de Tokens) já entram como variações.
+    const { data } = await supabase.from('creatures').select('token_variacoes').eq('id', c.id).maybeSingle()
+    return inserir({
+      campaign_id: campanhaId, tipo: 'ameaca', creature_id: c.id, name: c.name, token_url: c.image_url, pv_atual: c.pv_maximo ?? null, folder_id: pastaId,
+      token_variacoes: variacoesDaCriatura(data?.token_variacoes),
+    })
   }, [campanhaId, inserir])
 
   const salvar = useCallback(async (id: string, campos: Partial<Ator>) => {

@@ -283,6 +283,14 @@ Aba Configurações no formato do print do Foundry da Millie: Arkanis, Sistema d
 - **Configurações do Jogo** (busca + seções, cada uma abre a sua janela com Redefinir / Salvar Alterações): Interface de Usuário (escala, no navegador), Som (Música, Ambiente, Efeitos), **Dados** (mostrar os dados 3D, tamanho, tempo na tela; aparência dos SEUS dados: uma cor por tipo ou todos iguais, cor do número, contorno, material Plástico/Metal/Metal Polido/Madeira/Vidro, textura; Rolar de Teste; fica no perfil (profiles.dados3d) e todo mundo vê os seus assim), Chat (nome da conta), e do mestre: **Permissões de Usuários** (Criar Diário — vale no banco —, Pingar o Mapa, Usar a Régua), **Fontes Adicionais** (envia .ttf/.otf/.woff, nome, peso e estilo; carrega pra todo mundo e entra no menu de fontes do chat; com o nome Modesto Condensed vira a fonte dos títulos do Diário) e **Monitor de Combate** (vida no carrossel; caveiras automáticas — vale no passar_turno).
 - **Controles**: lista dos atalhos. **Configuração do Mundo**: nome e cor da mesa. **Usuários**: quem está na campanha; o mestre tira alguém.
 
+### Biblioteca de Tokens (feito; migrations 0136 e 0137)
+Tokens prontos dos pacotes da Millie (JipeX, O Speedrun na Floresta, Tokens Personagens, Ameaças do Outro Lado) e as armas/equipáveis do pacote de partes, servidos junto com o site em `app/public/biblioteca` (webp + miniatura + `indice.json`; 502 imagens, cada uma com código de 3 dígitos). Sem crédito de artista (site fechado, só amigos).
+- **Onde abre:** Posicionáveis → Tokens e Objetos (botão do livro: clique guarda na aba, ou arraste direto pra mesa, entra como token no tamanho da imagem) e Configurar Token (Da Biblioteca: escolhe o Token Principal ou soma Tokens Variáveis).
+- **Busca:** código (#042 ou 42), nome, coleção, grupo, ou palavras: mulher/homem, monstro/ameaça, pessoa/npc, item/equipamento, sangue/morte/energia/conhecimento. Todas as palavras têm que bater. Filtro por coleção.
+- **Ameaças do bestiário:** as 44 que têm token na biblioteca guardam todas as formas em `creatures.token_variacoes` (ex.: Anfitrião 1–6, as 5 Degolificadas); a imagem vira a do bestiário, e criar a ameaça na mesa (aba Personagens ou combate) já traz todas como variações, prontas no botão direito → Variação de Token. As que já estavam nas mesas também receberam.
+- **Itens do sistema:** 41 itens sem imagem (armas, granadas, Lanterna Tática, Celular, Mochila Militar, Capacete Tático…) ganharam a do pacote.
+- Fundo branco dos JPG é tirado ao montar; rostos e partes de corpo ficam pro montador de tokens.
+
 ## D. Pendências da mesa (spec 9)
 - Fora do escopo por enquanto: Paredes e Iluminação.
 - Definir implementação técnica dos Efeitos Climáticos (12.5) e do áudio por link/upload (12.5, 12.12, 12.13).

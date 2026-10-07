@@ -18,6 +18,7 @@ import {
 import type { Ping, useObjetos } from './useObjetos'
 import { TIPO_ARRASTO_ATOR } from './PainelPersonagens'
 import { soltouNosPosicionaveis, TIPO_ARRASTO_POSICIONAVEL } from './PainelPosicionaveis'
+import { TIPO_ARRASTO_BIBLIOTECA } from './biblioteca'
 import { TIPO_ARRASTO_ITEM } from './PainelItens'
 import { guardarObjeto, type Posicionavel } from './posicionaveis'
 import type { Variacao } from './atores'
@@ -55,7 +56,7 @@ type Gesto =
 
 // Centro da mesa: a cena com imagem, grade, objetos/tokens, escuridão, ambiente e clima.
 // Arrastar com o botão direito move o mapa (o esquerdo faz a caixa de seleção), a rodinha dá zoom.
-export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, ehMeuToken, podePingar = true, onInteragir, onColocarItem, itensDaCampanha = [], onEditarItem, podeEditarItem, onColocarPosicionavel, onGuardarPosicionaveis }: {
+export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPersonagens, jogadores, obj, aviso, pings, focoPing, onSoltarImagem, onColocarAtor, onAbrirFicha, variacoesDe, onAbrirVariacoes, ferramenta, meusAlvos, outrosAlvos, onAlternarAlvo, onLimparAlvos, combates = [], onAdicionarAoCombate, entraEmCombate, des, pedidoPaleta = 0, pedidoLimpar = 0, sons, pedidoPaletaSom = 0, pedidoLimparSom = 0, pedidoLimparEscuridao = 0, ehMeuToken, podePingar = true, onInteragir, onColocarItem, itensDaCampanha = [], onEditarItem, podeEditarItem, onColocarPosicionavel, onColocarDaBiblioteca, onGuardarPosicionaveis }: {
   cena: Cena | null
   souMestre: boolean
   userId: string
@@ -105,6 +106,8 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
   podeEditarItem?: (itemId: string) => boolean
   // Posicionáveis (12.6): arrastar da aba pra mesa usa; da mesa pra aba guarda.
   onColocarPosicionavel?: (id: string, ponto: { x: number; y: number }) => void
+  // Token arrastado da Biblioteca de Tokens.
+  onColocarDaBiblioteca?: (token: { url: string; nome: string }, ponto: { x: number; y: number }) => void
   onGuardarPosicionaveis?: (itens: Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'>[]) => void
 }) {
   const palcoRef = useRef<HTMLDivElement>(null)
@@ -733,6 +736,12 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       if (cena && souMestre) onColocarPosicionavel?.(posicionavel, pontoNoMapa(e.clientX, e.clientY))
       return
     }
+    const daBiblioteca = e.dataTransfer.getData(TIPO_ARRASTO_BIBLIOTECA)
+    if (daBiblioteca) {
+      e.preventDefault()
+      if (cena && souMestre) onColocarDaBiblioteca?.(JSON.parse(daBiblioteca), pontoNoMapa(e.clientX, e.clientY))
+      return
+    }
     const ator = e.dataTransfer.getData(TIPO_ARRASTO_ATOR)
     if (ator) {
       e.preventDefault()
@@ -949,7 +958,7 @@ export default function PalcoCena({ cena, souMestre, userId, nomeUsuario, meusPe
       }}
       onDragStart={(e) => e.preventDefault()}
       onDragOver={(e) => {
-        if (e.dataTransfer.types.includes(TIPO_ARRASTO_ATOR) || e.dataTransfer.types.includes(TIPO_ARRASTO_POSICIONAVEL) || e.dataTransfer.types.includes(TIPO_ARRASTO_ITEM)) {
+        if (e.dataTransfer.types.includes(TIPO_ARRASTO_ATOR) || e.dataTransfer.types.includes(TIPO_ARRASTO_POSICIONAVEL) || e.dataTransfer.types.includes(TIPO_ARRASTO_ITEM) || e.dataTransfer.types.includes(TIPO_ARRASTO_BIBLIOTECA)) {
           e.preventDefault()
           return
         }

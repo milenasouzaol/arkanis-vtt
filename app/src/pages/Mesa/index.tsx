@@ -555,6 +555,17 @@ export default function Mesa() {
     })
   }
 
+  // Token arrastado da Biblioteca direto pra mesa: entra como token, no tamanho da imagem.
+  async function colocarDaBiblioteca(t: { url: string; nome: string }, ponto: { x: number; y: number }) {
+    const atual = cenas.atual
+    if (!atual) return
+    const nat = await tamanhoDaImagem(t.url)
+    await objetos.criar({
+      scene_id: atual.id, campaign_id: campanha.id, name: t.nome, image_url: t.url, layer: 'token',
+      ...caixaNoPonto(ponto, nat.w || atual.grid_size, nat.h || atual.grid_size),
+    })
+  }
+
   // Arrastou da mesa pra aba: guarda uma cópia (e mostra a aba onde ficou).
   async function guardarPosicionaveis(itens: Pick<Posicionavel, 'categoria' | 'name' | 'url' | 'dados'>[]) {
     if (!itens.length) return
@@ -713,6 +724,7 @@ export default function Mesa() {
         onSoltarImagem={soltarImagem}
         onColocarAtor={colocarAtor}
         onColocarPosicionavel={colocarPosicionavel}
+        onColocarDaBiblioteca={colocarDaBiblioteca}
         onGuardarPosicionaveis={guardarPosicionaveis}
         onAbrirFicha={abrirFicha}
         variacoesDe={(id) => {
