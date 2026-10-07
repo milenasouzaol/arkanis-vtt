@@ -143,10 +143,19 @@ export default function ItemEditModal({
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
-    const path = `${item.id}/${Date.now()}-${file.name}`
+    // A pasta tem que ser a de quem envia (regra do banco); antes ia na do item e dava erro.
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setUploading(false)
+      return
+    }
+    const path = `${user.id}/${item.id}-${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`
     const { error } = await supabase.storage.from('attack_images').upload(path, file, { upsert: true })
     setUploading(false)
-    if (error) return
+    if (error) {
+      window.alert('Não deu pra enviar a imagem.')
+      return
+    }
     setImageUrl(supabase.storage.from('attack_images').getPublicUrl(path).data.publicUrl)
   }
 
