@@ -10,8 +10,8 @@ export type Elemento = 'sangue' | 'morte' | 'energia' | 'conhecimento'
 export const ELEMENTOS: { id: Elemento; rotulo: string; cores: { cor: string; numero: string; contorno: string; material: 'plastico' | 'metal' | 'madeira' | 'vidro' } }[] = [
   { id: 'sangue', rotulo: 'Sangue', cores: { cor: '#6e0b0b', numero: '#f1e6cf', contorno: '#1a0000', material: 'vidro' } },
   { id: 'morte', rotulo: 'Morte (lodo)', cores: { cor: '#141414', numero: '#f0f0f0', contorno: '#000000', material: 'plastico' } },
-  { id: 'energia', rotulo: 'Energia', cores: { cor: '#3a1d7a', numero: '#bfe9ff', contorno: '#120830', material: 'vidro' } },
-  { id: 'conhecimento', rotulo: 'Conhecimento', cores: { cor: '#2b2010', numero: '#f2c45a', contorno: '#000000', material: 'metal' } },
+  { id: 'energia', rotulo: 'Energia', cores: { cor: '#1a1466', numero: '#e6f6ff', contorno: '#0a0838', material: 'vidro' } },
+  { id: 'conhecimento', rotulo: 'Conhecimento', cores: { cor: '#d9a83a', numero: '#3a2606', contorno: '#fff3c4', material: 'plastico' } },
 ]
 
 // Sigilos do Conhecimento: letras na fonte Sigilos De Conhecimento (a mesma da ficha).
@@ -63,7 +63,7 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
   }
   if (el === 'energia') {
     // Jogo de luzes: pontos de luz rápidos girando em volta, com rastro.
-    for (let i = chance(14); i > 0; i--) ps.push(nova({ ch: 'luz', ang: Math.random() * Math.PI * 2, x: raio * (0.9 + Math.random() * 0.6), vx: (Math.random() < 0.5 ? -1 : 1) * (2.5 + Math.random() * 2.5), vida: 0.7 + Math.random() * 0.6, tam: raio * (0.07 + Math.random() * 0.06), cor: Math.random() < 0.5 ? '#b07bff' : '#5fd0ff' }))
+    for (let i = chance(14); i > 0; i--) ps.push(nova({ ch: 'luz', ang: Math.random() * Math.PI * 2, x: raio * (0.9 + Math.random() * 0.6), vx: (Math.random() < 0.5 ? -1 : 1) * (2.5 + Math.random() * 2.5), vida: 0.7 + Math.random() * 0.6, tam: raio * (0.07 + Math.random() * 0.06), cor: Math.random() < 0.5 ? '#7a5cff' : '#4fb8ff' }))
   }
   if (el === 'conhecimento') {
     if (ps.filter((p) => p.ch === 'sigilo').length < 8) for (let i = chance(4); i > 0; i--) ps.push(nova({ ch: 'sigilo', ang: Math.random() * Math.PI * 2, x: raio * (1.15 + Math.random() * 0.45), vida: 2.5 + Math.random() * 2, tam: raio * (0.4 + Math.random() * 0.25), cor: LETRAS[Math.floor(Math.random() * LETRAS.length)] }))
@@ -126,15 +126,15 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
     const pulso = 0.75 + 0.25 * Math.sin(t * 6) + (Math.random() < 0.04 ? 0.5 : 0) // às vezes um clarão
     const halo = raio * 1.9 * pulso
     ctx.globalAlpha = 0.55
-    ctx.drawImage(bolinha(Math.sin(t * 2.3) > 0 ? '#7b3cff' : '#2f8fff'), cx - halo, cy - halo, halo * 2, halo * 2)
+    ctx.drawImage(bolinha(Math.sin(t * 2.3) > 0 ? '#5a3cff' : '#2f7fff'), cx - halo, cy - halo, halo * 2, halo * 2)
     ctx.globalAlpha = 0.35
-    ctx.drawImage(bolinha('#d9c6ff'), cx - halo * 0.55, cy - halo * 0.55, halo * 1.1, halo * 1.1)
+    ctx.drawImage(bolinha('#cfe2ff'), cx - halo * 0.55, cy - halo * 0.55, halo * 1.1, halo * 1.1)
     // Feixes de luz.
     for (let f = 0; f < 6; f++) {
       const a = t * (f % 2 ? 1.1 : -0.8) + (f * Math.PI) / 3
       const comp = raio * (2 + 0.6 * Math.sin(t * 3 + f))
       const g = ctx.createLinearGradient(cx, cy, cx + Math.cos(a) * comp, cy + Math.sin(a) * comp)
-      const cor = f % 2 ? '#5fd0ff' : '#b07bff'
+      const cor = f % 2 ? '#4fb8ff' : '#6f52ff'
       g.addColorStop(0, cor + 'cc')
       g.addColorStop(1, cor + '00')
       ctx.globalAlpha = 0.5

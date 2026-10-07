@@ -66,11 +66,11 @@ function raio(ctx: CanvasRenderingContext2D, rnd: () => number, cor: string) {
   ctx.shadowColor = cor
   ctx.shadowBlur = 18
   ctx.strokeStyle = cor
-  ctx.lineWidth = 6
+  ctx.lineWidth = 10
   caminho()
-  ctx.shadowBlur = 6
-  ctx.strokeStyle = '#f4f0ff'
-  ctx.lineWidth = 2
+  ctx.shadowBlur = 10
+  ctx.strokeStyle = '#eef6ff'
+  ctx.lineWidth = 3.5
   caminho()
   ctx.shadowBlur = 0
 }
@@ -135,21 +135,42 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
   }
 
   if (el === 'energia') {
+    // Dentro do dado: fundo azul-arroxeado fundo e muitos raios azuis e roxos (quase nada de rosa).
     const g = ctx.createLinearGradient(0, 0, LADO, LADO)
-    g.addColorStop(0, '#1a0a40')
-    g.addColorStop(0.5, '#2b0f5e')
-    g.addColorStop(1, '#0d1a4a')
+    g.addColorStop(0, '#16148a')
+    g.addColorStop(0.5, '#2a1c9a')
+    g.addColorStop(1, '#0d3a9a')
     ctx.fillStyle = g
     ctx.fillRect(0, 0, LADO, LADO)
-    for (let i = 0; i < 16; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 40 + rnd() * 90, rnd() < 0.5 ? '#6a2cff' : '#1f8bff', 0.35)
-    for (let i = 0; i < 14; i++) raio(ctx, rnd, rnd() < 0.5 ? '#9a5cff' : '#4cc8ff')
+    for (let i = 0; i < 18; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 40 + rnd() * 90, rnd() < 0.5 ? '#4b2cff' : '#1f6bff', 0.4)
+    for (let i = 0; i < 18; i++) raio(ctx, rnd, rnd() < 0.45 ? '#6f4dff' : rnd() < 0.5 ? '#3a8dff' : '#52d6ff')
     return { name: 'energia', composite: 'source-over', texture: c, material: 'glass' }
   }
 
-  // Conhecimento: fundo escuro com sigilos dourados.
-  ctx.fillStyle = '#1c1408'
+  // Conhecimento: ouro (dourado e ouro branco), escovado, com sigilos gravados.
+  const g = ctx.createLinearGradient(0, 0, LADO, LADO)
+  g.addColorStop(0, '#f7e7a8')
+  g.addColorStop(0.3, '#d9a83a')
+  g.addColorStop(0.55, '#f3efe2')
+  g.addColorStop(0.8, '#c99428')
+  g.addColorStop(1, '#f0d27a')
+  ctx.fillStyle = g
   ctx.fillRect(0, 0, LADO, LADO)
-  for (let i = 0; i < 24; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 40 + rnd() * 100, rnd() < 0.5 ? '#3a2a0e' : '#0e0a04', 0.7)
+  // Faixas de ouro branco e dourado.
+  for (let i = 0; i < 22; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 50 + rnd() * 110, rnd() < 0.45 ? '#fbf6e8' : rnd() < 0.5 ? '#e5b84e' : '#b9862a', 0.45)
+  // Escovado: riscos finos na diagonal.
+  ctx.strokeStyle = '#fff6d6'
+  for (let i = 0; i < 160; i++) {
+    const x = rnd() * LADO
+    const y = rnd() * LADO
+    ctx.globalAlpha = 0.08 + rnd() * 0.12
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(x + 60 + rnd() * 80, y + 20 + rnd() * 30)
+    ctx.stroke()
+  }
+  ctx.globalAlpha = 1
   try {
     await document.fonts.load('40px "Sigilos De Conhecimento"')
   } catch {
@@ -158,22 +179,25 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
   const letras = 'abcdefghijklmnopqrstuvwxyz'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.shadowColor = '#f5c04a'
-  for (let i = 0; i < 70; i++) {
-    const tam = 20 + rnd() * 34
+  for (let i = 0; i < 60; i++) {
+    const tam = 22 + rnd() * 34
     ctx.font = `${Math.round(tam)}px "Sigilos De Conhecimento"`
-    ctx.globalAlpha = 0.25 + rnd() * 0.5
-    ctx.shadowBlur = 8
-    ctx.fillStyle = rnd() < 0.5 ? '#e8b64a' : '#c48f2a'
     ctx.save()
     ctx.translate(rnd() * LADO, rnd() * LADO)
     ctx.rotate((rnd() - 0.5) * 1.2)
-    ctx.fillText(letras[Math.floor(rnd() * letras.length)], 0, 0)
+    const l = letras[Math.floor(rnd() * letras.length)]
+    // Gravado: a sombra escura embaixo e o brilho claro em cima.
+    ctx.globalAlpha = 0.35 + rnd() * 0.3
+    ctx.fillStyle = '#8a5e14'
+    ctx.fillText(l, 1.5, 1.5)
+    ctx.fillStyle = '#fff4cf'
+    ctx.globalAlpha *= 0.8
+    ctx.fillText(l, 0, 0)
     ctx.restore()
   }
   ctx.globalAlpha = 1
-  ctx.shadowBlur = 0
-  return { name: 'conhecimento', composite: 'source-over', texture: c, material: 'metal' }
+  // Plástico: o metal da biblioteca escurece sem reflexo de ambiente e o ouro ficava marrom.
+  return { name: 'conhecimento', composite: 'source-over', texture: c, material: 'plastic' }
 }
 
 export function texturaDoElemento(el: Elemento): Promise<TexturaDaBiblioteca> {
