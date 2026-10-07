@@ -290,6 +290,9 @@ Tokens prontos dos pacotes da Millie (JipeX, O Speedrun na Floresta, Tokens Pers
 - **Ameaças do bestiário:** as 44 que têm token na biblioteca guardam todas as formas em `creatures.token_variacoes` (ex.: Anfitrião 1–6, as 5 Degolificadas); a imagem vira a do bestiário, e criar a ameaça na mesa (aba Personagens ou combate) já traz todas como variações, prontas no botão direito → Variação de Token. As que já estavam nas mesas também receberam.
 - **Itens do sistema:** 41 itens sem imagem (armas, granadas, Lanterna Tática, Celular, Mochila Militar, Capacete Tático…) ganharam a do pacote.
 - Fundo branco dos JPG é tirado ao montar; rostos e partes de corpo ficam pro montador de tokens.
+- **Atlas** (sem os mapas, que ficaram de fora por enquanto pelo tamanho): objetos, hospital, As Mãos que nos Acolhem, carros de Carga Mortal, criaturas, documentos das missões e itens amaldiçoados (Severum, Megrama, Coletora, Estimulante de Energia). Total da biblioteca: 695 imagens.
+- **Famílias na busca:** procurar uma coisa acha as parentes ("espada" acha katana, sabre e montante; "pistola" acha as armas de fogo; "faca" acha punhal e machete; "granada" acha os explosivos; "mochila" acha as bolsas…).
+- **Na ficha:** Editar item → Imagem → **Escolher da Biblioteca**. Já abre procurando o que o item é (Katana → todas as espadas), só com itens, e a imagem escolhida fica só naquele item do personagem. Item novo do catálogo já vem com a imagem base.
 
 ## D. Pendências da mesa (spec 9)
 - Fora do escopo por enquanto: Paredes e Iluminação.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { colecoesDa, filtrarBiblioteca, imagemDaBiblioteca, type TokenBiblioteca } from './biblioteca'
+import { buscaInicialDoItem, colecoesDa, filtrarBiblioteca, imagemDaBiblioteca, type TokenBiblioteca } from './biblioteca'
 
 const t = (id: string, nome: string, tags: string[], colecao = 'JipeX Tokens', grupo: string | null = null): TokenBiblioteca => ({ id, nome, colecao, grupo, tags, w: 100, h: 200 })
 
@@ -58,5 +58,34 @@ describe('itens na biblioteca', () => {
     const lista = [t('400', 'Katana', ['item'], 'Itens e Equipamentos', 'Armas Brancas'), t('001', 'Fernanda', ['humano', 'feminino'])]
     expect(filtrarBiblioteca(lista, 'equipamento').map((x) => x.id)).toEqual(['400'])
     expect(filtrarBiblioteca(lista, 'armas').map((x) => x.id)).toEqual(['400'])
+  })
+})
+
+describe('famílias de itens', () => {
+  const lista = [
+    t('401', 'Katana', ['item'], 'Itens e Equipamentos', 'Armas Brancas'),
+    t('402', 'Espada', ['item'], 'Itens e Equipamentos', 'Armas Brancas'),
+    t('403', 'Machado', ['item'], 'Itens e Equipamentos', 'Armas Brancas'),
+    t('404', 'Revólver', ['item'], 'Itens e Equipamentos', 'Armas de Fogo'),
+    t('405', 'Capacete 1', ['item'], 'Itens e Equipamentos', 'Capacetes'),
+    t('406', 'Capa de Monstros', ['documento'], 'Atlas', 'Documentos'),
+  ]
+
+  it('"espada" acha as katanas também, e "katana" acha as espadas', () => {
+    expect(filtrarBiblioteca(lista, 'espada').map((x) => x.id)).toEqual(['401', '402'])
+    expect(filtrarBiblioteca(lista, 'katana').map((x) => x.id)).toEqual(['401', '402'])
+  })
+
+  it('"pistola" acha as armas de fogo', () => {
+    expect(filtrarBiblioteca(lista, 'pistola').map((x) => x.id)).toEqual(['404'])
+  })
+
+  it('só os itens, quando pedido', () => {
+    expect(filtrarBiblioteca(lista, 'capa', null, ['item']).map((x) => x.id)).toEqual(['405'])
+  })
+
+  it('a busca inicial é a palavra que diz o que o item é', () => {
+    expect(buscaInicialDoItem('Pistola pesada')).toBe('pistola')
+    expect(buscaInicialDoItem('Pé de Cabra')).toBe('cabra')
   })
 })

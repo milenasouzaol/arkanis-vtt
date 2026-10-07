@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
+import { BuscaBiblioteca } from '../Mesa/JanelaBiblioteca'
+import { buscaInicialDoItem } from '../Mesa/biblioteca'
 import ItemModifiersModal, { type AppliedModifier } from './ItemModifiersModal'
 
 type ItemType = 'arma' | 'municao' | 'protecao' | 'geral' | 'paranormal'
@@ -131,6 +133,8 @@ export default function ItemEditModal({
   const [descricao, setDescricao] = useState(item.description ?? '')
   const [imageUrl, setImageUrl] = useState<string | null>(item.image_url ?? null)
   const [uploading, setUploading] = useState(false)
+  // Escolher a imagem na Biblioteca (pedido da Millie, 07/10): já abre procurando o que o item é.
+  const [biblioteca, setBiblioteca] = useState(false)
 
   const [modifiers, setModifiers] = useState<AppliedModifier[]>(item.applied_modifiers ?? [])
   const [showModModal, setShowModModal] = useState(false)
@@ -257,6 +261,7 @@ export default function ItemEditModal({
                 {uploading ? '...' : 'Alterar'}
                 <input type="file" accept="image/*" onChange={handleImage} hidden />
               </label>
+              <button type="button" className="attack-image-alter attack-image-biblioteca" onClick={() => setBiblioteca(true)}>Escolher da Biblioteca</button>
             </div>
 
             <div className="attack-section-title attack-section-title-inline">
@@ -285,6 +290,30 @@ export default function ItemEditModal({
         </div>
       </div>
     </div>
+
+    {biblioteca && (
+      <div className="attack-modal-backdrop biblioteca-ficha-fundo" onClick={() => setBiblioteca(false)}>
+        <div className="attack-modal-wrap biblioteca-ficha" onClick={(e) => e.stopPropagation()}>
+          <button type="button" className="ritual-close-outside" onClick={() => setBiblioteca(false)} aria-label="Fechar">
+            <span className="ritual-close-word">FECHAR</span>
+            <span className="ritual-close-x">X</span>
+          </button>
+          <div className="attack-modal">
+            <BuscaBiblioteca
+              buscaInicial={buscaInicialDoItem(name)}
+              tags={['item']}
+              arrastavel={false}
+              escolhidos={imageUrl ? [imageUrl] : []}
+              dica="Clique na imagem pra usar neste item."
+              onEscolher={(_, url) => {
+                setImageUrl(url)
+                setBiblioteca(false)
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    )}
 
     {showModModal && (
       <ItemModifiersModal

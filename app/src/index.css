@@ -17667,3 +17667,42 @@ label.janela-botao {
   grid-column: 1 / -1;
   justify-self: center;
 }
+
+/* Biblioteca na ficha: escolher a imagem do item (pedido da Millie, 07/10) */
+.attack-image-biblioteca {
+  right: auto;
+  left: 0.7em;
+}
+
+.biblioteca-ficha-fundo {
+  z-index: 95;
+  background: rgba(0, 0, 0, 0.92);
+}
+
+.attack-modal-wrap.biblioteca-ficha {
+  --mesa-creme: #d6d6da;
+  --mesa-creme-dim: #8f8c96;
+  width: min(760px, 94vw);
+  height: 82vh;
+}
+
+.biblioteca-ficha .attack-modal {
+  overflow: hidden;
+}
+
+.biblioteca-ficha .biblioteca input,
+.biblioteca-ficha .biblioteca select {
+  background: #15131b;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  padding: 0.5em 0.7em;
+}
+
+.biblioteca-ficha .janela-dica {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+}
+
+.biblioteca-ficha .janela-rolagem {
+  overflow-y: auto;
+}
