@@ -167,6 +167,26 @@ export function JanelaDados({ estiloAtual, onSalvarEstilo, onFechar }: {
 
         <Grupo titulo="Aparência dos seus dados">
           <p className="config-dica">Todo mundo vê os dados que você rola desse jeito.</p>
+          <Campo rotulo="Efeito" dica="A animação em volta dos dados. Os dados de elemento são especiais: vêm prontos, com a textura e as cores deles.">
+            <select
+              value={estilo.efeito}
+              aria-label="Efeito"
+              onChange={(e) => {
+                const v = e.target.value as EstiloDados['efeito']
+                const el = ELEMENTOS.find((x) => x.id === v)
+                // Saindo de um elemento, volta pro dado padrão.
+                setEstilo((x) => (el ? estiloCompleto({ efeito: v }) : ELEMENTOS.some((y) => y.id === x.efeito) ? { ...ESTILO_PADRAO, efeito: v } : { ...x, efeito: v }))
+              }}
+            >
+              <option value="auto">Pela textura (fogo, estrelas, gelo…)</option>
+              <option value="nenhum">Nenhum</option>
+              {ELEMENTOS.map((x) => <option key={x.id} value={x.id as Elemento}>Dado de {x.rotulo}</option>)}
+            </select>
+          </Campo>
+          {ELEMENTOS.some((x) => x.id === estilo.efeito) ? (
+            <p className="config-dica">Dado especial do elemento: a textura, as cores e o número já vêm prontos.</p>
+          ) : (
+            <>
           <Campo rotulo="Cores">
             <div className="efeito-tipos" role="radiogroup" aria-label="Cores">
               <button type="button" role="radio" aria-checked={estilo.modo === 'tipo'} className={`janela-botao${estilo.modo === 'tipo' ? ' janela-botao-destaque' : ''}`} onClick={() => mudar({ modo: 'tipo' })}>Uma cor por tipo</button>
@@ -188,21 +208,8 @@ export function JanelaDados({ estiloAtual, onSalvarEstilo, onFechar }: {
               {TEXTURAS_DADO.map((t) => <option key={t.id} value={t.id}>{t.rotulo}</option>)}
             </select>
           </Campo>
-          <Campo rotulo="Efeito" dica="A animação em volta dos dados. Escolher um elemento já põe as cores dele (dá pra mudar depois).">
-            <select
-              value={estilo.efeito}
-              aria-label="Efeito"
-              onChange={(e) => {
-                const v = e.target.value as EstiloDados['efeito']
-                const el = ELEMENTOS.find((x) => x.id === v)
-                mudar(el ? { efeito: v, modo: 'unica', textura: 'none', ...el.cores } : { efeito: v })
-              }}
-            >
-              <option value="auto">Pela textura (fogo, estrelas, gelo…)</option>
-              <option value="nenhum">Nenhum</option>
-              {ELEMENTOS.map((x) => <option key={x.id} value={x.id as Elemento}>{x.rotulo}</option>)}
-            </select>
-          </Campo>
+            </>
+          )}
           <button type="button" className="janela-botao" onClick={() => window.dispatchEvent(new CustomEvent(EVENTO_TESTAR_DADOS, { detail: estilo }))}>
             <FontAwesomeIcon icon={faDice} /> Rolar de Teste
           </button>

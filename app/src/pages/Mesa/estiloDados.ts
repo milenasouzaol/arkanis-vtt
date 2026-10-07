@@ -55,6 +55,9 @@ const HEX = /^#[0-9a-f]{6}$/i
 
 export function estiloCompleto(e: Partial<EstiloDados> | null | undefined): EstiloDados {
   const x = { ...ESTILO_PADRAO, ...(e ?? {}) }
+  // Dado de elemento é especial: as cores, o material e a textura são os do elemento.
+  const el = ELEMENTOS.find((y) => y.id === x.efeito)
+  if (el) return { ...ESTILO_PADRAO, modo: 'unica', textura: 'none', efeito: el.id, ...el.cores }
   return {
     modo: x.modo === 'unica' ? 'unica' : 'tipo',
     cor: HEX.test(x.cor) ? x.cor : ESTILO_PADRAO.cor,
@@ -73,7 +76,7 @@ export function conjuntoDoDado(estilo: EstiloDados, lados: number, corDoTipo: Re
   const fundo = estilo.modo === 'unica' ? estilo.cor : corDoTipo[lados] ?? '#5a5a66'
   const material = MATERIAIS_DADO.find((m) => m.id === estilo.material)!.biblioteca
   return {
-    name: `arkanis-${lados}-${fundo}-${estilo.numero}-${estilo.contorno}-${material}-${estilo.textura}`,
+    name: `arkanis-${lados}-${fundo}-${estilo.numero}-${estilo.contorno}-${material}-${estilo.textura}-${estilo.efeito}`,
     foreground: estilo.numero,
     background: fundo,
     outline: estilo.contorno,

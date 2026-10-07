@@ -4,6 +4,8 @@ import type { Mensagem } from './chat'
 import { chavesDe, dadosNovos, notacaoUnica, type Dado } from './dados3d'
 import { tocarSom, tocarSomDeArma } from '../../lib/sons'
 import { armaDoRotulo } from '../../lib/somDasArmas'
+import { texturaDoElemento } from './texturasElementais'
+import { ELEMENTOS } from './elementosDosDados'
 import { brilhoDoEstilo, iniciarBrilho, type CaixaComCena } from './brilhoDosDados'
 import { conjuntoDoDado, estiloCompleto, EVENTO_PREFERENCIAS, lerPreferenciasDados, type EstiloDados, type PreferenciasDados } from './estiloDados'
 
@@ -124,7 +126,11 @@ export default function DadosNaTela({ mensagens, estilos = {} }: { mensagens: Me
     const novos: Record<string, unknown> = {}
     for (const l of new Set(dados.map((d) => d.sides))) {
       try {
-        novos[`d${l}`] = await c.DiceColors.makeColorSet(conjuntoDoDado(estilo, l, DIE_COLOR))
+        const conj = (await c.DiceColors.makeColorSet(conjuntoDoDado(estilo, l, DIE_COLOR))) as Record<string, unknown>
+        // Dado de elemento: a textura especial dele (lodo, raios, sangue, sigilos).
+        const el = ELEMENTOS.find((x) => x.id === estilo.efeito)
+        if (el) conj.texture = await texturaDoElemento(el.id)
+        novos[`d${l}`] = conj
       } catch {
         // textura que não carregou: o dado sai na cor padrão
       }
@@ -136,7 +142,7 @@ export default function DadosNaTela({ mensagens, estilos = {} }: { mensagens: Me
     if (brilho && camada.current) {
       pararBrilho.current = iniciarBrilho(camada.current, c as unknown as CaixaComCena, brilho, (l) => (estilo.modo === 'unica' ? estilo.cor : DIE_COLOR[l] ?? '#7c4fe0'))
       // Brilho de metal, glitter e gelo na frente do dado; fogo, fumaça, água e constelação atrás.
-      camada.current.classList.toggle('frente', brilho === 'metal' || brilho === 'glitter' || brilho === 'gelo' || brilho === 'energia')
+      camada.current.classList.toggle('frente', brilho === 'metal' || brilho === 'glitter' || brilho === 'gelo')
       camada.current.classList.add('ativo')
     }
     const notacao = notacaoUnica(dados)
