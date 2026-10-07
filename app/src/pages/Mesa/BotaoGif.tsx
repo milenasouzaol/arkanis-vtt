@@ -114,7 +114,7 @@ export default function BotaoGif({ onEnviar, onImagem }: {
                   {estado === 'pronto' && !gifs.length && <p className="item-vazio">Nada encontrado.</p>}
                   {gifs.map((g) => (
                     <button key={g.id} type="button" title={g.titulo} disabled={enviando} onClick={() => mandar(g.url)}>
-                      <img src={g.previa} alt={g.titulo} loading="lazy" style={{ aspectRatio: `${g.largura} / ${g.altura}` }} />
+                      <img src={g.previa} alt={g.titulo} loading="lazy" />
                     </button>
                   ))}
                 </div>
