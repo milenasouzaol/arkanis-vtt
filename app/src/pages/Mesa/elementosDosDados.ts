@@ -71,6 +71,8 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
   if (el === 'morte') {
     // Gavinhas de lodo saindo do dado e enrolando na ponta (como na referência).
     if (ps.filter((p) => p.ch === 'gavinha').length < 5) for (let i = chance(2.2); i > 0; i--) ps.push(nova({ ch: 'gavinha', ang: Math.random() * Math.PI * 2, vida: 2 + Math.random() * 1.2, tam: raio * (0.8 + Math.random() * 0.6), semente: Math.random() < 0.5 ? 1 : -1 }))
+    // Ondas, como uma gota caindo num lago: uma a cada pouco, saindo do dado.
+    if (ps.filter((p) => p.ch === 'onda').length < 3) for (let i = chance(0.9); i > 0; i--) ps.push(nova({ ch: 'onda', vida: 2.2, tam: raio }))
     // Lodo pingando de baixo.
     for (let i = chance(3); i > 0; i--) ps.push(nova({ ch: 'gota', x: (Math.random() - 0.5) * raio * 1.1, y: raio * (0.3 + Math.random() * 0.25), vida: 2.2 + Math.random(), tam: raio * (0.09 + Math.random() * 0.06) }))
   }
@@ -130,7 +132,7 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
       const desce = raio * (el === 'morte' ? 0.9 : 1.4) * k * k
       const espesso = el === 'morte' ? 1.5 : 1
       ctx.globalAlpha = Math.min(1, (1 - k) * 2.2)
-      ctx.strokeStyle = '#2a0105'
+      ctx.strokeStyle = el === 'morte' ? '#07070a' : '#2a0105'
       ctx.fillStyle = el === 'morte' ? '#0a0a0c' : '#3d0207'
       ctx.lineCap = 'round'
       ctx.lineWidth = p.tam * 0.9 * espesso
@@ -158,6 +160,26 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
       ctx.strokeStyle = '#1e0103'
       ctx.lineWidth = 1.2
       garra(ctx, cx, cy, p.ang, raio * 0.55, p.tam * Math.min(1, sobe * 1.6), raio * 0.11)
+    } else if (p.ch === 'onda') {
+      // Anel suave que abre e some (vale escuro e crista clara, borrados): deformação no espaço,
+      // deitada no chão em volta do dado e girando de leve.
+      const r = p.tam * (0.7 + k * 2.1)
+      const larg = p.tam * (0.35 + k * 0.25)
+      const forca = (1 - k) * Math.min(1, k * 6)
+      ctx.translate(cx, cy + p.tam * 0.25)
+      ctx.rotate(Math.sin(t * 0.6) * 0.15)
+      ctx.scale(1, 0.55)
+      const g = ctx.createRadialGradient(0, 0, Math.max(0, r - larg), 0, 0, r + larg)
+      g.addColorStop(0, 'rgba(0,0,0,0)')
+      g.addColorStop(0.3, `rgba(0,0,0,${0.45 * forca})`)
+      g.addColorStop(0.55, `rgba(220,220,210,${0.22 * forca})`)
+      g.addColorStop(0.75, `rgba(0,0,0,${0.2 * forca})`)
+      g.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = g
+      ctx.beginPath()
+      ctx.arc(0, 0, r + larg, 0, Math.PI * 2)
+      ctx.arc(0, 0, Math.max(0, r - larg), 0, Math.PI * 2, true)
+      ctx.fill()
     } else if (p.ch === 'gavinha') {
       // Sai da borda, curva pro lado e enrola numa espiral na ponta; cresce e volta.
       const cresce = Math.min(1, sobe * 1.5)
