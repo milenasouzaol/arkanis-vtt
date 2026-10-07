@@ -47,32 +47,37 @@ function reflexos(ctx: CanvasRenderingContext2D, rnd: () => number, n: number, c
   ctx.globalAlpha = 1
 }
 
-function raio(ctx: CanvasRenderingContext2D, rnd: () => number, cor: string) {
-  let x = rnd() * LADO
-  let y = rnd() * LADO
-  const ang = rnd() * Math.PI * 2
-  const pts = [{ x, y }]
-  for (let i = 0; i < 9; i++) {
-    x += Math.cos(ang + (rnd() - 0.5) * 1.6) * (25 + rnd() * 30)
-    y += Math.sin(ang + (rnd() - 0.5) * 1.6) * (25 + rnd() * 30)
+// Veia de energia: um caminho que desce ondulando, feito de vários fios finos lado a lado (como
+// na referência), que às vezes se divide.
+function veia(ctx: CanvasRenderingContext2D, rnd: () => number, cor: string, x0?: number, y0?: number, prof = 0) {
+  let x = x0 ?? rnd() * LADO
+  let y = y0 ?? -20
+  let ang = Math.PI / 2 + (rnd() - 0.5) * 0.8
+  const pts: { x: number; y: number }[] = [{ x, y }]
+  const passos = prof ? 10 : 22
+  for (let i = 0; i < passos; i++) {
+    ang += (rnd() - 0.5) * 0.7
+    x += Math.cos(ang) * 26
+    y += Math.sin(ang) * 26
     pts.push({ x, y })
+    if (prof < 2 && rnd() < 0.12) veia(ctx, rnd, cor, x, y, prof + 1)
   }
-  const caminho = () => {
+  const fios = prof ? 3 : 6
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  for (let f = 0; f < fios; f++) {
+    const off = (f - fios / 2) * 2.2
+    ctx.shadowColor = cor
+    ctx.shadowBlur = 12
+    ctx.strokeStyle = f % 3 === 0 ? '#ffe6fb' : cor
+    ctx.globalAlpha = f % 3 === 0 ? 0.55 : 0.75
+    ctx.lineWidth = (prof ? 1.2 : 2.4) * (f % 3 === 0 ? 0.6 : 1)
     ctx.beginPath()
-    pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)))
+    pts.forEach((p, i) => (i ? ctx.lineTo(p.x + off, p.y + off * 0.3) : ctx.moveTo(p.x + off, p.y)))
     ctx.stroke()
   }
-  ctx.lineJoin = 'round'
-  ctx.shadowColor = cor
-  ctx.shadowBlur = 18
-  ctx.strokeStyle = cor
-  ctx.lineWidth = 10
-  caminho()
-  ctx.shadowBlur = 10
-  ctx.strokeStyle = '#eef6ff'
-  ctx.lineWidth = 3.5
-  caminho()
   ctx.shadowBlur = 0
+  ctx.globalAlpha = 1
 }
 
 async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
@@ -135,16 +140,24 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
   }
 
   if (el === 'energia') {
-    // Dentro do dado: fundo azul-arroxeado fundo e muitos raios azuis e roxos (quase nada de rosa).
+    // Referência da Millie: roxo profundo e granulado, com veias finas e ramificadas fluindo
+    // (rosa-magenta, roxo e um pouco de azul), brilhando.
     const g = ctx.createLinearGradient(0, 0, LADO, LADO)
-    g.addColorStop(0, '#16148a')
-    g.addColorStop(0.5, '#2a1c9a')
-    g.addColorStop(1, '#0d3a9a')
+    g.addColorStop(0, '#2c0a5c')
+    g.addColorStop(0.5, '#4a148a')
+    g.addColorStop(1, '#30106a')
     ctx.fillStyle = g
     ctx.fillRect(0, 0, LADO, LADO)
-    for (let i = 0; i < 18; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 40 + rnd() * 90, rnd() < 0.5 ? '#4b2cff' : '#1f6bff', 0.4)
-    for (let i = 0; i < 18; i++) raio(ctx, rnd, rnd() < 0.45 ? '#6f4dff' : rnd() < 0.5 ? '#3a8dff' : '#52d6ff')
-    return { name: 'energia', composite: 'source-over', texture: c, material: 'glass' }
+    for (let i = 0; i < 26; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 40 + rnd() * 120, rnd() < 0.5 ? '#6a22b8' : '#1e0646', 0.4)
+    // Grão.
+    for (let i = 0; i < 2600; i++) {
+      ctx.globalAlpha = 0.05 + rnd() * 0.12
+      ctx.fillStyle = rnd() < 0.5 ? '#e8d4ff' : '#12032a'
+      ctx.fillRect(rnd() * LADO, rnd() * LADO, 1 + rnd() * 1.5, 1 + rnd() * 1.5)
+    }
+    ctx.globalAlpha = 1
+    for (let i = 0; i < 9; i++) veia(ctx, rnd, rnd() < 0.55 ? '#ff5fd6' : rnd() < 0.6 ? '#b06bff' : '#6f8dff')
+    return { name: 'energia', composite: 'source-over', texture: c, material: 'plastic' }
   }
 
   // Conhecimento: ouro (dourado e dourado escuro), escovado, com sigilos gravados.

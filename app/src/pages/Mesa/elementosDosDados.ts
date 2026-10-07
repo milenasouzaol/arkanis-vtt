@@ -2,7 +2,7 @@
 // cada dado (ver brilhoDosDados):
 //   Sangue: gotas escorrendo e dentes/garras de osso saindo das bordas.
 //   Morte: buraco negro girando em volta (matéria escura caindo em espiral).
-//   Energia: jogo de luzes (halo pulsando, feixes girando e pontos de luz com rastro).
+//   Energia: chamas espectrais magenta, roxas e ciano subindo em volta, e estalinhos elétricos rosa.
 //   Conhecimento: letras e sigilos dourados girando e brilhando, com fumaça dourada leve.
 
 export type Elemento = 'sangue' | 'morte' | 'energia' | 'conhecimento'
@@ -10,7 +10,7 @@ export type Elemento = 'sangue' | 'morte' | 'energia' | 'conhecimento'
 export const ELEMENTOS: { id: Elemento; rotulo: string; cores: { cor: string; numero: string; contorno: string; material: 'plastico' | 'metal' | 'madeira' | 'vidro' } }[] = [
   { id: 'sangue', rotulo: 'Sangue', cores: { cor: '#6e0b0b', numero: '#f1e6cf', contorno: '#1a0000', material: 'vidro' } },
   { id: 'morte', rotulo: 'Morte (lodo)', cores: { cor: '#141414', numero: '#f0f0f0', contorno: '#000000', material: 'plastico' } },
-  { id: 'energia', rotulo: 'Energia', cores: { cor: '#1a1466', numero: '#f1e8ff', contorno: '#9a4dff', material: 'vidro' } },
+  { id: 'energia', rotulo: 'Energia', cores: { cor: '#4a148a', numero: '#ffe9fb', contorno: '#ff3fd2', material: 'plastico' } },
   { id: 'conhecimento', rotulo: 'Conhecimento', cores: { cor: '#b8862a', numero: '#fff7c8', contorno: '#ffb300', material: 'plastico' } },
 ]
 
@@ -73,8 +73,22 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
     for (let i = chance(38); i > 0; i--) ps.push(nova({ ch: 'espiral', ang: Math.random() * Math.PI * 2, x: raio * (1.6 + Math.random() * 0.9), vida: 1.6 + Math.random() * 0.8, tam: raio * (0.06 + Math.random() * 0.08), cor: Math.random() < 0.25 ? '#ffffff' : Math.random() < 0.5 ? '#5a5a5a' : '#080808' }))
   }
   if (el === 'energia') {
-    // Jogo de luzes: pontos de luz rápidos girando em volta, com rastro.
-    for (let i = chance(14); i > 0; i--) ps.push(nova({ ch: 'luz', ang: Math.random() * Math.PI * 2, x: raio * (0.9 + Math.random() * 0.6), vx: (Math.random() < 0.5 ? -1 : 1) * (2.5 + Math.random() * 2.5), vida: 0.7 + Math.random() * 0.6, tam: raio * (0.07 + Math.random() * 0.06), cor: Math.random() < 0.5 ? '#7a5cff' : '#4fb8ff' }))
+    // Chamas espectrais (magenta, roxo e ciano) subindo em volta do dado, como no personagem.
+    for (let i = chance(48); i > 0; i--) ps.push(nova({ ch: 'chama', x: (Math.random() - 0.5) * raio * 1.8, y: raio * (0.1 + Math.random() * 0.6), vy: -raio * (1.3 + Math.random() * 1), vida: 0.9 + Math.random() * 0.7, tam: raio * (0.2 + Math.random() * 0.16), cor: Math.random() < 0.45 ? '#ff4fd8' : Math.random() < 0.6 ? '#a24dff' : '#4fe3ff' }))
+    // Estalinhos elétricos rosa perto da borda.
+    for (let i = chance(5); i > 0; i--) {
+      const a0 = Math.random() * Math.PI * 2
+      const r0 = raio * (0.85 + Math.random() * 0.4)
+      const pts: { x: number; y: number }[] = []
+      let x = Math.cos(a0) * r0
+      let y = Math.sin(a0) * r0
+      for (let k = 0; k < 5; k++) {
+        pts.push({ x, y })
+        x += (Math.random() - 0.5) * raio * 0.35
+        y += (Math.random() - 0.7) * raio * 0.3
+      }
+      ps.push(nova({ ch: 'estalo', vida: 0.1 + Math.random() * 0.12, pts, cor: Math.random() < 0.7 ? '#ff7ae0' : '#8ff0ff' }))
+    }
   }
   if (el === 'conhecimento') {
     if (ps.filter((p) => p.ch === 'sigilo').length < 8) for (let i = chance(4); i > 0; i--) ps.push(nova({ ch: 'sigilo', ang: Math.random() * Math.PI * 2, x: raio * (1.15 + Math.random() * 0.45), vida: 2.5 + Math.random() * 2, tam: raio * (0.4 + Math.random() * 0.25), cor: LETRAS[Math.floor(Math.random() * LETRAS.length)] }))
@@ -127,36 +141,6 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
     ctx.beginPath()
     ctx.ellipse(cx, cy, raio * 0.95, raio * 0.6, t * 0.9, 0, Math.PI * 2)
     ctx.stroke()
-    ctx.restore()
-  }
-
-  // Energia: halo de luz pulsando e feixes girando atrás do dado.
-  if (el === 'energia') {
-    ctx.save()
-    ctx.globalCompositeOperation = 'lighter'
-    const pulso = 0.75 + 0.25 * Math.sin(t * 6) + (Math.random() < 0.04 ? 0.5 : 0) // às vezes um clarão
-    const halo = raio * 1.9 * pulso
-    ctx.globalAlpha = 0.55
-    ctx.drawImage(bolinha(Math.sin(t * 2.3) > 0 ? '#5a3cff' : '#2f7fff'), cx - halo, cy - halo, halo * 2, halo * 2)
-    ctx.globalAlpha = 0.35
-    ctx.drawImage(bolinha('#cfe2ff'), cx - halo * 0.55, cy - halo * 0.55, halo * 1.1, halo * 1.1)
-    // Feixes de luz.
-    for (let f = 0; f < 6; f++) {
-      const a = t * (f % 2 ? 1.1 : -0.8) + (f * Math.PI) / 3
-      const comp = raio * (2 + 0.6 * Math.sin(t * 3 + f))
-      const g = ctx.createLinearGradient(cx, cy, cx + Math.cos(a) * comp, cy + Math.sin(a) * comp)
-      const cor = f % 2 ? '#4fb8ff' : '#6f52ff'
-      g.addColorStop(0, cor + 'cc')
-      g.addColorStop(1, cor + '00')
-      ctx.globalAlpha = 0.5
-      ctx.fillStyle = g
-      ctx.beginPath()
-      ctx.moveTo(cx, cy)
-      ctx.lineTo(cx + Math.cos(a - 0.09) * comp, cy + Math.sin(a - 0.09) * comp)
-      ctx.lineTo(cx + Math.cos(a + 0.09) * comp, cy + Math.sin(a + 0.09) * comp)
-      ctx.closePath()
-      ctx.fill()
-    }
     ctx.restore()
   }
 
@@ -213,19 +197,27 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
       ctx.globalCompositeOperation = p.cor === '#ffffff' ? 'lighter' : 'source-over'
       ctx.globalAlpha = Math.min(1, k * 4) * (1 - k * 0.7)
       ctx.drawImage(bolinha(p.cor!), x - p.tam * 2, y - p.tam * 2, p.tam * 4, p.tam * 4)
-    } else if (p.ch === 'luz') {
-      // Ponto de luz girando rápido em volta, com rastro.
+    } else if (p.ch === 'chama') {
+      // Chama espectral: sobe balançando, alonga e some; brilho somado (neon).
+      p.y += p.vy * dt
+      p.x += Math.sin(t * 6 + p.semente * 30) * raio * 0.5 * dt
+      const larg = p.tam * (1 - k * 0.6)
       ctx.globalCompositeOperation = 'lighter'
-      const pts = 6
-      for (let j = 0; j < pts; j++) {
-        const a = p.ang - (j * p.vx * 0.012)
-        const x = cx + Math.cos(a) * p.x
-        const y = cy + Math.sin(a) * p.x * 0.8
-        ctx.globalAlpha = sobe * (1 - j / pts) * 0.8
-        const tam = p.tam * (1 - j / (pts * 1.3)) * 2
-        ctx.drawImage(bolinha(j ? p.cor! : '#ffffff'), x - tam, y - tam, tam * 2, tam * 2)
-      }
-      p.ang += p.vx * dt
+      ctx.globalAlpha = 0.8 * Math.min(1, k * 5) * (1 - k)
+      ctx.translate(cx + p.x, cy + p.y)
+      ctx.scale(1, 2.2)
+      ctx.drawImage(bolinha(p.cor!), -larg, -larg, larg * 2, larg * 2)
+    } else if (p.ch === 'estalo' && p.pts) {
+      ctx.globalCompositeOperation = 'lighter'
+      ctx.globalAlpha = Math.random() < 0.8 ? 1 : 0.4
+      ctx.shadowColor = p.cor!
+      ctx.shadowBlur = raio * 0.25
+      ctx.strokeStyle = p.cor!
+      ctx.lineWidth = Math.max(1, raio * 0.035)
+      ctx.lineJoin = 'round'
+      ctx.beginPath()
+      p.pts.forEach((q, i) => (i ? ctx.lineTo(cx + q.x, cy + q.y) : ctx.moveTo(cx + q.x, cy + q.y)))
+      ctx.stroke()
     } else if (p.ch === 'sigilo') {
       // Gira devagar em volta do dado, acendendo e apagando.
       p.ang += dt * 0.5
