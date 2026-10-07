@@ -50,7 +50,7 @@ describe('elementos nos dados', () => {
     expect(brilhoDoEstilo({ textura: 'fire', material: 'plastico', efeito: 'sangue' })).toBe('sangue')
     expect(brilhoDoEstilo({ textura: 'fire', material: 'plastico', efeito: 'nenhum' })).toBeNull()
     expect(brilhoDoEstilo({ textura: 'fire', material: 'plastico', efeito: 'auto' })).toBe('fogo')
-    expect(estiloCompleto({ efeito: 'energia', cor: '#00ff00' })).toMatchObject({ efeito: 'energia', cor: '#1a1466', modo: 'unica' })
+    expect(estiloCompleto({ efeito: 'energia', cor: '#00ff00' })).toMatchObject({ efeito: 'energia', cor: '#1a1466', modo: 'unica', contorno: '#9a4dff' })
     expect(estiloCompleto({ efeito: 'banana' as never }).efeito).toBe('auto')
   })
 })

@@ -147,19 +147,19 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
     return { name: 'energia', composite: 'source-over', texture: c, material: 'glass' }
   }
 
-  // Conhecimento: ouro (dourado e ouro branco), escovado, com sigilos gravados.
+  // Conhecimento: ouro (dourado e dourado escuro), escovado, com sigilos gravados.
   const g = ctx.createLinearGradient(0, 0, LADO, LADO)
-  g.addColorStop(0, '#f7e7a8')
-  g.addColorStop(0.3, '#d9a83a')
-  g.addColorStop(0.55, '#f3efe2')
-  g.addColorStop(0.8, '#c99428')
-  g.addColorStop(1, '#f0d27a')
+  g.addColorStop(0, '#c99428')
+  g.addColorStop(0.3, '#8f6416')
+  g.addColorStop(0.55, '#d4a23a')
+  g.addColorStop(0.8, '#7a5210')
+  g.addColorStop(1, '#c08a26')
   ctx.fillStyle = g
   ctx.fillRect(0, 0, LADO, LADO)
-  // Faixas de ouro branco e dourado.
-  for (let i = 0; i < 22; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 50 + rnd() * 110, rnd() < 0.45 ? '#fbf6e8' : rnd() < 0.5 ? '#e5b84e' : '#b9862a', 0.45)
+  // Faixas de dourado e dourado escuro.
+  for (let i = 0; i < 22; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 50 + rnd() * 110, rnd() < 0.5 ? '#e0ad3e' : '#6e4a0e', 0.45)
   // Escovado: riscos finos na diagonal.
-  ctx.strokeStyle = '#fff6d6'
+  ctx.strokeStyle = '#f0c860'
   for (let i = 0; i < 160; i++) {
     const x = rnd() * LADO
     const y = rnd() * LADO
@@ -188,9 +188,9 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
     const l = letras[Math.floor(rnd() * letras.length)]
     // Gravado: a sombra escura embaixo e o brilho claro em cima.
     ctx.globalAlpha = 0.35 + rnd() * 0.3
-    ctx.fillStyle = '#8a5e14'
+    ctx.fillStyle = '#4e3308'
     ctx.fillText(l, 1.5, 1.5)
-    ctx.fillStyle = '#fff4cf'
+    ctx.fillStyle = '#f2c75a'
     ctx.globalAlpha *= 0.8
     ctx.fillText(l, 0, 0)
     ctx.restore()

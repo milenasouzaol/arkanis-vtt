@@ -5,7 +5,7 @@ import { chavesDe, dadosNovos, notacaoUnica, type Dado } from './dados3d'
 import { tocarSom, tocarSomDeArma } from '../../lib/sons'
 import { armaDoRotulo } from '../../lib/somDasArmas'
 import { texturaDoElemento } from './texturasElementais'
-import { ELEMENTOS } from './elementosDosDados'
+import { ELEMENTOS, NEON } from './elementosDosDados'
 import { brilhoDoEstilo, iniciarBrilho, type CaixaComCena } from './brilhoDosDados'
 import { conjuntoDoDado, estiloCompleto, EVENTO_PREFERENCIAS, lerPreferenciasDados, type EstiloDados, type PreferenciasDados } from './estiloDados'
 
@@ -129,7 +129,17 @@ export default function DadosNaTela({ mensagens, estilos = {} }: { mensagens: Me
         const conj = (await c.DiceColors.makeColorSet(conjuntoDoDado(estilo, l, DIE_COLOR))) as Record<string, unknown>
         // Dado de elemento: a textura especial dele (lodo, raios, sangue, sigilos).
         const el = ELEMENTOS.find((x) => x.id === estilo.efeito)
-        if (el) conj.texture = await texturaDoElemento(el.id)
+        if (el) {
+          conj.texture = await texturaDoElemento(el.id)
+          // Números neon: com mais de uma cor, a biblioteca sorteia uma por dado.
+          const neon = NEON[el.id]
+          if (neon && neon.length > 1 && !Array.isArray(conj.foreground)) {
+            conj.foreground = neon.map((n) => n.numero)
+            conj.outline = neon.map((n) => n.contorno)
+            conj.background = neon.map(() => conj.background as string)
+            conj.edge = neon.map(() => conj.edge as string)
+          }
+        }
         novos[`d${l}`] = conj
       } catch {
         // textura que não carregou: o dado sai na cor padrão

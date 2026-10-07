@@ -10,9 +10,20 @@ export type Elemento = 'sangue' | 'morte' | 'energia' | 'conhecimento'
 export const ELEMENTOS: { id: Elemento; rotulo: string; cores: { cor: string; numero: string; contorno: string; material: 'plastico' | 'metal' | 'madeira' | 'vidro' } }[] = [
   { id: 'sangue', rotulo: 'Sangue', cores: { cor: '#6e0b0b', numero: '#f1e6cf', contorno: '#1a0000', material: 'vidro' } },
   { id: 'morte', rotulo: 'Morte (lodo)', cores: { cor: '#141414', numero: '#f0f0f0', contorno: '#000000', material: 'plastico' } },
-  { id: 'energia', rotulo: 'Energia', cores: { cor: '#1a1466', numero: '#e6f6ff', contorno: '#0a0838', material: 'vidro' } },
-  { id: 'conhecimento', rotulo: 'Conhecimento', cores: { cor: '#d9a83a', numero: '#3a2606', contorno: '#fff3c4', material: 'plastico' } },
+  { id: 'energia', rotulo: 'Energia', cores: { cor: '#1a1466', numero: '#f1e8ff', contorno: '#9a4dff', material: 'vidro' } },
+  { id: 'conhecimento', rotulo: 'Conhecimento', cores: { cor: '#b8862a', numero: '#fff7c8', contorno: '#ffb300', material: 'plastico' } },
 ]
+
+// Números neon (pedido da Millie): miolo claro com o contorno brilhando na cor do neon. Mais de um
+// par = cada dado sai sorteado num (a Energia: rosa, roxo ou azul).
+export const NEON: Partial<Record<Elemento, { numero: string; contorno: string }[]>> = {
+  conhecimento: [{ numero: '#fff7c8', contorno: '#ffb300' }],
+  energia: [
+    { numero: '#ffe9fb', contorno: '#ff3fd2' },
+    { numero: '#f1e8ff', contorno: '#9a4dff' },
+    { numero: '#e8f6ff', contorno: '#2f9dff' },
+  ],
+}
 
 // Sigilos do Conhecimento: letras na fonte Sigilos De Conhecimento (a mesma da ficha).
 const LETRAS = 'abcdefghijklmnopqrstuvwxyz'
