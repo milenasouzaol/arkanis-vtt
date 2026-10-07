@@ -18,7 +18,13 @@ type ProfileRow = {
 }
 
 export default function Perfil() {
-  const { session } = useAuth()
+  const { session, acesso } = useAuth()
+  // Administradora: quantos pedidos de acesso estão esperando.
+  const [esperando, setEsperando] = useState(0)
+  useEffect(() => {
+    if (!acesso.admin) return
+    supabase.from('acesso_usuarios').select('user_id', { count: 'exact', head: true }).eq('status', 'pendente').then(({ count }) => setEsperando(count ?? 0))
+  }, [acesso.admin])
   const navigate = useNavigate()
   const [profile, setProfile] = useState<ProfileRow | null>(null)
 
@@ -69,6 +75,12 @@ export default function Perfil() {
         </section>
 
         <aside className="profile-actions">
+          {acesso.admin && (
+            <Link to="/acessos" className="profile-action-item">
+              <img src={settingsIcon} alt="" />
+              <span>Pedidos de Acesso{esperando ? ` (${esperando})` : ''}</span>
+            </Link>
+          )}
           <Link to="/perfil/editar" className="profile-action-item">
             <img src={settingsIcon} alt="" />
             <span>Editar Perfil</span>

@@ -14,6 +14,7 @@ import CharacterSheet from './pages/CharacterSheet'
 import EntrarCampanha from './pages/EntrarCampanha'
 import Mesa from './pages/Mesa'
 import CriarCampanha from './pages/CriarCampanha'
+import PedidosDeAcesso from './pages/PedidosDeAcesso'
 import { ligarSonsDoSite } from './lib/sons'
 
 // Sons do site todo: abrir/fechar janelinhas, clique em botão e caixinhas (lib/sons.ts).
@@ -28,6 +29,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+          <Route path="/acessos" element={<ProtectedRoute><PedidosDeAcesso /></ProtectedRoute>} />
           <Route path="/perfil/editar" element={<ProtectedRoute><EditarPerfil /></ProtectedRoute>} />
           <Route path="/jogar" element={<ProtectedRoute><Jogar /></ProtectedRoute>} />
           <Route path="/campanha/criar" element={<ProtectedRoute><CriarCampanha /></ProtectedRoute>} />

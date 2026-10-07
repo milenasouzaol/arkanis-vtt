@@ -4,6 +4,7 @@
     { "source": "/login", "destination": "/index.html" },
     { "source": "/perfil", "destination": "/index.html" },
     { "source": "/perfil/editar", "destination": "/index.html" },
+    { "source": "/acessos", "destination": "/index.html" },
     { "source": "/jogar", "destination": "/index.html" },
     { "source": "/campanha/criar", "destination": "/index.html" },
     { "source": "/campanha/entrar/:code", "destination": "/index.html" },
