@@ -17044,3 +17044,118 @@ label.compendio-linha {
 .diario-linha {
   padding-left: 12px;
 }
+
+/* GIFs no chat (pedido da Millie, 06/10). */
+.chat-gif {
+  position: relative;
+}
+
+.chat-gif-botao {
+  width: auto;
+  padding: 0 6px;
+  font: 700 0.68rem 'Signika', var(--sans);
+  letter-spacing: 0.03em;
+}
+
+.chat-gif-botao.ligado {
+  background: var(--mesa-destaque);
+  color: #111;
+}
+
+.chat-gif-painel {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: -60px;
+  z-index: 46;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  padding: 8px;
+  background: #16161b;
+  border: 1px solid var(--mesa-borda);
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+}
+
+.chat-gif-busca {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #0b0b0d;
+  border: 1px solid var(--mesa-borda);
+  border-radius: 4px;
+  color: var(--mesa-creme-dim);
+}
+
+.chat-gif-busca input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--mesa-creme);
+  font-size: 0.85rem;
+}
+
+.chat-gif-grade {
+  columns: 2;
+  column-gap: 4px;
+  height: 300px;
+  overflow-y: auto;
+}
+
+.chat-gif-grade button {
+  display: block;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0;
+  background: #0b0b0d;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  break-inside: avoid;
+  cursor: pointer;
+}
+
+.chat-gif-grade button:hover {
+  border-color: var(--mesa-destaque);
+}
+
+.chat-gif-grade img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 2px;
+}
+
+.chat-gif-giphy {
+  margin: 0;
+  color: var(--mesa-creme-dim);
+  font-size: 0.65rem;
+  text-align: right;
+}
+
+.chat-gif-aviso {
+  margin: 0;
+  color: var(--mesa-creme-dim);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.chat-gif-outros {
+  display: flex;
+  gap: 4px;
+}
+
+.chat-gif-outros input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  background: #0b0b0d;
+  border: 1px solid var(--mesa-borda);
+  border-radius: 4px;
+  color: var(--mesa-creme);
+  font-size: 0.8rem;
+}

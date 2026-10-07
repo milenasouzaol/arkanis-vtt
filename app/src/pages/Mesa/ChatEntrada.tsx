@@ -8,6 +8,7 @@ import d8Icon from '../../assets/dice-picker/d8.svg'
 import d10Icon from '../../assets/dice-picker/d10.svg'
 import d12Icon from '../../assets/dice-picker/d12.svg'
 import d20Icon from '../../assets/dice-picker/d20.svg'
+import BotaoGif from './BotaoGif'
 import { BANDEJA_VAZIA, bandejaVazia, comandoDeRolagem, DADOS_DA_BANDEJA, formulaDaBandeja, type Bandeja, type Vantagem } from './rolador'
 
 const TAMANHOS = [
@@ -332,6 +333,7 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
           <button type="button" className="chat-barra-icone" aria-label="Inserir imagem" title="Inserir imagem" onMouseDown={manterFoco} onClick={() => { guardarSelecao(); arquivoRef.current?.click() }}>
             <FontAwesomeIcon icon={faImage} />
           </button>
+          <BotaoGif onEnviar={onEnviar} onImagem={onImagem} />
           <button type="button" className="chat-barra-icone" aria-label="Limpar Formatação" title="Limpar Formatação" onMouseDown={manterFoco} onClick={limparFormatacao}>
             <FontAwesomeIcon icon={faTextSlash} />
           </button>
