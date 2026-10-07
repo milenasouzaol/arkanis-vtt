@@ -11,13 +11,15 @@ type Opcao = { id: string; name: string | null; avatar_url: string | null; campa
 // Escolher com qual personagem entrar numa campanha: um que a pessoa já criou ou um novo
 // de Ordem Paranormal. Só depois disso ela entra na mesa.
 // Pelo convite (`codigoConvite`), é aqui que a pessoa vira membro da campanha.
-export default function EscolherPersonagem({ campanha, codigoConvite, voltarPara, janela, onFechar }: {
+export default function EscolherPersonagem({ campanha, codigoConvite, voltarPara, janela, onFechar, onSemFicha }: {
   campanha: { id: string; name: string }
   codigoConvite?: string
   // Pra onde voltar depois de criar o personagem novo.
   voltarPara: string
   janela?: boolean
   onFechar?: () => void
+  // Já na mesa: entrou sem ficha (a mesa abre sem recarregar).
+  onSemFicha?: () => void
 }) {
   const { session } = useAuth()
   const navigate = useNavigate()
@@ -65,10 +67,35 @@ export default function EscolherPersonagem({ campanha, codigoConvite, voltarPara
     navigate(`/mesa/${campanha.id}`)
   }
 
+  // Entrar sem ficha (pedido da Millie, 07/10): o mestre cria a ficha na mesa e dá pra pessoa
+  // em Configurar Propriedade → Dono.
+  async function entrarSemFicha() {
+    if (!session || salvando) return
+    setSalvando(true)
+    setErro(null)
+    if (codigoConvite) {
+      const { error } = await supabase.rpc('join_campaign_by_code', { p_invite_code: codigoConvite })
+      if (error) {
+        setSalvando(false)
+        setErro(error.message)
+        return
+      }
+    }
+    const { error } = await supabase.from('campaign_members').update({ sem_ficha: true }).eq('campaign_id', campanha.id).eq('user_id', session.user.id)
+    if (error) {
+      setSalvando(false)
+      setErro(error.message)
+      return
+    }
+    esquecerDestino()
+    if (onSemFicha) onSemFicha()
+    else navigate(`/mesa/${campanha.id}`)
+  }
+
   const conteudo = (
     <div className={janela ? 'modal-box escolher-personagem' : 'escolher-personagem'} onClick={(e) => e.stopPropagation()}>
       <h2>Escolha seu personagem</h2>
-      <p className="character-list-desc">Pra entrar em <strong>{campanha.name}</strong>, crie um personagem de Ordem Paranormal ou leve um que você já criou.</p>
+      <p className="character-list-desc">Pra entrar em <strong>{campanha.name}</strong>, crie um personagem de Ordem Paranormal, leve um que você já criou ou entre sem ficha (o mestre te dá uma).</p>
 
       <button type="button" className="btn-pill btn-pill-danger" onClick={criarNovo}>Criar personagem de Ordem Paranormal</button>
 
@@ -103,6 +130,7 @@ export default function EscolherPersonagem({ campanha, codigoConvite, voltarPara
 
       <div className="modal-actions">
         {onFechar && <button type="button" className="btn-pill btn-pill-neutral" onClick={onFechar}>Voltar</button>}
+        <button type="button" className="btn-pill btn-pill-neutral" disabled={salvando} onClick={entrarSemFicha}>Entrar sem ficha</button>
         {opcoes && opcoes.length > 0 && (
           <button type="button" className="btn-pill" disabled={!escolhido || salvando} onClick={entrar}>
             {salvando ? 'Entrando…' : 'Entrar na campanha'}

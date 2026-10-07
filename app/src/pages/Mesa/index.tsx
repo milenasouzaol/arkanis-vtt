@@ -67,6 +67,7 @@ import {
   FERRAMENTAS,
   ACOES_ESQUERDA,
   AJUDA_FERRAMENTA,
+  comFichasDadas,
   conectados as filtrarConectados,
   linkDeConvite,
   type AbaDireita,
@@ -92,7 +93,8 @@ type Campanha = {
 type Estado =
   | { tipo: 'carregando' }
   | { tipo: 'sem-acesso' }
-  | { tipo: 'pronta'; campanha: Campanha; membros: Membro[]; meuModo: ModoEnvio }
+  // semFicha: o jogador escolheu Entrar sem ficha (o mestre dá uma depois).
+  | { tipo: 'pronta'; campanha: Campanha; membros: Membro[]; meuModo: ModoEnvio; semFicha: boolean }
 
 // A Mesa (KAN-46): palco da cena no centro, abas na barra direita, ferramentas
 // de cena na esquerda e o painel de sessão no rodapé esquerdo.
@@ -135,15 +137,16 @@ export default function Mesa() {
         return
       }
       const [{ data: linhas }, { data: personagens }] = await Promise.all([
-        supabase.from('campaign_members').select('user_id, role, chat_mode').eq('campaign_id', id),
-        supabase.from('characters').select('id, user_id, name, avatar_url').eq('campaign_id', id),
+        supabase.from('campaign_members').select('user_id, role, chat_mode, sem_ficha').eq('campaign_id', id),
+        supabase.from('characters').select('id, user_id, name, avatar_url, npc').eq('campaign_id', id),
       ])
       const ids = [...new Set([campanha.owner_id, ...(linhas ?? []).map((l) => l.user_id)])]
       const { data: perfis } = await supabase.from('profiles').select('id, display_name, avatar_url, dados3d').in('id', ids)
       if (cancelado) return
       const perfil = new Map((perfis ?? []).map((p) => [p.id, p]))
       const membros: Membro[] = ids.map((uid) => {
-        const p = (personagens ?? []).find((c) => c.user_id === uid)
+        // NPC do mestre não é o personagem dele (fica na aba Personagens).
+        const p = (personagens ?? []).find((c) => c.user_id === uid && !c.npc)
         return {
           userId: uid,
           papel: uid === campanha.owner_id ? 'mestre' : 'jogador',
@@ -155,8 +158,9 @@ export default function Mesa() {
         }
       })
       setEstilosDados(Object.fromEntries((perfis ?? []).map((p) => [p.id, p.dados3d as Partial<EstiloDados> | null])))
-      const meuModo = (linhas ?? []).find((l) => l.user_id === userId)?.chat_mode as ModoEnvio | undefined
-      setEstado({ tipo: 'pronta', campanha, membros, meuModo: meuModo ?? 'publico_personagem' })
+      const minha = (linhas ?? []).find((l) => l.user_id === userId)
+      const meuModo = minha?.chat_mode as ModoEnvio | undefined
+      setEstado({ tipo: 'pronta', campanha, membros, meuModo: meuModo ?? 'publico_personagem', semFicha: !!minha?.sem_ficha })
     })()
     return () => {
       cancelado = true
@@ -166,7 +170,6 @@ export default function Mesa() {
   const pronta = estado.tipo === 'pronta' ? estado : null
   const { presencas, latencia } = useSessaoMesa(pronta?.campanha.id, userId)
   const fps = useFps()
-  const online = useMemo(() => (pronta ? filtrarConectados(pronta.membros, presencas) : []), [pronta, presencas])
   const chat = useChat(pronta?.campanha.id)
   const [modoEscolhido, setModoEscolhido] = useState<ModoEnvio | null>(null)
   const [destaqueFechado, setDestaqueFechado] = useState<string | null>(null)
@@ -212,6 +215,12 @@ export default function Mesa() {
   const [pedidoPaleta, setPedidoPaleta] = useState(0)
   const [pedidoLimpar, setPedidoLimpar] = useState(0)
   const atores = useAtores(pronta?.campanha.id)
+  // Com as fichas que o mestre deu (Dono) valendo como personagem de quem recebeu.
+  const membros = useMemo(
+    () => comFichasDadas(pronta?.membros ?? [], atores.atores, (cid) => atores.fichas[cid]?.avatar_url ?? null),
+    [pronta?.membros, atores.atores, atores.fichas],
+  )
+  const online = useMemo(() => (pronta ? filtrarConectados(membros, presencas) : []), [pronta, membros, presencas])
   const [criandoAtor, setCriandoAtor] = useState<{ pasta: string | null } | null>(null)
   const [pastaAtor, setPastaAtor] = useState<{ pai: string | null; editando?: Pasta } | null>(null)
   const [propriedadeAtor, setPropriedadeAtor] = useState<string | null>(null)
@@ -280,7 +289,7 @@ export default function Mesa() {
   const [editorAmeaca, setEditorAmeaca] = useState<{ inicial: CriaturaEditavel; depois?: (id: string) => void } | null>(null)
 
   // ---- Mira (12.9) ----
-  const euNaMesa = pronta?.membros.find((m) => m.userId === userId)
+  const euNaMesa = membros.find((m) => m.userId === userId)
   const mira = useMira(pronta?.campanha.id, userId, euNaMesa?.personagem || euNaMesa?.nomeConta || 'Alguém')
   const alvosComNome: Alvo[] = mira.meus.flatMap((id) => {
     const o = objetos.objetos.find((x) => x.id === id)
@@ -347,13 +356,18 @@ export default function Mesa() {
 
   const { campanha } = estado
   const souMestre = campanha.owner_id === userId
-  const meu = estado.membros.find((m) => m.userId === userId)
+  const meu = membros.find((m) => m.userId === userId)
 
-  // Jogador só entra na mesa com um personagem na campanha.
-  if (!souMestre && !meu?.personagemId) {
+  // Jogador entra com um personagem na campanha, ou sem ficha (o mestre dá uma depois).
+  if (!souMestre && !meu?.personagemId && !estado.semFicha) {
     return (
       <main className="mesa mesa-aviso mesa-sem-personagem">
-        <EscolherPersonagem campanha={campanha} voltarPara={`/mesa/${campanha.id}`} onFechar={() => navigate('/jogar')} />
+        <EscolherPersonagem
+          campanha={campanha}
+          voltarPara={`/mesa/${campanha.id}`}
+          onFechar={() => navigate('/jogar')}
+          onSemFicha={() => setEstado((e) => (e.tipo === 'pronta' ? { ...e, semFicha: true } : e))}
+        />
       </main>
     )
   }
@@ -375,8 +389,8 @@ export default function Mesa() {
     return true
   }
 
-  const eu = estado.membros.find((m) => m.userId === userId)
-  const mestre = estado.membros.find((m) => m.papel === 'mestre')
+  const eu = membros.find((m) => m.userId === userId)
+  const mestre = membros.find((m) => m.papel === 'mestre')
   const modo = modoEscolhido ?? estado.meuModo
   const chatAberto = !recolhida && aba === 'chat'
   // Mensagem destacada pelo mestre aparece no meio da mesa pra todo mundo.
@@ -696,7 +710,7 @@ export default function Mesa() {
   }
 
   const cenaEditada = cenas.cenas.find((c) => c.id === editandoCena)
-  const jogadoresParaCena = estado.membros
+  const jogadoresParaCena = membros
     .filter((m) => m.papel === 'jogador')
     .map((m) => ({ userId: m.userId, rotulo: m.personagem ? `${m.personagem} (${m.nomeConta})` : m.nomeConta }))
 
@@ -1197,7 +1211,7 @@ export default function Mesa() {
           return (
             <JanelaUsuarios
               key={j}
-              membros={estado.membros}
+              membros={membros}
               onRemover={async (uid) => {
                 const { error } = await supabase.from('campaign_members').delete().eq('campaign_id', campanha.id).eq('user_id', uid)
                 if (error) return avisar('Não deu pra tirar da campanha.', true)

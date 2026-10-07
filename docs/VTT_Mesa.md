@@ -161,6 +161,8 @@ Sem regra de negócio complexa — repositório de conveniência.
 ### 12.7 Barra Direita — Personagens (5º ícone, silhueta)
 Conecta a mesa genérica com a ficha do sistema. Rótulo "Personagem"/"Criar Personagem" (nunca "Ator").
 - Começa vazia. Cada jogador que entra pelo convite aparece automaticamente, vinculado à ficha dele.
+- **Entrar sem ficha** (feito; migration 0139, `campaign_members.sem_ficha`): na tela de escolher personagem, o jogador pode entrar sem ficha. Só o mestre cria personagens na mesa (NPC com ficha); em **Configurar Propriedade → Dono** pra um jogador, aquela ficha vira o personagem dele na mesa (rola, coleta itens, move o token, fala no chat como ele) e ele edita tudo. A ficha continua do mestre (não entra em Meus Personagens do jogador); personagem próprio na campanha tem preferência. Muda ao vivo, sem recarregar.
+- Tormentos da Arena Macabra: as 4 fichas da missão (Angelo, Jéssica Moreira, Rafael Alvarenga, Sam Ávila) já estão criadas na pasta Sobreviventes, prontas pra dar.
 - Botões **Criar Personagem** e **Criar Pasta**.
 - Tipos pra Ordem Paranormal: **NPC** e **Ameaça/Monstro** (mesma ficha do Homebrew, versão simplificada focada em rolagens). Sem "Objeto" e sem "Player Character".
 - **NPC:** abre a ficha completa de Ordem Paranormal numa janela flutuante redimensionável e reposicionável, sem as 5 etapas de criação. Salva em tempo real. Nome aparece na lista.

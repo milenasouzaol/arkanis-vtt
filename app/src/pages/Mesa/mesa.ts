@@ -189,3 +189,18 @@ export const AJUDA_FERRAMENTA: Record<string, { titulo: string; linhas: [string,
     ],
   },
 }
+
+// Ficha que o mestre criou na mesa e deu ao jogador (Configurar Propriedade → Dono): vira o
+// personagem dele na mesa, quando ele não tem um próprio na campanha (pedido da Millie, 07/10).
+export function comFichasDadas(
+  membros: Membro[],
+  atores: { tipo: string; character_id: string | null; name: string; token_url: string | null; acesso_jogadores: Record<string, string> }[],
+  fotoDaFicha: (characterId: string) => string | null = () => null,
+): Membro[] {
+  return membros.map((m) => {
+    if (m.papel === 'mestre' || m.personagemId) return m
+    const dada = atores.find((a) => a.tipo === 'npc' && a.character_id && a.acesso_jogadores[m.userId] === 'dono')
+    if (!dada) return m
+    return { ...m, personagem: dada.name, personagemId: dada.character_id, fotoPersonagem: fotoDaFicha(dada.character_id!) ?? dada.token_url }
+  })
+}
