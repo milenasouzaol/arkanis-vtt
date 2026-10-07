@@ -82,15 +82,22 @@ function EfeitoAnimado({ objeto, efeito, celula }: { objeto: ObjetoCena; efeito:
           ctx.globalAlpha = alfa * (clara ? 0.6 : 0.9)
           ctx.drawImage(corpo, p.x - raio, p.y - raio, raio * 2, raio * 2)
         } else if (e.tipo === 'veneno' && !p.nevoa) {
+          // Bolhinha pequena e cheia: corpo na cor, contorno fino e um brilho no alto.
           ctx.globalCompositeOperation = 'source-over'
-          ctx.globalAlpha = alfa
-          ctx.strokeStyle = e.cor
-          ctx.lineWidth = Math.max(0.8, raio * 0.28)
+          ctx.globalAlpha = alfa * 0.55
+          ctx.fillStyle = e.cor
           ctx.beginPath()
           ctx.arc(p.x, p.y, raio, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.globalAlpha = alfa * 0.8
+          ctx.strokeStyle = corDoMiolo(e.cor)
+          ctx.lineWidth = Math.max(0.6, raio * 0.18)
           ctx.stroke()
-          ctx.globalAlpha = alfa * 0.35
-          ctx.drawImage(corpo, p.x - raio, p.y - raio, raio * 2, raio * 2)
+          ctx.globalAlpha = alfa * 0.75
+          ctx.fillStyle = '#ffffff'
+          ctx.beginPath()
+          ctx.arc(p.x - raio * 0.35, p.y - raio * 0.35, raio * 0.28, 0, Math.PI * 2)
+          ctx.fill()
         } else if (e.tipo === 'faiscas') {
           ctx.globalCompositeOperation = clara ? 'lighter' : 'source-over'
           ctx.globalAlpha = alfa

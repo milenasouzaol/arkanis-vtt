@@ -51,7 +51,7 @@ export const COMPORTAMENTO: Record<TipoEfeito, Comportamento> = {
   fumaca: { porSegundo: 18, vida: 3.2, tamanho: [0.18, 0.55], alfa: 0.28, gravidade: 0, desenho: 'nevoa', andaFracao: 1 },
   agua: { porSegundo: 110, vida: 1.1, tamanho: [0.07, 0.11], alfa: 0.75, gravidade: 0.9, desenho: 'ponto', andaFracao: 1.1 },
   nuvem: { porSegundo: 12, vida: 9, tamanho: [0.22, 0.42], alfa: 0.16, gravidade: 0, desenho: 'nevoa', nasceEspalhado: 0.85, andaFracao: 0.3 },
-  veneno: { porSegundo: 26, vida: 2.4, tamanho: [0.05, 0.1], alfa: 0.8, gravidade: 0, desenho: 'bolha', nasceEspalhado: 0.25, andaFracao: 0.8 },
+  veneno: { porSegundo: 34, vida: 2.6, tamanho: [0.015, 0.03], alfa: 0.85, gravidade: 0, desenho: 'bolha', nasceEspalhado: 0.35, andaFracao: 0.6 },
   faiscas: { porSegundo: 34, vida: 1, tamanho: [0.035, 0.015], alfa: 1, gravidade: 1.4, desenho: 'ponto', andaFracao: 1.2 },
 }
 
@@ -77,7 +77,7 @@ export function nascer(e: Efeito, alcance: number, giro: number, rnd: () => numb
     x = (rnd() - 0.5) * alcance * 0.32
     y = (rnd() - 0.5) * alcance * 0.06
   }
-  return { x, y, vx: Math.cos(ang) * rapidez, vy: Math.sin(ang) * rapidez, idade: 0, vida, semente: rnd(), nevoa: e.tipo === 'veneno' && rnd() < 0.35 }
+  return { x, y, vx: Math.cos(ang) * rapidez, vy: Math.sin(ang) * rapidez, idade: 0, vida, semente: rnd(), nevoa: e.tipo === 'veneno' && rnd() < 0.4 }
 }
 
 // Avança dt segundos. Devolve false quando a partícula morreu.
@@ -101,11 +101,11 @@ export function andar(p: Particula, e: Efeito, alcance: number, dt: number): boo
 export function aparencia(p: Particula, e: Efeito, alcance: number): { raio: number; alfa: number; t: number } {
   const c = COMPORTAMENTO[e.tipo]
   const t = Math.min(1, p.idade / p.vida)
-  const [t0, t1] = p.nevoa ? [0.25, 0.6] : c.tamanho
+  const [t0, t1] = p.nevoa ? [0.18, 0.45] : c.tamanho
   const raio = alcance * (t0 + (t1 - t0) * t)
   const entrada = Math.min(1, t / 0.15)
   const saida = 1 - Math.max(0, (t - 0.6) / 0.4)
-  let alfa = c.alfa * entrada * saida * (p.nevoa ? 0.3 : 1)
+  let alfa = c.alfa * entrada * saida * (p.nevoa ? 0.16 : 1)
   if (e.tipo === 'faiscas') alfa *= 0.6 + 0.4 * Math.sin(p.idade * 40 + p.semente * 10)
   return { raio: Math.max(0.5, raio), alfa: Math.max(0, alfa), t }
 }
