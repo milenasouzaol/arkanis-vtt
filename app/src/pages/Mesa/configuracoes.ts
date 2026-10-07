@@ -21,6 +21,8 @@ export type FonteAdicional = { nome: string; url: string; peso: string; estilo: 
 
 export type ConfigCampanha = {
   fontes?: FonteAdicional[]
+  // Tempo e Calendário (ver tempo.ts); ausente = desligado.
+  tempo?: Partial<import('./tempo').ConfigTempo>
   combate?: { vidaNoCarrossel?: boolean; caveirasAutomaticas?: boolean }
 }
 

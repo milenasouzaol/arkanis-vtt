@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faComment, faDice, faFloppyDisk, faFont, faGamepad, faGears, faGlobe, faMagnifyingGlass, faPlus, faRotateLeft, faShieldHalved, faSwatchbook,
+  faClock, faComment, faDice, faFloppyDisk, faFont, faGamepad, faGears, faGlobe, faMagnifyingGlass, faPlus, faRotateLeft, faShieldHalved, faSwatchbook,
   faTrash, faUpload, faUserMinus, faUsers, faVolumeHigh, faXmarksLines, type IconDefinition,
 } from '@fortawesome/free-solid-svg-icons'
 import Janela, { Campo, CampoCor, Deslizante } from './Janela'
@@ -18,7 +18,7 @@ import {
 import { salvarVolume, useVolumesDoUsuario, VOLUMES_PADRAO } from './volumesDoUsuario'
 import type { Canal } from './playlists'
 
-export type SecaoConfig = 'interface' | 'som' | 'dados' | 'chat' | 'permissoes' | 'fontes' | 'combate'
+export type SecaoConfig = 'interface' | 'som' | 'dados' | 'chat' | 'permissoes' | 'fontes' | 'combate' | 'tempo'
 
 const SECOES: { id: SecaoConfig; rotulo: string; icone: IconDefinition; descricao: string; mestre?: boolean }[] = [
   { id: 'interface', rotulo: 'Interface de Usuário', icone: faSwatchbook, descricao: 'Tamanho da interface (painéis, janelas e textos) na sua tela.' },
@@ -28,6 +28,7 @@ const SECOES: { id: SecaoConfig; rotulo: string; icone: IconDefinition; descrica
   { id: 'permissoes', rotulo: 'Permissões de Usuários', icone: faShieldHalved, descricao: 'Ajuste que ações são permitidas aos jogadores.', mestre: true },
   { id: 'fontes', rotulo: 'Fontes Adicionais', icone: faFont, descricao: 'Configure fontes adicionais que estarão disponíveis para uso nesta mesa.', mestre: true },
   { id: 'combate', rotulo: 'Monitor de Combate', icone: faXmarksLines, descricao: 'Configurações relacionadas ao Monitor de Combate.', mestre: true },
+  { id: 'tempo', rotulo: 'Tempo e Calendário', icone: faClock, descricao: 'Relógio e calendário da campanha: o modo, o começo, quem vê, lua, estações e clima.', mestre: true },
 ]
 
 // Configurações do Jogo (print do Foundry): busca à esquerda; à direita cada seção com o botão

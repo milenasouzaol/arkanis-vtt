@@ -17754,3 +17754,436 @@ label.janela-botao {
   top: 1em;
   right: 1.5em;
 }
+
+/* ---- Tempo e Calendário (Mini Calendar, referência da Millie, 07/10) ---- */
+
+.mesa-tom-hora {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  transition: background 1.5s, opacity 1.5s;
+}
+
+.cal {
+  position: fixed;
+  z-index: 38;
+  width: 236px;
+  background: #1c1b20;
+  border: 1px solid #3a3740;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  color: #e8e6ea;
+  font-family: 'Signika', var(--sans);
+  user-select: none;
+  overflow: hidden;
+}
+
+.cal.cal-mes {
+  width: 340px;
+}
+
+.cal-topo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 6px 0 8px;
+  cursor: grab;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.cal-topo strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cal-topo-btn {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.cal-ceu {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+
+.cal-ceu-dia,
+.cal-ceu-amanhecer {
+  color: #ffd23f;
+}
+
+.cal-ceu-entardecer {
+  color: #ffb347;
+}
+
+.cal-ceu-noite {
+  color: #dfe6ff;
+}
+
+.cal-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 6px 4px;
+}
+
+.cal-linha {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.cal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 18px;
+  height: 20px;
+  padding: 0 2px;
+  background: none;
+  border: 0;
+  color: #e8e6ea;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cal-btn:hover:not(:disabled) {
+  color: #fff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+}
+
+.cal-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.cal-data {
+  overflow: hidden;
+  font-size: 0.86rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cal-hora {
+  padding: 0 2px;
+  background: none;
+  border: 0;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.cal-hora:not(:disabled) {
+  cursor: pointer;
+}
+
+.cal-mes .cal-hora {
+  font-size: 1.35rem;
+}
+
+.cal-clima {
+  color: #cfd6e6;
+  font-size: 0.8rem;
+}
+
+.cal-lua {
+  flex-shrink: 0;
+}
+
+.cal-lua-sombra {
+  fill: #3b3a40;
+  stroke: #6d6a74;
+  stroke-width: 0.6;
+}
+
+.cal-lua-luz {
+  fill: #d9d7dc;
+}
+
+.cal-faixa {
+  position: relative;
+  height: 16px;
+  margin: 2px 0 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.cal-faixa.arrastavel {
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.cal-sol {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  transform: translate(-50%, -50%);
+  background: #f2c14e;
+  border: 1px solid #8a5a00;
+  border-radius: 50%;
+  color: #8a4b00;
+  font-size: 0.6rem;
+  box-shadow: 0 0 6px rgba(242, 193, 78, 0.9);
+  pointer-events: none;
+}
+
+.cal-sol.cal-ceu-noite {
+  background: #c9d3ee;
+  border-color: #48527a;
+  color: #2b3358;
+  box-shadow: 0 0 6px rgba(201, 211, 238, 0.8);
+}
+
+/* Mês */
+.cal-mes-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px 6px;
+  border-bottom: 1px solid #4a4650;
+}
+
+.cal-mes-topo strong {
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+
+.cal-grade {
+  display: grid;
+  gap: 0;
+  margin-top: 4px;
+}
+
+.cal-semana {
+  padding: 2px 0 4px;
+  color: #cfcbd4;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cal-vazio,
+.cal-dia {
+  aspect-ratio: 1 / 0.9;
+  border: 1px dotted #5d5964;
+}
+
+.cal-dia {
+  position: relative;
+  padding: 2px 3px;
+  background: #121115;
+  color: #e8e6ea;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cal-dia:hover {
+  background: #26242b;
+}
+
+.cal-dia.vivido {
+  border-color: color-mix(in srgb, var(--mesa-destaque) 75%, transparent);
+}
+
+.cal-dia.hoje {
+  z-index: 1;
+  outline: 2px solid #f4f2f6;
+  outline-offset: -2px;
+}
+
+.cal-dia-num {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cal-dia-clima {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  color: #cfd6e6;
+  font-size: 0.6rem;
+}
+
+.cal-dia-nota {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  color: #e8e6ea;
+  font-size: 0.65rem;
+}
+
+.cal-dia-lua {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  display: flex;
+}
+
+.cal-linha-mes {
+  justify-content: space-between;
+  padding: 6px 2px 2px;
+  border-top: 1px solid #4a4650;
+  margin-top: 6px;
+}
+
+.cal-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 2px 0;
+}
+
+/* Janelas do calendário */
+.cal-notas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cal-nota {
+  padding: 6px 8px;
+  border: 1px dotted #5d5964;
+}
+
+.cal-nota-topo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cal-nota-titulo {
+  flex: 1;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--mesa-creme);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cal-nota-titulo:disabled {
+  cursor: default;
+}
+
+.cal-nota p {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+.cal-acertar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cal-acertar input {
+  width: 72px;
+  text-align: center;
+}
+
+/* Configuração */
+.config-tempo-par {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.config-tempo-meses {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.config-tempo-mes {
+  display: grid;
+  grid-template-columns: 1fr 70px auto auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-tempo-estacao {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto 52px minmax(0, 1fr) 30px 30px 24px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px dotted #3a3740;
+}
+
+.janela-form .config-tempo-estacao input,
+.janela-form .config-tempo-estacao select {
+  width: 100%;
+  min-width: 0;
+}
+
+.janela-form .config-tempo-estacao .config-tempo-cor {
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid #3a3740;
+  background: none;
+  cursor: pointer;
+}
+
+.config-tempo-amostra {
+  width: 34px;
+  height: 14px;
+  border-radius: 2px;
+}
+
+.config-tempo .janela-grupo,
+.config-tempo .janela-campo,
+.config-tempo .janela-controle {
+  min-width: 0;
+}
+
+.config-tempo .janela-check {
+  white-space: normal;
+}
+
+.config-tempo-par .janela-campo {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.config-tempo-par .janela-controle input,
+.config-tempo-par .janela-controle select {
+  width: 100%;
+}

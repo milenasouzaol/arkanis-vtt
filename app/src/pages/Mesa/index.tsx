@@ -17,6 +17,10 @@ import { usePlaylists } from './usePlaylists'
 import PainelPlaylist from './PainelPlaylist'
 import PainelPosicionaveis, { JanelaNota } from './PainelPosicionaveis'
 import PainelItens, { CriarItem, CriarItemDoObjeto } from './PainelItens'
+import Calendario from './Calendario'
+import { ConfigurarTempo } from './ConfigurarTempo'
+import { useCalendario } from './useCalendario'
+import { comAgora, momento, tempoAtivo, tempoCompleto, tomDaHora, type ConfigTempo } from './tempo'
 import FichaItem from './FichaItem'
 import { ConfiguracoesDoJogo, JanelaChat, JanelaCombate, JanelaControles, JanelaDados, JanelaFontes, JanelaInterface, JanelaMundo, JanelaPermissoes, JanelaSom, JanelaUsuarios, type SecaoConfig } from './JanelasConfig'
 import type { JanelaDoPainel } from './PainelConfig'
@@ -215,6 +219,8 @@ export default function Mesa() {
   const [pedidoPaleta, setPedidoPaleta] = useState(0)
   const [pedidoLimpar, setPedidoLimpar] = useState(0)
   const atores = useAtores(pronta?.campanha.id)
+  // Tempo e Calendário: anotações por dia.
+  const notasCalendario = useCalendario(pronta?.campanha.id, userId)
   // Com as fichas que o mestre deu (Dono) valendo como personagem de quem recebeu.
   const membros = useMemo(
     () => comFichasDadas(pronta?.membros ?? [], atores.atores, (cid) => atores.fichas[cid]?.avatar_url ?? null),
@@ -388,6 +394,20 @@ export default function Mesa() {
     setEstado((e) => (e.tipo === 'pronta' ? { ...e, campanha: { ...e.campanha, ...campos } } : e))
     return true
   }
+
+  // Tempo e Calendário: o mestre mexe e a tela anda na hora (salva por trás).
+  async function salvarTempo(t: ConfigTempo | null) {
+    const configuracoes = { ...(campanha.configuracoes ?? {}) }
+    if (t) configuracoes.tempo = t
+    else delete configuracoes.tempo
+    setEstado((e) => (e.tipo === 'pronta' ? { ...e, campanha: { ...e.campanha, configuracoes } } : e))
+    const { error } = await supabase.from('campaigns').update({ configuracoes }).eq('id', campanha.id)
+    if (error) avisar('Não deu pra salvar o tempo.', true)
+    return !error
+  }
+  const tempoLigado = tempoAtivo(campanha.configuracoes?.tempo)
+  const tempo = tempoCompleto(campanha.configuracoes?.tempo)
+  const tom = tempoLigado && tempo.relogio && tempo.tomDaCena ? tomDaHora(tempo, momento(comAgora(tempo))) : null
 
   const eu = membros.find((m) => m.userId === userId)
   const mestre = membros.find((m) => m.papel === 'mestre')
@@ -782,6 +802,22 @@ export default function Mesa() {
           if (c) combate.adicionarAtor(c, atorId)
         }}
       />
+
+      {/* Tom da cena pela hora (Tempo e Calendário). */}
+      {tom && tom.opacidade > 0 && <div className="mesa-tom-hora" style={{ background: tom.cor, opacity: tom.opacidade }} aria-hidden />}
+
+      {/* Tempo e Calendário: o mestre sempre vê; os jogadores, se ele deixar. */}
+      {tempoLigado && userId && (souMestre || tempo.jogadoresVeem) && (
+        <Calendario
+          tempo={tempo}
+          souMestre={souMestre}
+          corDaMesa={campanha.accent_color || '#3a3a40'}
+          userId={userId}
+          notas={notasCalendario}
+          onMudar={(t) => salvarTempo(t)}
+          onConfigurar={() => abrirConfig('tempo')}
+        />
+      )}
 
       {/* Dados 3D caindo na tela a cada rolagem nova do chat, pra todo mundo. */}
       <DadosNaTela mensagens={chat.mensagens} estilos={estilosDados} />
@@ -1205,6 +1241,7 @@ export default function Mesa() {
             />
           )
         }
+        if (j === 'tempo') return <ConfigurarTempo key={j} tempo={tempo} ativo={tempoLigado} onSalvar={(t) => salvarTempo(t)} onDesligar={() => salvarTempo(null)} onFechar={fechar} />
         if (j === 'combate') return <JanelaCombate key={j} config={campanha.configuracoes ?? {}} onSalvar={(c) => salvarCampanha({ configuracoes: c })} onFechar={fechar} />
         if (j === 'mundo') return <JanelaMundo key={j} nome={campanha.name} cor={campanha.accent_color} onSalvar={(c) => salvarCampanha(c)} onFechar={fechar} />
         if (j === 'usuarios') {
