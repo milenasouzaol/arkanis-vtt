@@ -1,7 +1,7 @@
 // Efeitos dos elementos de Ordem nos dados 3D (pedido da Millie, 06/10), desenhados em volta de
 // cada dado (ver brilhoDosDados):
 //   Sangue: gotas escorrendo e dentes/garras de osso saindo das bordas.
-//   Morte: buraco negro girando em volta (matéria escura caindo em espiral).
+//   Morte: gavinhas de lodo preto enrolando em espiral, rabiscos brancos em redemoinho, lodo pingando.
 //   Energia: chamas espectrais magenta, roxas e ciano subindo em volta, e estalinhos elétricos rosa.
 //   Conhecimento: letras e sigilos dourados girando e brilhando, com fumaça dourada leve.
 
@@ -9,7 +9,7 @@ export type Elemento = 'sangue' | 'morte' | 'energia' | 'conhecimento'
 
 export const ELEMENTOS: { id: Elemento; rotulo: string; cores: { cor: string; numero: string; contorno: string; material: 'plastico' | 'metal' | 'madeira' | 'vidro' } }[] = [
   { id: 'sangue', rotulo: 'Sangue', cores: { cor: '#3a0306', numero: '#d9ccb0', contorno: '#0a0000', material: 'vidro' } },
-  { id: 'morte', rotulo: 'Morte (lodo)', cores: { cor: '#141414', numero: '#f0f0f0', contorno: '#000000', material: 'plastico' } },
+  { id: 'morte', rotulo: 'Morte (lodo)', cores: { cor: '#2e2e2c', numero: '#ece8dc', contorno: '#050505', material: 'plastico' } },
   { id: 'energia', rotulo: 'Energia', cores: { cor: '#4a148a', numero: '#ffe9fb', contorno: '#ff3fd2', material: 'metal' } },
   { id: 'conhecimento', rotulo: 'Conhecimento', cores: { cor: '#b8862a', numero: '#fff7c8', contorno: '#ffb300', material: 'plastico' } },
 ]
@@ -69,8 +69,10 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
     if (ps.filter((p) => p.ch === 'garra').length < 4) for (let i = chance(1.6); i > 0; i--) ps.push(nova({ ch: 'garra', ang: Math.random() * Math.PI * 2, vida: 1.4 + Math.random() * 0.8, tam: raio * (0.45 + Math.random() * 0.35) }))
   }
   if (el === 'morte') {
-    // Buraco negro: matéria escura espiralando pra dentro do dado.
-    for (let i = chance(38); i > 0; i--) ps.push(nova({ ch: 'espiral', ang: Math.random() * Math.PI * 2, x: raio * (1.6 + Math.random() * 0.9), vida: 1.6 + Math.random() * 0.8, tam: raio * (0.06 + Math.random() * 0.08), cor: Math.random() < 0.25 ? '#ffffff' : Math.random() < 0.5 ? '#5a5a5a' : '#080808' }))
+    // Gavinhas de lodo saindo do dado e enrolando na ponta (como na referência).
+    if (ps.filter((p) => p.ch === 'gavinha').length < 5) for (let i = chance(2.2); i > 0; i--) ps.push(nova({ ch: 'gavinha', ang: Math.random() * Math.PI * 2, vida: 2 + Math.random() * 1.2, tam: raio * (0.8 + Math.random() * 0.6), semente: Math.random() < 0.5 ? 1 : -1 }))
+    // Lodo pingando de baixo.
+    for (let i = chance(3); i > 0; i--) ps.push(nova({ ch: 'gota', x: (Math.random() - 0.5) * raio * 1.1, y: raio * (0.3 + Math.random() * 0.25), vida: 2.2 + Math.random(), tam: raio * (0.09 + Math.random() * 0.06) }))
   }
   if (el === 'energia') {
     // Chamas espectrais (magenta, roxo e ciano) subindo em volta do dado, como no personagem.
@@ -95,51 +97,37 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
     for (let i = chance(5); i > 0; i--) ps.push(nova({ ch: 'fumaca', x: (Math.random() - 0.5) * raio * 1.4, y: (Math.random() - 0.3) * raio, vy: -raio * 0.35, vida: 2 + Math.random(), tam: raio * 0.6 }))
   }
 
-  // Morte: o disco do buraco negro girando atrás do dado, em preto e branco.
+  // Morte: rabiscos brancos em redemoinho girando em volta (como o desenho a giz da referência)
+  // e a poça de lodo embaixo.
   if (el === 'morte') {
     ctx.save()
-    ctx.translate(cx, cy)
-    ctx.rotate(t * 0.9)
-    ctx.scale(1, 0.62)
-    const r0 = raio * 0.75
-    const r1 = raio * 2.1
-    const g = ctx.createRadialGradient(0, 0, r0, 0, 0, r1)
-    g.addColorStop(0, '#000000')
-    g.addColorStop(0.25, '#141414')
-    g.addColorStop(0.5, '#3a3a3aaa')
-    g.addColorStop(1, '#00000000')
-    ctx.fillStyle = g
-    ctx.beginPath()
-    ctx.arc(0, 0, r1, 0, Math.PI * 2)
-    ctx.fill()
-    // Braços da espiral.
-    ctx.strokeStyle = '#d6d6d6'
     ctx.lineCap = 'round'
-    for (let b = 0; b < 3; b++) {
-      ctx.globalAlpha = 0.35
-      ctx.lineWidth = raio * 0.06
+    ctx.strokeStyle = '#f2f2ee'
+    for (let b = 0; b < 7; b++) {
+      const giro = t * (0.7 + b * 0.05) + b * 0.9
+      ctx.globalAlpha = 0.18 + 0.12 * Math.sin(t * 2 + b)
+      ctx.lineWidth = 0.8 + (b % 3) * 0.4
       ctx.beginPath()
-      for (let k = 0; k <= 30; k++) {
-        const a = (b * Math.PI * 2) / 3 + k * 0.16
-        const r = r1 * 0.9 - k * ((r1 * 0.9 - r0) / 30)
-        const x = Math.cos(a) * r
-        const y = Math.sin(a) * r
+      for (let k = 0; k <= 26; k++) {
+        const a = giro + k * 0.2
+        const r = raio * (2.1 - k * 0.045) + Math.sin(k * 3.1 + b + t * 4) * raio * 0.04
+        const x = cx + Math.cos(a) * r
+        const y = cy + Math.sin(a) * r * 0.85
         if (k) ctx.lineTo(x, y)
         else ctx.moveTo(x, y)
       }
       ctx.stroke()
     }
-    ctx.restore()
-    // Horizonte de eventos: anel fino e brilhante logo em volta do dado.
-    ctx.save()
-    ctx.globalCompositeOperation = 'lighter'
-    ctx.globalAlpha = 0.5 + 0.2 * Math.sin(t * 3)
-    ctx.strokeStyle = '#f2f2f2'
-    ctx.shadowColor = '#ffffff'
-    ctx.shadowBlur = raio * 0.4
-    ctx.lineWidth = raio * 0.05
+    ctx.globalAlpha = 0.95
+    ctx.fillStyle = '#070707'
     ctx.beginPath()
-    ctx.ellipse(cx, cy, raio * 0.95, raio * 0.6, t * 0.9, 0, Math.PI * 2)
+    ctx.ellipse(cx, cy + raio * 0.95, raio * (1.05 + 0.05 * Math.sin(t * 1.6)), raio * 0.24, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.globalAlpha = 0.5
+    ctx.strokeStyle = '#8c8c86'
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.ellipse(cx - raio * 0.2, cy + raio * 0.9, raio * 0.5, raio * 0.08, 0, Math.PI * 1.05, Math.PI * 1.75)
     ctx.stroke()
     ctx.restore()
   }
@@ -172,13 +160,13 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
       ctx.ellipse(cx + p.x, cy + y0 + desce, p.tam * espesso, p.tam * 1.35 * espesso, 0, 0, Math.PI * 2)
       ctx.fill()
       if (el === 'morte') {
-        ctx.strokeStyle = '#5b4772'
+        ctx.strokeStyle = '#3a3a38'
         ctx.lineWidth = 1.2
         ctx.stroke()
       }
       // Brilho de molhado.
       ctx.globalAlpha *= el === 'morte' ? 0.25 : 0.55
-      ctx.fillStyle = el === 'morte' ? '#5a4f6a' : '#8a3a3a'
+      ctx.fillStyle = el === 'morte' ? '#8c8c86' : '#8a3a3a'
       ctx.beginPath()
       ctx.arc(cx + p.x - p.tam * 0.35, cy + y0 + desce - p.tam * 0.4, p.tam * 0.3, 0, Math.PI * 2)
       ctx.fill()
@@ -188,15 +176,43 @@ export function passoDoElemento(ctx: CanvasRenderingContext2D, el: Elemento, est
       ctx.strokeStyle = '#1e0103'
       ctx.lineWidth = 1.2
       garra(ctx, cx, cy, p.ang, raio * 0.55, p.tam * Math.min(1, sobe * 1.6), raio * 0.11)
-    } else if (p.ch === 'espiral') {
-      // Cai em espiral pro centro, cada vez mais rápido, e some no dado.
-      p.ang += dt * (1.2 + (1 - k) * 0.4 + k * 3)
-      const r = p.x * (1 - k * 0.85)
-      const x = cx + Math.cos(p.ang) * r
-      const y = cy + Math.sin(p.ang) * r * 0.62
-      ctx.globalCompositeOperation = p.cor === '#ffffff' ? 'lighter' : 'source-over'
-      ctx.globalAlpha = Math.min(1, k * 4) * (1 - k * 0.7)
-      ctx.drawImage(bolinha(p.cor!), x - p.tam * 2, y - p.tam * 2, p.tam * 4, p.tam * 4)
+    } else if (p.ch === 'gavinha') {
+      // Sai da borda, curva pro lado e enrola numa espiral na ponta; cresce e volta.
+      const cresce = Math.min(1, sobe * 1.5)
+      const dir = p.semente // 1 ou -1: pra que lado enrola
+      const pts: { x: number; y: number }[] = []
+      let x = Math.cos(p.ang) * raio * 0.55
+      let y = Math.sin(p.ang) * raio * 0.55
+      let a = p.ang
+      const passos = Math.max(2, Math.round(34 * cresce))
+      for (let j = 0; j < passos; j++) {
+        pts.push({ x, y })
+        // Reto e curvando de leve; depois enrola cada vez mais apertado (espiral na ponta).
+        const enrola = j > 12 ? 0.32 + (j - 12) * 0.03 : 0.05
+        a += dir * enrola + Math.sin(t * 2 + j * 0.4) * 0.03
+        const passo = (p.tam / 16) * (j > 12 ? Math.max(0.18, 0.75 - (j - 12) * 0.03) : 1)
+        x += Math.cos(a) * passo
+        y += Math.sin(a) * passo
+      }
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      // Grossa na base e fina na ponta: desenha em pedaços afinando.
+      for (let j = 1; j < pts.length; j++) {
+        ctx.globalAlpha = 1
+        ctx.strokeStyle = '#090909'
+        ctx.lineWidth = Math.max(1, raio * 0.16 * (1 - j / pts.length))
+        ctx.beginPath()
+        ctx.moveTo(cx + pts[j - 1].x, cy + pts[j - 1].y)
+        ctx.lineTo(cx + pts[j].x, cy + pts[j].y)
+        ctx.stroke()
+      }
+      // Reflexo cinza de molhado.
+      ctx.strokeStyle = '#8c8c86'
+      ctx.globalAlpha = 0.55
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      pts.slice(0, Math.floor(pts.length * 0.7)).forEach((q, j) => (j ? ctx.lineTo(cx + q.x - 1, cy + q.y - 1) : ctx.moveTo(cx + q.x - 1, cy + q.y - 1)))
+      ctx.stroke()
     } else if (p.ch === 'chama') {
       // Chama espectral: sobe balançando, alonga e some; brilho somado (neon).
       p.y += p.vy * dt

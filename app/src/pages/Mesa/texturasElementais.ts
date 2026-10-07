@@ -80,6 +80,57 @@ function veia(ctx: CanvasRenderingContext2D, rnd: () => number, cor: string, x0?
   ctx.globalAlpha = 1
 }
 
+// Espiral da Morte gravada na textura.
+function espiral(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, giro: number, voltas: number) {
+  const caminho = (dx: number, dy: number) => {
+    ctx.beginPath()
+    const n = 60
+    for (let k = 0; k <= n; k++) {
+      const a = giro + (k / n) * voltas * Math.PI * 2
+      const rr = (k / n) * r
+      const px = x + dx + Math.cos(a) * rr
+      const py = y + dy + Math.sin(a) * rr
+      if (k) ctx.lineTo(px, py)
+      else ctx.moveTo(px, py)
+    }
+    ctx.stroke()
+  }
+  ctx.lineCap = 'round'
+  ctx.lineWidth = 4
+  ctx.globalAlpha = 0.7
+  ctx.strokeStyle = '#0e0e0e'
+  caminho(1.5, 1.5)
+  ctx.strokeStyle = '#a3a39c'
+  caminho(0, 0)
+  ctx.globalAlpha = 1
+}
+
+// Lodo preto escorrendo, com o reflexo cinza de um lado (como o monstro da referência).
+function lodo(ctx: CanvasRenderingContext2D, rnd: () => number) {
+  const x = rnd() * LADO
+  const larg = 10 + rnd() * 22
+  const comp = 80 + rnd() * 260
+  const y0 = rnd() < 0.5 ? -10 : rnd() * LADO * 0.6
+  ctx.fillStyle = '#080808'
+  ctx.beginPath()
+  ctx.moveTo(x - larg, y0)
+  ctx.lineTo(x + larg, y0)
+  ctx.quadraticCurveTo(x + larg * 0.8, y0 + comp * 0.7, x + larg * 0.45, y0 + comp)
+  ctx.arc(x, y0 + comp, larg * 0.5, 0, Math.PI)
+  ctx.quadraticCurveTo(x - larg * 0.8, y0 + comp * 0.7, x - larg, y0)
+  ctx.fill()
+  // Reflexo de molhado.
+  ctx.strokeStyle = '#8c8c86'
+  ctx.lineCap = 'round'
+  ctx.globalAlpha = 0.6
+  ctx.lineWidth = 2.5
+  ctx.beginPath()
+  ctx.moveTo(x - larg * 0.55, y0 + comp * 0.1)
+  ctx.quadraticCurveTo(x - larg * 0.5, y0 + comp * 0.6, x - larg * 0.25, y0 + comp * 0.92)
+  ctx.stroke()
+  ctx.globalAlpha = 1
+}
+
 async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
   const c = document.createElement('canvas')
   c.width = c.height = LADO
@@ -113,31 +164,19 @@ async function desenhar(el: Elemento): Promise<TexturaDaBiblioteca> {
   }
 
   if (el === 'morte') {
-    ctx.fillStyle = '#060607'
+    // Referências da Millie: tons de cinza, lodo preto brilhante escorrendo (com o reflexo cinza)
+    // e a espiral da Morte gravada.
+    const g = ctx.createLinearGradient(0, 0, 0, LADO)
+    g.addColorStop(0, '#3e3e3b')
+    g.addColorStop(1, '#232322')
+    ctx.fillStyle = g
     ctx.fillRect(0, 0, LADO, LADO)
-    // Lodo: manchas fundas e redemoinhos, preto e cinza, com reflexo branco de molhado.
-    for (let i = 0; i < 50; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 30 + rnd() * 110, rnd() < 0.6 ? '#141018' : '#000000', 0.8)
-    for (let i = 0; i < 18; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 20 + rnd() * 50, rnd() < 0.5 ? '#2e2e2e' : '#1a1a1a', 0.45)
-    ctx.strokeStyle = '#3c3c3c'
-    for (let i = 0; i < 22; i++) {
-      const x = rnd() * LADO
-      const y = rnd() * LADO
-      ctx.globalAlpha = 0.35
-      ctx.lineWidth = 2 + rnd() * 4
-      ctx.beginPath()
-      for (let k = 0; k < 40; k++) {
-        const a = k * 0.35
-        const r = 4 + k * 1.6
-        const px = x + Math.cos(a) * r
-        const py = y + Math.sin(a) * r
-        if (k) ctx.lineTo(px, py)
-        else ctx.moveTo(px, py)
-      }
-      ctx.stroke()
-    }
-    ctx.globalAlpha = 1
-    reflexos(ctx, rnd, 34, '#e6e6e6', 0.4)
-    return { name: 'morte', composite: 'source-over', texture: c, material: 'glass' }
+    for (let i = 0; i < 30; i++) mancha(ctx, rnd() * LADO, rnd() * LADO, 40 + rnd() * 100, rnd() < 0.5 ? '#55554f' : '#161616', 0.4)
+    // Espirais gravadas (cinza claro com a sombra escura).
+    for (let i = 0; i < 9; i++) espiral(ctx, rnd() * LADO, rnd() * LADO, 18 + rnd() * 26, rnd() * Math.PI * 2, 2.2 + rnd())
+    // Lodo escorrendo de cima: faixas pretas que descem e terminam em gota.
+    for (let i = 0; i < 16; i++) lodo(ctx, rnd)
+    return { name: 'morte', composite: 'source-over', texture: c, material: 'plastic' }
   }
 
   if (el === 'energia') {
