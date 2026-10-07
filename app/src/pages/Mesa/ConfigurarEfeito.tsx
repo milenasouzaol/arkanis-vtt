@@ -47,7 +47,7 @@ export default function ConfigurarEfeito({ objeto, onPrevia, onSalvar, onFechar 
             <CampoCor rotulo="Cor do efeito" valor={efeito.cor} onMudar={(v) => mudar({ cor: v })} />
           </Campo>
           <Campo rotulo="Tamanho (quadrados)" dica="Até onde o efeito chega.">
-            <Deslizante rotulo="Tamanho (quadrados)" valor={efeito.tamanho} min={0.5} max={10} passo={0.5} onMudar={(v) => mudar({ tamanho: v })} />
+            <Deslizante rotulo="Tamanho (quadrados)" valor={efeito.tamanho} min={0.1} max={10} passo={0.1} onMudar={(v) => mudar({ tamanho: v })} />
           </Campo>
           <Campo rotulo="Quantidade">
             <Deslizante rotulo="Quantidade" valor={efeito.quantidade} min={0.2} max={2} passo={0.1} onMudar={(v) => mudar({ quantidade: v })} />
