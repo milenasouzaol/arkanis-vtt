@@ -179,6 +179,7 @@ function CartaoCura({ mensagem, acao }: { mensagem: Mensagem; acao: AcaoCura }) 
       <p className="chat-acao-titulo">
         <FontAwesomeIcon icon={faHeartPulse} /> <strong>{acao.curador}</strong> está usando {acao.fonte} em <strong>{textoDosAlvos(acao.alvos)}</strong>
       </p>
+      {acao.imagem && <img className="chat-acao-imagem" src={acao.imagem} alt="" />}
       <p className="chat-rolagem-rotulo">Cura: {acao.formula} {sigla}</p>
 
       {acao.teste && (

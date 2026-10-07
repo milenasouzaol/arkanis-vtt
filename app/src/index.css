@@ -18200,3 +18200,12 @@ label.janela-botao {
   mix-blend-mode: color;
   transition: background 0.6s, opacity 0.6s;
 }
+
+/* Arte do item/ritual usado, no cartão do chat */
+.chat-acao-imagem {
+  display: block;
+  max-width: 100%;
+  max-height: 120px;
+  margin: 4px auto;
+  object-fit: contain;
+}

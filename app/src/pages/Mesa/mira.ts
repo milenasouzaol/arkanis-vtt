@@ -58,6 +58,7 @@ export type AcaoCura = {
   tipo: 'cura'
   curador: string
   fonte: string // "o ritual Cicatrização (Discente)", "o item Cicatrizante"
+  imagem?: string | null // a arte do item/ritual (a que a pessoa escolheu na ficha)
   formula: string
   recurso: Recurso
   teste: { nome: string; dados: number; bonus: number } | null

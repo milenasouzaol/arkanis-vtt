@@ -144,7 +144,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
     }
     const erro = await postarCura({
       campanhaId: character.campaign_id, characterId: character.id, autor: { nome: character.name, foto: character.avatar_url },
-      fonte: `o item ${nome}`, formula: cura.formula, recurso: cura.recurso, teste: null, alvos,
+      fonte: `o item ${nome}`, imagem: (inv.equipment_items ?? inv.custom_item)?.image_url ?? null, formula: cura.formula, recurso: cura.recurso, teste: null, alvos,
     })
     if (erro) {
       setAvisoUso(erro)
