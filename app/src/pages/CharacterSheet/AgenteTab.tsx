@@ -43,6 +43,8 @@ import determinationHalf from '../../assets/determination-half.svg'
 import determinationFull from '../../assets/determination-full.svg'
 import conditionsBorderTop from '../../assets/conditions-border-top.svg'
 import conditionsBorderBottom from '../../assets/conditions-border-bottom.svg'
+import { bonusDosPoderes, temProtecaoLeve } from './defesa'
+import { usePoderes } from './usePoderes'
 import { tocarSom } from '../../lib/sons'
 
 function pvIconFor(pct: number): string {
@@ -117,6 +119,7 @@ export default function AgenteTab({
   const [charSkills, setCharSkills] = useState<Record<string, CharacterSkillRow>>({})
   const [roll, setRoll] = useState<RollResultData | null>(null)
   const [rightTab, setRightTab] = useState<'Combate' | 'Habilidades' | 'Rituais' | 'Inventário'>('Combate')
+  const poderes = usePoderes(character.id, rightTab)
   const [testModifiers, setTestModifiers] = useState<Modifier[]>([])
   const [testDraft, setTestDraft] = useState({ diceBonus: 0, valueBonus: 0 })
   const [showConditionsModal, setShowConditionsModal] = useState(false)
@@ -207,7 +210,7 @@ export default function AgenteTab({
   useEffect(() => {
     supabase
       .from('character_inventory')
-      .select('active_bonuses, applied_modifiers, equipment_items(description), custom_item')
+      .select('active_bonuses, applied_modifiers, equipment_items(description, name, type), custom_item')
       .eq('character_id', character.id)
       .eq('is_equipped', true)
       .then(({ data }) => {
@@ -227,10 +230,13 @@ export default function AgenteTab({
             if (e.alvo) porAlvo[e.alvo] = (porAlvo[e.alvo] ?? 0) + e.valor
           }
         }
+        // Poderes com bônus fixo (Reflexos Defensivos: +2 nos testes de resistência), bug 08/10.
+        const protecaoLeve = temProtecaoLeve((data ?? []).map((i: any) => ({ tipo: i.equipment_items?.type ?? i.custom_item?.type, nome: i.equipment_items?.name ?? i.custom_item?.name })))
+        for (const [pericia, v] of Object.entries(bonusDosPoderes(poderes, { protecaoLeve }).pericias)) porPericia[pericia] = (porPericia[pericia] ?? 0) + v
         setBonusDeItens(porPericia)
         setBonusDeFicha(porAlvo)
       })
-  }, [character.id, rightTab])
+  }, [character.id, rightTab, poderes])
 
   useEffect(() => {
     supabase.from('skills').select('id, name, default_attribute, description, carga_penalty').order('sort_order').then(({ data }) => setSkills(data ?? []))

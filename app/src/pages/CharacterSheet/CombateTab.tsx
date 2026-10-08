@@ -9,9 +9,11 @@ import { type Modifier } from './ModifiersPanel'
 import CombateModifiersPanel from './CombateModifiersPanel'
 import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
 import AttackCard from './AttackCard'
-import { defesaDeCondicoes, penalidadeDeCondicoes, rotuloComCondicoes } from './condicoes'
-import { defesaDeModificadores, numerosDoAtaque, resistenciasDoItemEquipado, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
+import { penalidadeDeCondicoes, rotuloComCondicoes } from './condicoes'
+import { efeitosValendo, numerosDoAtaque, resistenciasDoItemEquipado, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
 import { useAlvosDaMesa } from '../../lib/miraDaMesa'
+import { defesaDosItens, defesaTotal, type ItemDeDefesa } from './defesa'
+import { usePoderes } from './usePoderes'
 import { postarAtaque } from '../Mesa/acoesDeMira'
 import { textoDosAlvos } from '../Mesa/mira'
 import { numerosComEncantos, textoDoEncanto, type Encanto } from './encantos'
@@ -71,6 +73,10 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const [charSkillBonus, setCharSkillBonus] = useState<Record<string, number>>({})
   const [equippedDefense, setEquippedDefense] = useState(0)
   const [equippedProtectionName, setEquippedProtectionName] = useState<string | null>(null)
+  const [itensEquipados, setItensEquipados] = useState<ItemDeDefesa[]>([])
+  // Bônus de perícia dos itens equipados (Reflexos/Fortitude entram na Esquiva e no Bloqueio).
+  const [bonusDeItens, setBonusDeItens] = useState<Record<string, number>>({})
+  const poderes = usePoderes(character.id)
   const [resistencias, setResistencias] = useState<Resistencia[]>([])
   const [adding, setAdding] = useState(false)
   const [roll, setRoll] = useState<RollResultData | null>(null)
@@ -122,20 +128,31 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   function loadEquippedProtection() {
     supabase
       .from('character_inventory')
-      .select('is_equipped, applied_modifiers, equipment_items(type, stats, name, description), custom_item')
+      .select('is_equipped, applied_modifiers, active_bonuses, equipment_items(type, stats, name, description), custom_item')
       .eq('character_id', character.id)
       .eq('is_equipped', true)
       .then(({ data }) => {
         // O escudo acumula com a protecao, entao a Defesa soma todas as protecoes
         // equipadas, nao so a primeira encontrada.
         const protecoes = (data ?? []).filter((i: any) => (i.equipment_items?.type ?? i.custom_item?.type) === 'protecao')
-        const defesaTotal = protecoes.reduce((soma, p: any) => {
-          const stats = p.equipment_items?.stats ?? p.custom_item?.stats ?? {}
-          // "Defesa +2" da Reforcada entra junto com a defesa da propria protecao.
-          return soma + Number(stats.defesa ?? 0) + defesaDeModificadores(p.applied_modifiers)
-        }, 0)
+        // A protecao conta a Defesa dela; modificacao/maldicao de Defesa vale em qualquer item
+        // equipado (Coturnos com "+5 Defesa", bug 08/10).
+        const itens: ItemDeDefesa[] = (data ?? []).map((i: any) => ({
+          tipo: i.equipment_items?.type ?? i.custom_item?.type,
+          nome: i.equipment_items?.name ?? i.custom_item?.name,
+          stats: i.equipment_items?.stats ?? i.custom_item?.stats ?? {},
+          mods: i.applied_modifiers ?? [],
+        }))
         const nomes = protecoes.map((p: any) => p.equipment_items?.name ?? p.custom_item?.name).filter(Boolean)
-        setEquippedDefense(defesaTotal)
+        setItensEquipados(itens)
+        setEquippedDefense(defesaDosItens(itens))
+        const porPericia: Record<string, number> = {}
+        for (const i of data ?? []) {
+          for (const e of efeitosValendo((i as any).equipment_items?.description ?? (i as any).custom_item?.description, (i as any).applied_modifiers ?? [], (i as any).active_bonuses ?? [])) {
+            if (e.pericias) for (const p of e.pericias) porPericia[p] = (porPericia[p] ?? 0) + e.valor
+          }
+        }
+        setBonusDeItens(porPericia)
         setEquippedProtectionName(nomes.length ? nomes.join(' + ') : null)
 
         // Resistencia nasce no proprio item (a Protecao Pesada ja traz corte/impacto/
@@ -377,12 +394,17 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
 
   const agilidade = character.attributes.agilidade
   // Condições (Vulnerável -2, Desprevenido -5, Indefeso -10) entram sozinhas na Defesa.
-  const defesaCondicoes = defesaDeCondicoes(character.conditions)
-  const defenseTotal = equippedDefense + character.defense_other_bonus + agilidade + 10 + defesaCondicoes.valor
+  // Mesma conta da mesa (defesa.ts): 10 + AGI + itens + poderes fixos + outros + condições.
+  const defesa = defesaTotal({ agilidade, outros: character.defense_other_bonus, condicoes: character.conditions, itens: itensEquipados, poderes })
+  const defesaCondicoes = defesa.condicoes
+  const defenseTotal = defesa.total
   const fortitudeSkill = skills.find((s) => s.name === 'Fortitude')
   const reflexosSkill = skills.find((s) => s.name === 'Reflexos')
-  const bloqueioAuto = fortitudeSkill ? (charSkillBonus[fortitudeSkill.id] ?? 0) : 0
-  const esquivaAuto = 10 + (reflexosSkill ? (charSkillBonus[reflexosSkill.id] ?? 0) : 0)
+  const bonusDaPericia = (sk: Skill) => (charSkillBonus[sk.id] ?? 0) + (bonusDeItens[sk.name] ?? 0) + (defesa.poderes.pericias[sk.name] ?? 0)
+  // Bloqueio: o bônus de Fortitude vira resistência a dano. Esquiva: o bônus de Reflexos soma
+  // na Defesa, então o número mostrado é a Defesa de quem esquiva.
+  const bloqueioAuto = fortitudeSkill ? bonusDaPericia(fortitudeSkill) : 0
+  const esquivaAuto = defenseTotal + (reflexosSkill ? bonusDaPericia(reflexosSkill) : 0)
 
   useEffect(() => {
     if (fortitudeSkill && character.bloqueio_bonus !== bloqueioAuto) updateDefenseField({ bloqueio_bonus: bloqueioAuto })
@@ -429,6 +451,13 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
                 onChange={(e) => updateDefenseField({ defense_other_bonus: Number(e.target.value) })}
               />
               <span className="combat-defense-sub">Outros</span>
+              {defesa.poderes.defesa !== 0 && (
+                <>
+                  <span className="combat-defense-plus">+</span>
+                  <span className="combat-plain-value" title={defesa.poderes.motivos.join(', ')}>{defesa.poderes.defesa}</span>
+                  <span className="combat-defense-sub">Poderes</span>
+                </>
+              )}
               <span className="combat-defense-fixed">+AGI({agilidade})+10</span>
               {defesaCondicoes.valor !== 0 && (
                 <span className="combat-defense-condicoes" title={defesaCondicoes.motivos.join(', ')}>
@@ -476,6 +505,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
           <div className="combat-defense-details">
             <p><strong>Proteção:</strong> {equippedProtectionName ?? 'Nenhuma equipada'}</p>
             <p><strong>Resistência:</strong> {textoDasResistencias(resistencias) || 'Nenhuma'}</p>
+            {defesa.poderes.motivos.length > 0 && <p><strong>Poderes:</strong> {defesa.poderes.motivos.join(', ')}</p>}
           </div>
         )}
        </div>

@@ -1,8 +1,8 @@
 // Regras puras do Sistema de Mira (KAN-51, spec 12.9): o ataque que vai pro chat, a Defesa e
 // as resistências do alvo e quanto do dano passa.
 import { rollAttributeTest, rollDiceFormula } from '../../lib/rules'
-import { defesaDeModificadores, resistenciasDoItemEquipado, type AppliedModifier } from '../CharacterSheet/itemMods'
-import { defesaDeCondicoes } from '../CharacterSheet/condicoes'
+import { resistenciasDoItemEquipado, type AppliedModifier } from '../CharacterSheet/itemMods'
+import { defesaTotal } from '../CharacterSheet/defesa'
 import { lerTeste } from './combate'
 
 export type Alvo = { token_id: string; nome: string }
@@ -94,7 +94,8 @@ export type DadosDoAlvo =
       condicoes: string[]
       defesa_outros: number
       bloqueio: number
-      itens: { tipo: string | null; stats: Record<string, unknown>; mods: AppliedModifier[] }[]
+      itens: { tipo: string | null; nome?: string | null; stats: Record<string, unknown>; mods: AppliedModifier[] }[]
+      poderes?: string[]
       atributos?: Record<string, number>
       nex?: number
       class_id?: string | null
@@ -188,14 +189,11 @@ export function perfilDoAlvo(d: DadosDoAlvo): Perfil {
   return { resist, imune: [], imuneExceto: null, vulneravel: [] }
 }
 
-// Mesma conta da ficha: 10 + Agilidade + proteções equipadas + outros bônus + condições.
+// Mesma conta da ficha (defesa.ts): 10 + Agilidade + itens + poderes fixos + outros + condições.
 export function defesaDoAlvo(d: DadosDoAlvo): number | null {
   if (d.tipo === 'criatura') return d.defesa
   if (d.tipo !== 'ficha') return null
-  const protecoes = d.itens
-    .filter((i) => i.tipo === 'protecao')
-    .reduce((s, i) => s + Number(i.stats?.defesa ?? 0) + defesaDeModificadores(i.mods), 0)
-  return 10 + d.agilidade + protecoes + d.defesa_outros + defesaDeCondicoes(d.condicoes).valor
+  return defesaTotal({ agilidade: d.agilidade, outros: d.defesa_outros, condicoes: d.condicoes, itens: d.itens, poderes: d.poderes ?? [] }).total
 }
 
 // Quanto do dano passa: imune zera, vulnerável dobra, resistência do tipo (ou a geral, a maior
