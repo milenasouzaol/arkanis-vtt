@@ -322,7 +322,8 @@ export default function AgenteTab({
     const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: skill.name })
     const score = attrValue(character.attributes, attr) + testDiceBonus + cond.dados
     const { rolls, kept } = rollAttributeTest(score)
-    const bonus = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus
+    // O mesmo total da tabela: itens equipados (o +N verde) e a penalidade da Proteção Pesada.
+    const bonus = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus + (bonusDeItens[skill.name] ?? 0) + (skill.carga_penalty ? cargaPenalty : 0)
     const label = rotuloComCondicoes(`Teste de ${skill.name}`, cond.motivos)
     setRoll({ label, rolls, kept, bonus, characterName: character.name, diceTray: character.dice_tray })
     if (session) {
