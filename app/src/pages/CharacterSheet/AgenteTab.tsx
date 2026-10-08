@@ -43,7 +43,7 @@ import determinationHalf from '../../assets/determination-half.svg'
 import determinationFull from '../../assets/determination-full.svg'
 import conditionsBorderTop from '../../assets/conditions-border-top.svg'
 import conditionsBorderBottom from '../../assets/conditions-border-bottom.svg'
-import { bonusDosPoderes, temProtecaoLeve } from './defesa'
+import { bonusDosPoderes, origemDoItem, temProtecaoLeve } from './defesa'
 import { usePoderes } from './usePoderes'
 import { tocarSom } from '../../lib/sons'
 
@@ -114,6 +114,10 @@ export default function AgenteTab({
   const [cargaPenalty, setCargaPenalty] = useState(0)
   // Bonus de pericia que o item equipado da sempre (ex.: Pe de Morto, +5 Furtividade).
   const [bonusDeItens, setBonusDeItens] = useState<Record<string, number>>({})
+  // De onde vem cada bônus verde (passar o mouse mostra: item, poder…), pedido da Millie 08/10.
+  const [origensPericia, setOrigensPericia] = useState<Record<string, string[]>>({})
+  const [origensFicha, setOrigensFicha] = useState<Partial<Record<AlvoDeBonus, string[]>>>({})
+  const [origensCarga, setOrigensCarga] = useState<string[]>([])
   // Atributo, PV e PE que os itens equipados somam (ex.: Pujanca +1 Forca).
   const [bonusDeFicha, setBonusDeFicha] = useState<Partial<Record<AlvoDeBonus, number>>>({})
   const [charSkills, setCharSkills] = useState<Record<string, CharacterSkillRow>>({})
@@ -215,26 +219,35 @@ export default function AgenteTab({
       .eq('is_equipped', true)
       .then(({ data }) => {
         const linhas = (data ?? []).map((i: any) => ({
+          nome: (i.equipment_items?.name ?? i.custom_item?.name) as string | undefined,
           descricao: i.equipment_items?.description ?? i.custom_item?.description,
           mods: i.applied_modifiers ?? [],
           ligados: (i.active_bonuses ?? []) as string[],
         }))
         setCargaPenalty(linhas.reduce((soma, l) => soma + penalidadeDeCarga(l.descricao), 0))
+        setOrigensCarga(linhas.filter((l) => penalidadeDeCarga(l.descricao)).map((l) => origemDoItem(l.nome, `${penalidadeDeCarga(l.descricao)} (penalidade de carga)`)))
+        const origemP: Record<string, string[]> = {}
+        const origemF: Partial<Record<AlvoDeBonus, string[]>> = {}
 
         const porPericia: Record<string, number> = {}
         const porAlvo: Partial<Record<AlvoDeBonus, number>> = {}
         for (const l of linhas) {
           // os que valem sempre entram direto; os condicionais so se a pessoa ligou
           for (const e of efeitosValendo(l.descricao, l.mods, l.ligados)) {
-            if (e.pericias) for (const p of e.pericias) porPericia[p] = (porPericia[p] ?? 0) + e.valor
-            if (e.alvo) porAlvo[e.alvo] = (porAlvo[e.alvo] ?? 0) + e.valor
+            const origem = origemDoItem(l.nome, e.valor, e.mod)
+            if (e.pericias) for (const p of e.pericias) { porPericia[p] = (porPericia[p] ?? 0) + e.valor; (origemP[p] ??= []).push(origem) }
+            if (e.alvo) { porAlvo[e.alvo] = (porAlvo[e.alvo] ?? 0) + e.valor; (origemF[e.alvo] ??= []).push(origem) }
           }
         }
         // Poderes com bônus fixo (Reflexos Defensivos: +2 nos testes de resistência), bug 08/10.
         const protecaoLeve = temProtecaoLeve((data ?? []).map((i: any) => ({ tipo: i.equipment_items?.type ?? i.custom_item?.type, nome: i.equipment_items?.name ?? i.custom_item?.name })))
-        for (const [pericia, v] of Object.entries(bonusDosPoderes(poderes, { protecaoLeve }).pericias)) porPericia[pericia] = (porPericia[pericia] ?? 0) + v
+        const dosPoderes = bonusDosPoderes(poderes, { protecaoLeve })
+        for (const [pericia, v] of Object.entries(dosPoderes.pericias)) porPericia[pericia] = (porPericia[pericia] ?? 0) + v
+        for (const [pericia, lista] of Object.entries(dosPoderes.origens)) (origemP[pericia] ??= []).push(...lista)
         setBonusDeItens(porPericia)
         setBonusDeFicha(porAlvo)
+        setOrigensPericia(origemP)
+        setOrigensFicha(origemF)
       })
   }, [character.id, rightTab, poderes])
 
@@ -420,6 +433,7 @@ export default function AgenteTab({
             editable={editMode}
             onAttributeChange={updateAttribute}
             bonus={bonusDeFicha}
+            origens={origensFicha}
           />
 
           {character.optional_rules.evolucao_patente && (
@@ -577,6 +591,12 @@ export default function AgenteTab({
             testValueBonus={testValueBonus}
             cargaPenalty={cargaPenalty}
             bonusDeItens={bonusDeItens}
+            origensDoBonus={origensPericia}
+            origensDaCarga={origensCarga}
+            origensDosTestes={(nome, atributo) => [
+              ...activeTestMods.filter((m) => m.dice_bonus || m.value_bonus).map((m) => `Modificador ${m.name}: ${[m.dice_bonus ? `${m.dice_bonus > 0 ? '+' : ''}${m.dice_bonus}d20` : '', m.value_bonus ? `${m.value_bonus > 0 ? '+' : ''}${m.value_bonus}` : ''].filter(Boolean).join(' ')}`),
+              ...penalidadeDeCondicoes(character.conditions, { atributo, pericia: nome }).motivos.map((m) => `Condição ${m.replace(/ ([+-])/, ': $1')}`),
+            ]}
             onSetSkillField={setSkillField}
             onRoll={rollSkill}
           />

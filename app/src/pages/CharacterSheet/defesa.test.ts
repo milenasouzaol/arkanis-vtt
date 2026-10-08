@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bonusDosPoderes, defesaTotal } from './defesa'
+import { bonusDosPoderes, defesaTotal, origensDaDefesaDosItens } from './defesa'
 
 const coturnos = { tipo: 'geral', nome: 'Coturno + 2 Reflexos', stats: {}, mods: [{ kind: 'maldicao' as const, name: 'Defesa', effect: '+5 Defesa.', elemento: 'energia' }] }
 
@@ -30,5 +30,22 @@ describe('defesa da ficha', () => {
 
   it('condições continuam entrando', () => {
     expect(defesaTotal({ agilidade: 0, outros: 0, condicoes: ['Desprevenido'], itens: [], poderes: [] }).total).toBe(5)
+  })
+})
+
+describe('origem dos bônus', () => {
+  it('lista cada parte da Defesa dos itens com o nome do item e da maldição', () => {
+    const leve = { tipo: 'protecao', nome: 'Proteção Leve', stats: { defesa: 5 }, mods: [{ kind: 'maldicao' as const, name: 'Cinética', effect: '+2 Defesa + resistência a dano 2', elemento: 'energia' }] }
+    expect(origensDaDefesaDosItens([leve, coturnos])).toEqual([
+      'Item Proteção Leve: +5',
+      'Item Proteção Leve (maldição Cinética): +2',
+      'Item Coturno + 2 Reflexos (maldição Defesa): +5',
+    ])
+  })
+
+  it('poder diz o nome dele', () => {
+    const r = bonusDosPoderes(['Reflexos Defensivos'])
+    expect(r.motivos).toEqual(['Poder Reflexos Defensivos: +2'])
+    expect(r.origens.Reflexos).toEqual(['Poder Reflexos Defensivos: +2'])
   })
 })

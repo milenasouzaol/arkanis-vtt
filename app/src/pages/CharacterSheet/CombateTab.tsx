@@ -12,7 +12,7 @@ import AttackCard from './AttackCard'
 import { penalidadeDeCondicoes, rotuloComCondicoes } from './condicoes'
 import { efeitosValendo, numerosDoAtaque, resistenciasDoItemEquipado, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
 import { useAlvosDaMesa } from '../../lib/miraDaMesa'
-import { defesaDosItens, defesaTotal, type ItemDeDefesa } from './defesa'
+import { defesaDosItens, defesaTotal, origensDaDefesaDosItens, textoDasOrigens, type ItemDeDefesa } from './defesa'
 import { usePoderes } from './usePoderes'
 import { postarAtaque } from '../Mesa/acoesDeMira'
 import { textoDosAlvos } from '../Mesa/mira'
@@ -441,7 +441,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
           <div className="combat-defense-main">
             <span className="combat-defense-label">Defesa</span>
             <div className="combat-defense-formula">
-              <span className="combat-plain-value">{equippedDefense}</span>
+              <span className="combat-plain-value" title={textoDasOrigens(origensDaDefesaDosItens(itensEquipados))}>{equippedDefense}</span>
               <span className="combat-defense-sub">Equip</span>
               <span className="combat-defense-plus">+</span>
               <input
@@ -454,13 +454,13 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
               {defesa.poderes.defesa !== 0 && (
                 <>
                   <span className="combat-defense-plus">+</span>
-                  <span className="combat-plain-value" title={defesa.poderes.motivos.join(', ')}>{defesa.poderes.defesa}</span>
+                  <span className="combat-plain-value" title={textoDasOrigens(defesa.poderes.motivos)}>{defesa.poderes.defesa}</span>
                   <span className="combat-defense-sub">Poderes</span>
                 </>
               )}
               <span className="combat-defense-fixed">+AGI({agilidade})+10</span>
               {defesaCondicoes.valor !== 0 && (
-                <span className="combat-defense-condicoes" title={defesaCondicoes.motivos.join(', ')}>
+                <span className="combat-defense-condicoes" title={textoDasOrigens(defesaCondicoes.motivos.map((m) => `Condição ${m.replace(/ ([+-])/, ": $1")}`))}>
                   {defesaCondicoes.valor} Condições
                 </span>
               )}
@@ -477,7 +477,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
                   onChange={(e) => updateDefenseField({ bloqueio_bonus: Number(e.target.value) })}
                 />
               ) : (
-                <span className="combat-plain-value">{character.bloqueio_bonus}</span>
+                <span className="combat-plain-value" title={fortitudeSkill ? `Bônus de Fortitude: ${bloqueioAuto}` : undefined}>{character.bloqueio_bonus}</span>
               )}
               <span className="combat-defense-sub">Bloqueio</span>
             </div>
@@ -490,7 +490,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
                   onChange={(e) => updateDefenseField({ esquiva_bonus: Number(e.target.value) })}
                 />
               ) : (
-                <span className="combat-plain-value">{character.esquiva_bonus}</span>
+                <span className="combat-plain-value" title={reflexosSkill ? `Defesa ${defenseTotal} + bônus de Reflexos ${esquivaAuto - defenseTotal}` : undefined}>{character.esquiva_bonus}</span>
               )}
               <span className="combat-defense-sub">Esquiva</span>
             </div>

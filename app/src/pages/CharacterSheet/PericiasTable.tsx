@@ -8,6 +8,7 @@ import veteranIcon from '../../assets/pericias/veteran.svg'
 import expertIcon from '../../assets/pericias/expert.svg'
 import ellipsisIcon from '../../assets/pericias/ellipsis.svg'
 import ellipsisGreenIcon from '../../assets/pericias/ellipsis-green.svg'
+import { textoDasOrigens } from './defesa'
 import ellipsisRedIcon from '../../assets/pericias/ellipsis-red.svg'
 
 type SkillRow = { id: string; name: string; default_attribute: string | null; description: string | null; carga_penalty?: boolean }
@@ -79,6 +80,9 @@ export default function PericiasTable({
   testValueBonus,
   cargaPenalty,
   bonusDeItens,
+  origensDoBonus = {},
+  origensDaCarga = [],
+  origensDosTestes,
   onSetSkillField,
   onRoll,
 }: {
@@ -93,6 +97,11 @@ export default function PericiasTable({
   cargaPenalty: number
   /** Bônus por perícia vindos de itens equipados, somados por nome da perícia. */
   bonusDeItens: Record<string, number>
+  /** De onde vem cada bônus ("Item Coturnos: +2", "Poder Reflexos Defensivos: +2"), pro mouse em cima. */
+  origensDoBonus?: Record<string, string[]>
+  origensDaCarga?: string[]
+  /** Modificadores ligados e condições que mexem no teste (dados e valor). */
+  origensDosTestes?: (pericia: string, atributo: string | null) => string[]
   onSetSkillField: (skillId: string, patch: Partial<CharacterSkillRow>) => void
   onRoll: (skill: SkillRow) => void
 }) {
@@ -159,6 +168,8 @@ export default function PericiasTable({
           const diceCount = effectiveScore > 0 ? effectiveScore : 2
           const bonusPips = Math.min(Math.abs(dadosExtras), diceCount)
           const bonusPipIcon = dadosExtras < 0 ? ellipsisRedIcon : ellipsisGreenIcon
+          const origensTeste = origensDosTestes?.(skill.name, attr) ?? []
+          const origensItem = origensDoBonus[skill.name] ?? []
 
           return (
             <div key={skill.id} className="pericias-row" data-training={cs.training}>
@@ -170,7 +181,7 @@ export default function PericiasTable({
                 <span className="pericias-row-name">
                   {skill.name}
                   <span className="pericias-row-formula">
-                    <span style={{ color: dadosExtras > 0 ? '#3ecf6e' : dadosExtras < 0 ? '#e0393e' : undefined }}>{diceCount}d20</span>
+                    <span style={{ color: dadosExtras > 0 ? '#3ecf6e' : dadosExtras < 0 ? '#e0393e' : undefined }} title={dadosExtras !== 0 ? textoDasOrigens(origensTeste) : undefined}>{diceCount}d20</span>
                     {Array.from({ length: diceCount }).map((_, i) => (
                       <img key={i} src={i < diceCount - bonusPips ? ellipsisIcon : bonusPipIcon} alt="" className="pericias-pip" />
                     ))}
@@ -221,13 +232,13 @@ export default function PericiasTable({
               {/* a penalidade de carga aparece do lado do total, pra nao sumir dentro dele */}
               <div
                 className="pericias-cell pericias-cell-total"
-                title={[penalidade ? `${penalidade} de penalidade de carga` : '', doItem ? `+${doItem} de item equipado` : ''].filter(Boolean).join(' · ') || undefined}
+                title={textoDasOrigens([...origensItem, ...(penalidade ? origensDaCarga : []), ...origensTeste.filter((o) => !/d20/.test(o))])}
               >
                 {total}
                 {(penalidade !== 0 || doItem !== 0) && (
                   <span className="pericias-marcadores">
-                    {penalidade !== 0 && <span className="pericias-carga-penalty">{penalidade}</span>}
-                    {doItem !== 0 && <span className="pericias-item-bonus">+{doItem}</span>}
+                    {penalidade !== 0 && <span className="pericias-carga-penalty" title={textoDasOrigens(origensDaCarga)}>{penalidade}</span>}
+                    {doItem !== 0 && <span className="pericias-item-bonus" title={textoDasOrigens(origensItem)}>{doItem > 0 ? '+' : ''}{doItem}</span>}
                   </span>
                 )}
               </div>

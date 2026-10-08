@@ -482,6 +482,8 @@ export type EfeitoDeItem = {
   pericias?: string[]
   alvo?: AlvoDeBonus
   valor: number
+  // Modificação/maldição de onde veio (pra mostrar a origem do bônus ao passar o mouse).
+  mod?: { kind: AppliedModifier['kind']; name: string }
 }
 
 function rotuloDeFicha(alvo: AlvoDeBonus, valor: number) {
@@ -520,6 +522,7 @@ export function efeitosDoItem(
         condicao: b.condicao,
         alvo: b.alvo,
         valor: b.valor,
+        mod: { kind: m.kind, name: m.name },
       })
     })
     bonusDePericiaDaDescricao(m.effect).forEach((b, i) => {
@@ -529,6 +532,7 @@ export function efeitosDoItem(
         condicao: b.condicao,
         pericias: b.pericias,
         valor: b.valor,
+        mod: { kind: m.kind, name: m.name },
       })
     })
   }

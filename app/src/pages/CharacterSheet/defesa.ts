@@ -24,19 +24,28 @@ const PODERES_PASSIVOS: Record<string, Passivo> = {
   'luta ou fuga': { pericias: { Vontade: 2 } },
 }
 
-export type BonusDosPoderes = { defesa: number; pericias: Record<string, number>; motivos: string[] }
+export type BonusDosPoderes = {
+  defesa: number
+  pericias: Record<string, number>
+  motivos: string[]
+  // De onde vem cada bônus de perícia ("Poder Reflexos Defensivos: +2"), pra mostrar ao passar o mouse.
+  origens: Record<string, string[]>
+}
 
 export function bonusDosPoderes(nomes: (string | null | undefined)[], ctx: { protecaoLeve?: boolean } = {}): BonusDosPoderes {
-  const r: BonusDosPoderes = { defesa: 0, pericias: {}, motivos: [] }
+  const r: BonusDosPoderes = { defesa: 0, pericias: {}, motivos: [], origens: {} }
   // O mesmo poder escolhido duas vezes (registro repetido) não soma de novo.
   for (const nome of new Set(nomes.map((n) => String(n ?? '').trim()))) {
     const p = PODERES_PASSIVOS[nome.toLowerCase()]
     if (!p || (p.soComProtecaoLeve && !ctx.protecaoLeve)) continue
     if (p.defesa) {
       r.defesa += p.defesa
-      r.motivos.push(`${nome} +${p.defesa}`)
+      r.motivos.push(`Poder ${nome}: +${p.defesa}`)
     }
-    for (const [pericia, v] of Object.entries(p.pericias ?? {})) r.pericias[pericia] = (r.pericias[pericia] ?? 0) + v
+    for (const [pericia, v] of Object.entries(p.pericias ?? {})) {
+      r.pericias[pericia] = (r.pericias[pericia] ?? 0) + v
+      ;(r.origens[pericia] ??= []).push(`Poder ${nome}: ${v > 0 ? '+' : ''}${v}`)
+    }
   }
   return r
 }
@@ -58,3 +67,31 @@ export function defesaTotal(p: { agilidade: number; outros: number; condicoes: s
   const condicoes = defesaDeCondicoes(p.condicoes ?? [])
   return { total: 10 + p.agilidade + itens + poderes.defesa + p.outros + condicoes.valor, itens, poderes, condicoes }
 }
+
+// ---- De onde vem cada bônus (pedido da Millie, 08/10): passar o mouse no "+" verde mostra
+// "Item Coturnos (maldição Defesa): +5", "Poder Reflexos Defensivos: +2", "Condição Abalado: -1d20". ----
+
+const sinal = (v: number) => `${v > 0 ? '+' : ''}${v}`
+const NOME_DO_MOD = { modificacao: 'modificação', maldicao: 'maldição' } as const
+
+export function origemDoItem(nomeDoItem: string | null | undefined, valor: number | string, mod?: { kind: AppliedModifier['kind']; name: string }) {
+  const de = mod ? ` (${NOME_DO_MOD[mod.kind]} ${mod.name})` : ''
+  return `Item ${nomeDoItem || 'sem nome'}${de}: ${typeof valor === 'number' ? sinal(valor) : valor}`
+}
+
+// Cada parte da Defesa que vem dos itens equipados.
+export function origensDaDefesaDosItens(itens: ItemDeDefesa[]): string[] {
+  const lista: string[] = []
+  for (const i of itens) {
+    const base = i.tipo === 'protecao' ? Number(i.stats?.defesa ?? 0) : 0
+    if (base) lista.push(origemDoItem(i.nome, base))
+    for (const m of i.mods ?? []) {
+      const v = defesaDeModificadores([m])
+      if (v) lista.push(origemDoItem(i.nome, v, m))
+    }
+  }
+  return lista
+}
+
+// Texto do title: uma origem por linha.
+export const textoDasOrigens = (origens: string[] | undefined) => (origens?.length ? origens.join('\n') : undefined)

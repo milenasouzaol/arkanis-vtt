@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Attributes, AttributeKey } from '../../lib/rules'
+import { textoDasOrigens } from './defesa'
 import attributesDiagram from '../../assets/attributes-diagram.png'
 
 const ATTRS: { key: AttributeKey; abbr: string; top: string; left: string }[] = [
@@ -20,6 +21,7 @@ export default function AttributeDiagram({
   editable,
   onAttributeChange,
   bonus,
+  origens,
 }: {
   attributes: Attributes
   nexPercent: number
@@ -29,6 +31,8 @@ export default function AttributeDiagram({
   onAttributeChange?: (key: AttributeKey, value: number) => void
   /** Bônus de item equipado, mostrado do lado do número em vez de somado nele. */
   bonus?: Partial<Record<AttributeKey, number>>
+  /** De onde vem o bônus de cada atributo ("Item Anel: +1"), pro mouse em cima. */
+  origens?: Partial<Record<string, string[]>>
 }) {
   const [nexOpen, setNexOpen] = useState(false)
 
@@ -82,7 +86,7 @@ export default function AttributeDiagram({
             aria-label={`Rolar ${abbr}`}
           >
             {attributes[key]}
-            {!!bonus?.[key] && <span className="attr-item-bonus">+{bonus[key]}</span>}
+            {!!bonus?.[key] && <span className="attr-item-bonus" title={textoDasOrigens(origens?.[key])}>+{bonus[key]}</span>}
           </button>
         )
       )}
