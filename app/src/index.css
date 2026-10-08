@@ -18414,3 +18414,14 @@ label.janela-botao {
   outline-offset: -3px;
 }
 .cenas-painel.soltar-aqui:has(.cena-pasta.soltar-aqui) { outline: none; }
+
+/* Efeitos escolhidos na condição/maldição personalizada (08/10): mesmos campos do formulário. */
+.efeitos-escolhidos { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.efeitos-escolhidos-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
+.efeitos-escolhidos-linha .conditions-modal-custom-name { width: auto; flex: 1 1 130px; min-width: 0; }
+.efeitos-escolhidos-linha .efeitos-escolhidos-valor { flex: 0 0 64px; }
+.efeitos-escolhidos-linha select option { background: #1b1a20; color: #fff; }
+.efeitos-escolhidos-modo, .efeitos-escolhidos-ligavel, .efeitos-escolhidos-dica { font-size: 0.8em; color: var(--text-dim); }
+.efeitos-escolhidos-ligavel { display: inline-flex; align-items: center; gap: 4px; }
+.efeitos-escolhidos-resumo { flex-basis: 100%; font-size: 0.8em; color: var(--text-dim); }
+.efeitos-escolhidos-dica { margin: 0; }

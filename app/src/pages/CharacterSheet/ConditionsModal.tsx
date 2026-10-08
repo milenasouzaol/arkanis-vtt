@@ -17,6 +17,8 @@ import resetIcon from '../../assets/condicoes/reset.svg'
 import tiredIcon from '../../assets/condicoes/tired.svg'
 import ritual1Icon from '../../assets/condicoes/ritual-1.svg'
 import ritual2Icon from '../../assets/condicoes/ritual-2.svg'
+import EditorDeEfeitos from './EditorDeEfeitos'
+import type { CondicaoPersonalizada, EfeitoEscolhido } from './efeitosEscolhidos'
 import ritual3Icon from '../../assets/condicoes/ritual-3.svg'
 
 type CategoryKey = 'conditions' | 'enemy-effects' | 'rituals' | 'skills' | 'extra'
@@ -51,7 +53,7 @@ const CURATED_SKILLS: { table: 'class_powers' | 'paranormal_powers' | 'general_p
   { table: 'class_powers', name: 'Sincronia Paranormal' },
 ]
 
-const CUSTOM_ICONS = [
+export const CUSTOM_ICONS = [
   conditionsIcon, enemyEffectsIcon, ritualsIcon, skillsIcon, extraIcon,
   biteIcon, fearIcon, fireIcon, flowerIcon, handIcon, mentalIcon, paralysisIcon, resetIcon, tiredIcon,
   ritual1Icon, ritual2Icon, ritual3Icon,
@@ -83,12 +85,13 @@ export default function ConditionsModal({
   onAddCondition,
 }: {
   onClose: () => void
-  onAddCondition: (name: string) => void
+  onAddCondition: (name: string, propria?: CondicaoPersonalizada) => void
 }) {
   const [active, setActive] = useState<CategoryKey | 'custom'>('conditions')
   const [customName, setCustomName] = useState('')
   const [customIcon, setCustomIcon] = useState(CUSTOM_ICONS[0])
   const [customDescription, setCustomDescription] = useState('')
+  const [customEfeitos, setCustomEfeitos] = useState<EfeitoEscolhido[]>([])
   const [items, setItems] = useState<CatalogItem[]>([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
@@ -181,9 +184,16 @@ export default function ConditionsModal({
 
   function submitCustom() {
     if (!customName.trim()) return
-    onAddCondition(customName.trim())
+    // A definição vai junto: a ficha guarda e aplica os efeitos escolhidos (08/10).
+    onAddCondition(customName.trim(), {
+      nome: customName.trim(),
+      descricao: customDescription.trim() || undefined,
+      icone: String(Math.max(0, CUSTOM_ICONS.indexOf(customIcon))),
+      efeitos: customEfeitos.filter((e) => e.valor),
+    })
     setCustomName('')
     setCustomDescription('')
+    setCustomEfeitos([])
   }
 
   return createPortal(
@@ -259,6 +269,9 @@ export default function ConditionsModal({
                 onChange={(e) => setCustomDescription(e.target.value)}
                 placeholder="Escreva aqui a descrição"
               />
+
+              <h4 className="conditions-modal-custom-section-title">Efeitos</h4>
+              <EditorDeEfeitos contexto="condicao" efeitos={customEfeitos} onChange={setCustomEfeitos} />
 
               <div className="conditions-modal-custom-submit-row">
                 <button type="button" className="conditions-modal-add-btn" onClick={submitCustom}>Adicionar</button>

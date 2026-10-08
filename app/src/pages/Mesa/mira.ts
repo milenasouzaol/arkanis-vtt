@@ -3,6 +3,7 @@
 import { rollAttributeTest, rollDiceFormula } from '../../lib/rules'
 import { resistenciasDoItemEquipado, type AppliedModifier } from '../CharacterSheet/itemMods'
 import { defesaTotal } from '../CharacterSheet/defesa'
+import { lerCondicoesPersonalizadas } from '../CharacterSheet/efeitosEscolhidos'
 import { lerTeste } from './combate'
 
 export type Alvo = { token_id: string; nome: string }
@@ -92,6 +93,7 @@ export type DadosDoAlvo =
       nome: string
       agilidade: number
       condicoes: string[]
+      condicoes_personalizadas?: unknown
       defesa_outros: number
       bloqueio: number
       itens: { tipo: string | null; nome?: string | null; stats: Record<string, unknown>; mods: AppliedModifier[] }[]
@@ -193,7 +195,7 @@ export function perfilDoAlvo(d: DadosDoAlvo): Perfil {
 export function defesaDoAlvo(d: DadosDoAlvo): number | null {
   if (d.tipo === 'criatura') return d.defesa
   if (d.tipo !== 'ficha') return null
-  return defesaTotal({ agilidade: d.agilidade, outros: d.defesa_outros, condicoes: d.condicoes, itens: d.itens, poderes: d.poderes ?? [] }).total
+  return defesaTotal({ agilidade: d.agilidade, outros: d.defesa_outros, condicoes: d.condicoes, itens: d.itens, poderes: d.poderes ?? [], condicoesPersonalizadas: lerCondicoesPersonalizadas(d.condicoes_personalizadas) }).total
 }
 
 // Quanto do dano passa: imune zera, vulnerável dobra, resistência do tipo (ou a geral, a maior

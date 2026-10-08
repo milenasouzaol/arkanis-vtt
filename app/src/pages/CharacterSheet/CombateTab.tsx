@@ -22,6 +22,7 @@ import { nomeDoTipo } from '../Mesa/mira'
 import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
+import { lerCondicoesPersonalizadas } from './efeitosEscolhidos'
 import { dentroDaMesa, tocarSomDeArma } from '../../lib/sons'
 
 type Attack = {
@@ -77,6 +78,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   // Bônus de perícia dos itens equipados (Reflexos/Fortitude entram na Esquiva e no Bloqueio).
   const [bonusDeItens, setBonusDeItens] = useState<Record<string, number>>({})
   const poderes = usePoderes(character.id)
+  const condicoesProprias = lerCondicoesPersonalizadas(character.condicoes_personalizadas)
   const [resistencias, setResistencias] = useState<Resistencia[]>([])
   const [adding, setAdding] = useState(false)
   const [roll, setRoll] = useState<RollResultData | null>(null)
@@ -282,11 +284,11 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
 
     // Condições: Fraco/Debilitado no atributo do ataque, Caído no corpo a corpo, Ofuscado…
     const corpo = /corpo/i.test(attack.general_info?.tipo ?? '') || /corpo/i.test(attack.general_info?.alcance ?? '')
-    const cond = penalidadeDeCondicoes(character.conditions, { atributo: attack.attribute, ataque: corpo ? 'corpo' : 'distancia' })
+    const cond = penalidadeDeCondicoes(character.conditions, { atributo: attack.attribute, ataque: corpo ? 'corpo' : 'distancia' }, condicoesProprias)
     const score = attrValue(character.attributes, attack.attribute) + attackDiceBonus + cond.dados
     const { rolls, kept } = rollAttributeTest(score)
     const skillBonus = attack.skill_id ? (charSkillBonus[attack.skill_id] ?? 0) : 0
-    const bonus = skillBonus + attack.d20_bonus + attackValueBonus
+    const bonus = skillBonus + attack.d20_bonus + attackValueBonus + cond.valor
 
     const effectiveThreatMargin = attack.threat_margin - threatBonus
     const isCrit = kept >= effectiveThreatMargin
@@ -395,7 +397,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const agilidade = character.attributes.agilidade
   // Condições (Vulnerável -2, Desprevenido -5, Indefeso -10) entram sozinhas na Defesa.
   // Mesma conta da mesa (defesa.ts): 10 + AGI + itens + poderes fixos + outros + condições.
-  const defesa = defesaTotal({ agilidade, outros: character.defense_other_bonus, condicoes: character.conditions, itens: itensEquipados, poderes })
+  const defesa = defesaTotal({ agilidade, outros: character.defense_other_bonus, condicoes: character.conditions, itens: itensEquipados, poderes, condicoesPersonalizadas: condicoesProprias })
   const defesaCondicoes = defesa.condicoes
   const defenseTotal = defesa.total
   const fortitudeSkill = skills.find((s) => s.name === 'Fortitude')

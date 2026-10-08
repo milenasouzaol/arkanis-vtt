@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import type { AppliedModifier } from './itemMods'
+import EditorDeEfeitos from './EditorDeEfeitos'
+import { resumoDosEfeitos, type EfeitoEscolhido } from './efeitosEscolhidos'
 import { supabase } from '../../lib/supabase'
 
-export type AppliedModifier = { kind: 'modificacao' | 'maldicao'; name: string; effect: string; elemento: string | null }
+export type { AppliedModifier } from './itemMods'
 
 type CatalogEntry = { id: string; name: string; effect: string; elemento?: string | null }
 
@@ -53,6 +56,7 @@ export default function ItemModifiersModal({
   const [customName, setCustomName] = useState('')
   const [customElement, setCustomElement] = useState('')
   const [customEffect, setCustomEffect] = useState('')
+  const [customEfeitos, setCustomEfeitos] = useState<EfeitoEscolhido[]>([])
 
   const singular = tab === 'modificacao' ? 'Modificação' : 'Maldição'
   const plural = tab === 'modificacao' ? 'Modificações' : 'Maldições'
@@ -79,9 +83,12 @@ export default function ItemModifiersModal({
   }
 
   function adicionarCustom() {
-    if (!customName.trim() || !customEffect.trim()) return
-    onApply([...applied, { kind: tab, name: customName.trim(), effect: customEffect.trim(), elemento: customElement.trim() || null }])
-    setCustomName(''); setCustomElement(''); setCustomEffect(''); setCreatingCustom(false)
+    // Os efeitos escolhidos valem sozinhos; o texto é a descrição (vazio: vira o resumo deles).
+    const efeitos = customEfeitos.filter((e) => e.valor)
+    const effect = customEffect.trim() || resumoDosEfeitos(efeitos)
+    if (!customName.trim() || !effect) return
+    onApply([...applied, { kind: tab, name: customName.trim(), effect, elemento: customElement.trim() || null, ...(efeitos.length ? { efeitos } : {}) }])
+    setCustomName(''); setCustomElement(''); setCustomEffect(''); setCustomEfeitos([]); setCreatingCustom(false)
   }
 
   function remover(index: number) {
@@ -142,6 +149,8 @@ export default function ItemModifiersModal({
                 <input className="conditions-modal-custom-name" value={customElement} onChange={(e) => setCustomElement(e.target.value)} placeholder="Nenhum" />
                 <label className="conditions-modal-custom-label">Efeito</label>
                 <textarea className="conditions-modal-custom-description" value={customEffect} onChange={(e) => setCustomEffect(e.target.value)} placeholder="O que essa alteração faz" />
+                <label className="conditions-modal-custom-label">O que ela mexe na ficha</label>
+                <EditorDeEfeitos contexto="item" efeitos={customEfeitos} onChange={setCustomEfeitos} />
               </>
             ) : filtrados.length === 0 ? (
               <p className="conditions-modal-placeholder">

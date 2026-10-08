@@ -77,6 +77,7 @@ export default function PericiasTable({
   attributes,
   testDiceBonus,
   dadosDeCondicoes,
+  valorDeCondicoes,
   testValueBonus,
   cargaPenalty,
   bonusDeItens,
@@ -92,6 +93,8 @@ export default function PericiasTable({
   testDiceBonus: number
   /** Dados a mais/menos por causa das condições, por perícia (Frustrado, Fraco…). */
   dadosDeCondicoes?: (pericia: string, atributo: string | null) => number
+  /** Valor a mais/menos por condição criada na mão (ex.: -2 em Furtividade). */
+  valorDeCondicoes?: (pericia: string, atributo: string | null) => number
   testValueBonus: number
   /** Penalidade da proteção equipada nas perícias afetadas por carga (negativo, ex.: -5). */
   cargaPenalty: number
@@ -129,7 +132,7 @@ export default function PericiasTable({
       // Acrobacia, Crime e Furtividade.
       const penalidade = s.carga_penalty ? cargaPenalty : 0
       const doItem = bonusDeItens[s.name] ?? 0
-      const total = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus + penalidade + doItem
+      const total = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus + penalidade + doItem + (valorDeCondicoes?.(s.name, attr) ?? 0)
       return { skill: s, cs, attr, total, penalidade, doItem }
     })
 

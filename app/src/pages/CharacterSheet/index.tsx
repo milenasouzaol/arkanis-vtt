@@ -64,6 +64,8 @@ export type CharacterRecord = {
   optional_rules: Record<string, boolean>
   afinidade_elemento: string | null
   conditions: string[]
+  // Condições criadas na mão, com os efeitos escolhidos (efeitosEscolhidos.ts).
+  condicoes_personalizadas?: unknown
   sheet_banner: string
   dice_tray: string
   defense_other_bonus: number

@@ -1,3 +1,4 @@
+import { periciasDoEfeito, textoDoEfeito, type EfeitoEscolhido } from './efeitosEscolhidos'
 // Bonus numericos que uma modificacao ou maldicao aplica num item.
 //
 // O catalogo nao guarda esses bonus em coluna: eles estao escritos no texto do efeito
@@ -8,7 +9,9 @@
 // Este arquivo e a unica fonte desse calculo: a ficha e o envio pro combate usam ele, pra
 // o numero que aparece no card ser o mesmo que vai rolar na mesa.
 
-export type AppliedModifier = { kind: 'modificacao' | 'maldicao'; name: string; effect: string; elemento: string | null }
+// efeitos: escolhidos na mão ao criar uma personalizada (efeitosEscolhidos.ts). Quando existem,
+// valem eles e o texto do efeito fica só como descrição (senão contaria duas vezes).
+export type AppliedModifier = { kind: 'modificacao' | 'maldicao'; name: string; effect: string; elemento: string | null; efeitos?: EfeitoEscolhido[] }
 
 export type ModBonuses = {
   attackTestBonus: number
@@ -72,13 +75,31 @@ export function parseNumericMod(effect: string): ModBonuses {
   return result
 }
 
+// Margem de ameaça conta ao contrário (ver parseNumericMod): +2 de margem abaixa o número.
+function bonusesEscolhidos(efeitos: EfeitoEscolhido[]): ModBonuses {
+  const r: ModBonuses = {
+    attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0,
+    extraDamageDice: 0, spacesDelta: 0, defenseBonus: 0, rangeSteps: 0, extraDamageRolls: [],
+  }
+  for (const e of efeitos) {
+    if (e.alvo === 'defesa') r.defenseBonus += e.valor
+    else if (e.alvo === 'ataque') r.attackTestBonus += e.valor
+    else if (e.alvo === 'margem') r.threatMarginDelta -= e.valor
+    else if (e.alvo === 'dano') {
+      if (e.modo === 'dados') r.extraDamageDice += e.valor
+      else r.damageBonus += e.valor
+    }
+  }
+  return r
+}
+
 export function somaBonuses(applied: AppliedModifier[]): ModBonuses {
   const total: ModBonuses = {
     attackTestBonus: 0, threatMarginDelta: 0, damageBonus: 0, multiplierDelta: 0,
     extraDamageDice: 0, spacesDelta: 0, defenseBonus: 0, rangeSteps: 0, extraDamageRolls: [],
   }
   for (const m of applied) {
-    const b = parseNumericMod(m.effect ?? '')
+    const b = m.efeitos?.length ? bonusesEscolhidos(m.efeitos) : parseNumericMod(m.effect ?? '')
     total.attackTestBonus += b.attackTestBonus
     total.threatMarginDelta += b.threatMarginDelta
     total.damageBonus += b.damageBonus
@@ -515,6 +536,21 @@ export function efeitosDoItem(
   })
 
   for (const m of mods ?? []) {
+    if (m.efeitos?.length) {
+      m.efeitos.forEach((e, i) => {
+        if (!e.valor) return
+        const base = { chave: `mod-${m.name}-esc-${i}`, condicao: e.ligavel ? 'Só quando ligado' : '', valor: e.valor, mod: { kind: m.kind, name: m.name } }
+        const pericias = periciasDoEfeito(e, PERICIAS)
+        if (pericias.length) {
+          lista.push({ ...base, rotulo: `${textoDoEfeito({ ...e, ligavel: false })} (${m.name})`, pericias })
+        } else if (e.alvo === 'atributo' && e.qual) {
+          lista.push({ ...base, rotulo: `${rotuloDeFicha(e.qual as AlvoDeBonus, e.valor)} (${m.name})`, alvo: e.qual as AlvoDeBonus })
+        } else if (e.alvo === 'pv' || e.alvo === 'pe') {
+          lista.push({ ...base, rotulo: `${rotuloDeFicha(e.alvo, e.valor)} (${m.name})`, alvo: e.alvo })
+        }
+      })
+      continue
+    }
     bonusDeFichaDaDescricao(m.effect).forEach((b, i) => {
       lista.push({
         chave: `mod-${m.name}-ficha-${i}`,

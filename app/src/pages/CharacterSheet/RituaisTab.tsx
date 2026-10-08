@@ -21,6 +21,7 @@ import morteIcon from '../../assets/rituais/morte-simbolo.png'
 import conhecimentoIcon from '../../assets/rituais/conhecimento-simbolo.png'
 import energiaIcon from '../../assets/rituais/energia-simbolo.png'
 import medoIcon from '../../assets/rituais/medo-simbolo.png'
+import { lerCondicoesPersonalizadas } from './efeitosEscolhidos'
 import { somDoRitual, tocarSom } from '../../lib/sons'
 
 const ELEMENT_ICON: Record<string, string> = {
@@ -121,10 +122,10 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
   function rollOcultismo() {
     if (!ocultismoSkill) return
     const attr = ocultismoBonus.attribute_override ?? ocultismoSkill.default_attribute
-    const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: 'Ocultismo' })
+    const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: 'Ocultismo' }, lerCondicoesPersonalizadas(character.condicoes_personalizadas))
     const score = attrValue(character.attributes, attr) + cond.dados
     const { rolls, kept } = rollAttributeTest(score)
-    const bonus = trainingBonus(ocultismoBonus.training) + ocultismoBonus.extra_bonus
+    const bonus = trainingBonus(ocultismoBonus.training) + ocultismoBonus.extra_bonus + cond.valor
     const label = rotuloComCondicoes('Teste de Ocultismo', cond.motivos)
     setRoll({ label, rolls, kept, bonus, characterName: character.name, diceTray: character.dice_tray })
     if (session) {
@@ -249,7 +250,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
     const som = somDoRitual(arma?.elemento ?? ritual.elemento)
     if (som) tocarSom(som)
     // Alquebrado: +1 PE no custo.
-    const custo = custoDoRitual(ritual.circle, mode, ritual.discenteCost, ritual.verdadeiroCost) + custoExtraDeCondicoes(character.conditions)
+    const custo = custoDoRitual(ritual.circle, mode, ritual.discenteCost, ritual.verdadeiroCost) + custoExtraDeCondicoes(character.conditions, lerCondicoesPersonalizadas(character.condicoes_personalizadas))
     const recurso = recursoDoRitual(character.optional_rules)
     const antes = (character as unknown as Record<string, number | null>)[recurso.campo] ?? 0
     if (antes < custo && !window.confirm(`Você tem ${antes} ${recurso.sigla} e o ritual custa ${custo}. Conjurar mesmo assim?`)) return
@@ -289,7 +290,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
     if (cura && alvos.length && character.campaign_id) {
       const ocultismo = ocultismoSkill ? ocultismoSkill.default_attribute : 'intelecto'
       const attr = ocultismoBonus.attribute_override ?? ocultismo
-      const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: 'Ocultismo' })
+      const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: 'Ocultismo' }, lerCondicoesPersonalizadas(character.condicoes_personalizadas))
       const erro = await postarCura({
         campanhaId: character.campaign_id,
         characterId: character.id,
@@ -297,7 +298,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
         fonte: `o ritual ${ritual.name}${modeLabel}`,
         formula: formula ?? cura.formula,
         recurso: cura.recurso,
-        teste: { nome: 'Ocultismo', dados: attrValue(character.attributes, attr) + cond.dados, bonus: trainingBonus(ocultismoBonus.training) + ocultismoBonus.extra_bonus },
+        teste: { nome: 'Ocultismo', dados: attrValue(character.attributes, attr) + cond.dados, bonus: trainingBonus(ocultismoBonus.training) + ocultismoBonus.extra_bonus + cond.valor },
         alvos,
       })
       if (erro) setAvisoGasto(erro)
@@ -452,7 +453,7 @@ export default function RituaisTab({ character, onGastar }: { character: Charact
               expanded={expanded === cr.id}
               onToggle={() => setExpanded(expanded === cr.id ? null : cr.id)}
               onRoll={(mode, formula) => conjurar(view, mode, formula)}
-              custo={(mode) => custoDoRitual(view.circle, mode, view.discenteCost, view.verdadeiroCost) + custoExtraDeCondicoes(character.conditions)}
+              custo={(mode) => custoDoRitual(view.circle, mode, view.discenteCost, view.verdadeiroCost) + custoExtraDeCondicoes(character.conditions, lerCondicoesPersonalizadas(character.condicoes_personalizadas))}
               sigla={recursoDoRitual(character.optional_rules).sigla}
               onRemove={() => removeRitual(cr.id)}
               onEdit={() => setEditing(cr)}

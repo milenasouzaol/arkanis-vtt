@@ -19,7 +19,7 @@ import PericiasTable from './PericiasTable'
 import AttributeDiagram from './AttributeDiagram'
 import StatBar from './StatBar'
 import { useClasseDaFicha } from './useClasseDaFicha'
-import ConditionsModal from './ConditionsModal'
+import ConditionsModal, { CUSTOM_ICONS } from './ConditionsModal'
 import FrameModal from './FrameModal'
 import conditionsIcon from '../../assets/condicoes/conditions.svg'
 import enemyEffectsIcon from '../../assets/condicoes/enemy-effects.svg'
@@ -45,6 +45,7 @@ import conditionsBorderTop from '../../assets/conditions-border-top.svg'
 import conditionsBorderBottom from '../../assets/conditions-border-bottom.svg'
 import { bonusDosPoderes, origemDoItem, temProtecaoLeve } from './defesa'
 import { usePoderes } from './usePoderes'
+import { lerCondicoesPersonalizadas, resumoDosEfeitos, type CondicaoPersonalizada } from './efeitosEscolhidos'
 import { tocarSom } from '../../lib/sons'
 
 function pvIconFor(pct: number): string {
@@ -114,6 +115,7 @@ export default function AgenteTab({
   const [cargaPenalty, setCargaPenalty] = useState(0)
   // Bonus de pericia que o item equipado da sempre (ex.: Pe de Morto, +5 Furtividade).
   const [bonusDeItens, setBonusDeItens] = useState<Record<string, number>>({})
+  const condicoesProprias = lerCondicoesPersonalizadas(character.condicoes_personalizadas)
   // De onde vem cada bônus verde (passar o mouse mostra: item, poder…), pedido da Millie 08/10.
   const [origensPericia, setOrigensPericia] = useState<Record<string, string[]>>({})
   const [origensFicha, setOrigensFicha] = useState<Partial<Record<AlvoDeBonus, string[]>>>({})
@@ -293,8 +295,16 @@ export default function AgenteTab({
     await updateCharacterField('avatar_url', publicUrl)
   }
 
-  async function addCondition(name: string) {
+  async function addCondition(name: string, propria?: CondicaoPersonalizada) {
     const current = character.conditions ?? []
+    // Condição criada na mão: guarda a definição (descrição, ícone e efeitos) na ficha.
+    if (propria) {
+      const outras = condicoesProprias.filter((c) => c.nome !== propria.nome)
+      const next = current.includes(name) ? current : [...current, name]
+      await supabase.from('characters').update({ conditions: next, condicoes_personalizadas: [...outras, propria] }).eq('id', character.id)
+      onUpdated()
+      return
+    }
     const escalatesTo = CONDITION_ESCALATION[name]
     if (escalatesTo && current.includes(name)) {
       const next = [...current.filter((c) => c !== name), escalatesTo]
@@ -314,16 +324,16 @@ export default function AgenteTab({
 
   function rollAttribute(key: AttributeKey, abbr: string) {
     // Condições (Frustrado, Fraco…) tiram dados sozinhas, e a rolagem diz por quê.
-    const cond = penalidadeDeCondicoes(character.conditions, { atributo: key })
+    const cond = penalidadeDeCondicoes(character.conditions, { atributo: key }, condicoesProprias)
     const score = character.attributes[key] + cond.dados
     const { rolls, kept } = rollAttributeTest(score)
     const label = rotuloComCondicoes(`Teste de ${abbr}`, cond.motivos)
-    setRoll({ label, rolls, kept, bonus: 0, characterName: character.name, diceTray: character.dice_tray })
+    setRoll({ label, rolls, kept, bonus: cond.valor, characterName: character.name, diceTray: character.dice_tray })
     if (session) {
       recordRoll({
         characterId: character.id, userId: session.user.id, campaignId: character.campaign_id, characterName: character.name,
-        label, total: kept, detail: `d20 mantido: ${kept} (rolados: ${rolls.join(', ')})`,
-        dice: rolls.map((v) => ({ sides: 20, value: v, discarded: v !== kept })), bonus: 0,
+        label, total: kept + cond.valor, detail: `d20 mantido: ${kept} (rolados: ${rolls.join(', ')})${cond.valor ? ` + bônus ${cond.valor}` : ''}`,
+        dice: rolls.map((v) => ({ sides: 20, value: v, discarded: v !== kept })), bonus: cond.valor,
       })
     }
   }
@@ -342,11 +352,11 @@ export default function AgenteTab({
   function rollSkill(skill: SkillRow) {
     const cs = charSkills[skill.id] ?? { skill_id: skill.id, training: 'nenhum' as const, attribute_override: null, extra_bonus: 0 }
     const attr = cs.attribute_override ?? skill.default_attribute
-    const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: skill.name })
+    const cond = penalidadeDeCondicoes(character.conditions, { atributo: attr, pericia: skill.name }, condicoesProprias)
     const score = attrValue(character.attributes, attr) + testDiceBonus + cond.dados
     const { rolls, kept } = rollAttributeTest(score)
     // O mesmo total da tabela: itens equipados (o +N verde) e a penalidade da Proteção Pesada.
-    const bonus = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus + (bonusDeItens[skill.name] ?? 0) + (skill.carga_penalty ? cargaPenalty : 0)
+    const bonus = trainingBonus(cs.training) + cs.extra_bonus + testValueBonus + (bonusDeItens[skill.name] ?? 0) + (skill.carga_penalty ? cargaPenalty : 0) + cond.valor
     const label = rotuloComCondicoes(`Teste de ${skill.name}`, cond.motivos)
     setRoll({ label, rolls, kept, bonus, characterName: character.name, diceTray: character.dice_tray })
     if (session) {
@@ -544,7 +554,8 @@ export default function AgenteTab({
           <img className="vtt-condition-border" src={conditionsBorderBottom} alt="" />
           <div className="vtt-condition-tags">
             {(character.conditions ?? []).map((cond, i) => {
-              const info = conditionCatalog[cond]
+              const propria = condicoesProprias.find((c) => c.nome === cond)
+              const info = propria ? { icon: CUSTOM_ICONS[Number(propria.icone) || 0] } : conditionCatalog[cond]
               return (
                 <div key={i} className="vtt-condition-tag-row">
                   <button type="button" className="vtt-condition-tag" onClick={() => setOpenConditionDetail(cond)}>
@@ -561,11 +572,24 @@ export default function AgenteTab({
             <div className="vtt-condition-detail-backdrop" onClick={() => setOpenConditionDetail(null)}>
               <div className="vtt-condition-detail-card" onClick={(e) => e.stopPropagation()}>
                 <div className="vtt-condition-detail-header">
-                  {conditionCatalog[openConditionDetail] && <img src={conditionCatalog[openConditionDetail].icon} alt="" />}
+                  {(() => {
+                    const propria = condicoesProprias.find((c) => c.nome === openConditionDetail)
+                    const icone = propria ? CUSTOM_ICONS[Number(propria.icone) || 0] : conditionCatalog[openConditionDetail]?.icon
+                    return icone ? <img src={icone} alt="" /> : null
+                  })()}
                   <h4>{openConditionDetail}</h4>
                   <button type="button" onClick={() => setOpenConditionDetail(null)} aria-label="Fechar">×</button>
                 </div>
-                <p>{conditionCatalog[openConditionDetail]?.description ?? 'Condição personalizada.'}</p>
+                {(() => {
+                  const propria = condicoesProprias.find((c) => c.nome === openConditionDetail)
+                  if (!propria) return <p>{conditionCatalog[openConditionDetail]?.description ?? 'Condição personalizada.'}</p>
+                  return (
+                    <>
+                      <p>{propria.descricao || 'Condição personalizada.'}</p>
+                      {propria.efeitos.length > 0 && <p><strong>Efeitos:</strong> {resumoDosEfeitos(propria.efeitos)}</p>}
+                    </>
+                  )
+                })()}
               </div>
             </div>
           )}
@@ -587,7 +611,8 @@ export default function AgenteTab({
             charSkills={charSkills}
             attributes={character.attributes}
             testDiceBonus={testDiceBonus}
-            dadosDeCondicoes={(nome, atributo) => penalidadeDeCondicoes(character.conditions, { atributo, pericia: nome }).dados}
+            dadosDeCondicoes={(nome, atributo) => penalidadeDeCondicoes(character.conditions, { atributo, pericia: nome }, condicoesProprias).dados}
+            valorDeCondicoes={(nome, atributo) => penalidadeDeCondicoes(character.conditions, { atributo, pericia: nome }, condicoesProprias).valor}
             testValueBonus={testValueBonus}
             cargaPenalty={cargaPenalty}
             bonusDeItens={bonusDeItens}
@@ -595,7 +620,7 @@ export default function AgenteTab({
             origensDaCarga={origensCarga}
             origensDosTestes={(nome, atributo) => [
               ...activeTestMods.filter((m) => m.dice_bonus || m.value_bonus).map((m) => `Modificador ${m.name}: ${[m.dice_bonus ? `${m.dice_bonus > 0 ? '+' : ''}${m.dice_bonus}d20` : '', m.value_bonus ? `${m.value_bonus > 0 ? '+' : ''}${m.value_bonus}` : ''].filter(Boolean).join(' ')}`),
-              ...penalidadeDeCondicoes(character.conditions, { atributo, pericia: nome }).motivos.map((m) => `Condição ${m.replace(/ ([+-])/, ': $1')}`),
+              ...penalidadeDeCondicoes(character.conditions, { atributo, pericia: nome }, condicoesProprias).motivos.map((m) => `Condição ${m.replace(/ ([+-])/, ': $1')}`),
             ]}
             onSetSkillField={setSkillField}
             onRoll={rollSkill}

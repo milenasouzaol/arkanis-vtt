@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { computeDerivedStats, type Training } from '../../lib/rules'
 import { lerTeste, nomesNumerados, ordemDeIniciativa, rolarTeste, testeDeIniciativa, type Combatente } from './combate'
 import { variacoesDaCriatura } from './atores'
+import { lerCondicoesPersonalizadas } from '../CharacterSheet/efeitosEscolhidos'
 import { penalidadeDeCondicoes, rotuloComCondicoes } from '../CharacterSheet/condicoes'
 
 export type Combate = {
@@ -38,7 +39,7 @@ type FichaBarras = {
 
 const CAMPOS_FICHA = 'id, name, avatar_url, attributes, nex_percent, class_id, current_pv, current_pe, current_sanity, max_pv_override, max_sanity_override, pv_death_marks'
 
-type FichaIniciativa = { id: string; user_id: string; name: string | null; avatar_url: string | null; attributes: unknown; conditions: unknown }
+type FichaIniciativa = { id: string; user_id: string; name: string | null; avatar_url: string | null; attributes: unknown; conditions: unknown; condicoes_personalizadas?: unknown }
 
 function trocar<T extends { id: string }>(lista: T[], item: T): T[] {
   return lista.some((x) => x.id === item.id) ? lista.map((x) => (x.id === item.id ? item : x)) : [...lista, item]
@@ -139,8 +140,8 @@ export function useCombate(campanhaId: string | undefined) {
     const linhas = lista.map((j) => {
       const t = treino.get(j.id)
       const base = testeDeIniciativa((j.attributes as Record<string, number>)?.agilidade ?? 1, (t?.training ?? 'nenhum') as Training, t?.extra_bonus ?? 0)
-      const cond = penalidadeDeCondicoes(j.conditions as string[] | null, { atributo: 'agilidade', pericia: 'Iniciativa' })
-      const teste = { ...base, dados: base.dados + cond.dados }
+      const cond = penalidadeDeCondicoes(j.conditions as string[] | null, { atributo: 'agilidade', pericia: 'Iniciativa' }, lerCondicoesPersonalizadas(j.condicoes_personalizadas))
+      const teste = { ...base, dados: base.dados + cond.dados, bonus: base.bonus + cond.valor }
       const r = rolarTeste(teste)
       if (tipo === 'jogador') {
         rolagens.push({
@@ -206,7 +207,7 @@ export function useCombate(campanhaId: string | undefined) {
     })
     const npcs = lista.filter((a) => a.tipo === 'npc' && a.character_id)
     const { data: fichasNpc } = npcs.length
-      ? await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions').in('id', npcs.map((a) => a.character_id!))
+      ? await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions, condicoes_personalizadas').in('id', npcs.map((a) => a.character_id!))
       : { data: [] }
     const linhasNpc = await iniciativaDasFichas((fichasNpc ?? []) as FichaIniciativa[], combate, 'npc', new Map(npcs.map((a) => [a.character_id!, a.id])), new Map(npcs.map((a) => [a.character_id!, a.token_url])))
     const linhas = [...ameacas, ...linhasNpc]
@@ -269,7 +270,7 @@ export function useCombate(campanhaId: string | undefined) {
   // (Combate salvo antes desta mudança ainda pode ter ameaças só do bestiário: viram personagens aqui.)
   const iniciar = useCallback(async (combate: Combate) => {
     if (!campanhaId) return
-    const { data: jogadores } = await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions').eq('campaign_id', campanhaId).eq('npc', false)
+    const { data: jogadores } = await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions, condicoes_personalizadas').eq('campaign_id', campanhaId).eq('npc', false)
     const { data: atoresJogadores } = jogadores?.length
       ? await supabase.from('campaign_actors').select('id, character_id, token_url').in('character_id', jogadores.map((j) => j.id))
       : { data: [] }
@@ -279,7 +280,7 @@ export function useCombate(campanhaId: string | undefined) {
     const { data: npcsDaCampanha } = await supabase.from('campaign_actors').select('id, character_id, token_url, acesso_jogadores').eq('campaign_id', campanhaId).eq('tipo', 'npc')
     const dadas = (npcsDaCampanha ?? []).filter((a) => a.character_id && Object.values((a.acesso_jogadores ?? {}) as Record<string, string>).includes('dono'))
     const { data: fichasDadas } = dadas.length
-      ? await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions').in('id', dadas.map((a) => a.character_id as string))
+      ? await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions, condicoes_personalizadas').in('id', dadas.map((a) => a.character_id as string))
       : { data: [] }
     for (const a of dadas) atorDoJogador.set(a.character_id as string, a.id as string)
     const tokenDe = new Map([...(atoresJogadores ?? []), ...dadas].map((a) => [a.character_id as string, (a.token_url as string | null) ?? null]))

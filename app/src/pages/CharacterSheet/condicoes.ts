@@ -4,6 +4,11 @@
 // O que dá pra automatizar: dados a menos em testes de certos atributos/perícias/ataques, a
 // Defesa e o custo de rituais. O que depende de turno (dano no início do turno, rolar 1d6 no
 // Confuso…) ou do mestre decidir (fugir, não poder agir) fica manual.
+//
+// Condição criada na mão (08/10) traz os efeitos que a pessoa escolheu (efeitosEscolhidos.ts) e
+// vale do mesmo jeito: quem chama passa a lista da ficha (characters.condicoes_personalizadas).
+
+import { valeNoTeste, type CondicaoPersonalizada } from './efeitosEscolhidos'
 
 export type ContextoDoTeste = {
   // atributo do teste: 'forca' | 'agilidade' | 'intelecto' | 'vigor' | 'presenca'
@@ -62,18 +67,38 @@ function vale(r: Regra, c: ContextoDoTeste): boolean {
   return false
 }
 
-// Dados a menos (ou a mais) num teste por causa das condições, e o porquê, pra mostrar na rolagem.
-export function penalidadeDeCondicoes(condicoes: string[] | null | undefined, c: ContextoDoTeste): { dados: number; motivos: string[] } {
+const sinal = (v: number) => `${v > 0 ? '+' : ''}${v}`
+const daFicha = (nome: string, personalizadas?: CondicaoPersonalizada[] | null) => personalizadas?.find((p) => p.nome === nome)
+
+// Dados a menos (ou a mais) num teste por causa das condições, o valor (só nas personalizadas)
+// e o porquê, pra mostrar na rolagem.
+export function penalidadeDeCondicoes(
+  condicoes: string[] | null | undefined,
+  c: ContextoDoTeste,
+  personalizadas?: CondicaoPersonalizada[] | null,
+): { dados: number; valor: number; motivos: string[] } {
   let dados = 0
+  let valor = 0
   const motivos: string[] = []
   for (const nome of new Set(condicoes ?? [])) {
-    const soma = (REGRAS[nome] ?? []).filter((r) => vale(r, c)).reduce((s, r) => s + r.dados, 0)
-    if (soma) {
-      dados += soma
-      motivos.push(`${nome} ${soma > 0 ? '+' : ''}${soma}d20`)
+    const propria = daFicha(nome, personalizadas)
+    let d = 0
+    let v = 0
+    if (propria) {
+      for (const e of propria.efeitos.filter((e) => valeNoTeste(e, c))) {
+        if (e.modo === 'dados') d += e.valor
+        else v += e.valor
+      }
+    } else {
+      d = (REGRAS[nome] ?? []).filter((r) => vale(r, c)).reduce((s, r) => s + r.dados, 0)
+    }
+    if (d || v) {
+      dados += d
+      valor += v
+      motivos.push(`${nome} ${[d ? `${sinal(d)}d20` : '', v ? sinal(v) : ''].filter(Boolean).join(' ')}`)
     }
   }
-  return { dados, motivos }
+  return { dados, valor, motivos }
 }
 
 // Defesa (12/livro): vulnerável -2; desprevenido -5; indefeso -10 (no lugar do desprevenido).
@@ -81,10 +106,17 @@ const VULNERAVEL = ['Vulnerável', 'Fatigado', 'Exausto', 'Enredado']
 const DESPREVENIDO = ['Desprevenido', 'Agarrado', 'Cego', 'Atordoado', 'Surpreendido']
 const INDEFESO = ['Indefeso', 'Inconsciente', 'Paralisado', 'Petrificado']
 
-export function defesaDeCondicoes(condicoes: string[] | null | undefined): { valor: number; motivos: string[] } {
+export function defesaDeCondicoes(condicoes: string[] | null | undefined, personalizadas?: CondicaoPersonalizada[] | null): { valor: number; motivos: string[] } {
   const tem = new Set(condicoes ?? [])
   const motivos: string[] = []
   let valor = 0
+  for (const nome of tem) {
+    const v = (daFicha(nome, personalizadas)?.efeitos ?? []).filter((e) => e.alvo === 'defesa').reduce((s, e) => s + e.valor, 0)
+    if (v) {
+      valor += v
+      motivos.push(`${nome} ${sinal(v)}`)
+    }
+  }
   const vulneravel = VULNERAVEL.find((n) => tem.has(n))
   if (vulneravel) {
     valor -= 2
@@ -103,8 +135,9 @@ export function defesaDeCondicoes(condicoes: string[] | null | undefined): { val
 }
 
 // Alquebrado: habilidades e rituais custam +1 PE.
-export function custoExtraDeCondicoes(condicoes: string[] | null | undefined): number {
-  return (condicoes ?? []).includes('Alquebrado') ? 1 : 0
+export function custoExtraDeCondicoes(condicoes: string[] | null | undefined, personalizadas?: CondicaoPersonalizada[] | null): number {
+  const proprias = [...new Set(condicoes ?? [])].reduce((s, nome) => s + (daFicha(nome, personalizadas)?.efeitos ?? []).filter((e) => e.alvo === 'custo_ritual').reduce((t, e) => t + e.valor, 0), 0)
+  return ((condicoes ?? []).includes('Alquebrado') ? 1 : 0) + proprias
 }
 
 // "Teste de Diplomacia" → "Teste de Diplomacia (Frustrado -1d20)".

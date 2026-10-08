@@ -3,7 +3,7 @@ import { custoExtraDeCondicoes, defesaDeCondicoes, penalidadeDeCondicoes, rotulo
 
 describe('penalidade nos testes', () => {
   it('Frustrado: -1d20 em Intelecto e Presença, nada no resto', () => {
-    expect(penalidadeDeCondicoes(['Frustrado'], { atributo: 'presenca', pericia: 'Diplomacia' })).toEqual({ dados: -1, motivos: ['Frustrado -1d20'] })
+    expect(penalidadeDeCondicoes(['Frustrado'], { atributo: 'presenca', pericia: 'Diplomacia' })).toEqual({ dados: -1, valor: 0, motivos: ['Frustrado -1d20'] })
     expect(penalidadeDeCondicoes(['Frustrado'], { atributo: 'intelecto' }).dados).toBe(-1)
     expect(penalidadeDeCondicoes(['Frustrado'], { atributo: 'agilidade', pericia: 'Acrobacia' }).dados).toBe(0)
   })

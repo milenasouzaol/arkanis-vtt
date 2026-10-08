@@ -1,4 +1,5 @@
 import { defesaDeModificadores, type AppliedModifier } from './itemMods'
+import type { CondicaoPersonalizada } from './efeitosEscolhidos'
 import { defesaDeCondicoes } from './condicoes'
 
 // Defesa e testes de resistência num lugar só (bug 08/10, ficha da Renata): a ficha e a mesa
@@ -61,10 +62,10 @@ export function temProtecaoLeve(itens: ItemDeDefesa[]): boolean {
   return itens.some((i) => i.tipo === 'protecao' && /\bleve\b/i.test(String(i.nome ?? '')))
 }
 
-export function defesaTotal(p: { agilidade: number; outros: number; condicoes: string[] | null | undefined; itens: ItemDeDefesa[]; poderes: (string | null | undefined)[] }) {
+export function defesaTotal(p: { agilidade: number; outros: number; condicoes: string[] | null | undefined; itens: ItemDeDefesa[]; poderes: (string | null | undefined)[]; condicoesPersonalizadas?: CondicaoPersonalizada[] }) {
   const itens = defesaDosItens(p.itens)
   const poderes = bonusDosPoderes(p.poderes, { protecaoLeve: temProtecaoLeve(p.itens) })
-  const condicoes = defesaDeCondicoes(p.condicoes ?? [])
+  const condicoes = defesaDeCondicoes(p.condicoes ?? [], p.condicoesPersonalizadas)
   return { total: 10 + p.agilidade + itens + poderes.defesa + p.outros + condicoes.valor, itens, poderes, condicoes }
 }
 
