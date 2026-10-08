@@ -443,22 +443,27 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
           <div className="combat-defense-main">
             <span className="combat-defense-label">Defesa</span>
             <div className="combat-defense-formula">
-              <span className="combat-plain-value" title={textoDasOrigens(origensDaDefesaDosItens(itensEquipados))}>{equippedDefense}</span>
-              <span className="combat-defense-sub">Equip</span>
-              <span className="combat-defense-plus">+</span>
-              <input
-                className="combat-dotted-input"
-                type="number"
-                value={character.defense_other_bonus}
-                onChange={(e) => updateDefenseField({ defense_other_bonus: Number(e.target.value) })}
-              />
-              <span className="combat-defense-sub">Outros</span>
+              {/* Cada parte fica junta (número + nome) e a linha quebra entre elas, sem invadir o Bloqueio/Esquiva. */}
+              <span className="combat-defense-termo">
+                <span className="combat-plain-value" title={textoDasOrigens(origensDaDefesaDosItens(itensEquipados))}>{equippedDefense}</span>
+                <span className="combat-defense-sub">Equip</span>
+              </span>
+              <span className="combat-defense-termo">
+                <span className="combat-defense-plus">+</span>
+                <input
+                  className="combat-dotted-input"
+                  type="number"
+                  value={character.defense_other_bonus}
+                  onChange={(e) => updateDefenseField({ defense_other_bonus: Number(e.target.value) })}
+                />
+                <span className="combat-defense-sub">Outros</span>
+              </span>
               {defesa.poderes.defesa !== 0 && (
-                <>
+                <span className="combat-defense-termo">
                   <span className="combat-defense-plus">+</span>
                   <span className="combat-plain-value" title={textoDasOrigens(defesa.poderes.motivos)}>{defesa.poderes.defesa}</span>
                   <span className="combat-defense-sub">Poderes</span>
-                </>
+                </span>
               )}
               <span className="combat-defense-fixed">+AGI({agilidade})+10</span>
               {defesaCondicoes.valor !== 0 && (

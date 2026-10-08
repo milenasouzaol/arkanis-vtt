@@ -18425,3 +18425,21 @@ label.janela-botao {
 .efeitos-escolhidos-ligavel { display: inline-flex; align-items: center; gap: 4px; }
 .efeitos-escolhidos-resumo { flex-basis: 100%; font-size: 0.8em; color: var(--text-dim); }
 .efeitos-escolhidos-dica { margin: 0; }
+
+/* Fórmula da Defesa (08/10): com "Poderes" ela ficava larga e passava por cima do Bloqueio/Esquiva.
+   Agora quebra linha entre as partes, e cada parte (número + nome) fica junta. */
+.combat-defense-formula {
+  flex-wrap: wrap;
+  white-space: normal;
+  row-gap: 0.2em;
+  column-gap: 0.3em;
+}
+.combat-defense-termo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.15em;
+  white-space: nowrap;
+}
+.combat-defense-formula .combat-defense-fixed { margin-left: 0; }
+.combat-defense-top:has(.combat-defense-termo) .combat-defense-side { gap: 0.6em; }
+.combat-defense-top:has(.combat-defense-termo) { gap: 0.6em; }
