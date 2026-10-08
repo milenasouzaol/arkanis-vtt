@@ -34,6 +34,7 @@ function App() {
           <Route path="/perfil/editar" element={<ProtectedRoute><EditarPerfil /></ProtectedRoute>} />
           <Route path="/jogar" element={<ProtectedRoute><Jogar /></ProtectedRoute>} />
           <Route path="/campanha/criar" element={<ProtectedRoute><CriarCampanha /></ProtectedRoute>} />
+          <Route path="/campanha/:id/editar" element={<ProtectedRoute><CriarCampanha key="editar" /></ProtectedRoute>} />
           <Route path="/campanha/entrar/:code" element={<ProtectedRoute><EntrarCampanha /></ProtectedRoute>} />
           <Route path="/mesa/:id" element={<ProtectedRoute><Mesa /></ProtectedRoute>} />
           <Route path="/personagem/criar" element={<ProtectedRoute><SystemSelect /></ProtectedRoute>} />

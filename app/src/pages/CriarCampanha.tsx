@@ -1,14 +1,17 @@
-import { useRef, useState, type ChangeEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { SISTEMAS } from '../lib/sistemas'
 
 // Criar Campanha (spec 4.4): nome, descrição, capa, cor de destaque e o jogo.
 // O card seleciona o jogo; ao criar, o mestre entra direto na mesa (12.1).
+// Com /campanha/:id/editar (pedido da Millie, 08/10): a mesma tela, já preenchida, pra trocar
+// nome, descrição, capa e cor (o jogo não muda depois de criada).
 export default function CriarCampanha() {
   const { session } = useAuth()
   const navigate = useNavigate()
+  const { id: editandoId } = useParams()
   const capaRef = useRef<HTMLInputElement>(null)
   const [nome, setNome] = useState('Nova Campanha')
   const [descricao, setDescricao] = useState('')
@@ -19,6 +22,35 @@ export default function CriarCampanha() {
   const [criando, setCriando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [erroCapa, setErroCapa] = useState<string | null>(null)
+  const [carregando, setCarregando] = useState(!!editandoId)
+
+  useEffect(() => {
+    if (!editandoId) return
+    supabase.from('campaigns').select('name, description, cover_image_url, accent_color, system').eq('id', editandoId).maybeSingle().then(({ data }) => {
+      if (data) {
+        setNome(data.name ?? '')
+        setDescricao(data.description ?? '')
+        setCapa(data.cover_image_url)
+        setCor(data.accent_color || '#b48af0')
+        setJogo(data.system)
+      } else setErro('Campanha não encontrada (ou você não é o mestre dela).')
+      setCarregando(false)
+    })
+  }, [editandoId])
+
+  async function salvarEdicao() {
+    if (!editandoId || criando) return
+    if (!nome.trim()) {
+      setErro('Dê um nome pra campanha.')
+      return
+    }
+    setCriando(true)
+    setErro(null)
+    const { error } = await supabase.from('campaigns').update({ name: nome.trim(), description: descricao.trim() || null, cover_image_url: capa, accent_color: cor }).eq('id', editandoId)
+    setCriando(false)
+    if (error) setErro(error.message)
+    else navigate('/jogar')
+  }
 
   async function escolherCapa(e: ChangeEvent<HTMLInputElement>) {
     const arquivo = e.target.files?.[0]
@@ -70,7 +102,8 @@ export default function CriarCampanha() {
 
   return (
     <main className="criar-campanha" style={{ '--cc-destaque': cor } as React.CSSProperties}>
-      <h1>Criar Campanha</h1>
+      <h1>{editandoId ? 'Editar Campanha' : 'Criar Campanha'}</h1>
+      {carregando && <p>Carregando…</p>}
 
       <section>
         <h2>Informações básicas</h2>
@@ -90,6 +123,7 @@ export default function CriarCampanha() {
           <span className="cc-rotulo">Imagem de Capa</span>
           <div className="cc-capa">
             {capa && <img src={capa} alt="" className="cc-capa-previa" />}
+            {capa && <button type="button" className="cc-botao" onClick={() => setCapa(null)}>Tirar imagem</button>}
             <input ref={capaRef} type="file" accept="image/*" hidden onChange={escolherCapa} />
             <button type="button" className="cc-botao" disabled={enviandoCapa} onClick={() => capaRef.current?.click()}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
@@ -106,6 +140,7 @@ export default function CriarCampanha() {
         </div>
       </section>
 
+      {!editandoId && (
       <section>
         <h2>Escolha o jogo para a campanha</h2>
         <div className="system-card-grid cc-jogos">
@@ -126,15 +161,16 @@ export default function CriarCampanha() {
           ))}
         </div>
       </section>
+      )}
 
       {erro && <p role="alert" className="cc-erro">{erro}</p>}
 
       <div className="cc-acoes">
-        <button type="button" className="cc-botao cc-criar" disabled={criando || enviandoCapa} onClick={criar}>
+        <button type="button" className="cc-botao cc-criar" disabled={criando || enviandoCapa || carregando} onClick={editandoId ? salvarEdicao : criar}>
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M4.5 12.5l5 5L19.5 7" />
           </svg>
-          {criando ? 'Criando…' : 'Criar Campanha'}
+          {editandoId ? (criando ? 'Salvando…' : 'Salvar Alterações') : criando ? 'Criando…' : 'Criar Campanha'}
         </button>
       <Link to="/jogar" className="cc-voltar">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>

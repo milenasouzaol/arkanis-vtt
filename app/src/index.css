@@ -18266,3 +18266,16 @@ label.janela-botao {
   color: #8a8a90;
   font-size: 1.1rem;
 }
+
+.character-card-dropdown a.character-card-dropdown-link {
+  display: block;
+  padding: 0.4em 0.6em;
+  border-radius: 6px;
+  color: var(--text-h);
+  font-size: 0.9em;
+  text-decoration: none;
+}
+
+.character-card-dropdown a.character-card-dropdown-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+}

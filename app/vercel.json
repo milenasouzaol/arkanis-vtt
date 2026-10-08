@@ -7,6 +7,7 @@
     { "source": "/acessos", "destination": "/index.html" },
     { "source": "/jogar", "destination": "/index.html" },
     { "source": "/campanha/criar", "destination": "/index.html" },
+    { "source": "/campanha/:id/editar", "destination": "/index.html" },
     { "source": "/campanha/entrar/:code", "destination": "/index.html" },
     { "source": "/mesa/:id", "destination": "/index.html" },
     { "source": "/personagem/criar", "destination": "/index.html" },

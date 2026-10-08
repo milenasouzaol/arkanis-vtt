@@ -113,6 +113,7 @@ Digite o nome da campanha pra confirmar:`)
                   <div className="dropdown-backdrop" onClick={() => setMenuOpen(null)} />
                   <ul className="character-card-dropdown">
                     <li><button type="button" onClick={() => handleCopiarLink(c)}>{copiedId === c.id ? 'Link copiado!' : 'Copiar link de convite'}</button></li>
+                    <li><Link to={`/campanha/${c.id}/editar`} className="character-card-dropdown-link">Editar campanha</Link></li>
                     <li><button type="button" className="character-card-dropdown-perigo" onClick={() => excluirCampanha(c)}>Excluir campanha</button></li>
                   </ul>
                 </>
