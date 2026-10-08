@@ -930,6 +930,8 @@ export default function Mesa() {
                 onCriarPasta={cenas.criarPasta}
                 onSalvarPasta={cenas.salvarPasta}
                 onExcluirPasta={(p, comCenas) => cenas.excluirPasta(p.id, comCenas)}
+                jogadores={jogadoresParaCena}
+                onVisibilidade={(c, v) => cenas.salvarCena(c.id, v)}
               />
             ) : aba === 'combate' ? (
               <PainelCombate

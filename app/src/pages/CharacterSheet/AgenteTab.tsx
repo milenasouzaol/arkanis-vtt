@@ -1,3 +1,4 @@
+import { nomeSeguro } from '../../lib/nomeDeArquivo'
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
@@ -262,7 +263,7 @@ export default function AgenteTab({
   async function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !session) return
-    const path = `${session.user.id}/${Date.now()}-${file.name}`
+    const path = `${session.user.id}/${Date.now()}-${nomeSeguro(file.name)}`
     const { error } = await supabase.storage.from('character_photos').upload(path, file, { upsert: true })
     if (error) return
     const { publicUrl } = supabase.storage.from('character_photos').getPublicUrl(path).data

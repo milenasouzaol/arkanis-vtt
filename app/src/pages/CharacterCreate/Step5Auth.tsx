@@ -1,3 +1,4 @@
+import { nomeSeguro } from '../../lib/nomeDeArquivo'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
@@ -80,7 +81,7 @@ export default function Step5Auth({
     if (!file || !session) return
     setUploadError(null)
     try {
-      const path = `${session.user.id}/${Date.now()}-${file.name}`
+      const path = `${session.user.id}/${Date.now()}-${nomeSeguro(file.name)}`
       const { error } = await supabase.storage.from('character_photos').upload(path, file, { upsert: true })
       if (error) throw error
       onChange({ photoUrl: supabase.storage.from('character_photos').getPublicUrl(path).data.publicUrl })

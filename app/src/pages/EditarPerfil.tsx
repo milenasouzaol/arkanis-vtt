@@ -1,3 +1,4 @@
+import { nomeSeguro } from '../lib/nomeDeArquivo'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -46,7 +47,7 @@ export default function EditarPerfil() {
   }, [session])
 
   async function uploadTo(bucket: 'avatars' | 'banners', file: File): Promise<string> {
-    const path = `${session!.user.id}/${Date.now()}-${file.name}`
+    const path = `${session!.user.id}/${Date.now()}-${nomeSeguro(file.name)}`
     const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
     if (uploadError) throw uploadError
     return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl

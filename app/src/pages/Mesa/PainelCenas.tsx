@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faCheck, faClone, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faMap, faPenToSquare, faPeopleArrows, faTrash,
+  faCheck, faClone, faEye, faEyeSlash, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faMap, faPenToSquare, faPeopleArrows, faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import Janela, { Campo, CampoCor } from './Janela'
 import { montarArvore, pastasEmLista, type Cena, type NoPasta, type Pasta } from './cenas'
@@ -11,7 +11,7 @@ type Menu = { x: number; y: number } & Alvo
 
 // Aba Cenas (12.5): Criar Cena / Criar Pasta, pastas com subpastas e as miniaturas.
 // Clicar abre a cena só pra quem clicou; o mestre muda a de todo mundo com "Ativar Cena".
-export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, onAbrir, onEditar, onAtivar, onTrazerTodos, onExcluir, onDuplicar, onCriarCena, onCriarPasta, onSalvarPasta, onExcluirPasta }: {
+export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, onAbrir, onEditar, onAtivar, onTrazerTodos, onExcluir, onDuplicar, onCriarCena, onCriarPasta, onSalvarPasta, onExcluirPasta, jogadores = [], onVisibilidade }: {
   souMestre: boolean
   cenas: Cena[]
   pastas: Pasta[]
@@ -27,11 +27,15 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
   onCriarPasta: (p: Pick<Pasta, 'name' | 'color' | 'sort_mode' | 'parent_id'>) => void
   onSalvarPasta: (id: string, p: Pick<Pasta, 'name' | 'color' | 'sort_mode'>) => void
   onExcluirPasta: (p: Pasta, comCenas: boolean) => void
+  // Quem pode ver o mapa (pedido da Millie, 07/10): só o mestre, todos ou jogadores escolhidos.
+  jogadores?: { userId: string; rotulo: string }[]
+  onVisibilidade?: (c: Cena, v: Pick<Cena, 'visibility' | 'visible_to'>) => void
 }) {
   const [menu, setMenu] = useState<Menu | null>(null)
   const [criandoCena, setCriandoCena] = useState<{ pasta: string | null } | null>(null)
   const [criandoPasta, setCriandoPasta] = useState<{ pai: string | null } | null>(null)
   const [editandoPasta, setEditandoPasta] = useState<Pasta | null>(null)
+  const [vendoQuem, setVendoQuem] = useState<Cena | null>(null)
   const [fechadas, setFechadas] = useState<Set<string>>(new Set())
   const arvore = montarArvore(pastas, cenas)
 
@@ -69,6 +73,7 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
         title={souMestre ? 'Clique pra olhar; botão direito › Ativar Cena pra mostrar pra todos' : undefined}
       >
         <span>{c.name}</span>
+        {souMestre && c.id !== ativa && c.visibility === 'mestre' && <FontAwesomeIcon icon={faEyeSlash} className="cena-cartao-oculta" aria-label="Só o mestre vê" title="Só o mestre vê" />}
         {c.id === ativa && <FontAwesomeIcon icon={faCheck} className="cena-cartao-ativa" aria-label="Cena ativa" />}
       </button>
     </li>
@@ -138,6 +143,7 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
               <>
                 <li><button type="button" disabled={menu.cena.id === ativa} onClick={() => { onAtivar(menu.cena); setMenu(null) }}><FontAwesomeIcon icon={faCheck} /> {menu.cena.id === ativa ? 'Cena Ativa' : 'Ativar Cena'}</button></li>
                 <li><button type="button" onClick={() => { onEditar(menu.cena); setMenu(null) }}><FontAwesomeIcon icon={faPenToSquare} /> Editar</button></li>
+                {onVisibilidade && <li><button type="button" onClick={() => { setVendoQuem(menu.cena); setMenu(null) }}><FontAwesomeIcon icon={faEye} /> Quem pode ver</button></li>}
                 <li><button type="button" onClick={() => { onTrazerTodos(menu.cena); setMenu(null) }}><FontAwesomeIcon icon={faPeopleArrows} /> Trazer todos pra cá</button></li>
                 <li>
                   <button type="button" onClick={() => {
@@ -182,6 +188,16 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
         <CriarPasta
           onCriar={(p) => { onCriarPasta({ ...p, parent_id: criandoPasta.pai }); setCriandoPasta(null) }}
           onFechar={() => setCriandoPasta(null)}
+        />
+      )}
+
+      {vendoQuem && onVisibilidade && (
+        <QuemPodeVer
+          cena={vendoQuem}
+          ativa={vendoQuem.id === ativa}
+          jogadores={jogadores}
+          onSalvar={(v) => { onVisibilidade(vendoQuem, v); setVendoQuem(null) }}
+          onFechar={() => setVendoQuem(null)}
         />
       )}
 
@@ -247,6 +263,42 @@ export function CriarPasta({ inicial, onCriar, onFechar }: {
           </div>
         </Campo>
         <button type="submit" className="janela-botao"><FontAwesomeIcon icon={faFloppyDisk} /> {inicial ? 'Salvar Alterações' : 'Criar Pasta'}</button>
+      </form>
+    </Janela>
+  )
+}
+
+// Quem pode ver o mapa: só o mestre (padrão de mapa novo), todos os jogadores ou só os marcados.
+// A cena ativa todo mundo vê, de qualquer jeito.
+function QuemPodeVer({ cena, ativa, jogadores, onSalvar, onFechar }: {
+  cena: Cena
+  ativa: boolean
+  jogadores: { userId: string; rotulo: string }[]
+  onSalvar: (v: Pick<Cena, 'visibility' | 'visible_to'>) => void
+  onFechar: () => void
+}) {
+  const [modo, setModo] = useState(cena.visibility)
+  const [marcados, setMarcados] = useState<string[]>(cena.visible_to)
+  return (
+    <Janela titulo={`Quem pode ver: ${cena.name}`} icone={faEye} largura={400} onFechar={onFechar}>
+      <form className="janela-form" onSubmit={(e) => { e.preventDefault(); onSalvar({ visibility: modo, visible_to: modo === 'jogadores' ? marcados : [] }) }}>
+        {([['mestre', 'Só o mestre'], ['todos', 'Todos os jogadores'], ['jogadores', 'Só os jogadores marcados']] as const).map(([v, rotulo]) => (
+          <label key={v} className="janela-check">
+            <input type="radio" checked={modo === v} onChange={() => setModo(v)} /> {rotulo}
+          </label>
+        ))}
+        {modo === 'jogadores' && (
+          <div className="cena-quem-lista">
+            {jogadores.length === 0 && <p className="janela-dica">Nenhum jogador na campanha ainda.</p>}
+            {jogadores.map((j) => (
+              <label key={j.userId} className="janela-check">
+                <input type="checkbox" checked={marcados.includes(j.userId)} onChange={(e) => setMarcados((l) => (e.target.checked ? [...l, j.userId] : l.filter((x) => x !== j.userId)))} /> {j.rotulo}
+              </label>
+            ))}
+          </div>
+        )}
+        <p className="janela-dica">{ativa ? 'Esta é a cena ativa: todo mundo está vendo ela agora.' : 'A cena ativa todo mundo vê; esta regra vale pra aba Mapas.'}</p>
+        <button type="submit" className="janela-botao"><FontAwesomeIcon icon={faFloppyDisk} /> Salvar</button>
       </form>
     </Janela>
   )

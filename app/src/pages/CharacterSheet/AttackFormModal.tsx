@@ -1,3 +1,4 @@
+import { nomeSeguro } from '../../lib/nomeDeArquivo'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
@@ -356,7 +357,7 @@ export default function AttackFormModal({
     const file = e.target.files?.[0]
     if (!file || !session) return
     setUploading(true)
-    const path = `${session.user.id}/${Date.now()}-${file.name}`
+    const path = `${session.user.id}/${Date.now()}-${nomeSeguro(file.name)}`
     const { error } = await supabase.storage.from('attack_images').upload(path, file, { upsert: true })
     setUploading(false)
     if (error) return

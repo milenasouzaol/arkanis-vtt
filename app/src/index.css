@@ -18209,3 +18209,20 @@ label.janela-botao {
   margin: 4px auto;
   object-fit: contain;
 }
+
+/* Mapa que só o mestre vê (Quem pode ver) */
+.cena-cartao-oculta {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  color: #fff;
+  opacity: 0.8;
+  filter: drop-shadow(0 1px 2px #000);
+}
+
+.cena-quem-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 18px;
+}

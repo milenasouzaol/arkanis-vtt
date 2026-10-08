@@ -1,3 +1,4 @@
+import { nomeSeguro } from '../../lib/nomeDeArquivo'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
@@ -213,7 +214,7 @@ export default function RitualPickerModal({
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
-    const path = `${characterId}/${Date.now()}-${file.name}`
+    const path = `${characterId}/${Date.now()}-${nomeSeguro(file.name)}`
     const { error } = await supabase.storage.from('ritual_images').upload(path, file, { upsert: true })
     setUploading(false)
     if (error) return
