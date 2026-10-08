@@ -628,7 +628,8 @@ export default function Mesa() {
   async function colocarAtor(atorId: string, ponto: { x: number; y: number }) {
     if (!cenas.atual) return
     const a = atores.atores.find((x) => x.id === atorId)
-    const url = a && imagemDoToken(a, (a.character_id && atores.fichas[a.character_id]?.avatar_url) || (a.creature_id && atores.criaturas[a.creature_id]?.image_url) || null)
+    // Ficha só entra com o token configurado; a foto redonda da ficha não é token (08/10).
+    const url = a && imagemDoToken(a, (a.creature_id && atores.criaturas[a.creature_id]?.image_url) || null)
     const largura = cenas.atual.grid_size
     const nat = url ? await tamanhoDaImagem(url) : { w: 0, h: 0 }
     const altura = nat.w > 0 ? Math.round((largura * nat.h) / nat.w) : largura
