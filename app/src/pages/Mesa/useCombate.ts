@@ -127,7 +127,8 @@ export function useCombate(campanhaId: string | undefined) {
   // Teste de Iniciativa das fichas (jogadores e NPCs): Agilidade em dados + treino + bônus,
   // com as condições (Surdo, Fraco…). O dos jogadores vai pro chat e pro Histórico, como se
   // ele tivesse rolado na ficha.
-  const iniciativaDasFichas = useCallback(async (lista: FichaIniciativa[], combate: Combate, tipo: 'jogador' | 'npc', atorDe: Map<string, string>) => {
+  // tokenDe: o token atual do personagem (Configurar Token), que vale mais que a foto da ficha.
+  const iniciativaDasFichas = useCallback(async (lista: FichaIniciativa[], combate: Combate, tipo: 'jogador' | 'npc', atorDe: Map<string, string>, tokenDe: Map<string, string | null> = new Map()) => {
     if (!campanhaId || !lista.length) return []
     const { data: pericia } = await supabase.from('skills').select('id').eq('name', 'Iniciativa').maybeSingle()
     const { data: treinos } = pericia
@@ -151,7 +152,7 @@ export function useCombate(campanhaId: string | undefined) {
       }
       return {
         combat_id: combate.id, campaign_id: campanhaId, tipo, character_id: j.id, creature_id: null, actor_id: atorDe.get(j.id) ?? null,
-        name: j.name || 'Sem nome', image_url: j.avatar_url, iniciativa: r.total, desempate: teste.bonus,
+        name: j.name || 'Sem nome', image_url: tokenDe.get(j.id) || j.avatar_url, iniciativa: r.total, desempate: teste.bonus,
       }
     })
     if (rolagens.length) await supabase.from('character_rolls').insert(rolagens)
@@ -207,7 +208,7 @@ export function useCombate(campanhaId: string | undefined) {
     const { data: fichasNpc } = npcs.length
       ? await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions').in('id', npcs.map((a) => a.character_id!))
       : { data: [] }
-    const linhasNpc = await iniciativaDasFichas((fichasNpc ?? []) as FichaIniciativa[], combate, 'npc', new Map(npcs.map((a) => [a.character_id!, a.id])))
+    const linhasNpc = await iniciativaDasFichas((fichasNpc ?? []) as FichaIniciativa[], combate, 'npc', new Map(npcs.map((a) => [a.character_id!, a.id])), new Map(npcs.map((a) => [a.character_id!, a.token_url])))
     const linhas = [...ameacas, ...linhasNpc]
     if (!linhas.length) return []
     const { data } = await supabase.from('combatants').insert(linhas).select('*')
@@ -270,17 +271,26 @@ export function useCombate(campanhaId: string | undefined) {
     if (!campanhaId) return
     const { data: jogadores } = await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions').eq('campaign_id', campanhaId).eq('npc', false)
     const { data: atoresJogadores } = jogadores?.length
-      ? await supabase.from('campaign_actors').select('id, character_id').in('character_id', jogadores.map((j) => j.id))
+      ? await supabase.from('campaign_actors').select('id, character_id, token_url').in('character_id', jogadores.map((j) => j.id))
       : { data: [] }
     const atorDoJogador = new Map((atoresJogadores ?? []).map((a) => [a.character_id as string, a.id as string]))
+    // Ficha do mestre dada como Dono a um jogador (Configurar Propriedade) é personagem de jogador:
+    // entra sozinha no combate, como as outras.
+    const { data: npcsDaCampanha } = await supabase.from('campaign_actors').select('id, character_id, token_url, acesso_jogadores').eq('campaign_id', campanhaId).eq('tipo', 'npc')
+    const dadas = (npcsDaCampanha ?? []).filter((a) => a.character_id && Object.values((a.acesso_jogadores ?? {}) as Record<string, string>).includes('dono'))
+    const { data: fichasDadas } = dadas.length
+      ? await supabase.from('characters').select('id, user_id, name, avatar_url, attributes, conditions').in('id', dadas.map((a) => a.character_id as string))
+      : { data: [] }
+    for (const a of dadas) atorDoJogador.set(a.character_id as string, a.id as string)
+    const tokenDe = new Map([...(atoresJogadores ?? []), ...dadas].map((a) => [a.character_id as string, (a.token_url as string | null) ?? null]))
     await supabase.from('combatants').delete().eq('combat_id', combate.id)
     setCombatentes((l) => l.filter((c) => c.combat_id !== combate.id))
-    const linhas = await iniciativaDasFichas((jogadores ?? []) as FichaIniciativa[], combate, 'jogador', atorDoJogador)
+    const linhas = await iniciativaDasFichas([...(jogadores ?? []), ...(fichasDadas ?? [])] as FichaIniciativa[], combate, 'jogador', atorDoJogador, tokenDe)
     const { data: novos } = linhas.length ? await supabase.from('combatants').insert(linhas).select('*') : { data: [] }
     const criados = await criarAtoresDoBestiario(combate, combate.ameacas)
     const atores = [...new Set([...combate.atores, ...criados])]
     if (criados.length) await gravarAtores(combate, atores, [])
-    const ameacas = await entrarAtores({ ...combate, atores, ameacas: [] }, atores)
+    const ameacas = await entrarAtores({ ...combate, atores, ameacas: [] }, atores.filter((id) => !dadas.some((a) => a.id === id)))
     const todos = ordemDeIniciativa([...((novos ?? []) as Combatente[]), ...ameacas])
     setCombatentes((l) => [...l.filter((c) => c.combat_id !== combate.id), ...todos])
     await supabase.from('combats').update({ ativo: true, rodada: 1, turno_atual: todos[0]?.id ?? null }).eq('id', combate.id)
