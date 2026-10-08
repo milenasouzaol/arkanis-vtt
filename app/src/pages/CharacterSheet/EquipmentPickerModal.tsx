@@ -29,6 +29,16 @@ const SOURCE_OPTIONS: { key: SourceFilter; label: string }[] = [
 
 const ITEM_CATEGORIES = ['0', 'I', 'II', 'III', 'IV']
 
+// Tipo do item criado na mão (bug 08/10: pegava a aba aberta, e quase sempre virava arma).
+// É o tipo que decide quais modificações e maldições aparecem pra ele.
+const TIPOS_DO_ITEM: { key: EquipmentType; label: string }[] = [
+  { key: 'arma', label: 'Arma' },
+  { key: 'municao', label: 'Munição' },
+  { key: 'protecao', label: 'Proteção / Escudo' },
+  { key: 'geral', label: 'Geral / Acessório' },
+  { key: 'paranormal', label: 'Item Amaldiçoado' },
+]
+
 export type EquipmentPickResult =
   | { kind: 'catalog'; id: string }
   | { kind: 'custom'; name: string; type: EquipmentType; category: string; spaces: number; description: string; stats?: Record<string, unknown>; image_url?: string | null }
@@ -86,6 +96,7 @@ export default function EquipmentPickerModal({
   const [creatingCustom, setCreatingCustom] = useState(false)
   const [customName, setCustomName] = useState('')
   const [customCategory, setCustomCategory] = useState('I')
+  const [customType, setCustomType] = useState<EquipmentType>('geral')
   const [customSpaces, setCustomSpaces] = useState('1')
   const [customDescription, setCustomDescription] = useState('')
 
@@ -179,7 +190,7 @@ export default function EquipmentPickerModal({
     onAdd({
       kind: 'custom',
       name: customName.trim(),
-      type: category,
+      type: customType,
       category: customCategory,
       spaces: Number(customSpaces) || 0,
       description: customDescription.trim(),
@@ -277,7 +288,7 @@ export default function EquipmentPickerModal({
             ))}
           </div>
 
-          <button type="button" className="ability-picker-custom-btn" onClick={() => { setCreatingCustom(true); setSelectedId(null) }}>Criar novo Equipamento</button>
+          <button type="button" className="ability-picker-custom-btn" onClick={() => { setCreatingCustom(true); setSelectedId(null); setCustomType(category) }}>Criar novo Equipamento</button>
         </div>
 
         <div className="conditions-modal conditions-modal-detail-panel ability-picker-detail-panel">
@@ -293,6 +304,14 @@ export default function EquipmentPickerModal({
                   <div>
                     <label className="conditions-modal-custom-label">Categoria</label>
                     <Picker value={customCategory} options={ITEM_CATEGORIES} onChange={setCustomCategory} />
+                  </div>
+                  <div>
+                    <label className="conditions-modal-custom-label">Tipo do Item</label>
+                    <Picker
+                      value={TIPOS_DO_ITEM.find((t) => t.key === customType)?.label ?? ''}
+                      options={TIPOS_DO_ITEM.map((t) => t.label)}
+                      onChange={(rotulo) => setCustomType(TIPOS_DO_ITEM.find((t) => t.label === rotulo)?.key ?? 'geral')}
+                    />
                   </div>
                   <div>
                     <label className="conditions-modal-custom-label">Espaços</label>

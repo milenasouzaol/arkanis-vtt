@@ -9,6 +9,16 @@ import ItemModifiersModal, { type AppliedModifier } from './ItemModifiersModal'
 
 type ItemType = 'arma' | 'municao' | 'protecao' | 'geral' | 'paranormal'
 
+// Tipo do item (bug 08/10): dá pra corrigir um item criado com o tipo errado; é ele que decide
+// quais modificações e maldições aparecem.
+const TIPO_DO_ITEM_OPTIONS: { value: ItemType; label: string }[] = [
+  { value: 'arma', label: 'Arma' },
+  { value: 'municao', label: 'Munição' },
+  { value: 'protecao', label: 'Proteção / Escudo' },
+  { value: 'geral', label: 'Geral / Acessório' },
+  { value: 'paranormal', label: 'Item Amaldiçoado' },
+]
+
 const CATEGORIA_OPTIONS = ['0', 'I', 'II', 'III', 'IV'].map((c) => ({ value: c, label: c }))
 
 const TIPO_OPTIONS = [
@@ -139,6 +149,7 @@ export default function ItemEditModal({
 
   const [modifiers, setModifiers] = useState<AppliedModifier[]>(item.applied_modifiers ?? [])
   const [showModModal, setShowModModal] = useState(false)
+  const [tipoDoItem, setTipoDoItem] = useState<ItemType>(item.type)
 
   async function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const escolhido = e.target.files?.[0]
@@ -192,7 +203,7 @@ export default function ItemEditModal({
       equipment_item_id: null,
       custom_item: {
         name: name.trim(),
-        type: item.type,
+        type: tipoDoItem,
         category: categoria,
         spaces: Number(espacos) || 0,
         description: descricao || null,
@@ -226,6 +237,7 @@ export default function ItemEditModal({
               <TextField label="Quantas unidades" value={unidades} onChange={setUnidades} placeholder="1" />
             </div>
             <div className="attack-field-row">
+              <SelectField label="Tipo do Item" value={tipoDoItem} options={TIPO_DO_ITEM_OPTIONS} onChange={(v) => setTipoDoItem(v as ItemType)} />
               <SelectField label="Tipo" value={tipo} options={TIPO_OPTIONS} onChange={setTipo} />
               <SelectField label="Empunhadura" value={empunhadura} options={EMPUNHADURA_OPTIONS} onChange={setEmpunhadura} />
             </div>
@@ -330,7 +342,7 @@ export default function ItemEditModal({
 
     {showModModal && (
       <ItemModifiersModal
-        itemType={item.type}
+        itemType={tipoDoItem}
         applied={modifiers}
         onClose={() => setShowModModal(false)}
         onApply={setModifiers}
