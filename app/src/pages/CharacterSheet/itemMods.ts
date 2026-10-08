@@ -553,3 +553,14 @@ export function efeitosValendo(
   const ativos = new Set(ligados ?? [])
   return efeitosDoItem(descricao, mods).filter((e) => !e.condicao || ativos.has(e.chave))
 }
+
+// Espaços a mais na carga máxima por itens equipados (pedido da Millie, 07/10): Mochila Militar
+// +2 (OPRPG, p. 66), ou o que o item disser em stats.carga_bonus.
+export function bonusDeCarga(itens: { is_equipped: boolean; item: { name: string; stats?: Record<string, unknown> } | null }[]): number {
+  return itens.reduce((s, i) => {
+    if (!i.is_equipped || !i.item) return s
+    const extra = Number(i.item.stats?.carga_bonus)
+    if (Number.isFinite(extra) && extra) return s + extra
+    return /mochila militar|mochila t[aá]tica/i.test(i.item.name) ? s + 2 : s
+  }, 0)
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { numerosDoAtaque, parseCritico, somaDadosNoDano, parseNumericMod, somaBonusNoDano, somaBonuses, statsComModificadores } from './itemMods'
+import { bonusDeCarga, numerosDoAtaque, parseCritico, somaDadosNoDano, parseNumericMod, somaBonusNoDano, somaBonuses, statsComModificadores } from './itemMods'
 
 const mod = (effect: string) => ({ kind: 'modificacao' as const, name: 'x', effect, elemento: null })
 
@@ -199,5 +199,15 @@ describe('dado extra no ataque', () => {
     const r = numerosDoAtaque({ dano: '1d10' }, [mod('+2 em rolagens de dano')])
     expect(r.damage[0].formula).toBe('1d10')
     expect(r.damageBonusFromMods).toBe(2)
+  })
+})
+
+describe('bonusDeCarga', () => {
+  it('Mochila Militar equipada dá +2; guardada não', () => {
+    expect(bonusDeCarga([{ is_equipped: true, item: { name: 'Mochila Militar' } }])).toBe(2)
+    expect(bonusDeCarga([{ is_equipped: false, item: { name: 'Mochila Militar' } }])).toBe(0)
+  })
+  it('item com carga_bonus soma o valor dele', () => {
+    expect(bonusDeCarga([{ is_equipped: true, item: { name: 'Bolsa', stats: { carga_bonus: 3 } } }, { is_equipped: true, item: { name: 'Mochila Militar' } }])).toBe(5)
   })
 })

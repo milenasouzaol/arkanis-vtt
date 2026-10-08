@@ -67,11 +67,13 @@ export default function InventarioTopBox({
   character,
   atualPorCategoria,
   cargaAtual,
+  bonusCarga = 0,
   editMode,
 }: {
   character: CharacterRecord
   atualPorCategoria: [number, number, number, number]
   cargaAtual: number
+  bonusCarga?: number
   editMode: boolean
 }) {
   const [patente, setPatente] = useState<PatenteKey>((character.patente as PatenteKey) ?? 'sem_patente')
@@ -173,7 +175,8 @@ export default function InventarioTopBox({
   const limites = CATEGORIAS.map((c, i) => limiteOverride[c] ?? atual.limites[i])
   // Carga maxima nao vem da patente, vem de Forca: 5 espacos por ponto, minimo 2.
   const forca = character.attributes?.forca ?? 0
-  const cargaMaxima = Math.max(2, forca * 5)
+  // + itens equipados que aumentam a carga (Mochila Militar +2).
+  const cargaMaxima = Math.max(2, forca * 5) + bonusCarga
 
   return (
     <div className="inv-top-frame">

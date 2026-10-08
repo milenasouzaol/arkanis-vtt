@@ -4,7 +4,7 @@ import type { CharacterRecord } from './index'
 import InventarioTopBox from './InventarioTopBox'
 import InventoryItemCard from './InventoryItemCard'
 import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPickerModal'
-import { espacoComModificadores, numerosDoAtaque, statsComModificadores } from './itemMods'
+import { bonusDeCarga, espacoComModificadores, numerosDoAtaque, statsComModificadores } from './itemMods'
 import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
 import ItemModifiersModal from './ItemModifiersModal'
 import { efeitosLigaveis, type AppliedModifier } from './itemMods'
@@ -266,7 +266,7 @@ export default function InventarioTab({ character, editMode }: { character: Char
 
   return (
     <div>
-      <InventarioTopBox character={character} atualPorCategoria={atualPorCategoria} cargaAtual={cargaAtual} editMode={editMode} />
+      <InventarioTopBox character={character} atualPorCategoria={atualPorCategoria} cargaAtual={cargaAtual} bonusCarga={bonusDeCarga(items.map((inv) => ({ is_equipped: inv.is_equipped, item: inv.equipment_items ?? inv.custom_item })))} editMode={editMode} />
 
       {cartaoUso && (
         <RollCard
