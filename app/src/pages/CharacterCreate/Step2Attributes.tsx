@@ -51,7 +51,7 @@ export default function Step2Attributes({
   function setValue(key: keyof Attributes, raw: number) {
     if (Number.isNaN(raw)) return
     // Sem limite de pontos (pedido da Millie, 07/10): a ficha pode não ser de NEX 5%.
-    const next = Math.max(0, Math.min(9, Math.round(raw)))
+    const next = Math.max(0, Math.min(99, Math.round(raw)))
     onChange({ ...attributes, [key]: next })
   }
 
@@ -74,7 +74,7 @@ export default function Step2Attributes({
                 className="attr-radar-input"
                 style={{ top: node.top, left: node.left }}
                 min={0}
-                max={9}
+                max={99}
                 value={attributes[node.key]}
                 onChange={(e) => setValue(node.key, Number(e.target.value))}
               />

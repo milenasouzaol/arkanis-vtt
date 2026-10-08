@@ -3,6 +3,7 @@ import { AuthProvider } from './lib/AuthContext'
 import ProtectedRoute from './lib/ProtectedRoute'
 import Navbar from './components/Navbar'
 import AvisoErroBanco from './components/AvisoErroBanco'
+import AvisoVersaoNova from './components/AvisoVersaoNova'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Perfil from './pages/Perfil'
@@ -40,6 +41,7 @@ function App() {
           <Route path="/personagem/:id" element={<ProtectedRoute><CharacterSheet /></ProtectedRoute>} />
         </Routes>
         <AvisoErroBanco />
+        <AvisoVersaoNova />
       </BrowserRouter>
     </AuthProvider>
   )

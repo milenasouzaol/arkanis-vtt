@@ -18230,3 +18230,39 @@ label.janela-botao {
 .character-card-dropdown button.character-card-dropdown-perigo {
   color: #ff6b6b;
 }
+
+/* Versão nova do site com a aba aberta */
+.aviso-versao {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  transform: translateX(-50%);
+  background: #141217;
+  border: 1px solid #3a3740;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  color: #e8e6ea;
+  font-size: 0.9rem;
+}
+
+.aviso-versao button {
+  padding: 4px 12px;
+  background: #e8e6ea;
+  border: 0;
+  border-radius: 6px;
+  color: #141217;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.aviso-versao button.aviso-versao-fechar {
+  padding: 0 6px;
+  background: none;
+  color: #8a8a90;
+  font-size: 1.1rem;
+}
