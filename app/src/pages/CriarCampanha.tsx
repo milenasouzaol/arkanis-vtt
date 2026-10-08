@@ -1,3 +1,4 @@
+import { recortarImagem } from '../components/RecortarImagem'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -53,7 +54,10 @@ export default function CriarCampanha() {
   }
 
   async function escolherCapa(e: ChangeEvent<HTMLInputElement>) {
-    const arquivo = e.target.files?.[0]
+    const escolhido = e.target.files?.[0]
+    e.target.value = ''
+    // Recorte (pedido da Millie, 08/10): a pessoa enquadra a parte que quer ou usa a inteira.
+    const arquivo = escolhido ? await recortarImagem(escolhido, { proporcao: 'quadrado', titulo: 'Capa da campanha' }) : null
     if (!arquivo || !session) return
     setEnviandoCapa(true)
     setErroCapa(null)

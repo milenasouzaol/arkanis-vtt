@@ -1,3 +1,4 @@
+import { recortarImagem } from '../../components/RecortarImagem'
 import { useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBookOpen, faCheck, faFloppyDisk, faFolder, faFolderOpen, faFolderPlus, faImage, faImages, faPlus, faSkull, faUser, faUserGear, faXmark } from '@fortawesome/free-solid-svg-icons'
@@ -182,7 +183,12 @@ export function ConfigurarToken({ ator, onEnviar, onSalvar, onFechar }: {
   const destinoRef = useRef<string | null>(null)
 
   async function enviar(arquivos: File[], comoPrincipal: boolean) {
-    const imagens = arquivos.filter((f) => f.type.startsWith('image/'))
+    let imagens = arquivos.filter((f) => f.type.startsWith('image/'))
+    // Recorte (08/10): uma imagem por vez abre o recorte; várias de uma vez sobem direto.
+    if (imagens.length === 1) {
+      const r = await recortarImagem(imagens[0], { proporcao: 'quadrado', titulo: comoPrincipal ? 'Imagem do token' : 'Variação do token' })
+      imagens = r ? [r] : []
+    }
     if (!imagens.length) return
     setAviso('Enviando…')
     for (const f of imagens) {

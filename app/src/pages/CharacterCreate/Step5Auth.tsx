@@ -1,3 +1,4 @@
+import { recortarImagem } from '../../components/RecortarImagem'
 import { nomeSeguro } from '../../lib/nomeDeArquivo'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
@@ -77,7 +78,10 @@ export default function Step5Auth({
   }
 
   async function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const escolhido = e.target.files?.[0]
+    e.target.value = ''
+    // Recorte (pedido da Millie, 08/10): a pessoa enquadra a parte que quer ou usa a inteira.
+    const file = escolhido ? await recortarImagem(escolhido, { proporcao: 'quadrado', titulo: 'Foto do personagem' }) : null
     if (!file || !session) return
     setUploadError(null)
     try {

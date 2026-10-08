@@ -1,3 +1,4 @@
+import { recortarImagem } from '../../components/RecortarImagem'
 import { useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBorderAll, faCubes, faFileImage, faFloppyDisk, faImage, faMap, faSun } from '@fortawesome/free-solid-svg-icons'
@@ -64,8 +65,11 @@ export default function EditorCena({ cena, jogadores, onSalvar, onImagem, onFech
 
   async function escolherImagem(arquivo: File | undefined) {
     if (!arquivo) return
+    // Recorte (08/10): começa com o mapa inteiro; dá pra cortar a borda ou usar como veio.
+    const recortado = await recortarImagem(arquivo, { proporcao: 'original', titulo: 'Imagem do mapa', maxLado: 4096 })
+    if (!recortado) return
     setAviso('Enviando imagem…')
-    const url = await onImagem(arquivo)
+    const url = await onImagem(recortado)
     setAviso(url ? null : 'Não deu pra enviar a imagem.')
     if (url) mudar('background_url', url)
   }

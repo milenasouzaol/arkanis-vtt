@@ -1,3 +1,4 @@
+import { recortarImagem } from '../../components/RecortarImagem'
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { Pasta } from './cenas'
@@ -23,7 +24,10 @@ function normal(i: ItemMesa): ItemMesa {
   }
 }
 
-export async function enviarImagemDoItem(userId: string, arquivo: File): Promise<string | null> {
+export async function enviarImagemDoItem(userId: string, escolhido: File): Promise<string | null> {
+  // Recorte (08/10): a pessoa enquadra a parte que quer ou usa a imagem inteira.
+  const arquivo = await recortarImagem(escolhido, { proporcao: 'quadrado', titulo: 'Imagem do item' })
+  if (!arquivo) return null
   const caminho = `${userId}/${Date.now()}-${arquivo.name.replace(/[^\w.-]/g, '_') || 'item.png'}`
   const { error } = await supabase.storage.from('item_images').upload(caminho, arquivo)
   if (error) return null

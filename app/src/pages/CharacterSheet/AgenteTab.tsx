@@ -1,3 +1,4 @@
+import { recortarImagem } from '../../components/RecortarImagem'
 import { nomeSeguro } from '../../lib/nomeDeArquivo'
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
@@ -261,7 +262,10 @@ export default function AgenteTab({
   }
 
   async function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const escolhido = e.target.files?.[0]
+    e.target.value = ''
+    // Recorte (pedido da Millie, 08/10): a pessoa enquadra a parte que quer ou usa a inteira.
+    const file = escolhido ? await recortarImagem(escolhido, { proporcao: 'quadrado', titulo: 'Foto do personagem' }) : null
     if (!file || !session) return
     const path = `${session.user.id}/${Date.now()}-${nomeSeguro(file.name)}`
     const { error } = await supabase.storage.from('character_photos').upload(path, file, { upsert: true })

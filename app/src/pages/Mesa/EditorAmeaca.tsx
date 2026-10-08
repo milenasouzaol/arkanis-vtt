@@ -1,3 +1,4 @@
+import { recortarImagem } from '../../components/RecortarImagem'
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFloppyDisk, faImage, faPlus, faSkull, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons'
@@ -162,7 +163,9 @@ export default function EditorAmeaca({ userId, inicial, onSalvo, onEnviarImagem,
                 accept="image/*"
                 hidden
                 onChange={async (e) => {
-                  const f = e.target.files?.[0]
+                  const escolhido = e.target.files?.[0]
+                  e.target.value = ''
+                  const f = escolhido ? await recortarImagem(escolhido, { proporcao: 'quadrado', titulo: 'Imagem da ameaça' }) : null
                   if (!f) return
                   const url = await onEnviarImagem(f)
                   if (url) mudar('image_url', url)

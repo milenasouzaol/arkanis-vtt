@@ -1,3 +1,4 @@
+import { recortarImagem } from '../components/RecortarImagem'
 import { nomeSeguro } from '../lib/nomeDeArquivo'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -54,7 +55,10 @@ export default function EditarPerfil() {
   }
 
   async function handleAvatarChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const escolhido = e.target.files?.[0]
+    e.target.value = ''
+    // Recorte (pedido da Millie, 08/10): a pessoa enquadra a parte que quer ou usa a inteira.
+    const file = escolhido ? await recortarImagem(escolhido, { proporcao: 'quadrado', titulo: 'Foto de perfil' }) : null
     if (!file || !session) return
     try {
       setAvatarUrl(await uploadTo('avatars', file))
@@ -64,7 +68,10 @@ export default function EditarPerfil() {
   }
 
   async function handleBannerChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const escolhido = e.target.files?.[0]
+    e.target.value = ''
+    // Recorte (pedido da Millie, 08/10): a pessoa enquadra a parte que quer ou usa a inteira.
+    const file = escolhido ? await recortarImagem(escolhido, { proporcao: 'faixa', titulo: 'Banner do perfil' }) : null
     if (!file || !session) return
     try {
       setBannerUrl(await uploadTo('banners', file))

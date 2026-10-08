@@ -1,3 +1,4 @@
+import { recortarImagem } from '../../components/RecortarImagem'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
@@ -140,7 +141,10 @@ export default function ItemEditModal({
   const [showModModal, setShowModModal] = useState(false)
 
   async function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const escolhido = e.target.files?.[0]
+    e.target.value = ''
+    // Recorte (pedido da Millie, 08/10): a pessoa enquadra a parte que quer ou usa a inteira.
+    const file = escolhido ? await recortarImagem(escolhido, { proporcao: 'quadrado', titulo: 'Imagem do item' }) : null
     if (!file) return
     setUploading(true)
     // A pasta tem que ser a de quem envia (regra do banco); antes ia na do item e dava erro.

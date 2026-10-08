@@ -1,3 +1,4 @@
+import { recortarImagem } from '../../components/RecortarImagem'
 import { useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faChevronDown, faChevronRight, faImage, faMinus, faPlus, faTextSlash } from '@fortawesome/free-solid-svg-icons'
@@ -150,7 +151,12 @@ export default function ChatEntrada({ compacto, onEnviar, onImagem }: {
   }
 
   async function inserirImagens(arquivos: File[]) {
-    const imagens = arquivos.filter(ehImagem)
+    let imagens = arquivos.filter(ehImagem)
+    // Recorte (08/10): uma imagem por vez abre o recorte; várias de uma vez sobem direto.
+    if (imagens.length === 1) {
+      const r = await recortarImagem(imagens[0], { proporcao: 'original', titulo: 'Imagem no chat' })
+      imagens = r ? [r] : []
+    }
     if (!imagens.length) return
     setAviso('Enviando imagem…')
     for (const arquivo of imagens) {
