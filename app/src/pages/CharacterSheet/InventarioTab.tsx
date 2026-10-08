@@ -4,7 +4,7 @@ import type { CharacterRecord } from './index'
 import InventarioTopBox from './InventarioTopBox'
 import InventoryItemCard from './InventoryItemCard'
 import EquipmentPickerModal, { type EquipmentPickResult } from './EquipmentPickerModal'
-import { bonusDeCarga, espacoComModificadores, numerosDoAtaque, statsComModificadores } from './itemMods'
+import { bonusDeCarga, categoriaComMods, espacoComModificadores, numerosDoAtaque, statsComModificadores } from './itemMods'
 import ItemEditModal, { type ItemToEdit } from './ItemEditModal'
 import ItemModifiersModal from './ItemModifiersModal'
 import { efeitosLigaveis, type AppliedModifier } from './itemMods'
@@ -131,7 +131,10 @@ export default function InventarioTab({ character, editMode }: { character: Char
   }
 
   async function salvarMods(inv: InventoryItem, next: AppliedModifier[]) {
-    await supabase.from('character_inventory').update({ applied_modifiers: next }).eq('id', inv.id)
+    // A categoria sobe/desce junto (modificação +I; 1ª maldição +II, as outras +I).
+    const atual = inv.category_override ?? (inv.equipment_items ?? inv.custom_item)?.category ?? null
+    const categoria = categoriaComMods(atual, inv.applied_modifiers, next)
+    await supabase.from('character_inventory').update({ applied_modifiers: next, ...(categoria !== atual ? { category_override: categoria } : {}) }).eq('id', inv.id)
     await loadInventory()
   }
 

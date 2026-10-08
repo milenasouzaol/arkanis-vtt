@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
 import { BuscaBiblioteca } from '../Mesa/JanelaBiblioteca'
 import { buscaInicialDoItem } from '../Mesa/biblioteca'
+import { categoriaComMods } from './itemMods'
 import ItemModifiersModal, { type AppliedModifier } from './ItemModifiersModal'
 
 type ItemType = 'arma' | 'municao' | 'protecao' | 'geral' | 'paranormal'
@@ -211,6 +212,8 @@ export default function ItemEditModal({
         stats,
       },
       applied_modifiers: modifiers,
+      // A categoria escolhida aqui (já com modificações/maldições) passa a ser a do item.
+      category_override: null,
       quantity: Math.max(0, Number(unidades) || 0),
     }).eq('id', item.id)
 
@@ -299,7 +302,7 @@ export default function ItemEditModal({
                   <div className="attack-mod-pill" key={`${m.name}-${i}`}>
                     <div className="attack-mod-pill-head">
                       <strong>{m.name}{m.elemento ? ` (${m.elemento})` : ''} | {m.kind === 'modificacao' ? 'MODIFICAÇÃO' : 'MALDIÇÃO'}</strong>
-                      <button type="button" onClick={() => setModifiers((mods) => mods.filter((_, idx) => idx !== i))}>Remover</button>
+                      <button type="button" onClick={() => { const next = modifiers.filter((_, idx) => idx !== i); setCategoria((c) => categoriaComMods(c, modifiers, next) ?? c); setModifiers(next) }}>Remover</button>
                     </div>
                     <p>{m.effect}</p>
                   </div>
@@ -345,7 +348,7 @@ export default function ItemEditModal({
         itemType={tipoDoItem}
         applied={modifiers}
         onClose={() => setShowModModal(false)}
-        onApply={setModifiers}
+        onApply={(next) => { setCategoria((c) => categoriaComMods(c, modifiers, next) ?? c); setModifiers(next) }}
       />
     )}
     </>,

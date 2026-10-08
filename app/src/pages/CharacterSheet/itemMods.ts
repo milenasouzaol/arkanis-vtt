@@ -604,3 +604,24 @@ export function bonusDeCarga(itens: { is_equipped: boolean; item: { name: string
     return /mochila militar|mochila t[aá]tica/i.test(i.item.name) ? s + 2 : s
   }, 0)
 }
+
+// ---- Categoria sobe com modificações e maldições (OPRPG; pedido da Millie, 08/10) ----
+// Cada modificação: +I. A 1ª maldição: +II; as seguintes: +I cada. Iguais não se acumulam
+// (mesmo nome conta uma vez). A categoria vai de 0 a IV.
+
+export const CATEGORIAS = ['0', 'I', 'II', 'III', 'IV']
+
+export function degrausDeCategoria(mods: AppliedModifier[] | null | undefined): number {
+  const unicos = (kind: AppliedModifier['kind']) => new Set((mods ?? []).filter((m) => m.kind === kind).map((m) => m.name.trim().toLowerCase())).size
+  const maldicoes = unicos('maldicao')
+  return unicos('modificacao') + (maldicoes > 0 ? maldicoes + 1 : 0)
+}
+
+// Categoria depois de trocar as modificações: aplica só a diferença, então um ajuste feito à mão
+// na categoria continua valendo. Categoria desconhecida fica como está.
+export function categoriaComMods(categoria: string | null | undefined, antes: AppliedModifier[] | null | undefined, depois: AppliedModifier[] | null | undefined): string | null | undefined {
+  const i = CATEGORIAS.indexOf(String(categoria ?? ''))
+  if (i < 0) return categoria
+  const j = Math.max(0, Math.min(CATEGORIAS.length - 1, i + degrausDeCategoria(depois) - degrausDeCategoria(antes)))
+  return CATEGORIAS[j]
+}
