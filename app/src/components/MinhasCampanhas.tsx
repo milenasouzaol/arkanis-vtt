@@ -26,6 +26,23 @@ export default function MinhasCampanhas() {
   const [comPersonagem, setComPersonagem] = useState<Set<string>>(new Set())
   const [escolhendo, setEscolhendo] = useState<CampaignItem | null>(null)
 
+  // Excluir campanha (só o mestre): pede o nome pra não apagar sem querer. As fichas dos
+  // jogadores continuam deles; os NPCs, cenas, itens e o chat vão junto.
+  async function excluirCampanha(c: CampaignItem) {
+    setMenuOpen(null)
+    const nome = window.prompt(`Excluir "${c.name}" pra sempre? Cenas, itens, NPCs, chat e diário somem; as fichas dos jogadores continuam com eles.
+
+Digite o nome da campanha pra confirmar:`)
+    if (nome === null) return
+    if (nome.trim() !== c.name.trim()) {
+      window.alert('O nome não bate. Nada foi excluído.')
+      return
+    }
+    const { error } = await supabase.rpc('excluir_campanha', { p_campaign_id: c.id })
+    if (error) window.alert(`Não deu pra excluir: ${error.message}`)
+    else setCampaigns((l) => (l ?? []).filter((x) => x.id !== c.id))
+  }
+
   async function loadCampaigns() {
     if (!session) return
     const { data } = await supabase
@@ -96,6 +113,7 @@ export default function MinhasCampanhas() {
                   <div className="dropdown-backdrop" onClick={() => setMenuOpen(null)} />
                   <ul className="character-card-dropdown">
                     <li><button type="button" onClick={() => handleCopiarLink(c)}>{copiedId === c.id ? 'Link copiado!' : 'Copiar link de convite'}</button></li>
+                    <li><button type="button" className="character-card-dropdown-perigo" onClick={() => excluirCampanha(c)}>Excluir campanha</button></li>
                   </ul>
                 </>
               )}

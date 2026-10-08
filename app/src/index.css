@@ -18226,3 +18226,7 @@ label.janela-botao {
   gap: 4px;
   padding-left: 18px;
 }
+
+.character-card-dropdown button.character-card-dropdown-perigo {
+  color: #ff6b6b;
+}
