@@ -79,7 +79,7 @@ export default function PainelPosicionaveis({ souMestre, userId, api, categoria,
     }
     // Recorte (08/10): uma imagem por vez abre o recorte; várias de uma vez sobem direto.
     if (bons.length === 1) {
-      const r = await recortarImagem(bons[0], { proporcao: 'original', titulo: 'Ajustar imagem', maxLado: 4096 })
+      const r = await recortarImagem(bons[0], { proporcao: 'original', titulo: 'Ajustar imagem' })
       if (!r) return
       bons = [r]
     }

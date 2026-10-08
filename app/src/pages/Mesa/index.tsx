@@ -929,6 +929,7 @@ export default function Mesa() {
                 onCriarCena={criarCena}
                 onCriarPasta={cenas.criarPasta}
                 onSalvarPasta={cenas.salvarPasta}
+                onMoverCena={(c, pastaId) => cenas.salvarCena(c.id, { folder_id: pastaId })}
                 onExcluirPasta={(p, comCenas) => cenas.excluirPasta(p.id, comCenas)}
                 jogadores={jogadoresParaCena}
                 onVisibilidade={(c, v) => cenas.salvarCena(c.id, v)}

@@ -11,7 +11,7 @@ export type OpcoesRecorte = {
   // ou 'original' (mapa, token: começa com a imagem inteira).
   proporcao?: 'original' | 'quadrado' | 'retrato' | 'paisagem' | 'faixa'
   titulo?: string
-  maxLado?: number // lado maior da imagem final (padrão 2048)
+  maxLado?: number // lado maior da imagem final (padrão 8192, só pra não estourar o navegador)
 }
 
 // Lado maior do quadro na tela (menor no celular).
@@ -40,7 +40,8 @@ async function gerar(arquivo: File, img: HTMLImageElement, r: { x: number; y: nu
   ctx.imageSmoothingQuality = 'high'
   ctx.drawImage(img, r.x, r.y, r.w, r.h, 0, 0, saida.w, saida.h)
   const tipo = tipoDeSaida(arquivo)
-  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, tipo, 0.9))
+  // Qualidade máxima (reclamação da Millie, 08/10: a 0.9 a imagem ficava ruim).
+  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, tipo, 1))
   if (!blob) return arquivo
   const base = arquivo.name.replace(/\.[^.]+$/, '') || 'imagem'
   const ext = tipo === 'image/png' ? 'png' : tipo === 'image/webp' ? 'webp' : 'jpg'
@@ -54,7 +55,7 @@ function Recortador({ arquivo, opcoes, onFim }: { arquivo: File; opcoes: OpcoesR
   const [enq, setEnq] = useState<Enquadre>({ cx: 0, cy: 0, zoom: 1 })
   const [ocupado, setOcupado] = useState(false)
   const arrasto = useRef<{ x: number; y: number; cx: number; cy: number } | null>(null)
-  const maxLado = opcoes.maxLado ?? 2048
+  const maxLado = opcoes.maxLado ?? 8192
 
   useEffect(() => {
     carregar(url).then((i) => {
@@ -87,8 +88,8 @@ function Recortador({ arquivo, opcoes, onFim }: { arquivo: File; opcoes: OpcoesR
     if (!img) return
     setOcupado(true)
     const r = inteira ? { x: 0, y: 0, w: W, h: H } : retanguloDoRecorte(W, H, proporcao, atual)
-    // Inteira e já pequena: sobe o arquivo como veio (sem perder nada).
-    if (inteira && Math.max(W, H) <= maxLado) onFim(arquivo)
+    // Inteira, ou recorte que pega a imagem toda: sobe o arquivo original, sem regravar.
+    if (inteira || (r.x === 0 && r.y === 0 && r.w === W && r.h === H)) onFim(arquivo)
     else onFim(await gerar(arquivo, img, r, maxLado))
   }
 

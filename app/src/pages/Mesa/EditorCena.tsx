@@ -66,7 +66,7 @@ export default function EditorCena({ cena, jogadores, onSalvar, onImagem, onFech
   async function escolherImagem(arquivo: File | undefined) {
     if (!arquivo) return
     // Recorte (08/10): começa com o mapa inteiro; dá pra cortar a borda ou usar como veio.
-    const recortado = await recortarImagem(arquivo, { proporcao: 'original', titulo: 'Imagem do mapa', maxLado: 4096 })
+    const recortado = await recortarImagem(arquivo, { proporcao: 'original', titulo: 'Imagem do mapa' })
     if (!recortado) return
     setAviso('Enviando imagem…')
     const url = await onImagem(recortado)

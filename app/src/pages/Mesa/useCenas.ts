@@ -111,7 +111,7 @@ export function useCenas(campanhaId: string | undefined, ativaInicial: string | 
     [campanhaId],
   )
 
-  const salvarPasta = useCallback(async (id: string, campos: Pick<Pasta, 'name' | 'color' | 'sort_mode'>) => {
+  const salvarPasta = useCallback(async (id: string, campos: Partial<Pick<Pasta, 'name' | 'color' | 'sort_mode' | 'parent_id'>>) => {
     const { data } = await supabase.from('scene_folders').update(campos).eq('id', id).select(CAMPOS_PASTA).single()
     if (data) setPastas((l) => trocar(l, data as Pasta))
   }, [])

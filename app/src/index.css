@@ -18405,3 +18405,12 @@ label.janela-botao {
   border: 1px solid #e8e6ea;
   color: #141217;
 }
+
+/* Arrastar cena/pasta na aba Cenas (08/10): mesmo tracejado dos Posicionáveis. */
+.cenas-painel { flex: 1; }
+.cenas-painel.soltar-aqui,
+.cena-pasta.soltar-aqui > .cena-pasta-topo {
+  outline: 1px dashed var(--mesa-destaque);
+  outline-offset: -3px;
+}
+.cenas-painel.soltar-aqui:has(.cena-pasta.soltar-aqui) { outline: none; }

@@ -9,9 +9,13 @@ import { montarArvore, pastasEmLista, type Cena, type NoPasta, type Pasta } from
 type Alvo = { tipo: 'cena'; cena: Cena } | { tipo: 'pasta'; pasta: Pasta }
 type Menu = { x: number; y: number } & Alvo
 
+// Arrastar na lista (pedido da Millie, 08/10): cena ou pasta pra dentro de uma pasta, ou pra fora (raiz).
+const TIPO_CENA = 'application/x-vtt-cena'
+const TIPO_PASTA = 'application/x-vtt-pasta-cena'
+
 // Aba Cenas (12.5): Criar Cena / Criar Pasta, pastas com subpastas e as miniaturas.
 // Clicar abre a cena só pra quem clicou; o mestre muda a de todo mundo com "Ativar Cena".
-export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, onAbrir, onEditar, onAtivar, onTrazerTodos, onExcluir, onDuplicar, onCriarCena, onCriarPasta, onSalvarPasta, onExcluirPasta, jogadores = [], onVisibilidade }: {
+export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, onAbrir, onEditar, onAtivar, onTrazerTodos, onExcluir, onDuplicar, onCriarCena, onCriarPasta, onSalvarPasta, onExcluirPasta, onMoverCena, jogadores = [], onVisibilidade }: {
   souMestre: boolean
   cenas: Cena[]
   pastas: Pasta[]
@@ -25,7 +29,8 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
   onDuplicar: (c: Cena) => void
   onCriarCena: (nome: string, pastaId: string | null) => void
   onCriarPasta: (p: Pick<Pasta, 'name' | 'color' | 'sort_mode' | 'parent_id'>) => void
-  onSalvarPasta: (id: string, p: Pick<Pasta, 'name' | 'color' | 'sort_mode'>) => void
+  onSalvarPasta: (id: string, p: Partial<Pick<Pasta, 'name' | 'color' | 'sort_mode' | 'parent_id'>>) => void
+  onMoverCena?: (c: Cena, pastaId: string | null) => void
   onExcluirPasta: (p: Pasta, comCenas: boolean) => void
   // Quem pode ver o mapa (pedido da Millie, 07/10): só o mestre, todos ou jogadores escolhidos.
   jogadores?: { userId: string; rotulo: string }[]
@@ -37,7 +42,48 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
   const [editandoPasta, setEditandoPasta] = useState<Pasta | null>(null)
   const [vendoQuem, setVendoQuem] = useState<Cena | null>(null)
   const [fechadas, setFechadas] = useState<Set<string>>(new Set())
+  const [alvoSoltar, setAlvoSoltar] = useState<string | null>(null) // id da pasta, ou 'raiz'
   const arvore = montarArvore(pastas, cenas)
+
+  // Pasta não pode ir pra dentro dela mesma nem de uma subpasta dela.
+  function dentroDe(id: string | null, pastaId: string): boolean {
+    for (let p = id; p; p = pastas.find((x) => x.id === p)?.parent_id ?? null) if (p === pastaId) return true
+    return false
+  }
+
+  const arrastando = (e: React.DragEvent) => e.dataTransfer.types.includes(TIPO_CENA) || e.dataTransfer.types.includes(TIPO_PASTA)
+
+  function soltavel(destino: string | null) {
+    if (!souMestre) return {}
+    const chave = destino ?? 'raiz'
+    return {
+      onDragOver: (e: React.DragEvent) => {
+        if (!arrastando(e)) return
+        e.preventDefault()
+        e.stopPropagation()
+        e.dataTransfer.dropEffect = 'move'
+        if (alvoSoltar !== chave) setAlvoSoltar(chave)
+      },
+      onDragLeave: (e: React.DragEvent) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setAlvoSoltar((a) => (a === chave ? null : a))
+      },
+      onDrop: (e: React.DragEvent) => {
+        if (!arrastando(e)) return
+        e.preventDefault()
+        e.stopPropagation()
+        setAlvoSoltar(null)
+        const cenaId = e.dataTransfer.getData(TIPO_CENA)
+        const pastaId = e.dataTransfer.getData(TIPO_PASTA)
+        if (cenaId) {
+          const c = cenas.find((x) => x.id === cenaId)
+          if (c && c.folder_id !== destino) onMoverCena?.(c, destino)
+        } else if (pastaId) {
+          const p = pastas.find((x) => x.id === pastaId)
+          if (p && p.parent_id !== destino && !dentroDe(destino, pastaId)) onSalvarPasta(pastaId, { parent_id: destino })
+        }
+      },
+    }
+  }
 
   useEffect(() => {
     if (!menu) return
@@ -69,6 +115,9 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
         style={c.background_url ? { backgroundImage: `url(${c.background_url})` } : undefined}
         onClick={() => onAbrir(c)}
         onContextMenu={(e) => abrirMenu(e, { tipo: 'cena', cena: c })}
+        draggable={souMestre}
+        onDragStart={(e) => { e.dataTransfer.setData(TIPO_CENA, c.id); e.dataTransfer.effectAllowed = 'move' }}
+        onDragEnd={() => setAlvoSoltar(null)}
         aria-label={c.name}
         title={souMestre ? 'Clique pra olhar; botão direito › Ativar Cena pra mostrar pra todos' : undefined}
       >
@@ -82,8 +131,13 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
   const pasta = (n: NoPasta) => {
     const aberta = !fechadas.has(n.pasta.id)
     return (
-      <li key={n.pasta.id} className="cena-pasta">
-        <div className="cena-pasta-topo" style={n.pasta.color ? { background: n.pasta.color } : undefined} onContextMenu={(e) => abrirMenu(e, { tipo: 'pasta', pasta: n.pasta })}>
+      <li key={n.pasta.id} className={`cena-pasta${alvoSoltar === n.pasta.id ? ' soltar-aqui' : ''}`} {...soltavel(n.pasta.id)}>
+        <div
+          className="cena-pasta-topo"
+          draggable={souMestre}
+          onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData(TIPO_PASTA, n.pasta.id); e.dataTransfer.effectAllowed = 'move' }}
+          onDragEnd={() => setAlvoSoltar(null)}
+          style={n.pasta.color ? { background: n.pasta.color } : undefined} onContextMenu={(e) => abrirMenu(e, { tipo: 'pasta', pasta: n.pasta })}>
           <button type="button" className="cena-pasta-nome" aria-expanded={aberta} onClick={() => alternar(n.pasta.id)}>
             <FontAwesomeIcon icon={aberta ? faFolderOpen : faFolder} /> {n.pasta.name}
           </button>
@@ -112,7 +166,7 @@ export default function PainelCenas({ souMestre, cenas, pastas, ativa, vendo, on
   const vazio = !arvore.pastas.length && !arvore.cenas.length
 
   return (
-    <div className="cenas-painel">
+    <div className={`cenas-painel${alvoSoltar === 'raiz' ? ' soltar-aqui' : ''}`} {...soltavel(null)}>
       {souMestre && (
         <div className="cenas-botoes">
           <button type="button" className="mesa-botao" onClick={() => setCriandoCena({ pasta: null })}>
