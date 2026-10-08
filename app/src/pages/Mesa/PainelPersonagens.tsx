@@ -37,7 +37,9 @@ export default function PainelPersonagens({ souMestre, userId, atores, pastas, f
   const [fechadas, setFechadas] = useState<Set<string>>(new Set())
   const arvore = montarArvore<Ator>(pastas, atores)
 
-  const ehDono = (a: Ator) => souMestre || (a.character_id !== null && fichas[a.character_id]?.user_id === userId)
+  // Dono: quem criou a ficha, ou quem o mestre marcou como Dono em Configurar Propriedade.
+  const ehDono = (a: Ator) =>
+    souMestre || (a.character_id !== null && fichas[a.character_id]?.user_id === userId) || a.acesso_jogadores?.[userId] === 'dono'
   const miniatura = (a: Ator) =>
     imagemDoToken(a, (a.character_id && fichas[a.character_id]?.avatar_url) || (a.creature_id && criaturas[a.creature_id]?.image_url) || null)
 
