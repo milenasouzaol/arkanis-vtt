@@ -20,6 +20,11 @@ type Escolha = {
   kind: 'poder_classe' | 'poder_geral' | 'poder_paranormal' | 'trilha' | 'atributo' | 'pericia' | 'versatilidade' | 'outro'
   label: string
   ref_id: string | null
+  // "Aplicar na ficha" (pedido da Millie, 08/10): escolha nova fica pendente; ao aplicar, entra na
+  // ficha e guarda o que fez, pra desfazer se for tirada. Escolhas antigas (sem esses campos) não
+  // são mexidas: podem já ter sido passadas à mão.
+  pendente?: boolean
+  aplicado?: { ability_id?: string | null; anterior?: string | null }
 }
 type LinhaPlano = { nex_percent: number; note: string; picks: Escolha[] }
 
@@ -98,15 +103,121 @@ export default function ProgressaoTab({ character, onUpdated }: { character: Cha
     setPlano(mapa)
   }
 
-  async function mudarLinha(nex: number, mudar: (linha: LinhaPlano) => Partial<LinhaPlano>) {
-    const atual = planoRef.current[nex] ?? { nex_percent: nex, note: '', picks: [] }
-    const nova = { ...atual, ...mudar(atual) }
-    planoRef.current = { ...planoRef.current, [nex]: nova }
+  async function gravarLinha(linha: LinhaPlano) {
+    planoRef.current = { ...planoRef.current, [linha.nex_percent]: linha }
     setPlano(planoRef.current)
     await supabase.from('character_progression_picks').upsert(
-      { character_id: character.id, nex_percent: nex, note: nova.note, picks: nova.picks },
+      { character_id: character.id, nex_percent: linha.nex_percent, note: linha.note, picks: linha.picks },
       { onConflict: 'character_id,nex_percent' },
     )
+  }
+
+  // Uma coisa por vez na ficha: dois cliques seguidos não aplicam em dobro.
+  const fila = useRef<Promise<unknown>>(Promise.resolve())
+  function emFila<T>(f: () => Promise<T>): Promise<T> {
+    const proxima = fila.current.then(f, f)
+    fila.current = proxima.catch(() => undefined)
+    return proxima
+  }
+
+  async function mudarLinha(nex: number, mudar: (linha: LinhaPlano) => Partial<LinhaPlano>) {
+    return emFila(async () => {
+      const atual = planoRef.current[nex] ?? { nex_percent: nex, note: '', picks: [] }
+      const mudanca = mudar(atual)
+      const nova = { ...atual, ...mudanca }
+      if (mudanca.picks) {
+        const novas = mudanca.picks
+        // O que entrou fica pendente; o que saiu e já estava na ficha é desfeito.
+        nova.picks = novas.map((e) => (atual.picks.includes(e) ? e : { ...e, pendente: true }))
+        let mexeu = false
+        for (const e of atual.picks.filter((x) => !novas.includes(x))) {
+          if (e.aplicado) { await desfazerNaFicha(e); mexeu = true }
+        }
+        if (mexeu) onUpdated()
+      }
+      await gravarLinha(nova)
+    })
+  }
+
+  // ---- Aplicar na ficha ----
+
+  async function colunaDoPoder(e: Escolha): Promise<Record<string, string> | null> {
+    if (!e.ref_id) return null
+    if (e.kind === 'poder_classe') return { class_power_id: e.ref_id }
+    if (e.kind === 'poder_geral') return { general_power_id: e.ref_id }
+    if (e.kind === 'poder_paranormal') return { paranormal_power_id: e.ref_id }
+    if (e.kind === 'versatilidade') {
+      if (niveisTrilha.some((t) => t.id === e.ref_id)) return { class_track_tier_id: e.ref_id }
+      if (gerais.some((g) => g.id === e.ref_id)) return { general_power_id: e.ref_id }
+      return { class_power_id: e.ref_id }
+    }
+    return null
+  }
+
+  const PROXIMO_GRAU: Record<string, string> = { nenhum: 'treinado', treinado: 'veterano', veterano: 'expert', expert: 'expert' }
+
+  async function aplicarNaFicha(e: Escolha): Promise<Escolha> {
+    const coluna = await colunaDoPoder(e)
+    if (coluna) {
+      const [campo, id] = Object.entries(coluna)[0]
+      const { data: ja } = await supabase.from('character_abilities').select('id').eq('character_id', character.id).eq(campo, id).limit(1)
+      // Já estava na ficha (posto à mão): não duplica, e tirar daqui não apaga o de antes.
+      if (ja?.length) return { ...e, pendente: false, aplicado: { ability_id: null } }
+      const { data } = await supabase.from('character_abilities').insert({ character_id: character.id, ...coluna }).select('id').single()
+      return { ...e, pendente: false, aplicado: { ability_id: data?.id ?? null } }
+    }
+    if (e.kind === 'atributo' && e.ref_id) {
+      const { data } = await supabase.from('characters').select('attributes').eq('id', character.id).single()
+      const attrs = { ...(data?.attributes as Record<string, number>) }
+      attrs[e.ref_id] = (attrs[e.ref_id] ?? 0) + 1
+      await supabase.from('characters').update({ attributes: attrs }).eq('id', character.id)
+      return { ...e, pendente: false, aplicado: {} }
+    }
+    if (e.kind === 'pericia' && e.ref_id) {
+      const { data } = await supabase.from('character_skills').select('training, attribute_override, extra_bonus').eq('character_id', character.id).eq('skill_id', e.ref_id).maybeSingle()
+      const anterior = data?.training ?? 'nenhum'
+      await supabase.from('character_skills').upsert({
+        character_id: character.id, skill_id: e.ref_id, training: PROXIMO_GRAU[anterior] ?? anterior,
+        attribute_override: data?.attribute_override ?? null, extra_bonus: data?.extra_bonus ?? 0,
+      })
+      return { ...e, pendente: false, aplicado: { anterior } }
+    }
+    return { ...e, pendente: false }
+  }
+
+  async function desfazerNaFicha(e: Escolha) {
+    if (!e.aplicado) return
+    if (e.aplicado.ability_id) {
+      await supabase.from('character_abilities').delete().eq('id', e.aplicado.ability_id)
+    } else if (e.kind === 'atributo' && e.ref_id) {
+      const { data } = await supabase.from('characters').select('attributes').eq('id', character.id).single()
+      const attrs = { ...(data?.attributes as Record<string, number>) }
+      attrs[e.ref_id] = Math.max(0, (attrs[e.ref_id] ?? 0) - 1)
+      await supabase.from('characters').update({ attributes: attrs }).eq('id', character.id)
+    } else if (e.kind === 'pericia' && e.ref_id && e.aplicado.anterior) {
+      await supabase.from('character_skills').update({ training: e.aplicado.anterior }).eq('character_id', character.id).eq('skill_id', e.ref_id)
+    }
+  }
+
+  // Pendentes nos NEX já alcançados (até o atual).
+  const pendentesAlcancados = NIVEIS_NEX.filter((n) => n <= (character.nex_percent ?? 0))
+    .reduce((t, n) => t + (plano[n]?.picks.filter((e) => e.pendente).length ?? 0), 0)
+  const [aplicando, setAplicando] = useState(false)
+
+  async function aplicarTudo() {
+    setAplicando(true)
+    await emFila(async () => {
+      for (const n of NIVEIS_NEX) {
+        if (n > (character.nex_percent ?? 0)) continue
+        const linha = planoRef.current[n]
+        if (!linha?.picks.some((e) => e.pendente)) continue
+        const picks: Escolha[] = []
+        for (const e of linha.picks) picks.push(e.pendente ? await aplicarNaFicha(e) : e)
+        await gravarLinha({ ...linha, picks })
+      }
+    })
+    setAplicando(false)
+    onUpdated()
   }
 
   const salvarLinha = (nex: number, mudanca: Partial<LinhaPlano>) => mudarLinha(nex, () => mudanca)
@@ -218,6 +329,18 @@ export default function ProgressaoTab({ character, onUpdated }: { character: Cha
             <span className="prog-rotulo">Trilha</span>
             <strong>{trilha?.name ?? 'Nenhuma ainda'}</strong>
           </div>
+          {/* Leva pra ficha o que foi escolhido nos NEX já alcançados (poderes, atributo, perícias). */}
+          <button
+            type="button"
+            className="prog-trocar prog-aplicar"
+            disabled={aplicando || pendentesAlcancados === 0}
+            title={pendentesAlcancados
+              ? 'Coloca na ficha os poderes, atributos e perícias escolhidos até o seu NEX atual. Tirar uma escolha depois desfaz na ficha.'
+              : 'Nada novo pra aplicar até o seu NEX atual.'}
+            onClick={aplicarTudo}
+          >
+            {aplicando ? 'Aplicando…' : `Aplicar na ficha${pendentesAlcancados ? ` (${pendentesAlcancados})` : ''}`}
+          </button>
         </div>
 
         {agora && (

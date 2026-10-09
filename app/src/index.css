@@ -18443,3 +18443,7 @@ label.janela-botao {
 .combat-defense-formula .combat-defense-fixed { margin-left: 0; }
 .combat-defense-top:has(.combat-defense-termo) .combat-defense-side { gap: 0.6em; }
 .combat-defense-top:has(.combat-defense-termo) { gap: 0.6em; }
+
+/* "Aplicar na ficha" na Progressão (08/10): mesmo botão do "Trocar". */
+.prog-aplicar { align-self: center; white-space: nowrap; }
+.prog-aplicar:disabled { opacity: 0.45; cursor: default; }
