@@ -52,6 +52,8 @@ export function useCombate(campanhaId: string | undefined) {
   const [combates, setCombates] = useState<Combate[]>([])
   const [combatentes, setCombatentes] = useState<Combatente[]>([])
   const [fichas, setFichas] = useState<Record<string, FichaBarras>>({})
+  // Nomes dos poderes de cada ficha: os que crescem com o NEX mudam o PV/PE máximo.
+  const [poderesDe, setPoderesDe] = useState<Record<string, string[]>>({})
   const [classes, setClasses] = useState<Record<string, Parameters<typeof computeDerivedStats>[0]>>({})
 
   const carregarFichas = useCallback(async () => {
@@ -60,6 +62,18 @@ export function useCombate(campanhaId: string | undefined) {
     const { data } = await supabase.from('characters').select(CAMPOS_FICHA).eq('campaign_id', campanhaId)
     const lista = (data ?? []) as FichaBarras[]
     setFichas(Object.fromEntries(lista.map((f) => [f.id, f])))
+    if (lista.length) {
+      const { data: habs } = await supabase
+        .from('character_abilities')
+        .select('character_id, custom_ability, class_powers(name), paranormal_powers(name), general_powers(name), origins(power_name), class_track_tiers(name)')
+        .in('character_id', lista.map((f) => f.id))
+      const mapa: Record<string, string[]> = {}
+      for (const r of (habs ?? []) as any[]) {
+        const nome = r.class_powers?.name ?? r.paranormal_powers?.name ?? r.general_powers?.name ?? r.origins?.power_name ?? r.class_track_tiers?.name ?? r.custom_ability?.name
+        if (nome) (mapa[r.character_id] ??= []).push(nome)
+      }
+      setPoderesDe(mapa)
+    }
     const ids = [...new Set(lista.map((f) => f.class_id).filter((x): x is string => !!x))]
     if (ids.length) {
       const { data: cls } = await supabase.from('classes').select('*').in('id', ids)
@@ -109,7 +123,7 @@ export function useCombate(campanhaId: string | undefined) {
     const f = fichas[c.character_id]
     if (!f) return null
     const cls = f.class_id ? classes[f.class_id] : undefined
-    const max = cls ? computeDerivedStats(cls, f.attributes as Parameters<typeof computeDerivedStats>[1], f.nex_percent) : null
+    const max = cls ? computeDerivedStats(cls, f.attributes as Parameters<typeof computeDerivedStats>[1], f.nex_percent, poderesDe[f.id]) : null
     const maxPv = f.max_pv_override ?? max?.maxPv ?? null
     const maxSan = f.max_sanity_override ?? max?.maxSanity ?? null
     return {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { recordRoll } from '../../lib/rollHistory'
-import { attrValue, rollAttributeTest, rollDiceFormula, trainingBonus, type AttributeKey, type Training } from '../../lib/rules'
+import { attrValue, computeDerivedStats, limiteDePE, nexSteps, rollAttributeTest, rollDiceFormula, trainingBonus, type AttributeKey, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
 import RollResult, { RollCard, type RollResultData, type RollCardDie } from './RollResult'
 import { type Modifier } from './ModifiersPanel'
@@ -23,6 +23,7 @@ import defenseRing from '../../assets/combate/border-defense-desktop.png'
 import resetIcon from '../../assets/combate/seta-reset.svg'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
 import { lerCondicoesPersonalizadas } from './efeitosEscolhidos'
+import { useClasseDaFicha } from './useClasseDaFicha'
 import { dentroDaMesa, tocarSomDeArma } from '../../lib/sons'
 
 type Attack = {
@@ -78,6 +79,11 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   // Bônus de perícia dos itens equipados (Reflexos/Fortitude entram na Esquiva e no Bloqueio).
   const [bonusDeItens, setBonusDeItens] = useState<Record<string, number>>({})
   const poderes = usePoderes(character.id)
+  const classe = useClasseDaFicha(character)
+  // Machucado = metade dos PV ou menos (Inquebrável da Tropa de Choque dá +5 Defesa).
+  const maxPv = character.max_pv_override ?? (classe ? computeDerivedStats(classe, character.attributes, character.nex_percent, poderes).maxPv : null)
+  const machucado = maxPv != null && maxPv > 0 && (character.current_pv ?? maxPv) <= maxPv / 2
+  const limitePE = limiteDePE(character.nex_percent, poderes)
   const condicoesProprias = lerCondicoesPersonalizadas(character.condicoes_personalizadas)
   const [resistencias, setResistencias] = useState<Resistencia[]>([])
   const [adding, setAdding] = useState(false)
@@ -397,7 +403,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const agilidade = character.attributes.agilidade
   // Condições (Vulnerável -2, Desprevenido -5, Indefeso -10) entram sozinhas na Defesa.
   // Mesma conta da mesa (defesa.ts): 10 + AGI + itens + poderes fixos + outros + condições.
-  const defesa = defesaTotal({ agilidade, outros: character.defense_other_bonus, condicoes: character.conditions, itens: itensEquipados, poderes, condicoesPersonalizadas: condicoesProprias })
+  const defesa = defesaTotal({ agilidade, outros: character.defense_other_bonus, condicoes: character.conditions, itens: itensEquipados, poderes, condicoesPersonalizadas: condicoesProprias, machucado })
   const defesaCondicoes = defesa.condicoes
   const defenseTotal = defesa.total
   const fortitudeSkill = skills.find((s) => s.name === 'Fortitude')
@@ -405,7 +411,9 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const bonusDaPericia = (sk: Skill) => (charSkillBonus[sk.id] ?? 0) + (bonusDeItens[sk.name] ?? 0) + (defesa.poderes.pericias[sk.name] ?? 0)
   // Bloqueio: o bônus de Fortitude vira resistência a dano. Esquiva: o bônus de Reflexos soma
   // na Defesa, então o número mostrado é a Defesa de quem esquiva.
-  const bloqueioAuto = fortitudeSkill ? bonusDaPericia(fortitudeSkill) : 0
+  // Casca Grossa (Tropa de Choque): ao bloquear, soma o Vigor na resistência a dano.
+  const cascaGrossa = poderes.some((n) => n.trim().toLowerCase() === 'casca grossa') ? character.attributes.vigor ?? 0 : 0
+  const bloqueioAuto = fortitudeSkill ? bonusDaPericia(fortitudeSkill) + cascaGrossa : 0
   const esquivaAuto = defenseTotal + (reflexosSkill ? bonusDaPericia(reflexosSkill) : 0)
 
   useEffect(() => {
@@ -484,7 +492,8 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
                   onChange={(e) => updateDefenseField({ bloqueio_bonus: Number(e.target.value) })}
                 />
               ) : (
-                <span className="combat-plain-value" title={fortitudeSkill ? `Bônus de Fortitude: ${bloqueioAuto}` : undefined}>{character.bloqueio_bonus}</span>
+                <span className="combat-plain-value" title={fortitudeSkill ? `Bônus de Fortitude: ${bloqueioAuto - cascaGrossa}${cascaGrossa ? `
+Poder Casca Grossa: +${cascaGrossa} (Vigor)` : ''}` : undefined}>{character.bloqueio_bonus}</span>
               )}
               <span className="combat-defense-sub">Bloqueio</span>
             </div>
@@ -524,7 +533,8 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         </button>
 
         <div className="combat-stats-row">
-          <span><strong>PE / Turno:</strong> 1/1</span>
+          <span title={`1 por degrau de NEX${limitePE > Math.max(1, nexSteps(character.nex_percent)) ? ' + poderes (Dedicação)' : ''}${poderes.some((n) => n.trim().toLowerCase() === 'presença poderosa') ? `
+Presença Poderosa: +${character.attributes.presenca ?? 0} só pra conjurar rituais` : ''}`}><strong>PE / Turno:</strong> {limitePE}</span>
           <span><strong>Deslocamento:</strong> 9m (6q)</span>
         </div>
       </div>

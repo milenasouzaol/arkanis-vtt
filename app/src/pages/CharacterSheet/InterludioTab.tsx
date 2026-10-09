@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { recordRoll } from '../../lib/rollHistory'
-import { attrValue, computeDerivedStats, nexSteps, recuperarAteMaximo, rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
+import { attrValue, computeDerivedStats, limiteDePE, recuperarAteMaximo, rollAttributeTest, rollDiceFormula, trainingBonus, type Training } from '../../lib/rules'
 import type { CharacterRecord } from './index'
 import RollResult, { type RollResultData } from './RollResult'
 import { elementoPorChave } from './elementosParanormais'
 import { useClasseDaFicha } from './useClasseDaFicha'
 import { ALTURA_CENA, LARGURA_CENA, OBJETOS, centroDe } from './interludioCena'
+import { usePoderes } from './usePoderes'
 import esconderijo from '../../assets/interludio/esconderijo.webp'
 
 type ActionKey = 'alimentar' | 'dormir' | 'exercitar' | 'ler' | 'manutencao' | 'relaxar' | 'revisar_caso' | 'resolver_problema'
@@ -96,7 +97,8 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
     })
   }
 
-  const limitePE = Math.max(1, nexSteps(character.nex_percent))
+  const poderes = usePoderes(character.id)
+  const limitePE = limiteDePE(character.nex_percent, poderes)
   const classe = useClasseDaFicha(character)
 
   async function confirmar() {
@@ -104,7 +106,7 @@ export default function InterludioTab({ character, onUpdated }: { character: Cha
 
     const semSanidade = character.optional_rules.sem_sanidade
     // O descanso para no maximo que a ficha mostra (com os ajustes a mao de maximo).
-    const formula = classe ? computeDerivedStats(classe, character.attributes, character.nex_percent) : null
+    const formula = classe ? computeDerivedStats(classe, character.attributes, character.nex_percent, poderes) : null
     const maxPv = character.max_pv_override ?? formula?.maxPv ?? null
     const maxSanity = character.max_sanity_override ?? formula?.maxSanity ?? null
     const maxPe = formula?.maxPe ?? null

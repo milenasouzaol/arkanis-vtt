@@ -8,7 +8,7 @@ import { defesaDeCondicoes } from './condicoes'
 
 export const TESTES_DE_RESISTENCIA = ['Fortitude', 'Reflexos', 'Vontade']
 
-type Passivo = { defesa?: number; pericias?: Record<string, number>; soComProtecaoLeve?: boolean }
+type Passivo = { defesa?: number; pericias?: Record<string, number>; soComProtecaoLeve?: boolean; soMachucado?: boolean }
 
 const RESISTENCIA_2 = { Fortitude: 2, Reflexos: 2, Vontade: 2 }
 
@@ -23,6 +23,8 @@ const PODERES_PASSIVOS: Record<string, Passivo> = {
   'adaptação climática': { pericias: { Fortitude: 2 } },
   'vontade inabalável': { pericias: { Vontade: 2 } },
   'luta ou fuga': { pericias: { Vontade: 2 } },
+  // Tropa de Choque NEX 99%: machucado (metade dos PV ou menos), +5 Defesa (a resistência a dano 5 fica na mão).
+  'inquebrável': { defesa: 5, soMachucado: true },
 }
 
 export type BonusDosPoderes = {
@@ -33,12 +35,12 @@ export type BonusDosPoderes = {
   origens: Record<string, string[]>
 }
 
-export function bonusDosPoderes(nomes: (string | null | undefined)[], ctx: { protecaoLeve?: boolean } = {}): BonusDosPoderes {
+export function bonusDosPoderes(nomes: (string | null | undefined)[], ctx: { protecaoLeve?: boolean; machucado?: boolean } = {}): BonusDosPoderes {
   const r: BonusDosPoderes = { defesa: 0, pericias: {}, motivos: [], origens: {} }
   // O mesmo poder escolhido duas vezes (registro repetido) não soma de novo.
   for (const nome of new Set(nomes.map((n) => String(n ?? '').trim()))) {
     const p = PODERES_PASSIVOS[nome.toLowerCase()]
-    if (!p || (p.soComProtecaoLeve && !ctx.protecaoLeve)) continue
+    if (!p || (p.soComProtecaoLeve && !ctx.protecaoLeve) || (p.soMachucado && !ctx.machucado)) continue
     if (p.defesa) {
       r.defesa += p.defesa
       r.motivos.push(`Poder ${nome}: +${p.defesa}`)
@@ -62,9 +64,9 @@ export function temProtecaoLeve(itens: ItemDeDefesa[]): boolean {
   return itens.some((i) => i.tipo === 'protecao' && /\bleve\b/i.test(String(i.nome ?? '')))
 }
 
-export function defesaTotal(p: { agilidade: number; outros: number; condicoes: string[] | null | undefined; itens: ItemDeDefesa[]; poderes: (string | null | undefined)[]; condicoesPersonalizadas?: CondicaoPersonalizada[] }) {
+export function defesaTotal(p: { agilidade: number; outros: number; condicoes: string[] | null | undefined; itens: ItemDeDefesa[]; poderes: (string | null | undefined)[]; condicoesPersonalizadas?: CondicaoPersonalizada[]; machucado?: boolean }) {
   const itens = defesaDosItens(p.itens)
-  const poderes = bonusDosPoderes(p.poderes, { protecaoLeve: temProtecaoLeve(p.itens) })
+  const poderes = bonusDosPoderes(p.poderes, { protecaoLeve: temProtecaoLeve(p.itens), machucado: p.machucado })
   const condicoes = defesaDeCondicoes(p.condicoes ?? [], p.condicoesPersonalizadas)
   return { total: 10 + p.agilidade + itens + poderes.defesa + p.outros + condicoes.valor, itens, poderes, condicoes }
 }

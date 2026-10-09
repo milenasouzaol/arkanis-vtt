@@ -268,8 +268,8 @@ export default function AgenteTab({
 
   const derived = useMemo(() => {
     if (!classRow) return { maxPv: 0, maxPe: 0, maxSanity: 0, maxPd: 0 }
-    return computeDerivedStats(classRow, character.attributes, character.nex_percent)
-  }, [classRow, character.attributes, character.nex_percent])
+    return computeDerivedStats(classRow, character.attributes, character.nex_percent, poderes)
+  }, [classRow, character.attributes, character.nex_percent, poderes])
 
   async function updateAttribute(key: keyof typeof character.attributes, value: number) {
     const attributes = { ...character.attributes, [key]: value }

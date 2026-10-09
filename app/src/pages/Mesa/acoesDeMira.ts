@@ -161,7 +161,7 @@ export async function maximoDoAlvo(d: DadosDoAlvo, recurso: Recurso): Promise<nu
     classe = data
   } else if (d.custom_class) classe = classePropria(d.custom_class as unknown as NonNullable<CharacterRecord['custom_class']>)
   if (!classe) return null
-  const m = computeDerivedStats(classe, (d.atributos ?? {}) as Parameters<typeof computeDerivedStats>[1], d.nex ?? 0)
+  const m = computeDerivedStats(classe, (d.atributos ?? {}) as Parameters<typeof computeDerivedStats>[1], d.nex ?? 0, d.poderes)
   return recurso === 'pv' ? m.maxPv : recurso === 'san' ? m.maxSanity : m.maxPe
 }
 

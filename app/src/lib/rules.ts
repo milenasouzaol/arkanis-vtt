@@ -91,11 +91,41 @@ export function nexAumentos(nexPercent: number): number {
   return Math.max(0, nexSteps(nexPercent) - 1)
 }
 
-export function computeDerivedStats(cls: ClassLike, attributes: Attributes, nexPercent: number) {
+// ---- Poderes que crescem com o NEX (pedido da Millie, 08/10: Casca Grossa da Tropa de Choque
+// e o PE não subiam). "a cada 5% de NEX" / "por NEX" = um por degrau de NEX (5% = 1, 99% = 20). ----
+
+export function bonusDeNexDosPoderes(poderes: (string | null | undefined)[] | undefined, nexPercent: number): { pv: number; pe: number; limitePE: number; motivos: string[] } {
+  const nex = nexSteps(nexPercent)
+  const tem = new Set((poderes ?? []).map((n) => String(n ?? '').trim().toLowerCase()))
+  const r = { pv: 0, pe: 0, limitePE: 0, motivos: [] as string[] }
+  const dar = (nome: string, campo: 'pv' | 'pe' | 'limitePE', valor: number, rotulo: string) => {
+    if (!tem.has(nome.toLowerCase()) || !valor) return
+    r[campo] += valor
+    r.motivos.push(`Poder ${nome}: +${valor} ${rotulo}`)
+  }
+  dar('Casca Grossa', 'pv', nex, 'PV') // Tropa de Choque, NEX 10%
+  dar('Vitalidade Reforçada', 'pv', nex, 'PV')
+  dar('Sangue de Ferro', 'pv', 2 * nex, 'PV')
+  dar('Vontade Inabalável', 'pe', Math.floor(nex / 2), 'PE') // a cada 10% de NEX
+  dar('Combatente Esforçado', 'pe', nex, 'PE')
+  dar('Potencial Aprimorado', 'pe', nex, 'PE')
+  // Dedicação: +1 PE, +1 a cada NEX ímpar a partir de 15% (15%, 25%…), e +1 no limite de PE.
+  dar('Dedicação', 'pe', 1 + (nexPercent >= 15 ? Math.floor((Math.min(nexPercent, 95) - 5) / 10) : 0), 'PE')
+  dar('Dedicação', 'limitePE', 1, 'no limite de PE por turno')
+  return r
+}
+
+// Limite de PE por turno: 1 por degrau de NEX (5% = 1 … 99% = 20), mais poderes como Dedicação.
+export function limiteDePE(nexPercent: number, poderes?: (string | null | undefined)[]): number {
+  return Math.max(1, nexSteps(nexPercent)) + bonusDeNexDosPoderes(poderes, nexPercent).limitePE
+}
+
+export function computeDerivedStats(cls: ClassLike, attributes: Attributes, nexPercent: number, poderes?: (string | null | undefined)[]) {
   const steps = nexAumentos(nexPercent)
+  const dosPoderes = bonusDeNexDosPoderes(poderes, nexPercent)
   return {
-    maxPv: (cls.pv_initial ?? 0) + attrValue(attributes, cls.pv_initial_attr) + steps * ((cls.pv_per_nex ?? 0) + attrValue(attributes, cls.pv_per_nex_attr)),
-    maxPe: (cls.pe_initial ?? 0) + attrValue(attributes, cls.pe_initial_attr) + steps * ((cls.pe_per_nex ?? 0) + attrValue(attributes, cls.pe_per_nex_attr)),
+    maxPv: (cls.pv_initial ?? 0) + attrValue(attributes, cls.pv_initial_attr) + steps * ((cls.pv_per_nex ?? 0) + attrValue(attributes, cls.pv_per_nex_attr)) + dosPoderes.pv,
+    maxPe: (cls.pe_initial ?? 0) + attrValue(attributes, cls.pe_initial_attr) + steps * ((cls.pe_per_nex ?? 0) + attrValue(attributes, cls.pe_per_nex_attr)) + dosPoderes.pe,
     maxSanity: (cls.sanity_initial ?? 0) + steps * (cls.sanity_per_nex ?? 0),
     // maxPd aqui é a fórmula de "Jogando sem Sanidade" (fonte confirmada, ver 5.8) — PD por NEX.
     maxPd: (cls.pd_initial ?? 0) + attrValue(attributes, cls.pd_initial_attr) + steps * ((cls.pd_per_nex ?? 0) + attrValue(attributes, cls.pd_per_nex_attr)),

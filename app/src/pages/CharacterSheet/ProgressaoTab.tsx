@@ -7,6 +7,7 @@ import {
   NIVEIS_NEX, ROTULO_TIPO, anteriorNex, estadoDoNivel, habilidadeDaMelhoria, lerGanhos, niveisAte, periciasNoGrau,
   proximoNex, type Ganho,
 } from './progressao'
+import { usePoderes } from './usePoderes'
 import type { CharacterRecord } from './index'
 
 /*
@@ -48,6 +49,7 @@ export default function ProgressaoTab({ character, onUpdated }: { character: Cha
   const [classRow, setClassRow] = useState<any>(null)
   const [tabela, setTabela] = useState<ClassProgression[]>([])
   const [poderes, setPoderes] = useState<ClassPower[]>([])
+  const poderesDaFicha = usePoderes(character.id)
   const [habilidadesBase, setHabilidadesBase] = useState<ClassPower[]>([])
   const [trilhas, setTrilhas] = useState<ClassTrack[]>([])
   const [niveisTrilha, setNiveisTrilha] = useState<ClassTrackTier[]>([])
@@ -148,8 +150,9 @@ export default function ProgressaoTab({ character, onUpdated }: { character: Cha
   }
 
   const statsEm = (nex: number) => {
+    // Poderes que crescem com o NEX (Casca Grossa, Vitalidade Reforçada…) entram na prévia.
     if (!classRow) return null
-    const s = computeDerivedStats(classRow, character.attributes, nex)
+    const s = computeDerivedStats(classRow, character.attributes, nex, poderesDaFicha)
     return { ...s, maxSanity: s.maxSanity - sanidadePerdida(nex) }
   }
 
