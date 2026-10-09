@@ -3,8 +3,9 @@ import { supabase } from '../../lib/supabase'
 
 // Nomes dos poderes/habilidades da ficha (classe, paranormais, gerais, origem, trilha e os criados
 // na mão). A Defesa e os testes de resistência usam pra somar os bônus fixos (ver defesa.ts).
-export function usePoderes(characterId: string, recarregar?: unknown): string[] {
-  const [nomes, setNomes] = useState<string[]>([])
+// `carregado` diz quando a lista chegou: antes disso a conta ainda não está completa.
+export function usePoderesDaFicha(characterId: string, recarregar?: unknown): { nomes: string[]; carregado: boolean } {
+  const [estado, setEstado] = useState<{ nomes: string[]; carregado: boolean }>({ nomes: [], carregado: false })
   useEffect(() => {
     let cancelado = false
     supabase
@@ -13,11 +14,16 @@ export function usePoderes(characterId: string, recarregar?: unknown): string[] 
       .eq('character_id', characterId)
       .then(({ data }) => {
         if (cancelado) return
-        setNomes((data ?? []).map((r: any) =>
+        const nomes = (data ?? []).map((r: any) =>
           r.class_powers?.name ?? r.paranormal_powers?.name ?? r.general_powers?.name ?? r.origins?.power_name ?? r.class_track_tiers?.name ?? r.custom_ability?.name ?? '',
-        ).filter(Boolean))
+        ).filter(Boolean)
+        setEstado({ nomes, carregado: true })
       })
     return () => { cancelado = true }
   }, [characterId, recarregar])
-  return nomes
+  return estado
+}
+
+export function usePoderes(characterId: string, recarregar?: unknown): string[] {
+  return usePoderesDaFicha(characterId, recarregar).nomes
 }

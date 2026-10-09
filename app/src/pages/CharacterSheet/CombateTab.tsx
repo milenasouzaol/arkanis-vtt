@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { recordRoll } from '../../lib/rollHistory'
@@ -13,7 +13,7 @@ import { penalidadeDeCondicoes, rotuloComCondicoes } from './condicoes'
 import { efeitosValendo, rdDeBloqueio, numerosDoAtaque, resistenciasDoItemEquipado, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
 import { useAlvosDaMesa } from '../../lib/miraDaMesa'
 import { defesaDosItens, defesaTotal, origemDoItem, origensDaDefesaDosItens, textoDasOrigens, type ItemDeDefesa } from './defesa'
-import { usePoderes } from './usePoderes'
+import { usePoderesDaFicha } from './usePoderes'
 import { postarAtaque } from '../Mesa/acoesDeMira'
 import { textoDosAlvos } from '../Mesa/mira'
 import { numerosComEncantos, textoDoEncanto, type Encanto } from './encantos'
@@ -80,7 +80,10 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const [bonusDeItens, setBonusDeItens] = useState<Record<string, number>>({})
   // RD a mais no Bloqueio vinda de itens equipados (Braçadeira reforçada), com a origem.
   const [bloqueioDeItens, setBloqueioDeItens] = useState<{ valor: number; origens: string[] }>({ valor: 0, origens: [] })
-  const poderes = usePoderes(character.id)
+  const { nomes: poderes, carregado: poderesCarregados } = usePoderesDaFicha(character.id)
+  // Bloqueio/Esquiva dependem de tudo isso. Antes de tudo chegar, a conta é parcial: salvar ou
+  // mostrar esse valor fazia o número variar a cada F5 (5 numa, 9 na outra), bug 08/10.
+  const [carregou, setCarregou] = useState({ pericias: false, treino: false, itens: false })
   const classe = useClasseDaFicha(character)
   // Machucado = metade dos PV ou menos (Inquebrável da Tropa de Choque dá +5 Defesa).
   const maxPv = character.max_pv_override ?? (classe ? computeDerivedStats(classe, character.attributes, character.nex_percent, poderes).maxPv : null)
@@ -155,6 +158,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         }))
         const nomes = protecoes.map((p: any) => p.equipment_items?.name ?? p.custom_item?.name).filter(Boolean)
         setItensEquipados(itens)
+        setCarregou((c) => ({ ...c, itens: true }))
         setEquippedDefense(defesaDosItens(itens))
         const porPericia: Record<string, number> = {}
         for (const i of data ?? []) {
@@ -199,7 +203,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   }, [character.id])
 
   useEffect(() => {
-    supabase.from('skills').select('id, name').order('sort_order').then(({ data }) => setSkills(data ?? []))
+    supabase.from('skills').select('id, name').order('sort_order').then(({ data }) => { setSkills(data ?? []); setCarregou((c) => ({ ...c, pericias: true })) })
     supabase
       .from('character_modifiers')
       .select('id, name, dice_bonus, value_bonus, threat_margin_bonus, multiplier_bonus, damage_type, is_active')
@@ -214,6 +218,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         const map: Record<string, number> = {}
         for (const row of data ?? []) map[row.skill_id] = trainingBonus(row.training as Training) + row.extra_bonus
         setCharSkillBonus(map)
+        setCarregou((c) => ({ ...c, treino: true }))
       })
     loadEquippedProtection()
   }, [character.id])
@@ -429,13 +434,24 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const bloqueioAuto = fortitudeSkill ? bonusDaPericia(fortitudeSkill) + cascaGrossa + bloqueioDeItens.valor : 0
   const esquivaAuto = defenseTotal + (reflexosSkill ? bonusDaPericia(reflexosSkill) : 0)
 
+  const tudoCarregado = carregou.pericias && carregou.treino && carregou.itens && poderesCarregados && (!character.class_id || !!classe)
+  // Fora do modo de edição mostra a conta (já completa); no modo de edição, o valor salvo, que dá pra ajustar.
+  const bloqueioMostrado = !editMode && tudoCarregado && fortitudeSkill ? bloqueioAuto : character.bloqueio_bonus
+  const esquivaMostrada = !editMode && tudoCarregado && reflexosSkill ? esquivaAuto : character.esquiva_bonus
+
+  // Salva só a conta completa, e cada valor uma vez (a mesa usa o Bloqueio salvo na reação).
+  const salvos = useRef<{ bloqueio?: number; esquiva?: number }>({})
   useEffect(() => {
-    if (fortitudeSkill && character.bloqueio_bonus !== bloqueioAuto) updateDefenseField({ bloqueio_bonus: bloqueioAuto })
-  }, [bloqueioAuto])
+    if (!tudoCarregado || !fortitudeSkill || salvos.current.bloqueio === bloqueioAuto) return
+    salvos.current.bloqueio = bloqueioAuto
+    if (character.bloqueio_bonus !== bloqueioAuto) updateDefenseField({ bloqueio_bonus: bloqueioAuto })
+  }, [tudoCarregado, bloqueioAuto])
 
   useEffect(() => {
-    if (reflexosSkill && character.esquiva_bonus !== esquivaAuto) updateDefenseField({ esquiva_bonus: esquivaAuto })
-  }, [esquivaAuto])
+    if (!tudoCarregado || !reflexosSkill || salvos.current.esquiva === esquivaAuto) return
+    salvos.current.esquiva = esquivaAuto
+    if (character.esquiva_bonus !== esquivaAuto) updateDefenseField({ esquiva_bonus: esquivaAuto })
+  }, [tudoCarregado, esquivaAuto])
 
   return (
     <div>
@@ -458,7 +474,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
         <div className="combat-defense-top">
           <div className="combat-defense-badge">
             <img src={defenseRing} alt="" className="combat-defense-ring" />
-            <span className="combat-defense-value">{defenseTotal}</span>
+            <span className="combat-defense-value">{tudoCarregado ? defenseTotal : '…'}</span>
           </div>
 
           <div className="combat-defense-main">
@@ -505,7 +521,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
                   onChange={(e) => updateDefenseField({ bloqueio_bonus: Number(e.target.value) })}
                 />
               ) : (
-                <span className="combat-plain-value" title={fortitudeSkill ? textoDasOrigens([`Bônus de Fortitude: ${bloqueioAuto - cascaGrossa - bloqueioDeItens.valor}`, ...(cascaGrossa ? [`Poder Casca Grossa: +${cascaGrossa} (Vigor)`] : []), ...bloqueioDeItens.origens]) : undefined}>{character.bloqueio_bonus}</span>
+                <span className="combat-plain-value" title={fortitudeSkill ? textoDasOrigens([`Bônus de Fortitude: ${bloqueioAuto - cascaGrossa - bloqueioDeItens.valor}`, ...(cascaGrossa ? [`Poder Casca Grossa: +${cascaGrossa} (Vigor)`] : []), ...bloqueioDeItens.origens]) : undefined}>{bloqueioMostrado}</span>
               )}
               <span className="combat-defense-sub">Bloqueio</span>
             </div>
@@ -518,7 +534,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
                   onChange={(e) => updateDefenseField({ esquiva_bonus: Number(e.target.value) })}
                 />
               ) : (
-                <span className="combat-plain-value" title={reflexosSkill ? `Defesa ${defenseTotal} + bônus de Reflexos ${esquivaAuto - defenseTotal}` : undefined}>{character.esquiva_bonus}</span>
+                <span className="combat-plain-value" title={reflexosSkill ? `Defesa ${defenseTotal} + bônus de Reflexos ${esquivaAuto - defenseTotal}` : undefined}>{esquivaMostrada}</span>
               )}
               <span className="combat-defense-sub">Esquiva</span>
             </div>
