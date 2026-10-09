@@ -10,9 +10,9 @@ import CombateModifiersPanel from './CombateModifiersPanel'
 import AttackFormModal, { type AttackToEdit } from './AttackFormModal'
 import AttackCard from './AttackCard'
 import { penalidadeDeCondicoes, rotuloComCondicoes } from './condicoes'
-import { efeitosValendo, numerosDoAtaque, resistenciasDoItemEquipado, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
+import { efeitosValendo, rdDeBloqueio, numerosDoAtaque, resistenciasDoItemEquipado, somaBonusNoDano, textoDasResistencias, type AppliedModifier, type Resistencia } from './itemMods'
 import { useAlvosDaMesa } from '../../lib/miraDaMesa'
-import { defesaDosItens, defesaTotal, origensDaDefesaDosItens, textoDasOrigens, type ItemDeDefesa } from './defesa'
+import { defesaDosItens, defesaTotal, origemDoItem, origensDaDefesaDosItens, textoDasOrigens, type ItemDeDefesa } from './defesa'
 import { usePoderes } from './usePoderes'
 import { postarAtaque } from '../Mesa/acoesDeMira'
 import { textoDosAlvos } from '../Mesa/mira'
@@ -78,6 +78,8 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   const [itensEquipados, setItensEquipados] = useState<ItemDeDefesa[]>([])
   // Bônus de perícia dos itens equipados (Reflexos/Fortitude entram na Esquiva e no Bloqueio).
   const [bonusDeItens, setBonusDeItens] = useState<Record<string, number>>({})
+  // RD a mais no Bloqueio vinda de itens equipados (Braçadeira reforçada), com a origem.
+  const [bloqueioDeItens, setBloqueioDeItens] = useState<{ valor: number; origens: string[] }>({ valor: 0, origens: [] })
   const poderes = usePoderes(character.id)
   const classe = useClasseDaFicha(character)
   // Machucado = metade dos PV ou menos (Inquebrável da Tropa de Choque dá +5 Defesa).
@@ -161,6 +163,17 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
           }
         }
         setBonusDeItens(porPericia)
+        const noBloqueio = { valor: 0, origens: [] as string[] }
+        for (const i of (data ?? []) as any[]) {
+          const nome = i.equipment_items?.name ?? i.custom_item?.name
+          const daDescricao = rdDeBloqueio(i.equipment_items?.description ?? i.custom_item?.description)
+          if (daDescricao) { noBloqueio.valor += daDescricao; noBloqueio.origens.push(origemDoItem(nome, daDescricao)) }
+          for (const m of (i.applied_modifiers ?? []) as AppliedModifier[]) {
+            const v = rdDeBloqueio(m.effect)
+            if (v) { noBloqueio.valor += v; noBloqueio.origens.push(origemDoItem(nome, v, m)) }
+          }
+        }
+        setBloqueioDeItens(noBloqueio)
         setEquippedProtectionName(nomes.length ? nomes.join(' + ') : null)
 
         // Resistencia nasce no proprio item (a Protecao Pesada ja traz corte/impacto/
@@ -413,7 +426,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
   // na Defesa, então o número mostrado é a Defesa de quem esquiva.
   // Casca Grossa (Tropa de Choque): ao bloquear, soma o Vigor na resistência a dano.
   const cascaGrossa = poderes.some((n) => n.trim().toLowerCase() === 'casca grossa') ? character.attributes.vigor ?? 0 : 0
-  const bloqueioAuto = fortitudeSkill ? bonusDaPericia(fortitudeSkill) + cascaGrossa : 0
+  const bloqueioAuto = fortitudeSkill ? bonusDaPericia(fortitudeSkill) + cascaGrossa + bloqueioDeItens.valor : 0
   const esquivaAuto = defenseTotal + (reflexosSkill ? bonusDaPericia(reflexosSkill) : 0)
 
   useEffect(() => {
@@ -492,8 +505,7 @@ export default function CombateTab({ character, onUpdated, editMode }: { charact
                   onChange={(e) => updateDefenseField({ bloqueio_bonus: Number(e.target.value) })}
                 />
               ) : (
-                <span className="combat-plain-value" title={fortitudeSkill ? `Bônus de Fortitude: ${bloqueioAuto - cascaGrossa}${cascaGrossa ? `
-Poder Casca Grossa: +${cascaGrossa} (Vigor)` : ''}` : undefined}>{character.bloqueio_bonus}</span>
+                <span className="combat-plain-value" title={fortitudeSkill ? textoDasOrigens([`Bônus de Fortitude: ${bloqueioAuto - cascaGrossa - bloqueioDeItens.valor}`, ...(cascaGrossa ? [`Poder Casca Grossa: +${cascaGrossa} (Vigor)`] : []), ...bloqueioDeItens.origens]) : undefined}>{character.bloqueio_bonus}</span>
               )}
               <span className="combat-defense-sub">Bloqueio</span>
             </div>

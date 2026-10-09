@@ -635,3 +635,16 @@ export function categoriaComMods(categoria: string | null | undefined, antes: Ap
   const j = Math.max(0, Math.min(CATEGORIAS.length - 1, i + degrausDeCategoria(depois) - degrausDeCategoria(antes)))
   return CATEGORIAS[j]
 }
+
+// ---- RD a mais no Bloqueio (Braçadeira reforçada: "+2 na RD de bloqueio"), bug 08/10 ----
+// Só o bônus fixo. O que custa PE ou sacrifica o item ("gasta 2 PE + sacrifica a faca pra +20
+// na RD do bloqueio") é escolha na hora e fica na mão.
+export function rdDeBloqueio(texto: string | null | undefined): number {
+  let total = 0
+  for (const frase of String(texto ?? '').split(/[.;]/)) {
+    if (/\bPE\b|sacrific/i.test(frase)) continue
+    const m = /([+-]\s*\d+)\s+(?:na|em|de)\s+(?:RD|resist[eê]ncia a dano)\s+(?:de|do|no|ao)\s+bloquei/i.exec(frase)
+    if (m) total += Number(m[1].replace(/\s+/g, ''))
+  }
+  return total
+}
