@@ -113,16 +113,26 @@ export function somaBonuses(applied: AppliedModifier[]): ModBonuses {
   return total
 }
 
-// "19/x3" -> { threatMargin: 19, multiplier: 3 }. Aceita so "19" ou so "x3".
-export function parseCritico(critico: unknown): { threatMargin: number; multiplier: number } {
-  let threatMargin = 20
-  let multiplier = 2
+// Cada parte é reconhecida pelo formato, não pela posição: "x3" é multiplicador, "19" (ou
+// "19-20") é margem. O catálogo escreve "x3", "19", "19/x3"… Vale a primeira de cada (bug
+// 08/10: o editor salvava "x3" como "x3/x2", e ler a última fazia a arma perder o x3).
+export function partesDoCritico(critico: unknown): { margem: number | null; multiplicador: number | null } {
+  let margem: number | null = null
+  let multiplicador: number | null = null
   for (const parte of String(critico ?? '').split('/')) {
     const limpo = parte.trim()
-    if (/^x\d+$/i.test(limpo)) multiplier = Number(limpo.slice(1))
-    else if (/^\d+$/.test(limpo)) threatMargin = Number(limpo)
+    const mult = /^x\s*(\d+)$/i.exec(limpo)
+    const marg = /^(\d+)(?:\s*-\s*20)?$/.exec(limpo)
+    if (mult) multiplicador ??= Number(mult[1])
+    else if (marg) margem ??= Number(marg[1])
   }
-  return { threatMargin, multiplier }
+  return { margem, multiplicador }
+}
+
+// "19/x3" -> { threatMargin: 19, multiplier: 3 }. Sem margem = 20; sem multiplicador = x2.
+export function parseCritico(critico: unknown): { threatMargin: number; multiplier: number } {
+  const { margem, multiplicador } = partesDoCritico(critico)
+  return { threatMargin: margem ?? 20, multiplier: multiplicador ?? 2 }
 }
 
 // Soma um bonus fixo numa formula de dano, juntando com o que ja existir:

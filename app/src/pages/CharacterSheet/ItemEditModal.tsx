@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase'
 import mysteryIcon from '../../assets/combate/op-icon-misterio-custom.png'
 import { BuscaBiblioteca } from '../Mesa/JanelaBiblioteca'
 import { buscaInicialDoItem } from '../Mesa/biblioteca'
-import { categoriaComMods } from './itemMods'
+import { categoriaComMods, partesDoCritico } from './itemMods'
 import ItemModifiersModal, { type AppliedModifier } from './ItemModifiersModal'
 
 type ItemType = 'arma' | 'municao' | 'protecao' | 'geral' | 'paranormal'
@@ -135,8 +135,9 @@ export default function ItemEditModal({
   // O banco guarda margem e multiplicador juntos em "critico" ("19/x3"), que e como o
   // resto da ficha le. Aqui eles aparecem em dois campos, entao quebro na abertura e
   // junto de volta ao salvar.
-  const [critico, setCritico] = useState(String(s.critico ?? '').split('/')[0] ?? '')
-  const [multiplicador, setMultiplicador] = useState((String(s.critico ?? '').split('/')[1] ?? '').replace(/^x/i, ''))
+  // Pelo formato, não pela posição: "x3" sozinho é multiplicador (antes virava "x3/x2" ao salvar).
+  const [critico, setCritico] = useState(String(partesDoCritico(s.critico).margem ?? ''))
+  const [multiplicador, setMultiplicador] = useState(String(partesDoCritico(s.critico).multiplicador ?? ''))
   const [danoAlternativo, setDanoAlternativo] = useState(String(s.dano_alternativo ?? ''))
 
   const [tipoMunicao, setTipoMunicao] = useState(String(s.tipo_municao ?? ''))
