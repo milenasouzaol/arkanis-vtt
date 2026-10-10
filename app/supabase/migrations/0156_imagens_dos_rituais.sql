@@ -1,0 +1,48 @@
+-- Símbolos dos rituais do livro e das expansões (pedido da Millie, 09/10), da wiki de Ordem
+-- Paranormal, em public/conteudo/rituais. Só preenche quem ainda não tem imagem.
+
+update rituals set image_url = '/conteudo/rituais/tela-de-ruido.webp' where replace(lower(name), ' ', '') = replace(lower('Tela de Ruído'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/controle-mental.webp' where replace(lower(name), ' ', '') = replace(lower('Controle Mental'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/paradoxo.webp' where replace(lower(name), ' ', '') = replace(lower('Paradoxo'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/terceiro-olho.webp' where replace(lower(name), ' ', '') = replace(lower('Terceiro Olho'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/espirais-da-perdicao.webp' where replace(lower(name), ' ', '') = replace(lower('Espirais da Perdição'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/vomitar-pestes.webp' where replace(lower(name), ' ', '') = replace(lower('Vomitar Pestes'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/compreensao-paranormal.webp' where replace(lower(name), ' ', '') = replace(lower('Compreensão Paranormal'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/mergulho-mental.webp' where replace(lower(name), ' ', '') = replace(lower('Mergulho Mental'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/eco-espiral.webp' where replace(lower(name), ' ', '') = replace(lower('Eco Espiral'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/tecer-ilusao.webp' where replace(lower(name), ' ', '') = replace(lower('Tecer Ilusão'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/tentaculos-de-lodo.webp' where replace(lower(name), ' ', '') = replace(lower('Tentáculos de Lodo'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/desacelerar-impacto.webp' where replace(lower(name), ' ', '') = replace(lower('Desacelerar Impacto'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/odio-incontrolavel.webp' where replace(lower(name), ' ', '') = replace(lower('Ódio Incontrolável'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/teletransporte.webp' where replace(lower(name), ' ', '') = replace(lower('Teletransporte'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/invadir-mente.webp' where replace(lower(name), ' ', '') = replace(lower('Invadir Mente'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/distorcer-aparencia.webp' where replace(lower(name), ' ', '') = replace(lower('Distorcer Aparência'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/velocidade-mortal.webp' where replace(lower(name), ' ', '') = replace(lower('Velocidade Mortal'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/descarnar.webp' where replace(lower(name), ' ', '') = replace(lower('Descarnar'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/fortalecimento-sensorial.webp' where replace(lower(name), ' ', '') = replace(lower('Fortalecimento Sensorial'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/armadura-de-sangue.webp' where replace(lower(name), ' ', '') = replace(lower('Armadura de Sangue'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/transfusao-vital.webp' where replace(lower(name), ' ', '') = replace(lower('Transfusão Vital'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/enfeiticar.webp' where replace(lower(name), ' ', '') = replace(lower('Enfeitiçar'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/rejeitar-nevoa.webp' where replace(lower(name), ' ', '') = replace(lower('Rejeitar Névoa'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/salto-fantasma.webp' where replace(lower(name), ' ', '') = replace(lower('Salto Fantasma'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/forma-monstruosa.webp' where replace(lower(name), ' ', '') = replace(lower('Forma Monstruosa'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/capturar-momento.webp' where replace(lower(name), ' ', '') = replace(lower('Capturar Momento'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/cicatrizacao.webp' where replace(lower(name), ' ', '') = replace(lower('Cicatrização'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/luz.webp' where replace(lower(name), ' ', '') = replace(lower('Luz'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/lamina-do-medo.webp' where replace(lower(name), ' ', '') = replace(lower('Lâmina do Medo'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/perturbacao.webp' where replace(lower(name), ' ', '') = replace(lower('Perturbação'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/inexistir.webp' where replace(lower(name), ' ', '') = replace(lower('Inexistir'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/vinculo-de-sangue.webp' where replace(lower(name), ' ', '') = replace(lower('Vínculo de Sangue'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/rajada-caotica.webp' where replace(lower(name), ' ', '') = replace(lower('Rajada Caótica'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/passagem-de-conhecimento.webp' where replace(lower(name), ' ', '') = replace(lower('Passagem de Conhecimento'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/embaralhar.webp' where replace(lower(name), ' ', '') = replace(lower('Embaralhar'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/polarizacao-caotica.webp' where replace(lower(name), ' ', '') = replace(lower('Polarização Caótica'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/consumir-manancial.webp' where replace(lower(name), ' ', '') = replace(lower('Consumir Manancial'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/labirinto-mental.webp' where replace(lower(name), ' ', '') = replace(lower('Labirinto Mental'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/chamas-do-caos.webp' where replace(lower(name), ' ', '') = replace(lower('Chamas do Caos'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/alterar-memoria.webp' where replace(lower(name), ' ', '') = replace(lower('Alterar Memória'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/amaldicoar-tecnologia.webp' where replace(lower(name), ' ', '') = replace(lower('Amaldiçoar Tecnologia'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/coincidencia-forcada.webp' where replace(lower(name), ' ', '') = replace(lower('Coincidência Forçada'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/eletrocussao.webp' where replace(lower(name), ' ', '') = replace(lower('Eletrocussão'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/decadencia.webp' where replace(lower(name), ' ', '') = replace(lower('Decadência'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
+update rituals set image_url = '/conteudo/rituais/mapa-sanguineo.webp' where replace(lower(name), ' ', '') = replace(lower('Mapa Sanguíneo'), ' ', '') and not coalesce(is_custom, false) and image_url is null;
